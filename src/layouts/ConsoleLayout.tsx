@@ -1,0 +1,244 @@
+import { useEffect, useState } from 'react'
+import { Outlet, NavLink, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import {
+  Search,
+  ChevronDown,
+  ChevronRight,
+  User,
+  Settings,
+  LogOut,
+  Layers,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Globe,
+} from 'lucide-react'
+import { NAV_TOOL_GROUPS, getLocalizedTool } from '@/mock/data'
+import { useAuth } from '@/hooks/useAuth'
+import { logoutAuth } from '@/state/auth'
+
+export default function ConsoleLayout() {
+  const { t, i18n } = useTranslation()
+  const { user, isAuthenticated } = useAuth()
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  const language = i18n.resolvedLanguage ?? i18n.language
+  const userLabel =
+    user?.full_name?.trim() ||
+    user?.email?.trim() ||
+    (isAuthenticated
+      ? (language.startsWith('zh') ? '已登录用户' : 'Signed-in User')
+      : t('common.demoUser'))
+
+  const toggleSection = (label: string) => {
+    setCollapsed(prev => ({ ...prev, [label]: !prev[label] }))
+  }
+
+  const toggleLang = () => {
+    i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh')
+  }
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)')
+    const apply = (matches: boolean) => {
+      setIsDesktop(matches)
+      if (matches) {
+        setMobileOpen(false)
+      }
+    }
+
+    apply(media.matches)
+    const listener = (event: MediaQueryListEvent) => apply(event.matches)
+    media.addEventListener('change', listener)
+    return () => media.removeEventListener('change', listener)
+  }, [])
+
+  useEffect(() => {
+    if (!mobileOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileOpen])
+
+  const handleSidebarToggle = () => {
+    if (isDesktop) {
+      setDesktopCollapsed(prev => !prev)
+      return
+    }
+
+    setMobileOpen(prev => !prev)
+  }
+
+  const renderSidebar = (mode: 'desktop' | 'mobile') => {
+    const isMobile = mode === 'mobile'
+    const compact = isMobile ? false : desktopCollapsed
+
+    return (
+    <aside
+      className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/[0.06] bg-[#0b0d14]/94 backdrop-blur-xl transition-all duration-300 ${
+        isMobile
+          ? `w-[min(85vw,18rem)] ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden`
+          : `${desktopCollapsed ? 'w-20' : 'w-64'} hidden lg:flex`
+      }`}
+    >
+      <div className={`flex h-14 items-center gap-2 ${compact ? 'justify-center px-3' : 'px-5'}`}>
+        <Link to="/" className="flex items-center gap-2">
+          <Layers className="h-5 w-5 text-brand-400" />
+          {!compact && <span className="text-lg font-bold gradient-text">{t('common.brand')}</span>}
+        </Link>
+      </div>
+
+      <div className="px-3 pb-3">
+        <div className={`glass flex items-center gap-2 rounded-xl px-3 py-2 ${compact ? 'justify-center' : ''}`}>
+          <Search className="h-4 w-4 shrink-0 text-white/30" />
+          {!compact && (
+            <input
+              type="text"
+              placeholder={t('common.search')}
+              className="w-full bg-transparent text-sm text-white/80 placeholder-white/30 outline-none"
+            />
+          )}
+        </div>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto scrollbar-hide px-3 pb-4">
+        {NAV_TOOL_GROUPS.map(group => (
+          <div key={group.label} className="mb-4">
+            {!compact && (
+              <p className="mb-1 px-3 text-xs uppercase tracking-wider text-white/30">
+                {t(group.labelKey)}
+              </p>
+            )}
+
+            {group.items.map(item => {
+              if ('children' in item && item.children) {
+                const sectionLabel = t(item.labelKey)
+                const isCollapsed = collapsed[sectionLabel]
+                return (
+                  <div key={item.label}>
+                    <button
+                      onClick={() => toggleSection(sectionLabel)}
+                      className="sidebar-item w-full text-white/50"
+                    >
+                      <span>{item.icon}</span>
+                      {!compact && (
+                        <>
+                          <span className="flex-1 text-left">{sectionLabel}</span>
+                          {isCollapsed ? (
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          ) : (
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          )}
+                        </>
+                      )}
+                    </button>
+
+                    {!isCollapsed && (
+                      <div className={`${compact ? '' : 'ml-3 border-l border-white/[0.06] pl-2'}`}>
+                        {item.children.map(child => (
+                          <NavLink
+                            key={child.id}
+                            to={`/draw/${child.slug}`}
+                            onClick={() => setMobileOpen(false)}
+                            className={({ isActive }) =>
+                              `sidebar-item${isActive ? ' active' : ''} text-white/50`
+                            }
+                          >
+                            <span>{child.icon}</span>
+                            {!compact && <span>{getLocalizedTool(child, language).name}</span>}
+                          </NavLink>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+
+              return (
+                <NavLink
+                  key={item.label}
+                  to={'path' in item ? item.path : '#'}
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `sidebar-item${isActive ? ' active' : ''} text-white/50`
+                  }
+                >
+                  <span>{item.icon}</span>
+                  {!compact && <span>{t(item.labelKey)}</span>}
+                </NavLink>
+              )
+            })}
+          </div>
+        ))}
+      </nav>
+
+      <div className={`mt-auto border-t border-white/[0.06] py-3 space-y-2 ${compact ? 'px-2' : 'px-4'}`}>
+        <button
+          onClick={toggleLang}
+          className={`flex w-full items-center rounded-lg px-2 py-1.5 text-xs text-white/40 hover:text-white/70 hover:bg-white/[0.04] transition-colors ${
+            compact ? 'justify-center' : 'gap-2'
+          }`}
+        >
+          <Globe className="h-3.5 w-3.5" />
+          {!compact && <span>{i18n.language === 'zh' ? '\u4e2d' : 'EN'}</span>}
+        </button>
+        <div className={`flex items-center ${compact ? 'justify-center gap-2' : 'gap-3'}`}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500/20 text-brand-400">
+            <User className="h-4 w-4" />
+          </div>
+          {!compact && <span className="flex-1 truncate text-sm text-white/70">{userLabel}</span>}
+          <Link to="/settings/profile" onClick={() => setMobileOpen(false)} className="text-white/30 transition-colors hover:text-white/60">
+            <Settings className="h-4 w-4" />
+          </Link>
+          <Link
+            to="/login"
+            onClick={() => {
+              logoutAuth()
+              setMobileOpen(false)
+            }}
+            className="text-white/30 transition-colors hover:text-white/60"
+          >
+            <LogOut className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </aside>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0a0a12]">
+      {renderSidebar('desktop')}
+
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      {renderSidebar('mobile')}
+
+      <button
+        onClick={handleSidebarToggle}
+        className="fixed left-4 top-4 z-[130] rounded-lg p-2 text-white/60 transition-colors hover:text-white glass"
+      >
+        {!isDesktop && mobileOpen ? (
+          <PanelLeftClose className="h-5 w-5" />
+        ) : (
+          isDesktop && desktopCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />
+        )}
+      </button>
+
+      <main className={`min-h-screen p-6 transition-[margin] duration-300 ${desktopCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
+        <Outlet />
+      </main>
+    </div>
+  )
+}
