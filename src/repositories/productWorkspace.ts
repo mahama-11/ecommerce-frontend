@@ -17,6 +17,7 @@ import {
   type LinkedTemplateBridge,
   type WorkflowEvent,
 } from '@/mock/workflowBridge'
+import { API_BASE_URL } from '@/services/apiBase'
 import { getAccessToken } from '@/services/auth'
 
 type ApiEnvelope<T> = {
@@ -30,17 +31,12 @@ type ApiEnvelope<T> = {
 
 const env = import.meta.env as Record<string, string | undefined>
 const DATA_SOURCE = env.VITE_ECOMMERCE_DATA_SOURCE ?? 'api'
-const API_BASE_URL = (env.VITE_ECOMMERCE_API_BASE_URL ?? 'http://localhost:8296').replace(/\/$/, '')
 
 function shouldUseApi() {
-  return DATA_SOURCE !== 'mock' && Boolean(API_BASE_URL)
+  return DATA_SOURCE !== 'mock'
 }
 
 async function requestJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  if (!API_BASE_URL) {
-    throw new Error('Missing VITE_ECOMMERCE_API_BASE_URL')
-  }
-
   const token = getAccessToken()
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
