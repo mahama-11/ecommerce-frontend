@@ -16,7 +16,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
 
   const redirectPath = typeof location.state?.from === 'string' ? location.state.from : getAuthAwareStartPath(true)
 
@@ -29,14 +28,13 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
-    setError('')
 
     try {
       const payload = await login({ email, password })
       applyAuth(payload)
       navigate(redirectPath, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Please try again.')
+      // Error handled by global toast
     } finally {
       setSubmitting(false)
     }
@@ -112,8 +110,6 @@ export default function LoginPage() {
               {submitting ? t('common.loading') : t('common.login')}
             </button>
           </form>
-
-          {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
 
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px bg-white/10" />

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Loader2, Sparkles, Upload, Image as ImageIcon, Wand2, X, ChevronRight, Play } from 'lucide-react'
+import { useToastStore } from '@/store/toastStore'
+import { ArrowLeft, Loader2, Sparkles, Upload, Image as ImageIcon, Wand2, X, ChevronRight, Play, Search } from 'lucide-react'
 import { TOOLS, getLocalizedTool } from '@/mock/data'
 import type { ToolDef } from '@/types/tool'
 import { productWorkspaceRepository } from '@/repositories/productWorkspace'
@@ -35,18 +36,25 @@ import {
   formatAssetLabel,
 } from './tool-page/utils'
 
+type ToolPageLocationState = {
+  templateUsePayload?: TemplateUseResponse
+}
+
 function ToolContent({ tool }: { tool: ToolDef }) {
   const { i18n } = useTranslation()
+  const { showToast } = useToastStore()
   const locale: Locale = (i18n.resolvedLanguage ?? i18n.language).startsWith('en') ? 'en' : 'zh'
+  const location = useLocation()
+  const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const resultObjectURLsRef = useRef<string[]>([])
   const resultPreviewByAssetIDRef = useRef<Record<string, string>>({})
   const notifiedJobIDsRef = useRef<Set<string>>(new Set())
+  const consumedTemplatePayloadKeyRef = useRef<string | null>(null)
   const [creatingJob, setCreatingJob] = useState(false)
   const [uploadingSource, setUploadingSource] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [negativePrompt, setNegativePrompt] = useState('')
-  const [requestError, setRequestError] = useState<string | null>(null)
   const [activeTemplate, setActiveTemplate] = useState<ActiveTemplateState | null>(null)
   const [templateOptions, setTemplateOptions] = useState<ToolTemplateOption[]>([])
   const [selectingTemplateID, setSelectingTemplateID] = useState<string | null>(null)
@@ -54,6 +62,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   const [sourceAsset, setSourceAsset] = useState<SourceAssetSummary | null>(null)
   const [results, setResults] = useState<GeneratedResult[]>([])
   const [activeJobID, setActiveJobID] = useState<string | null>(null)
+  const [pollingJobID, setPollingJobID] = useState<string | null>(null)
   const localizedTool = getLocalizedTool(tool, i18n.resolvedLanguage ?? i18n.language)
   const sourceGuide = (() => {
     const fallback = defaultAssetGuide(locale, tool.slug)
@@ -85,7 +94,6 @@ function ToolContent({ tool }: { tool: ToolDef }) {
     resultObjectURLsRef.current = []
     resultPreviewByAssetIDRef.current = {}
     notifiedJobIDsRef.current.clear()
-    setRequestError(null)
     setSourcePreviewUrl(null)
     setSourceAsset(null)
     setResults([])
@@ -97,11 +105,12 @@ function ToolContent({ tool }: { tool: ToolDef }) {
     setSelectingTemplateID(null)
   }, [tool.slug])
 
-  const applyTemplatePayload = useCallback((payload: TemplateUseResponse, overwritePrompt: boolean) => {
+  const applyTemplatePayload = useCallback((payload: TemplateUseResponse, options?: { replacePrompt?: boolean; fallbackId?: string }) => {
+    const replacePrompt = options?.replacePrompt ?? false
     const templateID =
       typeof payload.preloadedTemplatePayload?.templateId === 'string'
         ? payload.preloadedTemplatePayload.templateId
-        : ''
+        : (options?.fallbackId || '')
     const externalCode =
       typeof payload.preloadedTemplatePayload?.externalCode === 'string'
         ? payload.preloadedTemplatePayload.externalCode
@@ -109,7 +118,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
     const templateName =
       typeof payload.preloadedTemplatePayload?.templateName === 'string'
         ? payload.preloadedTemplatePayload.templateName
-        : ''
+        : (options?.fallbackId || '')
     const defaultVariablesRaw = payload.preloadedTemplatePayload?.defaultVariables
     const defaultVariablesRecord =
       defaultVariablesRaw && typeof defaultVariablesRaw === 'object'
@@ -180,25 +189,50 @@ function ToolContent({ tool }: { tool: ToolDef }) {
         `已加载模板: ${templateName}`,
         `Loaded template: ${templateName}`,
       )
-    if (nextPrompt && (overwritePrompt || !prompt.trim())) {
-      setPrompt(nextPrompt)
+    if (nextPrompt) {
+      setPrompt(current => ((replacePrompt || !current.trim()) ? nextPrompt : current))
     }
-    if (injectedNegativePrompt && (overwritePrompt || !negativePrompt.trim())) {
-      setNegativePrompt(injectedNegativePrompt)
-    }
-  }, [locale, negativePrompt, prompt])
+    setNegativePrompt(current => {
+      if (replacePrompt) {
+        return injectedNegativePrompt || ''
+      }
+      if (!current.trim() && injectedNegativePrompt) {
+        return injectedNegativePrompt
+      }
+      return current
+    })
+  }, [locale])
 
   useEffect(() => {
-    const payload = loadUseTemplatePayload()
+    const payloadFromLocation = (location.state as ToolPageLocationState | null)?.templateUsePayload
+    const payload = payloadFromLocation ?? loadUseTemplatePayload()
     if (!payload) return
 
     const route = typeof payload.targetRoute === 'string' ? payload.targetRoute : ''
     const slug = typeof payload.toolSlug === 'string' ? payload.toolSlug : ''
     if (!route.includes(tool.slug) && slug !== tool.slug) return
 
-    applyTemplatePayload(payload, true)
+    const payloadKey = JSON.stringify({
+      route,
+      slug,
+      templateId: payload.preloadedTemplatePayload?.templateId ?? '',
+      externalCode: payload.preloadedTemplatePayload?.externalCode ?? '',
+      templateName: payload.preloadedTemplatePayload?.templateName ?? '',
+    })
+    if (consumedTemplatePayloadKeyRef.current === payloadKey) {
+      return
+    }
+
+    applyTemplatePayload(payload, {
+      replacePrompt: true,
+      fallbackId: payload.prefilledInputSchema?.templateId as string | undefined,
+    })
+    consumedTemplatePayloadKeyRef.current = payloadKey
     clearUseTemplatePayload()
-  }, [applyTemplatePayload, tool.slug])
+    if (payloadFromLocation) {
+      navigate(`${location.pathname}${location.search}`, { replace: true, state: null })
+    }
+  }, [applyTemplatePayload, location.pathname, location.search, location.state, navigate, tool.slug])
 
   useEffect(() => {
     let canceled = false
@@ -219,8 +253,21 @@ function ToolContent({ tool }: { tool: ToolDef }) {
             summary: item.summary,
             externalCode: item.externalCode,
             recommendScore: item.recommendScore,
+            coverAssetUrl: item.coverAssetUrl,
           }))
         setTemplateOptions(matched)
+        
+        // If there's an active template that only has an ID (from a payload fallback),
+        // try to enrich it with the real name from the catalog
+        setActiveTemplate(prev => {
+          if (prev && prev.name === prev.id) {
+            const found = matched.find(m => m.id === prev.id)
+            if (found) {
+              return { ...prev, name: found.name, templateCode: found.externalCode || prev.templateCode }
+            }
+          }
+          return prev
+        })
       } catch {
         if (!canceled) {
           setTemplateOptions([])
@@ -310,8 +357,13 @@ function ToolContent({ tool }: { tool: ToolDef }) {
           // eslint-disable-next-line no-await-in-loop
           await applyJobSummary(job)
         }
-        const activeJob = jobs.find(job => !isTerminalStatus(job.status))
-        setActiveJobID(activeJob?.job_id ?? null)
+        const activeJob = jobs.find(job => !isTerminalStatus(job.status)) || jobs.find(job => job.status !== 'failed')
+        if (activeJob) {
+          setActiveJobID(activeJob.job_id)
+          if (!isTerminalStatus(activeJob.status)) {
+            setPollingJobID(activeJob.job_id)
+          }
+        }
       } catch {
         // Keep the tool usable even if history loading fails.
       }
@@ -323,15 +375,15 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   }, [applyJobSummary, tool.slug])
 
   useEffect(() => {
-    if (!activeJobID) return
+    if (!pollingJobID) return
     let canceled = false
     const poll = async () => {
       try {
-        const job = await getImageJob(activeJobID)
+        const job = await getImageJob(pollingJobID)
         if (canceled) return
         await applyJobSummary(job)
         if (isTerminalStatus(job.status)) {
-          setActiveJobID(current => (current === job.job_id ? null : current))
+          setPollingJobID(current => (current === job.job_id ? null : current))
           if (!notifiedJobIDsRef.current.has(job.job_id)) {
             notifiedJobIDsRef.current.add(job.job_id)
             if (job.status === 'completed') {
@@ -353,11 +405,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
         }
       } catch (error) {
         if (!canceled) {
-          setRequestError(
-            error instanceof Error
-              ? error.message
-              : copy(locale, '任务状态获取失败，请稍后重试', 'Failed to refresh job status. Please try again later.'),
-          )
+          // Toast will be shown globally
         }
       }
     }
@@ -370,13 +418,15 @@ function ToolContent({ tool }: { tool: ToolDef }) {
       canceled = true
       window.clearInterval(timer)
     }
-  }, [activeJobID, applyJobSummary, locale, localizedTool.name, saveWorkflowEvent])
+  }, [pollingJobID, applyJobSummary, locale, localizedTool.name, saveWorkflowEvent])
 
   const currentResult = activeJobID
-    ? results.find(item => item.id === activeJobID) ?? results[0] ?? null
-    : results[0] ?? null
+    ? results.find(item => item.id === activeJobID) ?? null
+    : null
   const isProcessing =
     creatingJob || uploadingSource || currentResult?.status === 'running' || currentResult?.status === 'queued'
+
+  const hasValidCanvas = sourcePreviewUrl || currentResult?.previewUrl || isProcessing
 
   const handleSelectFile = () => {
     fileInputRef.current?.click()
@@ -386,7 +436,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
     setSourceAsset(null)
     setSourcePreviewUrl(null)
     setActiveJobID(null)
-    setResults([])
+    setPollingJobID(null)
     setPrompt('')
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -398,7 +448,6 @@ function ToolContent({ tool }: { tool: ToolDef }) {
     event.target.value = ''
     if (!file) return
 
-    setRequestError(null)
     setUploadingSource(true)
     const localPreviewUrl = await fileToDataURL(file)
     setSourcePreviewUrl(localPreviewUrl)
@@ -422,11 +471,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
         `${file.name} is registered and ready for generation`,
       )
     } catch (error) {
-      setRequestError(
-        error instanceof Error
-          ? error.message
-          : copy(locale, '源图上传失败，请稍后重试', 'Failed to register the source image. Please try again later.'),
-      )
+      // Global toast handles API errors
       setSourceAsset(null)
     } finally {
       setUploadingSource(false)
@@ -436,16 +481,15 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   const handleGenerate = async () => {
     if (creatingJob || uploadingSource) return
     if (!sourceAsset) {
-      setRequestError(copy(locale, '请先上传一张源图，再开始生成。', 'Upload a source image before starting generation.'))
+      showToast(copy(locale, '请先上传一张源图，再开始生成。', 'Upload a source image before starting generation.'), 'error')
       return
     }
     if (!prompt.trim()) {
-      setRequestError(copy(locale, '请先填写生成描述。', 'Enter a prompt before starting generation.'))
+      showToast(copy(locale, '请先填写生成描述。', 'Enter a prompt before starting generation.'), 'error')
       return
     }
 
     setCreatingJob(true)
-    setRequestError(null)
     const width = sourceAsset.width || 1024
     const height = sourceAsset.height || 1024
     try {
@@ -462,6 +506,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
       })
       await applyJobSummary(job)
       setActiveJobID(job.job_id)
+      setPollingJobID(job.job_id)
       saveWorkflowEvent(
         `${localizedTool.name} 任务已创建`,
         `${localizedTool.name} job created`,
@@ -469,11 +514,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
         `Job ${job.job_id.slice(-6)} has been queued in platform runtime`,
       )
     } catch (error) {
-      setRequestError(
-        error instanceof Error
-          ? error.message
-          : copy(locale, '任务创建失败，请稍后重试', 'Failed to create the job. Please try again later.'),
-      )
+      // Global toast handles API errors
     } finally {
       setCreatingJob(false)
     }
@@ -482,22 +523,18 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   const handleSelectTemplatePlan = async (template: ToolTemplateOption) => {
     if (selectingTemplateID) return
     setSelectingTemplateID(template.id)
-    setRequestError(null)
     try {
       const payload = await useTemplateNow(template.id)
-      applyTemplatePayload(payload, false)
+      applyTemplatePayload(payload, { replacePrompt: true })
     } catch (error) {
-      setRequestError(
-        error instanceof Error
-          ? error.message
-          : copy(locale, '模板方案加载失败，请稍后重试。', 'Failed to load the template plan. Please try again later.'),
-      )
+      // API error toast
     } finally {
       setSelectingTemplateID(null)
     }
   }
 
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [templateSearchTerm, setTemplateSearchTerm] = useState('')
 
   return (
     <div className="min-h-screen bg-[#060608] flex flex-col relative overflow-hidden">
@@ -531,7 +568,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
         <div className="pointer-events-none absolute -right-40 top-0 h-[600px] w-[600px] rounded-full bg-brand-500/10 blur-[120px]" />
         <div className="pointer-events-none absolute -left-40 bottom-0 h-[600px] w-[600px] rounded-full bg-indigo-500/10 blur-[120px]" />
 
-        {!sourcePreviewUrl && !currentResult ? (
+        {!hasValidCanvas ? (
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center z-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
             {/* Upload Dropzone */}
             <button
@@ -580,45 +617,63 @@ function ToolContent({ tool }: { tool: ToolDef }) {
             </button>
 
             {/* Inspiration Gallery (Zero Cold-Start) */}
-            <div className="mt-16 w-full max-w-4xl relative">
-              <div className="flex items-center justify-center gap-4 mb-8 opacity-60">
-                <div className="h-px bg-gradient-to-r from-transparent to-white/40 flex-1 max-w-[120px]"></div>
-                <h4 className="text-xs font-bold text-white uppercase tracking-[0.2em]">{copy(locale, '或试试这些优秀案例', 'Or try these examples')}</h4>
-                <div className="h-px bg-gradient-to-l from-transparent to-white/40 flex-1 max-w-[120px]"></div>
-              </div>
-              
-              {/* Marquee Container */}
-              <div className="relative w-full overflow-hidden flex pb-4">
-                {/* Fade masks for smooth entry/exit */}
-                <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#060608] to-transparent z-10 pointer-events-none" />
-                <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#060608] to-transparent z-10 pointer-events-none" />
+            {templateOptions.length > 0 && (
+              <div className="mt-16 w-full max-w-4xl relative">
+                <div className="flex items-center justify-center gap-4 mb-8 opacity-60">
+                  <div className="h-px bg-gradient-to-r from-transparent to-white/40 flex-1 max-w-[120px]"></div>
+                  <h4 className="text-xs font-bold text-white uppercase tracking-[0.2em]">{copy(locale, '或试试这些优秀案例', 'Or try these examples')}</h4>
+                  <div className="h-px bg-gradient-to-l from-transparent to-white/40 flex-1 max-w-[120px]"></div>
+                </div>
                 
-                <div className="flex w-max animate-marquee hover:[animation-play-state:paused]">
-                  {[0, 1].map((setIndex) => (
-                    <div key={setIndex} className="flex gap-5 px-2.5">
-                      {[1, 2, 3, 4, 5, 6, 7].map(i => (
-                        <div 
-                          key={`${setIndex}-${i}`} 
-                          className="flex-none w-36 h-36 rounded-2xl bg-black/40 border border-white/10 overflow-hidden cursor-pointer group relative shadow-xl hover:shadow-[0_0_30px_rgba(var(--brand-500),0.3)] hover:border-brand-500/40 transition-all duration-500 hover:-translate-y-2"
-                          onClick={handleSelectFile} // Mocking click
-                        >
-                          <img 
-                            src={`https://picsum.photos/seed/${i + tool.slug.length * 10 + setIndex * 100}/300`} 
-                            className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" 
-                            alt="Inspiration" 
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                            <span className="flex items-center gap-1.5 text-xs font-bold text-white bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                              <Play size={12} fill="currentColor" /> {copy(locale, '一键同款', 'Try this')}
-                            </span>
+                {/* Marquee Container */}
+                <div className="relative w-full overflow-hidden flex pb-4">
+                  {/* Fade masks for smooth entry/exit */}
+                  <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#060608] to-transparent z-10 pointer-events-none" />
+                  <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#060608] to-transparent z-10 pointer-events-none" />
+                  
+                  <div className="flex w-max animate-marquee hover:[animation-play-state:paused]">
+                    {[0, 1].map((setIndex) => (
+                      <div key={setIndex} className="flex gap-5 px-2.5">
+                        {templateOptions.map(item => (
+                          <div 
+                            key={`${setIndex}-${item.id}`} 
+                            className={`flex-none w-36 h-36 rounded-2xl bg-black/40 border overflow-hidden cursor-pointer group relative shadow-xl transition-all duration-500 ${
+                              activeTemplate?.id === item.id 
+                                ? 'border-brand-500 shadow-[0_0_30px_rgba(var(--brand-500),0.5)] -translate-y-2' 
+                                : 'border-white/10 hover:shadow-[0_0_30px_rgba(var(--brand-500),0.3)] hover:border-brand-500/40 hover:-translate-y-2'
+                            }`}
+                            onClick={() => {
+                              void handleSelectTemplatePlan(item)
+                            }}
+                          >
+                            <img 
+                              src={item.coverAssetUrl || `https://picsum.photos/seed/${item.id}/300`} 
+                              className={`w-full h-full object-cover transition-all duration-700 ${
+                                activeTemplate?.id === item.id ? 'opacity-100 scale-110' : 'opacity-60 group-hover:opacity-100 group-hover:scale-110'
+                              }`} 
+                              alt={item.name} 
+                            />
+                            <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex items-end justify-center pb-4 transition-opacity duration-300 ${
+                              activeTemplate?.id === item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}>
+                              <span className={`flex items-center gap-1.5 text-xs font-bold text-white bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-lg transition-transform duration-300 ${
+                                activeTemplate?.id === item.id ? 'translate-y-0' : 'transform translate-y-4 group-hover:translate-y-0'
+                              }`}>
+                                {activeTemplate?.id === item.id ? (
+                                  <>{copy(locale, '已应用', 'Applied')}</>
+                                ) : (
+                                  <><Play size={12} fill="currentColor" /> {copy(locale, '一键同款', 'Try this')}</>
+                                )}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         ) : (
           <div className="relative w-full max-w-5xl h-full flex items-center justify-center z-20 animate-in zoom-in-95 duration-500">
@@ -627,11 +682,11 @@ function ToolContent({ tool }: { tool: ToolDef }) {
               
               {/* Display Source Image if Result is not yet complete */}
               {sourcePreviewUrl && !currentResult?.previewUrl && (
-                <div className="relative max-w-full max-h-full group/source">
+                <div className="relative w-full h-full flex items-center justify-center group/source">
                   <img 
                     src={sourcePreviewUrl} 
                     alt="Source" 
-                    className={`max-w-full max-h-full object-contain transition-all duration-1000 ${isProcessing ? 'opacity-40 blur-md scale-105' : 'opacity-100'}`} 
+                    className={`w-full h-full object-contain transition-all duration-1000 ${isProcessing ? 'opacity-40 blur-md scale-105' : 'opacity-100'}`} 
                   />
                   {!isProcessing && (
                     <button
@@ -647,11 +702,22 @@ function ToolContent({ tool }: { tool: ToolDef }) {
               
               {/* Display Result Image */}
               {currentResult?.previewUrl && (
-                <img 
-                  src={currentResult.previewUrl} 
-                  alt="Result" 
-                  className="max-w-full max-h-full object-contain animate-in fade-in duration-1000" 
-                />
+                <div className="relative w-full h-full flex items-center justify-center group/result">
+                  <img 
+                    src={currentResult.previewUrl} 
+                    alt="Result" 
+                    className="w-full h-full object-contain animate-in fade-in duration-1000" 
+                  />
+                  {!isProcessing && (
+                    <button
+                      onClick={handleClearSource}
+                      className="absolute top-4 right-4 bg-black/60 text-white/80 hover:text-white hover:bg-rose-500/80 hover:shadow-[0_0_20px_rgba(244,63,94,0.5)] border border-white/10 backdrop-blur-md rounded-full p-2.5 opacity-0 group-hover/result:opacity-100 transition-all duration-300 z-50 transform hover:scale-110"
+                      title={copy(locale, '清除当前图片', 'Clear image')}
+                    >
+                      <X size={18} strokeWidth={2.5} />
+                    </button>
+                  )}
+                </div>
               )}
 
               {/* Immersive Processing Overlay */}
@@ -685,17 +751,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
       </main>
 
       {/* Floating Prompt Bar (Bottom Action Island) */}
-      <div className={`absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50 transition-all duration-700 ${(sourcePreviewUrl || currentResult) ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0 pointer-events-none'}`}>
-        
-        {/* Defensive Error Toast */}
-        {requestError && (
-          <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-full max-w-md animate-in slide-in-from-bottom-4 fade-in duration-300">
-            <div className="glass-strong border border-rose-500/30 bg-rose-500/10 rounded-2xl px-5 py-3.5 flex items-center justify-between shadow-2xl backdrop-blur-2xl">
-              <span className="text-sm font-semibold text-rose-200">{requestError}</span>
-              <button onClick={() => setRequestError(null)} className="text-rose-200/50 hover:text-rose-200"><X size={16} /></button>
-            </div>
-          </div>
-        )}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50 transition-all duration-700 translate-y-0 opacity-100">
 
         <div className="glass-strong rounded-full p-2 pl-6 pr-2 flex items-center gap-3 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-3xl relative">
           
@@ -797,8 +853,24 @@ function ToolContent({ tool }: { tool: ToolDef }) {
               </button>
             </div>
             
+            <div className="relative mb-6">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+              <input
+                type="text"
+                value={templateSearchTerm}
+                onChange={(e) => setTemplateSearchTerm(e.target.value)}
+                placeholder={copy(locale, '搜索模板名称...', 'Search templates...')}
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-brand-500/50 transition-colors"
+              />
+            </div>
+            
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto scrollbar-hide pr-2 pb-4">
-              {templateOptions.map(item => {
+              {templateOptions
+                .filter(item => 
+                  item.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) || 
+                  item.summary.toLowerCase().includes(templateSearchTerm.toLowerCase())
+                )
+                .map(item => {
                 const isActive = activeTemplate?.id === item.id
                 return (
                   <button
@@ -811,7 +883,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
                       isActive ? 'border-brand-500 shadow-[0_0_30px_rgba(var(--brand-500),0.3)] scale-[1.02] z-10' : 'border-white/5 hover:border-white/20'
                     }`}
                   >
-                    <img src={`https://picsum.photos/seed/${item.id}/300/400`} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt={item.name} />
+                    <img src={item.coverAssetUrl || `https://picsum.photos/seed/${item.id}/300/400`} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt={item.name} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-4">
                       <div className="text-sm font-bold text-white truncate">{item.name}</div>
                       <div className="text-[10px] text-white/60 line-clamp-2 mt-1">{item.summary}</div>

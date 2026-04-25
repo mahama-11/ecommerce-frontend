@@ -27,7 +27,7 @@ RUN rm -rf ./*
 # Copy from builder
 COPY --from=builder /app/dist .
 
-COPY deploy/menu-nginx.conf /etc/nginx/conf.d/default.conf
+COPY deploy/ecommerce-nginx.conf /etc/nginx/conf.d/default.conf
 COPY deploy/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

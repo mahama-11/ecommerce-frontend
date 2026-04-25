@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '@/services/apiBase'
 import { getAccessToken } from '@/services/auth'
+import { useToastStore } from '@/store/toastStore'
 
 type ApiEnvelope<T> = {
   code: number
@@ -108,7 +109,9 @@ export async function fetchAssetObjectURL(assetID: string) {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   })
   if (!response.ok) {
-    throw new Error(`Failed to load asset content: ${response.status}`)
+    const errorMsg = `Failed to load asset content: ${response.status}`
+    useToastStore.getState().showToast(errorMsg, 'error')
+    throw new Error(errorMsg)
   }
   const blob = await response.blob()
   return URL.createObjectURL(blob)
@@ -127,9 +130,9 @@ async function requestJSON<T>(path: string, init?: RequestInit): Promise<T> {
 
   const payload = (await response.json()) as ApiEnvelope<T>
   if (!response.ok || payload.code !== 0) {
-    throw new Error(
-      payload.error_hint || payload.error || payload.message || `Request failed with status ${response.status}`,
-    )
+    const errorMsg = payload.error_hint || payload.error || payload.message || `Request failed with status ${response.status}`
+    useToastStore.getState().showToast(errorMsg, 'error')
+    throw new Error(errorMsg)
   }
 
   return payload.data

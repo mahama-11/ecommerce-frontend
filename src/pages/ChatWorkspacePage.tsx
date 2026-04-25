@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useToastStore } from '@/store/toastStore'
 import {
   ArrowRight,
   BookOpen,
@@ -136,6 +137,7 @@ function copy(locale: Locale, zh: string, en: string) {
 export default function ChatWorkspacePage() {
   const { pathname } = useLocation()
   const { t, i18n } = useTranslation()
+  const { showToast } = useToastStore()
   const locale: Locale = (i18n.resolvedLanguage ?? i18n.language).startsWith('en') ? 'en' : 'zh'
   const config = CHAT_CONFIG[pathname] ?? CHAT_CONFIG['/chat']
   const [inputValue, setInputValue] = useState(
@@ -150,7 +152,6 @@ export default function ChatWorkspacePage() {
   const [activeAction, setActiveAction] = useState(0)
   const [isSending, setIsSending] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle')
-  const [actionNotice, setActionNotice] = useState<string | null>(null)
   const [workflowEvents, setWorkflowEvents] = useState<WorkflowEvent[]>([])
   const [activeTemplateCard, setActiveTemplateCard] = useState<TemplateExecutionCard | null>(null)
 
@@ -198,13 +199,6 @@ export default function ChatWorkspacePage() {
             `已加载模板: ${templateName}`,
             `Loaded template: ${templateName}`,
           ),
-      )
-      setActionNotice(
-        copy(
-          locale,
-          `模板已预载到当前工作台: ${templateName}`,
-          `Template preloaded into current workspace: ${templateName}`,
-        ),
       )
       setActiveTemplateCard({
         name: templateName,
@@ -324,7 +318,7 @@ export default function ChatWorkspacePage() {
         },
         createdAt: now,
       })
-      setActionNotice(copy(locale, '已保存到我的模板库', 'Saved to My Templates'))
+      showToast(copy(locale, '已保存到我的模板库', 'Saved to My Templates'), 'success')
     } else if (activeAction === 1) {
       void productWorkspaceRepository.saveWorkflowEvent({
         id: `chat-batch-${Date.now()}`,
@@ -339,7 +333,7 @@ export default function ChatWorkspacePage() {
         },
         createdAt: new Date().toISOString(),
       })
-      setActionNotice(copy(locale, '已写入批量 Listing 回流记录', 'Sent to batch-listing workflow'))
+      showToast(copy(locale, '已写入批量 Listing 回流记录', 'Sent to batch-listing workflow'), 'success')
     } else {
       void productWorkspaceRepository.saveWorkflowEvent({
         id: `chat-asset-${Date.now()}`,
@@ -354,7 +348,7 @@ export default function ChatWorkspacePage() {
         },
         createdAt: new Date().toISOString(),
       })
-      setActionNotice(copy(locale, '已同步到资料层回流记录', 'Synced to library workflow feed'))
+      showToast(copy(locale, '已同步到资料层回流记录', 'Synced to library workflow feed'), 'success')
     }
 
     setSaveStatus('saved')
@@ -627,12 +621,11 @@ export default function ChatWorkspacePage() {
 
             {saveStatus === 'saved' && (
               <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-300">
-                {actionNotice ??
-                  copy(
-                    locale,
-                    '当前动作已进入假保存状态，下一步适合补模板保存、任务排队和回写接口。',
-                    'The current action is now in a mock saved state, ready for template saving, task queueing, and write-back integration later.',
-                  )}
+                {copy(
+                  locale,
+                  '当前动作已进入假保存状态，下一步适合补模板保存、任务排队和回写接口。',
+                  'The current action is now in a mock saved state, ready for template saving, task queueing, and write-back integration later.',
+                )}
               </div>
             )}
           </aside>
@@ -641,3 +634,4 @@ export default function ChatWorkspacePage() {
     </div>
   )
 }
+

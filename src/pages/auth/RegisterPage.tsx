@@ -6,12 +6,14 @@ import { useAuth } from '@/hooks/useAuth'
 import { register } from '@/services/auth'
 import { applyAuth } from '@/state/auth'
 import { getAuthAwareStartPath } from '@/utils/authNavigation'
+import { useToastStore } from '@/store/toastStore'
 
 export default function RegisterPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const { isAuthenticated } = useAuth({ refreshOnMount: false })
+  const { showToast } = useToastStore()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -20,7 +22,6 @@ export default function RegisterPage() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
 
   const redirectPath = typeof location.state?.from === 'string' ? location.state.from : getAuthAwareStartPath(true)
 
@@ -33,16 +34,15 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (password !== confirmPassword) {
-      setError('Passwords do not match.')
+      showToast('Passwords do not match.', 'error')
       return
     }
     if (!agreeTerms) {
-      setError('Please agree to the terms first.')
+      showToast('Please agree to the terms first.', 'error')
       return
     }
 
     setSubmitting(true)
-    setError('')
 
     try {
       const payload = await register({
@@ -54,7 +54,7 @@ export default function RegisterPage() {
       applyAuth(payload)
       navigate(redirectPath, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Please try again.')
+      // Global toast
     } finally {
       setSubmitting(false)
     }
@@ -176,8 +176,6 @@ export default function RegisterPage() {
               {submitting ? t('common.loading') : t('auth.createAccount')}
             </button>
           </form>
-
-          {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
 
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px bg-white/10" />

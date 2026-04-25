@@ -21,9 +21,25 @@ export default function DetailDrawer({
 
   useEffect(() => {
     if (open) {
+      const scrollY = window.scrollY
+      const previousOverflow = document.body.style.overflow
+      const previousPosition = document.body.style.position
+      const previousTop = document.body.style.top
+      const previousWidth = document.body.style.width
       setMounted(true)
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
       const frame = window.requestAnimationFrame(() => setVisible(true))
-      return () => window.cancelAnimationFrame(frame)
+      return () => {
+        window.cancelAnimationFrame(frame)
+        document.body.style.overflow = previousOverflow
+        document.body.style.position = previousPosition
+        document.body.style.top = previousTop
+        document.body.style.width = previousWidth
+        window.scrollTo({ top: scrollY, behavior: 'auto' })
+      }
     }
     setVisible(false)
     const timer = window.setTimeout(() => setMounted(false), 220)
@@ -40,7 +56,7 @@ export default function DetailDrawer({
       onClick={onClose}
     >
       <div
-        className={`h-full w-full max-w-md border-l border-white/[0.08] bg-[#0d1018]/95 p-5 shadow-2xl transition-transform duration-220 ease-out ${
+        className={`flex h-full w-full max-w-md flex-col overflow-hidden border-l border-white/[0.08] bg-[#0d1018]/95 p-5 shadow-2xl transition-transform duration-220 ease-out ${
           visible ? 'translate-x-0' : 'translate-x-6'
         }`}
         onClick={event => event.stopPropagation()}
@@ -58,7 +74,9 @@ export default function DetailDrawer({
           </button>
         </div>
 
-        <div className="space-y-4">{children}</div>
+        <div className="scrollbar-subtle min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+          {children}
+        </div>
       </div>
     </div>
   )

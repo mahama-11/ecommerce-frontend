@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '@/services/apiBase'
 import { getAccessToken } from '@/services/auth'
+import { useToastStore } from '@/store/toastStore'
 
 type Envelope<T> = {
   code: number
@@ -62,6 +63,12 @@ export type TemplateDetail = {
     exampleType: string
     title?: string
     description?: string
+    assetRef?: string
+    sourceRef?: string
+    storageKey?: string
+    assetId?: string
+    mimeType?: string
+    checksum?: string
     inputAssetUrl?: string
     outputAssetUrl?: string
     previewAssetUrl?: string
@@ -129,7 +136,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   const payload = (await response.json()) as Envelope<T>
   if (!response.ok || payload.code !== 0) {
-    throw new Error(payload.error_hint || payload.error || payload.message || 'Request failed')
+    const errorMsg = payload.error_hint || payload.error || payload.message || 'Request failed'
+    useToastStore.getState().showToast(errorMsg, 'error')
+    throw new Error(errorMsg)
   }
 
   return payload.data

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '@/services/apiBase'
+import { useToastStore } from '@/store/toastStore'
 
 export type AuthAccessSummary = {
   active_org_id: string
@@ -87,7 +88,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   const payload = (await response.json()) as Envelope<T>
   if (!response.ok || payload.code !== 0) {
-    throw new Error(payload.error_hint || payload.error || payload.message || 'Request failed')
+    const errorMsg = payload.error_hint || payload.error || payload.message || 'Request failed'
+    useToastStore.getState().showToast(errorMsg, 'error')
+    throw new Error(errorMsg)
   }
 
   return payload.data

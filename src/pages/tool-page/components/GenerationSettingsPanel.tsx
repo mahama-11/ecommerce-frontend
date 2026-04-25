@@ -6,8 +6,6 @@ import { copy } from '../utils'
 type GenerationSettingsPanelProps = {
   locale: Locale
   t: (key: string) => string
-  requestError: string | null
-  templateNotice: string | null
   activeTemplate: ActiveTemplateState | null
   templateOptions: ToolTemplateOption[]
   loadingTemplateOptions: boolean
@@ -27,8 +25,6 @@ type GenerationSettingsPanelProps = {
 export function GenerationSettingsPanel({
   locale,
   t,
-  requestError,
-  templateNotice,
   activeTemplate,
   templateOptions,
   loadingTemplateOptions,
@@ -89,16 +85,6 @@ export function GenerationSettingsPanel({
         </div>
       </div>
 
-      {requestError ? (
-        <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">
-          {requestError}
-        </div>
-      ) : null}
-      {templateNotice ? (
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-          {templateNotice}
-        </div>
-      ) : null}
       {activeTemplate ? (
         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
           <div className="text-sm font-medium text-white/75">{copy(locale, '当前方案', 'Current Template')}</div>

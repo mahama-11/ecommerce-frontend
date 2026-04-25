@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useToastStore } from '@/store/toastStore'
 import {
   ArrowRight,
   Clock3,
@@ -289,6 +290,7 @@ const DESIGN_CONFIG: Record<string, DesignConfig> = {
 export default function DesignWorkbenchPage() {
   const { pathname } = useLocation()
   const { t, i18n } = useTranslation()
+  const { showToast } = useToastStore()
   const locale: Locale = (i18n.resolvedLanguage ?? i18n.language).startsWith('en') ? 'en' : 'zh'
   const config = DESIGN_CONFIG[pathname] ?? DESIGN_CONFIG['/draw/product-home']
   const Icon = config.icon
@@ -301,7 +303,6 @@ export default function DesignWorkbenchPage() {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [taskDrawerOpen, setTaskDrawerOpen] = useState(false)
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(mock.assets[0]?.id ?? null)
-  const [bridgeNotice, setBridgeNotice] = useState<string | null>(null)
 
   useEffect(() => {
     const nextMock = getDesignWorkbenchMock(pathname)
@@ -313,7 +314,6 @@ export default function DesignWorkbenchPage() {
     setSelectedTaskId(null)
     setTaskDrawerOpen(false)
     setSelectedAssetId(nextMock.assets[0]?.id ?? null)
-    setBridgeNotice(null)
   }, [pathname])
 
   const visibleStages = useMemo(() => {
@@ -383,7 +383,7 @@ export default function DesignWorkbenchPage() {
       selectedAsset.title,
       'asset',
     )
-    setBridgeNotice(locale === 'zh' ? '已同步到图片素材库' : 'Synced to image library')
+    showToast(locale === 'zh' ? '已同步到图片素材库' : 'Synced to image library', 'success')
   }
 
   const handlePushToDelivery = () => {
@@ -407,7 +407,7 @@ export default function DesignWorkbenchPage() {
       selectedAsset.title,
       'delivery',
     )
-    setBridgeNotice(locale === 'zh' ? '已加入下载中心' : 'Added to download center')
+    showToast(locale === 'zh' ? '已加入下载中心' : 'Added to download center', 'success')
   }
 
   const handleBridgeTemplate = () => {
@@ -455,7 +455,12 @@ export default function DesignWorkbenchPage() {
       selectedAsset.title,
       'template',
     )
-    setBridgeNotice(locale === 'zh' ? '已生成模板桥接关系' : 'Template bridge created')
+    showToast(
+      locale === 'zh'
+        ? '操作已写入回流记录，可到模板中心查看'
+        : 'Action logged in workflow feed, ready for Template Center',
+      'success'
+    )
   }
 
   const boardHeading =
@@ -797,11 +802,6 @@ export default function DesignWorkbenchPage() {
                     {locale === 'zh' ? '桥接为 Agent 模板' : 'Bridge as Agent Template'}
                   </button>
                 </div>
-                {bridgeNotice ? (
-                  <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
-                    {bridgeNotice}
-                  </div>
-                ) : null}
               </div>
             ) : null}
           </aside>

@@ -19,13 +19,16 @@ npm run dev
 
 ```bash
 npm run dev
+npm run lint
+npm run typecheck
 npm run build
-npx tsc --noEmit
+bash scripts/install-git-hooks.sh
 ```
 
 ## Documentation
 
 - [Developer Guide](docs/DEVELOPER_GUIDE.md)
+- [Git Hooks](docs/GIT_HOOKS.md)
 - [Project Skeleton](docs/architecture/PROJECT_SKELETON.md)
 - [Project Agent Context](AGENTS.md)
 

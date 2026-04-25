@@ -33,8 +33,10 @@ Common commands:
 
 ```bash
 npm run dev
+npm run lint
 npx tsc --noEmit
 npm run build
+bash scripts/install-git-hooks.sh
 ```
 
 ## 4. Project Structure
@@ -143,6 +145,12 @@ The frontend now contains two product-facing API clients that should be preferre
 
 - `src/services/templateCenter.ts`: template catalog, detail, favorite, copy, and use-now flows
 - `src/services/imageRuntime.ts`: source asset registration, image job creation, job polling, and asset preview loading
+- `src/services/auth.ts`: login, register, password reset, and token lifecycle
+
+Shared UX infrastructure used by these real integrations:
+
+- `src/store/toastStore.ts`: global success/error toast state
+- `src/components/Toast.tsx`: top-level toast rendering mounted from `src/main.tsx`
 
 Current real image runtime routes used by `src/pages/ToolPage.tsx`:
 
@@ -151,6 +159,24 @@ Current real image runtime routes used by `src/pages/ToolPage.tsx`:
 - `POST /api/v1/ecommerce/image-jobs`
 - `GET /api/v1/ecommerce/image-jobs/:jobID`
 - `GET /api/v1/ecommerce/assets/:assetID/content`
+
+Current real template center routes used by `src/pages/AgentTemplateMarketPage.tsx` and `src/pages/ToolPage.tsx`:
+
+- `GET /api/v1/ecommerce/template-center/catalog`
+- `GET /api/v1/ecommerce/template-center/catalog/facets`
+- `GET /api/v1/ecommerce/template-center/catalog/recommendations`
+- `GET /api/v1/ecommerce/template-center/catalog/:templateId`
+- `POST /api/v1/ecommerce/template-center/catalog/:templateId/favorite`
+- `DELETE /api/v1/ecommerce/template-center/catalog/:templateId/favorite`
+- `POST /api/v1/ecommerce/template-center/catalog/:templateId/copy`
+- `POST /api/v1/ecommerce/template-center/catalog/:templateId/use`
+
+Template center UX baseline:
+
+- list cards render `coverAssetUrl`
+- detail drawer renders `examples[].previewAssetUrl`
+- drawer scroll is isolated from the background list scroll
+- `Use Now` and in-tool template switching must overwrite the active prompt/template state only once per payload
 
 ## 9. Internationalization
 
@@ -189,5 +215,6 @@ Relevant docs for this project:
 
 - `README.md`
 - `AGENTS.md`
+- `docs/GIT_HOOKS.md`
 - `docs/DEVELOPER_GUIDE.md`
 - `docs/architecture/PROJECT_SKELETON.md`
