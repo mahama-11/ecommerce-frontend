@@ -5,33 +5,25 @@ import {
   Search,
   ChevronDown,
   ChevronRight,
-  User,
-  Settings,
-  LogOut,
   Layers,
   PanelLeftClose,
   PanelLeftOpen,
   Globe,
 } from 'lucide-react'
 import { NAV_TOOL_GROUPS, getLocalizedTool } from '@/mock/data'
+import UserAccountMenu from '@/components/account/UserAccountMenu'
 import { useAuth } from '@/hooks/useAuth'
-import { logoutAuth } from '@/state/auth'
+import { Z_INDEX } from '@/styles/zIndex'
 
 export default function ConsoleLayout() {
   const { t, i18n } = useTranslation()
-  const { user, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [mobileOpen, setMobileOpen] = useState(false)
   const [desktopCollapsed, setDesktopCollapsed] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
 
   const language = i18n.resolvedLanguage ?? i18n.language
-  const userLabel =
-    user?.full_name?.trim() ||
-    user?.email?.trim() ||
-    (isAuthenticated
-      ? (language.startsWith('zh') ? '已登录用户' : 'Signed-in User')
-      : t('common.demoUser'))
 
   const toggleSection = (label: string) => {
     setCollapsed(prev => ({ ...prev, [label]: !prev[label] }))
@@ -82,7 +74,7 @@ export default function ConsoleLayout() {
 
     return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/[0.06] bg-[#0b0d14]/94 backdrop-blur-xl transition-all duration-300 ${
+      className={`fixed inset-y-0 left-0 ${Z_INDEX.sidebar} flex flex-col border-r border-white/[0.06] bg-[#0b0d14]/94 backdrop-blur-xl transition-all duration-300 ${
         isMobile
           ? `w-[min(85vw,18rem)] ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden`
           : `${desktopCollapsed ? 'w-20' : 'w-64'} hidden lg:flex`
@@ -117,7 +109,7 @@ export default function ConsoleLayout() {
               </p>
             )}
 
-            {group.items.map(item => {
+            {group.items.map((item: (typeof group.items)[number]) => {
               if ('children' in item && item.children) {
                 const sectionLabel = t(item.labelKey)
                 const isCollapsed = collapsed[sectionLabel]
@@ -142,7 +134,7 @@ export default function ConsoleLayout() {
 
                     {!isCollapsed && (
                       <div className={`${compact ? '' : 'ml-3 border-l border-white/[0.06] pl-2'}`}>
-                        {item.children.map(child => (
+                        {item.children.map((child: (typeof item.children)[number]) => (
                           <NavLink
                             key={child.id}
                             to={`/draw/${child.slug}`}
@@ -179,7 +171,7 @@ export default function ConsoleLayout() {
         ))}
       </nav>
 
-      <div className={`mt-auto border-t border-white/[0.06] py-3 space-y-2 ${compact ? 'px-2' : 'px-4'}`}>
+      <div className={`mt-auto border-t border-white/[0.06] py-3 ${compact ? 'px-2' : 'px-4'}`}>
         <button
           onClick={toggleLang}
           className={`flex w-full items-center rounded-lg px-2 py-1.5 text-xs text-white/40 hover:text-white/70 hover:bg-white/[0.04] transition-colors ${
@@ -189,25 +181,6 @@ export default function ConsoleLayout() {
           <Globe className="h-3.5 w-3.5" />
           {!compact && <span>{i18n.language === 'zh' ? '\u4e2d' : 'EN'}</span>}
         </button>
-        <div className={`flex items-center ${compact ? 'justify-center gap-2' : 'gap-3'}`}>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500/20 text-brand-400">
-            <User className="h-4 w-4" />
-          </div>
-          {!compact && <span className="flex-1 truncate text-sm text-white/70">{userLabel}</span>}
-          <Link to="/settings/profile" onClick={() => setMobileOpen(false)} className="text-white/30 transition-colors hover:text-white/60">
-            <Settings className="h-4 w-4" />
-          </Link>
-          <Link
-            to="/login"
-            onClick={() => {
-              logoutAuth()
-              setMobileOpen(false)
-            }}
-            className="text-white/30 transition-colors hover:text-white/60"
-          >
-            <LogOut className="h-4 w-4" />
-          </Link>
-        </div>
       </div>
     </aside>
     )
@@ -219,7 +192,7 @@ export default function ConsoleLayout() {
 
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          className={`fixed inset-0 ${Z_INDEX.pageOverlay} bg-black/60 lg:hidden`}
           onClick={() => setMobileOpen(false)}
         />
       )}
@@ -227,7 +200,7 @@ export default function ConsoleLayout() {
 
       <button
         onClick={handleSidebarToggle}
-        className="fixed left-4 top-4 z-[130] rounded-lg p-2 text-white/60 transition-colors hover:text-white glass"
+        className={`fixed left-4 top-4 ${Z_INDEX.floatingToolControl} rounded-lg p-2 text-white/60 transition-colors hover:text-white glass`}
       >
         {!isDesktop && mobileOpen ? (
           <PanelLeftClose className="h-5 w-5" />
@@ -235,6 +208,12 @@ export default function ConsoleLayout() {
           isDesktop && desktopCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />
         )}
       </button>
+
+      {isAuthenticated && (
+        <div className={`fixed right-4 top-4 ${Z_INDEX.floatingToolControl}`}>
+          <UserAccountMenu compact={false} />
+        </div>
+      )}
 
       <main className={`min-h-screen p-6 transition-[margin] duration-300 ${desktopCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         <Outlet />

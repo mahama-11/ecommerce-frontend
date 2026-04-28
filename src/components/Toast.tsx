@@ -1,5 +1,6 @@
 import { useToastStore } from '@/store/toastStore';
 import { CheckCircle, AlertCircle, Info, X } from 'lucide-react';
+import { Z_INDEX } from '@/styles/zIndex';
 
 export default function Toast() {
   const { message, type, visible, hideToast } = useToastStore();
@@ -18,7 +19,7 @@ export default function Toast() {
 
   return (
     <div 
-      className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 pointer-events-none ${
+      className={`fixed top-6 left-1/2 -translate-x-1/2 ${Z_INDEX.toast} transition-all duration-300 pointer-events-none ${
         visible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
       }`}
     >

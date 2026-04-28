@@ -95,6 +95,13 @@ export async function getImageJob(jobID: string) {
   return requestJSON<ImageJobSummary>(`/api/v1/ecommerce/image-jobs/${jobID}`)
 }
 
+export async function cancelImageJob(jobID: string) {
+  return requestJSON<ImageJobSummary>(`/api/v1/ecommerce/image-jobs/${jobID}/cancel`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  })
+}
+
 export async function listImageJobs(params: { sceneType?: string; limit?: number } = {}) {
   const query = new URLSearchParams()
   if (params.sceneType) query.set('sceneType', params.sceneType)

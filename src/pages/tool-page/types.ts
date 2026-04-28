@@ -9,6 +9,7 @@ export type GeneratedResult = {
   hint: string
   progress: number
   assetId?: string
+  sourceAssetId?: string
   previewUrl?: string
 }
 

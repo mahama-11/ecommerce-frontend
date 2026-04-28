@@ -7,6 +7,7 @@ import { TOOLS, getLocalizedTool } from '@/mock/data'
 import type { ToolDef } from '@/types/tool'
 import { productWorkspaceRepository } from '@/repositories/productWorkspace'
 import {
+  cancelImageJob,
   createImageJob,
   fetchAssetObjectURL,
   getImageJob,
@@ -35,9 +36,32 @@ import {
   toolToSceneType,
   formatAssetLabel,
 } from './tool-page/utils'
+import { Z_INDEX } from '@/styles/zIndex'
 
 type ToolPageLocationState = {
   templateUsePayload?: TemplateUseResponse
+}
+
+function matchesToolTemplateSlug(templateSlug: string, toolSlug: string) {
+  return (
+    templateSlug === toolSlug ||
+    templateSlug.startsWith(`${toolSlug}-`) ||
+    templateSlug.endsWith(`-${toolSlug}`) ||
+    templateSlug.includes(`-${toolSlug}-`)
+  )
+}
+
+function buildHistorySourceAsset(sourceAssetID: string): SourceAssetSummary {
+  return {
+    id: sourceAssetID,
+    asset_type: 'image',
+    source_type: 'history',
+    storage_key: '',
+    mime_type: 'image/png',
+    width: 0,
+    height: 0,
+    file_name: 'history-source',
+  }
 }
 
 function ToolContent({ tool }: { tool: ToolDef }) {
@@ -52,6 +76,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   const notifiedJobIDsRef = useRef<Set<string>>(new Set())
   const consumedTemplatePayloadKeyRef = useRef<string | null>(null)
   const [creatingJob, setCreatingJob] = useState(false)
+  const [cancelingJob, setCancelingJob] = useState(false)
   const [uploadingSource, setUploadingSource] = useState(false)
   const [prompt, setPrompt] = useState('')
   const [negativePrompt, setNegativePrompt] = useState('')
@@ -244,7 +269,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
         })
         if (canceled) return
         const matched = items
-          .filter(item => item.slug.startsWith(`${tool.slug}-`))
+          .filter(item => matchesToolTemplateSlug(item.slug, tool.slug))
           .sort((left, right) => right.recommendScore - left.recommendScore)
           .map(item => ({
             id: item.id,
@@ -319,9 +344,13 @@ function ToolContent({ tool }: { tool: ToolDef }) {
         ? {
             ...current,
             ...nextItem,
+            sourceAssetId: job.source_asset_id || current.sourceAssetId,
             previewUrl: previewUrl ?? current.previewUrl,
           }
-        : nextItem
+        : {
+            ...nextItem,
+            sourceAssetId: job.source_asset_id,
+          }
       const remaining = prev.filter(item => item.id !== job.job_id)
       return [merged, ...remaining].slice(0, 6)
     })
@@ -357,11 +386,13 @@ function ToolContent({ tool }: { tool: ToolDef }) {
           // eslint-disable-next-line no-await-in-loop
           await applyJobSummary(job)
         }
-        const activeJob = jobs.find(job => !isTerminalStatus(job.status)) || jobs.find(job => job.status !== 'failed')
+        const activeJob = jobs.find(job => !isTerminalStatus(job.status)) || jobs[0]
         if (activeJob) {
           setActiveJobID(activeJob.job_id)
           if (!isTerminalStatus(activeJob.status)) {
             setPollingJobID(activeJob.job_id)
+          } else {
+            setPollingJobID(null)
           }
         }
       } catch {
@@ -423,6 +454,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   const currentResult = activeJobID
     ? results.find(item => item.id === activeJobID) ?? null
     : null
+  const currentSourceAsset = sourceAsset ?? (currentResult?.sourceAssetId ? buildHistorySourceAsset(currentResult.sourceAssetId) : null)
   const isProcessing =
     creatingJob || uploadingSource || currentResult?.status === 'running' || currentResult?.status === 'queued'
 
@@ -449,6 +481,8 @@ function ToolContent({ tool }: { tool: ToolDef }) {
     if (!file) return
 
     setUploadingSource(true)
+    setActiveJobID(null)
+    setPollingJobID(null)
     const localPreviewUrl = await fileToDataURL(file)
     setSourcePreviewUrl(localPreviewUrl)
 
@@ -480,7 +514,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
 
   const handleGenerate = async () => {
     if (creatingJob || uploadingSource) return
-    if (!sourceAsset) {
+    if (!currentSourceAsset) {
       showToast(copy(locale, '请先上传一张源图，再开始生成。', 'Upload a source image before starting generation.'), 'error')
       return
     }
@@ -490,18 +524,16 @@ function ToolContent({ tool }: { tool: ToolDef }) {
     }
 
     setCreatingJob(true)
-    const width = sourceAsset.width || 1024
-    const height = sourceAsset.height || 1024
     try {
       const job = await createImageJob({
         sceneType: toolToSceneType(tool.slug),
-        sourceAssetID: sourceAsset.id,
+        sourceAssetID: currentSourceAsset.id,
         prompt,
         negativePrompt,
         objective: 'quality',
         requestedVariants: 1,
-        width,
-        height,
+        width: currentSourceAsset.width || undefined,
+        height: currentSourceAsset.height || undefined,
         templateCode: activeTemplate?.templateCode,
       })
       await applyJobSummary(job)
@@ -517,6 +549,28 @@ function ToolContent({ tool }: { tool: ToolDef }) {
       // Global toast handles API errors
     } finally {
       setCreatingJob(false)
+    }
+  }
+
+  const handleCancelJob = async () => {
+    if (!pollingJobID || cancelingJob) return
+    setCancelingJob(true)
+    try {
+      const job = await cancelImageJob(pollingJobID)
+      await applyJobSummary(job)
+      setPollingJobID(null)
+      setActiveJobID(job.job_id)
+      saveWorkflowEvent(
+        `${localizedTool.name} 任务已取消`,
+        `${localizedTool.name} job canceled`,
+        `任务 ${job.job_id.slice(-6)} 已取消，不再阻塞当前工作区`,
+        `Job ${job.job_id.slice(-6)} has been canceled and no longer blocks the workspace`,
+      )
+      showToast(copy(locale, '任务已取消', 'Job canceled'), 'success')
+    } catch {
+      // Global toast handles API errors
+    } finally {
+      setCancelingJob(false)
     }
   }
 
@@ -762,7 +816,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
             title={copy(locale, '重新上传源图', 'Replace source image')}
           >
             <ImageIcon size={22} />
-            {sourcePreviewUrl && <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#1a1b1e]"></div>}
+            {currentSourceAsset && <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#1a1b1e]"></div>}
           </button>
 
           <div className="h-6 w-px bg-white/10 shrink-0"></div>
@@ -798,12 +852,22 @@ function ToolContent({ tool }: { tool: ToolDef }) {
           {/* Generate CTA */}
           <button 
             onClick={handleGenerate}
-            disabled={creatingJob || uploadingSource || !sourcePreviewUrl}
+            disabled={creatingJob || uploadingSource || !currentSourceAsset}
             className="h-14 px-8 rounded-full bg-brand-500 text-white font-black text-sm flex items-center gap-2.5 hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-[0_0_20px_rgba(var(--brand-500),0.3)] hover:shadow-[0_0_40px_rgba(var(--brand-500),0.6)] shrink-0"
           >
             {creatingJob ? <Loader2 size={20} className="animate-spin" /> : <Wand2 size={20} />}
             {creatingJob ? copy(locale, '生成中...', 'Generating...') : copy(locale, '魔法生成', 'Generate')}
           </button>
+          {pollingJobID && (
+            <button
+              onClick={() => { void handleCancelJob() }}
+              disabled={cancelingJob}
+              className="h-14 px-6 rounded-full border border-white/15 bg-white/5 text-white font-bold text-sm flex items-center gap-2 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shrink-0"
+            >
+              {cancelingJob ? <Loader2 size={18} className="animate-spin" /> : <X size={18} />}
+              {cancelingJob ? copy(locale, '取消中...', 'Canceling...') : copy(locale, '取消任务', 'Cancel Job')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -817,7 +881,11 @@ function ToolContent({ tool }: { tool: ToolDef }) {
              {results.filter(r => r.status !== 'failed').map(res => (
                 <button 
                   key={res.id} 
-                  onClick={() => setActiveJobID(res.id)}
+                  onClick={() => {
+                    setSourceAsset(null)
+                    setSourcePreviewUrl(null)
+                    setActiveJobID(res.id)
+                  }}
                   className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
                     res.id === currentResult?.id 
                       ? 'border-brand-400 scale-110 shadow-[0_0_20px_rgba(var(--brand-500),0.5)] z-10' 
@@ -839,7 +907,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
 
       {/* Template Picker Modal (Visual Parameters) */}
       {pickerOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 px-4 backdrop-blur-md animate-in fade-in duration-300">
+        <div className={`fixed inset-0 ${Z_INDEX.modal} flex items-center justify-center bg-black/80 px-4 backdrop-blur-md animate-in fade-in duration-300`}>
           <div className="w-full max-w-4xl rounded-[32px] border border-white/10 bg-[#0a0d14] p-8 shadow-2xl animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between mb-8">
               <div>

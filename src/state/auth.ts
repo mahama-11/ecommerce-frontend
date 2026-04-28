@@ -1,4 +1,5 @@
 import { clearAuthSession, getCachedAuthSession, loadSession, type AuthPayload, type SessionPayload } from '@/services/auth'
+import { SESSION_STORAGE_KEY } from '@/services/http'
 
 type AuthListener = (payload: AuthPayload | null) => void
 
@@ -22,6 +23,20 @@ export function subscribeAuth(listener: AuthListener) {
 
 export function applyAuth(payload: AuthPayload | null) {
   currentAuth = payload
+  notify()
+}
+
+export function patchAuthUser(patch: Partial<AuthPayload['user']>) {
+  if (!currentAuth) return
+
+  currentAuth = {
+    ...currentAuth,
+    user: {
+      ...currentAuth.user,
+      ...patch,
+    },
+  }
+  localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentAuth))
   notify()
 }
 

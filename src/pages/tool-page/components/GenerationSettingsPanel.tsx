@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronRight, Sparkles, X } from 'lucide-react'
 import type { ActiveTemplateState, Locale, ToolTemplateOption } from '../types'
 import { copy } from '../utils'
+import { Z_INDEX } from '@/styles/zIndex'
 
 type GenerationSettingsPanelProps = {
   locale: Locale
@@ -179,7 +180,7 @@ export function GenerationSettingsPanel({
       </div>
 
       {pickerOpen ? (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+        <div className={`fixed inset-0 ${Z_INDEX.modal} flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm`}>
           <div className="w-full max-w-3xl rounded-[28px] border border-white/[0.08] bg-[#0c1018] p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>

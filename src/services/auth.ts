@@ -1,5 +1,4 @@
-import { API_BASE_URL } from '@/services/apiBase'
-import { useToastStore } from '@/store/toastStore'
+import { SESSION_STORAGE_KEY, TOKEN_STORAGE_KEY, request } from '@/services/http'
 
 export type AuthAccessSummary = {
   active_org_id: string
@@ -55,47 +54,8 @@ export type RegisterRequest = {
   password: string
   organization_name?: string
   language?: string
+  promotion_code?: string
 }
-
-type Envelope<T> = {
-  code: number
-  message: string
-  data: T
-  error?: string
-  error_code?: string
-  error_hint?: string
-}
-
-const TOKEN_STORAGE_KEY = 'ecommerce_access_token'
-const SESSION_STORAGE_KEY = 'ecommerce_session'
-
-function getHeaders() {
-  const token = getAccessToken()
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  }
-}
-
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      ...getHeaders(),
-      ...(init?.headers ?? {}),
-    },
-    ...init,
-  })
-
-  const payload = (await response.json()) as Envelope<T>
-  if (!response.ok || payload.code !== 0) {
-    const errorMsg = payload.error_hint || payload.error || payload.message || 'Request failed'
-    useToastStore.getState().showToast(errorMsg, 'error')
-    throw new Error(errorMsg)
-  }
-
-  return payload.data
-}
-
 export function getAccessToken() {
   return localStorage.getItem(TOKEN_STORAGE_KEY) ?? ''
 }

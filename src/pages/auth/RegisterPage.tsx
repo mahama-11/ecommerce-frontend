@@ -1,29 +1,39 @@
-import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Mail, Lock, Eye, EyeOff, User, Layers } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, User, Layers, Sparkles } from 'lucide-react'
+import { resolveAppLocale } from '@/i18n/helpers'
 import { useAuth } from '@/hooks/useAuth'
 import { register } from '@/services/auth'
+import { commercialService } from '@/services/commercial'
 import { applyAuth } from '@/state/auth'
 import { getAuthAwareStartPath } from '@/utils/authNavigation'
 import { useToastStore } from '@/store/toastStore'
+import type { PromotionCodeResolve } from '@/types/commercial'
 
 export default function RegisterPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { isAuthenticated } = useAuth({ refreshOnMount: false })
   const { showToast } = useToastStore()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [promotionCode, setPromotionCode] = useState('')
+  const [promotionMeta, setPromotionMeta] = useState<PromotionCodeResolve | null>(null)
+  const [promotionLoading, setPromotionLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const redirectPath = typeof location.state?.from === 'string' ? location.state.from : getAuthAwareStartPath(true)
+  const redirectFromQuery = searchParams.get('redirect')?.trim()
+  const redirectPath = redirectFromQuery || (typeof location.state?.from === 'string' ? location.state.from : getAuthAwareStartPath(true))
+  const locale = resolveAppLocale(i18n.resolvedLanguage ?? i18n.language)
+  const promotionCodeFromUrl = useMemo(() => searchParams.get('promotion_code') || searchParams.get('invite_code') || '', [searchParams])
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -31,14 +41,33 @@ export default function RegisterPage() {
     }
   }, [isAuthenticated, navigate, redirectPath])
 
+  useEffect(() => {
+    if (!promotionCodeFromUrl) return
+    setPromotionCode(prev => prev || promotionCodeFromUrl)
+  }, [promotionCodeFromUrl])
+
+  useEffect(() => {
+    const code = promotionCode.trim()
+    if (!code) {
+      setPromotionMeta(null)
+      return
+    }
+    setPromotionLoading(true)
+    commercialService
+      .resolvePromotionCode(code)
+      .then(result => setPromotionMeta(result))
+      .catch(() => setPromotionMeta(null))
+      .finally(() => setPromotionLoading(false))
+  }, [promotionCode])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (password !== confirmPassword) {
-      showToast('Passwords do not match.', 'error')
+      showToast(t('auth.passwordMismatch'), 'error')
       return
     }
     if (!agreeTerms) {
-      showToast('Please agree to the terms first.', 'error')
+      showToast(t('auth.agreeTermsFirst'), 'error')
       return
     }
 
@@ -49,7 +78,8 @@ export default function RegisterPage() {
         full_name: username,
         email,
         password,
-        language: 'zh',
+        language: locale,
+        promotion_code: promotionCode.trim() || undefined,
       })
       applyAuth(payload)
       navigate(redirectPath, { replace: true })
@@ -105,6 +135,43 @@ export default function RegisterPage() {
                   className="flex-1 bg-transparent text-sm text-white/90 placeholder-white/25 outline-none ml-3"
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-white/60 mb-1.5">{t('auth.promotionCode')}</label>
+              <div className="glass rounded-xl flex items-center px-4 py-3 focus-within:border-brand-500/40 transition-colors">
+                <Sparkles className="w-4 h-4 text-white/30 shrink-0" />
+                <input
+                  type="text"
+                  value={promotionCode}
+                  onChange={e => setPromotionCode(e.target.value)}
+                  placeholder={t('auth.promotionCodePlaceholder')}
+                  className="flex-1 bg-transparent text-sm text-white/90 placeholder-white/25 outline-none ml-3"
+                />
+              </div>
+              {promotionCode ? (
+                <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3">
+                  {promotionLoading ? (
+                    <div className="text-xs text-white/45">{t('auth.promotionRuleLoading')}</div>
+                  ) : promotionMeta ? (
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium text-white">
+                        {promotionMeta.program_name || t('account.promotion.badge')}
+                      </div>
+                      <div className="text-xs text-white/50">
+                        {promotionMeta.reward_policy_desc || t('auth.promotionRuleFallback')}
+                      </div>
+                      <div className="text-[11px] text-brand-300">
+                        {t('auth.promotionProgramCode')}: {promotionMeta.program_code || promotionMeta.program_id}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-amber-300">
+                      {t('auth.promotionInvalid')}
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
 
             <div>
@@ -203,7 +270,10 @@ export default function RegisterPage() {
 
           <p className="text-sm text-white/40 text-center mt-6">
             {t('auth.hasAccount')}{' '}
-            <Link to="/login" className="text-brand-400 hover:text-brand-300 transition-colors">
+            <Link
+              to={redirectFromQuery ? `/login?redirect=${encodeURIComponent(redirectFromQuery)}` : '/login'}
+              className="text-brand-400 hover:text-brand-300 transition-colors"
+            >
               {t('auth.signInNow')}
             </Link>
           </p>

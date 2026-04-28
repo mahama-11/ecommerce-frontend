@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { Menu, X, ChevronDown, Layers, Zap, Globe } from 'lucide-react'
 import { NAV_TOOL_GROUPS, TOOL_CATEGORIES, TOOLS, getLocalizedTool } from '@/mock/data'
 import { useAuth } from '@/hooks/useAuth'
+import UserAccountMenu, { getUserDisplayName } from '@/components/account/UserAccountMenu'
 import { logoutAuth } from '@/state/auth'
-import { getAuthAwareLoginPath, getAuthAwareStartPath, getWorkbenchEntryPath } from '@/utils/authNavigation'
+import { getAuthAwareLoginPath, getAuthAwareStartPath } from '@/utils/authNavigation'
+import { Z_INDEX } from '@/styles/zIndex'
 
 export default function PortalLayout() {
   const { t, i18n } = useTranslation()
-  const { isAuthenticated } = useAuth({ refreshOnMount: false })
+  const { isAuthenticated, user } = useAuth({ refreshOnMount: false })
   const [mobileOpen, setMobileOpen] = useState(false)
   const [megaOpen, setMegaOpen] = useState(false)
   const [activeCat, setActiveCat] = useState<string>(TOOL_CATEGORIES[0].key)
@@ -28,9 +30,9 @@ export default function PortalLayout() {
   ]
 
   const language = i18n.resolvedLanguage ?? i18n.language
+  const locale = language.startsWith('en') ? 'en' : 'zh'
   const loginPath = getAuthAwareLoginPath(isAuthenticated)
   const startPath = getAuthAwareStartPath(isAuthenticated)
-  const workbenchPath = getWorkbenchEntryPath()
 
   const FOOTER_COLUMNS = [
     {
@@ -83,14 +85,14 @@ export default function PortalLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0a12]">
-      <nav className="fixed top-0 inset-x-0 z-[120] isolate border-b border-white/[0.08] bg-[#0a0c12]/88 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-6 safe-area-inset">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
+      <nav className={`fixed top-0 inset-x-0 ${Z_INDEX.portalNav} isolate border-b border-white/[0.08] bg-[#0a0c12]/88 backdrop-blur-xl`}>
+        <div className="max-w-7xl mx-auto flex items-center justify-between h-[72px] px-4 sm:px-6 safe-area-inset">
+          <Link to="/" className="flex items-center gap-2 shrink-0 min-w-[170px]">
             <Layers className="w-6 h-6 text-brand-400" />
             <span className="text-xl font-bold gradient-text">{t('common.brand')}</span>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden lg:flex items-center justify-center gap-1 flex-1 px-8">
             <div
               ref={megaRef}
               className="relative"
@@ -103,7 +105,7 @@ export default function PortalLayout() {
               </button>
 
               <div
-                className={`absolute top-full left-1/2 z-[160] -translate-x-1/2 pt-3 transition-all duration-200 ${
+                className={`absolute top-full left-1/2 ${Z_INDEX.dropdown} -translate-x-1/2 pt-3 transition-all duration-200 ${
                   megaOpen ? 'visible translate-y-0 opacity-100 pointer-events-auto' : 'invisible -translate-y-2 opacity-0 pointer-events-none'
                 }`}
               >
@@ -169,7 +171,7 @@ export default function PortalLayout() {
             </Link>
           </div>
 
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center justify-end gap-2 min-w-[250px]">
             <button
               onClick={toggleLang}
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-white/50 hover:text-white/80 transition-colors rounded-lg hover:bg-white/[0.06]"
@@ -178,17 +180,7 @@ export default function PortalLayout() {
               <span>{i18n.language === 'zh' ? '\u4e2d' : 'EN'}</span>
             </button>
             {isAuthenticated ? (
-              <>
-                <Link to={workbenchPath} className="text-sm text-white/70 hover:text-white transition-colors px-3 py-2">
-                  {t('nav.products')}
-                </Link>
-                <button
-                  onClick={logoutAuth}
-                  className="text-sm text-white/70 hover:text-white transition-colors px-3 py-2"
-                >
-                  {t('common.logout')}
-                </button>
-              </>
+              <UserAccountMenu compact />
             ) : (
               <>
                 <Link to={loginPath} className="text-sm text-white/70 hover:text-white transition-colors px-3 py-2">
@@ -211,16 +203,16 @@ export default function PortalLayout() {
       </nav>
 
       {mobileOpen && (
-        <div className="fixed inset-0 z-40 bg-[#0a0a12]/95 backdrop-blur-xl transition-all duration-300 lg:hidden">
+        <div className={`fixed inset-0 ${Z_INDEX.pageOverlay} bg-[#0a0a12]/95 backdrop-blur-xl transition-all duration-300 lg:hidden`}>
           <div className="h-full overflow-y-auto px-6 pb-8 pt-20 safe-area-inset">
             <div className="space-y-1">
               <p className="mb-2 px-3 text-xs uppercase tracking-wider text-white/30">{t('nav.products')}</p>
               {NAV_TOOL_GROUPS.map(group => (
                 <div key={group.label} className="mb-4">
                   <p className="mb-1 px-3 text-xs text-white/40">{t(group.labelKey)}</p>
-                  {group.items.map(item => {
+                  {group.items.map((item: (typeof group.items)[number]) => {
                     if ('children' in item && item.children) {
-                      return item.children.map(tool => (
+                      return item.children.map((tool: (typeof item.children)[number]) => (
                         <Link
                           key={tool.id}
                           to={`/draw/${tool.slug}`}
@@ -271,8 +263,15 @@ export default function PortalLayout() {
                 </button>
                 {isAuthenticated ? (
                   <>
-                    <Link to={workbenchPath} onClick={() => setMobileOpen(false)} className="py-2.5 text-center text-sm text-white/70 hover:text-white">
-                      {t('nav.products')}
+                    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3">
+                      <div className="text-sm font-semibold text-white">{getUserDisplayName(user, locale)}</div>
+                      <div className="mt-1 text-xs text-white/45">{user?.email}</div>
+                    </div>
+                    <Link to="/aiChat/template" onClick={() => setMobileOpen(false)} className="py-2.5 text-center text-sm text-white/70 hover:text-white">
+                      {locale === 'zh' ? '模板市场' : 'Template Market'}
+                    </Link>
+                    <Link to="/account/profile" onClick={() => setMobileOpen(false)} className="py-2.5 text-center text-sm text-white/70 hover:text-white">
+                      {locale === 'zh' ? '账户资料' : 'Account Profile'}
                     </Link>
                     <button
                       onClick={() => {

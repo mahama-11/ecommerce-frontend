@@ -181,19 +181,19 @@ const PRICING_TRANSLATIONS: Record<
 > = {
   free: {
     en: {
-      name: 'Free',
-      period: 'Forever',
-      desc: 'Try the core AI capabilities',
-      features: ['10 free generations per day', 'Basic cutout', '3 scene templates', '720p export', 'Community support'],
-      cta: 'Start Free',
+      name: 'Trial',
+      period: '/month',
+      desc: 'A low-friction way to try the core workflow',
+      features: ['First-month trial access', 'Core workflow experience', 'Starter package recharge', 'Extra credits available anytime'],
+      cta: 'Start Trial',
     },
   },
   basic: {
     en: {
       name: 'Basic',
       period: '/month',
-      desc: 'Great for solo sellers and daily use',
-      features: ['500 generations / month', 'All AI tools', '1080p export', '100 templates', '5GB asset space', 'Email support'],
+      desc: 'A practical monthly package for daily seller operations',
+      features: ['Monthly package recharge', 'Core visual workflows', 'Standard export and delivery', 'Extra credits available on demand'],
       cta: 'Subscribe Now',
     },
   },
@@ -201,17 +201,17 @@ const PRICING_TRANSLATIONS: Record<
     en: {
       name: 'Pro',
       period: '/month',
-      desc: 'For professional sellers and studios',
-      features: ['3000 generations / month', 'AI video generation', '4K export', 'Unlimited templates', '50GB asset space', 'API access', 'Priority support'],
+      desc: 'For high-frequency operators and compact teams',
+      features: ['Higher monthly package recharge', 'Advanced workflow access', 'Flexible extra credit top-up', 'Priority support'],
       cta: 'Upgrade to Pro',
     },
   },
   team: {
     en: {
       name: 'Team',
-      period: '/month+',
-      desc: 'For collaborative enterprise teams',
-      features: ['10000 shared generations / month', 'Team workspace', 'Brand library management', 'Unlimited storage', 'SSO integration', 'Dedicated tech support', 'Custom models'],
+      period: '/month',
+      desc: 'For teams that need shared workflow, governance, and ongoing top-up',
+      features: ['Team package recharge plan', 'Shared team workspace', 'Organization-level governance', 'Extra credits and commercial support'],
       cta: 'Contact Sales',
     },
   },
@@ -327,27 +327,27 @@ export const SOLUTIONS: SolutionDef[] = [
 
 export const PRICING_PLANS: PricingPlan[] = [
   {
-    id: 'free', name: '免费版', price: '¥0', period: '永久',
-    desc: '体验核心AI能力',
-    features: ['每日10次免费生图', '基础抠图', '3张场景模板', '720p导出', '社区支持'],
-    cta: '免费开始',
+    id: 'free', name: '试用版', price: '¥9.9', period: '/月',
+    desc: '适合低门槛体验核心工作流',
+    features: ['首月试用权益', '核心工作流体验', '基础套餐充值能力', '支持额外积分补充'],
+    cta: '立即试用',
   },
   {
-    id: 'basic', name: '基础版', price: '¥55', period: '/月',
-    desc: '适合个人卖家日常使用',
-    features: ['500次/月生图额度', '全部AI工具', '高清1080p导出', '100个模板', '5GB素材空间', '邮件支持'],
+    id: 'basic', name: '基础版', price: '¥699', period: '/月',
+    desc: '适合个人卖家的日常运营与稳定补能',
+    features: ['月度套餐充值', '核心视觉工作流', '标准导出与交付', '支持额外积分购买'],
     cta: '立即订阅', popular: true,
   },
   {
-    id: 'pro', name: '高级版', price: '¥239', period: '/月',
-    desc: '适合专业卖家和工作室',
-    features: ['3000次/月生图额度', 'AI视频生成', '4K导出', '无限模板', '50GB素材空间', 'API接口', '专属客服'],
+    id: 'pro', name: '高级版', price: '¥999', period: '/月',
+    desc: '适合高频使用的专业卖家和小团队',
+    features: ['更高月度套餐充值', '高级工作流开放', '更灵活的额外积分补充', '优先服务支持'],
     cta: '升级高级版',
   },
   {
-    id: 'team', name: '团队版', price: '¥399', period: '/月起',
-    desc: '适合团队协作的企业方案',
-    features: ['10000次/月共享额度', '团队协作空间', '品牌库管理', '无限存储', 'SSO集成', '专属技术支持', '自定义模型'],
+    id: 'team', name: '团队版', price: '¥1299', period: '/月',
+    desc: '适合需要协作、治理和持续补能的团队',
+    features: ['团队套餐充值方案', '团队共享工作区', '组织级治理能力', '额外积分与商业支持'],
     cta: '联系销售',
   },
 ]
@@ -372,8 +372,6 @@ export const NAV_TOOL_GROUPS = [
       { label: '知识库对话', labelKey: 'pages.chatDoc', icon: '📚', path: '/chat/doc' },
       { label: '批量Listing', labelKey: 'pages.aiChatBatchListing', icon: '📝', path: '/aiChat/batchListing' },
       { label: 'AI Agent模板', labelKey: 'pages.aiChatTemplate', icon: '🤖', path: '/aiChat/template' },
-      { label: '历史会话', labelKey: 'pages.aiChatHistory', icon: '🗂️', path: '/aiChat/history' },
-      { label: '我的模板', labelKey: 'pages.aiChatMyTemplate', icon: '📁', path: '/aiChat/myTemplate' },
       { label: '分析记录', labelKey: 'pages.aiChatAnalysisRecords', icon: '📊', path: '/aiChat/analysisRecords' },
       { label: 'AI训练(选品)', labelKey: 'pages.aiChatTraining', icon: '🎯', path: '/aiChat/training' },
     ],
@@ -387,15 +385,6 @@ export const NAV_TOOL_GROUPS = [
       { label: '品牌库', labelKey: 'pages.brandLibrary', icon: '🏷️', path: '/brandLibrary' },
       { label: '敏感词库', labelKey: 'pages.databaseSensitiveThesaurus', icon: '🚫', path: '/database/sensitiveThesaurus' },
       { label: '标签管理', labelKey: 'pages.databaseTagManage', icon: '🏷️', path: '/database/tagManage' },
-    ],
-  },
-  {
-    label: '管理设置',
-    labelKey: 'navGroups.settings',
-    items: [
-      { label: '个人设置', labelKey: 'pages.settingsProfile', icon: '⚙️', path: '/settings/profile' },
-      { label: '个人管理', labelKey: 'pages.settingsPersonal', icon: '👤', path: '/settings/personal' },
-      { label: '组织管理', labelKey: 'pages.settingsOrganization', icon: '🏢', path: '/settings/organization' },
     ],
   },
 ]

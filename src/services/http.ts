@@ -1,0 +1,65 @@
+import { API_BASE_URL } from '@/services/apiBase'
+import { useToastStore } from '@/store/toastStore'
+
+type Envelope<T> = {
+  code: number
+  message: string
+  data: T
+  error?: string
+  error_code?: string
+  error_hint?: string
+}
+
+export const TOKEN_STORAGE_KEY = 'ecommerce_access_token'
+export const SESSION_STORAGE_KEY = 'ecommerce_session'
+
+export function getAccessToken() {
+  return localStorage.getItem(TOKEN_STORAGE_KEY) ?? ''
+}
+
+function clearStoredAuth() {
+  localStorage.removeItem(TOKEN_STORAGE_KEY)
+  localStorage.removeItem(SESSION_STORAGE_KEY)
+}
+
+function redirectToLogin() {
+  if (typeof window === 'undefined') return
+
+  const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+  const isAuthPage = ['/login', '/register', '/forgot-password'].includes(window.location.pathname)
+  const target = isAuthPage ? '/login' : `/login?redirect=${encodeURIComponent(currentPath)}`
+  window.location.replace(target)
+}
+
+export function buildHeaders(init?: HeadersInit) {
+  const token = getAccessToken()
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(init ?? {}),
+  }
+}
+
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getAccessToken()
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: buildHeaders(init?.headers),
+  })
+
+  const payload = (await response.json()) as Envelope<T>
+  if (!response.ok || payload.code !== 0) {
+    const isTokenInvalid =
+      Boolean(token) &&
+      (response.status === 401 || payload.code === 401 || payload.error_code === 'TOKEN_INVALID')
+    const errorMsg = payload.error_hint || payload.error || payload.message || 'Request failed'
+    useToastStore.getState().showToast(errorMsg, 'error')
+    if (isTokenInvalid) {
+      clearStoredAuth()
+      redirectToLogin()
+    }
+    throw new Error(errorMsg)
+  }
+
+  return payload.data
+}

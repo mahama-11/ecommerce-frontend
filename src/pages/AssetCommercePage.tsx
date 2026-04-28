@@ -53,6 +53,8 @@ interface PageConfig {
   actions: Array<{ label: LocalizedText; to: string }>
 }
 
+type AssetCommercePageKey = keyof typeof PAGE_CONFIG
+
 const PAGE_CONFIG: Record<string, PageConfig> = {
   '/database/knowledge': {
     titleKey: 'pages.databaseKnowledge',
@@ -230,7 +232,37 @@ const PAGE_CONFIG: Record<string, PageConfig> = {
       },
     ],
     actions: [
-      { label: { zh: '下载中心', en: 'Download Center' }, to: '/downloadCenter' },
+      { label: { zh: '下载中心', en: 'Download Center' }, to: '/account/downloads' },
+      { label: { zh: '定价页', en: 'Pricing Page' }, to: '/pricing' },
+    ],
+  },
+  '/account/billing': {
+    titleKey: 'pages.orderList',
+    icon: FileText,
+    badge: { zh: '商业中心', en: 'Commerce Center' },
+    subtitle: {
+      zh: '展示订阅、充值包、团队席位和服务采购的商业订单流。',
+      en: 'Show subscriptions, credit packs, team seats, and service procurement order flows.',
+    },
+    stats: [
+      { value: '12', label: { zh: '订单数', en: 'Orders' } },
+      { value: '3', label: { zh: '活跃订阅', en: 'Active Plans' } },
+      { value: '2', label: { zh: '待支付', en: 'Pending Payment' } },
+    ],
+    collections: [
+      {
+        title: { zh: '商业订单流', en: 'Commercial Order Flow' },
+        desc: { zh: '区分订阅、资源包、团队版和咨询服务等不同订单类型。', en: 'Separate subscriptions, credit packs, team plans, and service consulting orders.' },
+        meta: { zh: '后续接真实支付与开票', en: 'Ready for billing and invoicing' },
+      },
+      {
+        title: { zh: '售后状态位', en: 'After-sales States' },
+        desc: { zh: '预留退款、发票、客服工单和升级补差流程。', en: 'Reserve refund, invoice, support ticket, and upgrade delta flows.' },
+        meta: { zh: '平台商业化骨架', en: 'Platform monetization skeleton' },
+      },
+    ],
+    actions: [
+      { label: { zh: '下载中心', en: 'Download Center' }, to: '/account/downloads' },
       { label: { zh: '定价页', en: 'Pricing Page' }, to: '/pricing' },
     ],
   },
@@ -260,26 +292,57 @@ const PAGE_CONFIG: Record<string, PageConfig> = {
       },
     ],
     actions: [
-      { label: { zh: '订单列表', en: 'Order List' }, to: '/orderList' },
+      { label: { zh: '订单与额度', en: 'Orders & Credits' }, to: '/account/billing' },
       { label: { zh: '商品中心', en: 'Product Center' }, to: '/draw/product-home' },
+    ],
+  },
+  '/account/downloads': {
+    titleKey: 'pages.downloadCenter',
+    icon: Download,
+    badge: { zh: '结果交付中心', en: 'Result Delivery Center' },
+    subtitle: {
+      zh: '统一管理生成结果、导出包、批量任务压缩包与历史下载记录。',
+      en: 'Manage generated outputs, export bundles, batch archives, and download history in one delivery center.',
+    },
+    stats: [
+      { value: '64', label: { zh: '可下载结果', en: 'Available Files' } },
+      { value: '9', label: { zh: '批量打包', en: 'Batch Bundles' } },
+      { value: '1.2GB', label: { zh: '占用空间', en: 'Storage Used' } },
+    ],
+    collections: [
+      {
+        title: { zh: '交付包管理', en: 'Delivery Bundle Management' },
+        desc: { zh: '按商品、任务、设计稿和导出格式组织结果包。', en: 'Organize result packages by product, task, draft, and file format.' },
+        meta: { zh: '连接生成与交付', en: 'Connects generation to delivery' },
+      },
+      {
+        title: { zh: '失效时间与重打包', en: 'Expiry and Re-bundling' },
+        desc: { zh: '后续展示文件保留时长、重新打包和下载次数。', en: 'Show retention times, re-bundle actions, and download counts later.' },
+        meta: { zh: '适合异步任务联动', en: 'Works with async jobs' },
+      },
+    ],
+    actions: [
+      { label: { zh: '商品中心', en: 'Product Center' }, to: '/draw/product-home' },
+      { label: { zh: '订单与额度', en: 'Orders & Credits' }, to: '/account/billing' },
     ],
   },
 }
 
-export default function AssetCommercePage() {
+export default function AssetCommercePage({ forcedPath }: { forcedPath?: AssetCommercePageKey }) {
   const { pathname } = useLocation()
   const { t, i18n } = useTranslation()
   const locale: Locale = (i18n.resolvedLanguage ?? i18n.language).startsWith('en') ? 'en' : 'zh'
-  const config = PAGE_CONFIG[pathname] ?? PAGE_CONFIG['/database/knowledge']
+  const pageKey = forcedPath ?? pathname
+  const config = PAGE_CONFIG[pageKey] ?? PAGE_CONFIG['/database/knowledge']
   const Icon = config.icon
-  const isOrderPage = pathname === '/orderList'
-  const isDownloadPage = pathname === '/downloadCenter'
+  const isOrderPage = pageKey === '/orderList' || pageKey === '/account/billing'
+  const isDownloadPage = pageKey === '/downloadCenter' || pageKey === '/account/downloads'
   const isAssetPage = !isOrderPage && !isDownloadPage
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [viewMode, setViewMode] = useState<'overview' | 'detail'>('overview')
   const [statusFilter, setStatusFilter] = useState<'all' | UploadStatus | OrderStatus | DeliveryStatus>('all')
-  const [uploads, setUploads] = useState<UploadItem[]>(() => UPLOAD_GROUPS[pathname] ?? [])
+  const [uploads, setUploads] = useState<UploadItem[]>(() => UPLOAD_GROUPS[pageKey] ?? [])
   const [orders, setOrders] = useState<OrderItem[]>(ORDER_ITEMS)
   const [deliveries, setDeliveries] = useState<DeliveryItem[]>(DELIVERY_ITEMS)
   const [workflowEvents, setWorkflowEvents] = useState<WorkflowEvent[]>([])
@@ -301,22 +364,22 @@ export default function AssetCommercePage() {
       setWorkflowEvents(events.slice(0, 4))
     })
 
-    if (pathname === '/database/picturelibrary') {
+    if (pageKey === '/database/picturelibrary') {
       void productWorkspaceRepository.listLinkedDesignAssets().then(assets => {
-        setUploads([...assets.map(createLinkedUploadFromDesign), ...(UPLOAD_GROUPS[pathname] ?? [])])
+        setUploads([...assets.map(createLinkedUploadFromDesign), ...(UPLOAD_GROUPS[pageKey] ?? [])])
       })
     } else {
-      setUploads(UPLOAD_GROUPS[pathname] ?? [])
+      setUploads(UPLOAD_GROUPS[pageKey] ?? [])
     }
 
-    if (pathname === '/downloadCenter') {
+    if (isDownloadPage) {
       void productWorkspaceRepository.listLinkedDeliveries().then(items => {
         setDeliveries([...items, ...DELIVERY_ITEMS])
       })
     } else {
       setDeliveries(DELIVERY_ITEMS)
     }
-  }, [pathname])
+  }, [isDownloadPage, pageKey])
 
   const visibleCollections = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase()
@@ -511,7 +574,7 @@ export default function AssetCommercePage() {
       return
     }
 
-    setUploads(prev => [createMockUpload(pathname, prev.length), ...prev])
+    setUploads(prev => [createMockUpload(pageKey, prev.length), ...prev])
   }
 
   const activeItemsCount = isOrderPage ? visibleOrders.length : isDownloadPage ? visibleDeliveries.length : visibleUploads.length

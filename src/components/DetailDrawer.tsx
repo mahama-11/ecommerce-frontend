@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
+import { Z_INDEX } from '@/styles/zIndex'
 
 interface DetailDrawerProps {
   open: boolean
@@ -50,7 +51,7 @@ export default function DetailDrawer({
 
   return (
     <div
-      className={`fixed inset-0 z-[80] flex justify-end bg-black/50 backdrop-blur-sm transition-all duration-200 ${
+      className={`fixed inset-0 ${Z_INDEX.drawer} flex justify-end bg-black/50 backdrop-blur-sm transition-all duration-200 ${
         visible ? 'opacity-100' : 'opacity-0'
       }`}
       onClick={onClose}

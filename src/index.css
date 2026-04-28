@@ -61,6 +61,9 @@
 }
 
 @layer base {
+  html, body, #root {
+    min-height: 100%;
+  }
   * {
     @apply border-white/10;
   }
@@ -87,7 +90,9 @@
     background-clip: padding-box;
   }
   body {
+    margin: 0;
     @apply bg-[#0a0a12] text-white antialiased;
+    overflow-x: hidden;
   }
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff, Layers, Lock, Mail } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
@@ -11,13 +11,15 @@ export default function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { isAuthenticated } = useAuth({ refreshOnMount: false })
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  const redirectPath = typeof location.state?.from === 'string' ? location.state.from : getAuthAwareStartPath(true)
+  const redirectFromQuery = searchParams.get('redirect')?.trim()
+  const redirectPath = redirectFromQuery || (typeof location.state?.from === 'string' ? location.state.from : getAuthAwareStartPath(true))
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -129,7 +131,10 @@ export default function LoginPage() {
           <p className="text-sm text-white/40 text-center mt-6">
             {t('auth.hasAccount').replace('?', '').replace('？', '')}
             {' / '}
-            <Link to="/register" className="text-brand-400 hover:text-brand-300 transition-colors">
+            <Link
+              to={redirectFromQuery ? `/register?redirect=${encodeURIComponent(redirectFromQuery)}` : '/register'}
+              className="text-brand-400 hover:text-brand-300 transition-colors"
+            >
               {t('common.signup')}
             </Link>
           </p>
