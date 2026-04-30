@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowDown,
   ArrowUp,
@@ -8,23 +9,33 @@ import {
   Eye,
   FileText,
   Grid3X3,
-  Image,
+  Image as ImageIcon,
   LoaderCircle,
   Sparkles,
   Star,
   TrendingUp,
   Trash2,
   Wand2,
+  ChevronDown,
 } from 'lucide-react'
 import { downloadExportTask } from '@/services/product'
 import type { DownloadRecord, ExportTask, ListingVersion, ProductAssetItem, ProfitSnapshot } from '@/types/product'
 
-const ASSET_ROLE_LABELS: Record<string, string> = {
-  hero: 'Hero Image',
-  model_shot: 'Model Shot',
-  scene_shot: 'Scene Shot',
-  detail_shot: 'Detail Shot',
-  listing_attachment: 'Listing Attachment',
+
+function SelectField({ value, onChange, options, disabled = false }: { value: string, onChange: (v: string) => void, options: {label: string, value: string}[], disabled?: boolean }) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        disabled={disabled}
+        className="w-full appearance-none rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 pr-8 text-sm text-white/90 outline-none transition-all hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+    </div>
+  )
 }
 
 export function AssetsTab({
@@ -62,6 +73,7 @@ export function AssetsTab({
   onCreateExportFromSelection: (assetRelationIds: string[]) => void
   onSelectionChange: (assetRelationIds: string[]) => void
 }) {
+  const { t } = useTranslation()
   const [selectedRole, setSelectedRole] = useState<string | 'all'>('all')
   const [onlyPrimary, setOnlyPrimary] = useState(false)
   const [selectedRelationIds, setSelectedRelationIds] = useState<string[]>([])
@@ -187,40 +199,40 @@ export function AssetsTab({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-3">
-        <SummaryChip label="Total Assets" value={String(summary.total)} helper="linked to this product" />
-        <SummaryChip label="Visible Assets" value={String(summary.visible)} helper="matching current workspace filters" />
-        <SummaryChip label="Primary Assets" value={String(summary.primary)} helper="marked as hero or primary" />
-        <SummaryChip label="AI Generated" value={String(summary.aiGenerated)} helper="returned from runtime jobs" />
+      <div className="grid gap-4 md:grid-cols-4">
+        <SummaryChip label={t('product.detail.assetsTab.totalAssets')} value={String(summary.total)} helper={t('product.detail.assetsTab.totalAssetsHelper')} />
+        <SummaryChip label={t('product.detail.assetsTab.visibleAssets')} value={String(summary.visible)} helper={t('product.detail.assetsTab.visibleAssetsHelper')} />
+        <SummaryChip label={t('product.detail.assetsTab.primaryAssets')} value={String(summary.primary)} helper={t('product.detail.assetsTab.primaryAssetsHelper')} />
+        <SummaryChip label={t('product.detail.assetsTab.aiGenerated')} value={String(summary.aiGenerated)} helper={t('product.detail.assetsTab.aiGeneratedHelper')} />
       </div>
 
-      <div className="glass-strong rounded-2xl p-4 transition-all duration-300 hover:border-white/20 hover:shadow-lg">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <div className="text-sm font-medium text-white">Export Trace Filter</div>
-            <p className="mt-1 text-xs text-white/45">
-              Focus the asset grid on a specific delivered export package.
+            <div className="text-sm font-semibold text-white/90">{t('product.detail.assetsTab.exportTraceFilter')}</div>
+            <p className="mt-1 text-xs text-white/40">
+              {t('product.detail.assetsTab.exportTraceFilterDesc')}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => onSelectDownload('all')}
-              className={`rounded-xl px-3 py-1.5 text-sm transition ${
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                 selectedDownloadId === 'all'
-                  ? 'bg-brand-500/15 text-brand-200'
-                  : 'bg-white/[0.03] text-white/60 hover:text-white'
+                  ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10'
               }`}
             >
-              All assets
+              {t('product.detail.assetsTab.allAssets')}
             </button>
             {downloads.map(download => (
               <button
                 key={download.id}
                 onClick={() => onSelectDownload(download.id)}
-                className={`rounded-xl px-3 py-1.5 text-sm transition ${
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                   selectedDownloadId === download.id
-                    ? 'bg-brand-500/15 text-brand-200'
-                    : 'bg-white/[0.03] text-white/60 hover:text-white'
+                    ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10'
                 }`}
               >
                 {download.platform.toUpperCase()} {download.site} · {download.format.toUpperCase()}
@@ -229,8 +241,8 @@ export function AssetsTab({
           </div>
         </div>
         {selectedDownload ? (
-          <div className="mt-3 rounded-xl border border-brand-500/15 bg-brand-500/5 px-3 py-2 text-xs text-brand-100">
-            Inspecting export `{selectedDownload.downloadFileName}` with {selectedDownload.assetCount} linked asset{selectedDownload.assetCount !== 1 ? 's' : ''}.
+          <div className="mt-4 rounded-xl border border-brand-500/20 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+            {t('product.detail.assetsTab.inspectingExport', { fileName: selectedDownload.downloadFileName, count: selectedDownload.assetCount })}
           </div>
         ) : null}
       </div>
@@ -241,42 +253,44 @@ export function AssetsTab({
             <button
               key={role}
               onClick={() => setSelectedRole(role)}
-              className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${
-                selectedRole === role ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white'
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                selectedRole === role ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/90 hover:bg-white/10'
               }`}
             >
-              {role === 'all' ? 'All Assets' : ASSET_ROLE_LABELS[role] || role}
+              {role === 'all' ? t('product.detail.assetsTab.allAssets') : t(`product.detail.assetRoles.${role}` as any, role) || role}
             </button>
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => setOnlyPrimary(value => !value)}
-            className={`rounded-xl border px-3 py-1.5 text-sm transition ${
-              onlyPrimary
-                ? 'border-brand-500/25 bg-brand-500/10 text-brand-300'
-                : 'border-white/[0.08] bg-white/[0.03] text-white/60 hover:text-white'
-            }`}
-          >
-            Primary Only
-          </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-white/70 hover:text-white cursor-pointer select-none">
+            <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-all ${onlyPrimary ? 'border-brand-500 bg-brand-500' : 'border-white/20 bg-white/5'}`}>
+              {onlyPrimary && (
+                <svg viewBox="0 0 14 14" fill="none" className="h-3 w-3 text-white">
+                  <path d="M3 7.5L5.5 10L11 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
+            {t('product.detail.assetsTab.primaryOnly')}
+            <input type="checkbox" className="hidden" checked={onlyPrimary} onChange={e => setOnlyPrimary(e.target.checked)} />
+          </label>
+          <div className="h-4 w-px bg-white/20" />
           <Link
             to={`/products/${productId}/ai/ai-product`}
-            className="inline-flex items-center gap-2 rounded-xl bg-brand-500/10 px-3 py-1.5 text-sm font-medium text-brand-300 transition hover:bg-brand-500/20"
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-500 hover:bg-brand-400 px-3 py-1.5 text-sm font-medium text-white transition-colors"
           >
             <Sparkles className="h-4 w-4" />
-            Generate Assets
+            {t('product.detail.assetsTab.generateAssets')}
           </Link>
         </div>
       </div>
 
-      <div className="glass-strong rounded-2xl p-4 transition-all duration-300 hover:border-white/20 hover:shadow-lg">
+      <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <div className="text-sm font-medium text-white">Asset Workspace Filters</div>
-            <p className="mt-1 text-xs text-white/45">
-              Search and shape the current asset working set before applying batch actions.
+            <div className="text-sm font-semibold text-white/90">{t('product.detail.assetsTab.workspaceFilters')}</div>
+            <p className="mt-1 text-xs text-white/40">
+              {t('product.detail.assetsTab.workspaceFiltersDesc')}
             </p>
           </div>
           <button
@@ -287,103 +301,104 @@ export function AssetsTab({
               setSelectedRole('all')
               setOnlyPrimary(false)
             }}
-            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-white/60 transition hover:text-white"
+            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
           >
-            Reset Workspace Filters
+            {t('product.detail.assetsTab.resetFilters')}
           </button>
         </div>
-        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_repeat(2,minmax(0,1fr))]">
+        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_repeat(2,minmax(0,1fr))]">
           <input
             value={search}
             onChange={event => setSearch(event.target.value)}
-            placeholder="Search file name, role, relation type..."
-            className="w-full glass rounded-lg px-3 py-2 text-sm text-white/80 outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05] placeholder:text-white/25"
+            placeholder={t('product.detail.assetsTab.searchPlaceholder')}
+            className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
           />
-          <select
+          <SelectField
             value={sourceFilter}
-            onChange={event => setSourceFilter(event.target.value as typeof sourceFilter)}
-            className="w-full glass rounded-lg px-3 py-2 text-sm text-white/80 outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05]"
-          >
-            <option value="all">All Sources</option>
-            <option value="generated">AI Generated</option>
-            <option value="manual">Manual Linked</option>
-          </select>
-          <select
+            onChange={v => setSourceFilter(v as typeof sourceFilter)}
+            options={[
+              {label: t('product.detail.assetsTab.allSources'), value: 'all'},
+              {label: t('product.detail.assetsTab.sourceGenerated'), value: 'generated'},
+              {label: t('product.detail.assetsTab.sourceManual'), value: 'manual'}
+            ]}
+          />
+          <SelectField
             value={sortMode}
-            onChange={event => setSortMode(event.target.value as typeof sortMode)}
-            className="w-full glass rounded-lg px-3 py-2 text-sm text-white/80 outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05]"
-          >
-            <option value="sort_order">Sort by Workspace Order</option>
-            <option value="newest">Sort by Newest</option>
-            <option value="file_name">Sort by File Name</option>
-          </select>
+            onChange={v => setSortMode(v as typeof sortMode)}
+            options={[
+              {label: t('product.detail.assetsTab.sortOrder'), value: 'sort_order'},
+              {label: t('product.detail.assetsTab.sortNewest'), value: 'newest'},
+              {label: t('product.detail.assetsTab.sortFileName'), value: 'file_name'}
+            ]}
+          />
         </div>
       </div>
 
-      <div className="glass-strong rounded-2xl p-4 transition-all duration-300 hover:border-white/20 hover:shadow-lg">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+      <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <div className="text-sm font-medium text-white">Bulk Asset Actions</div>
-            <p className="mt-1 text-xs text-white/45">
-              Select multiple assets to update role or remove them from the product workspace together.
+            <div className="text-sm font-semibold text-white/90">{t('product.detail.assetsTab.bulkActions')}</div>
+            <p className="mt-1 text-xs text-white/40">
+              {t('product.detail.assetsTab.bulkActionsDesc')}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-sm text-white/60">
-            <span>{selectedRelationIds.length} selected</span>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
+            <span className="font-medium text-brand-400">{t('product.detail.assetsTab.selectedCount', { count: selectedRelationIds.length })}</span>
+            <div className="h-4 w-px bg-white/20" />
             <button
               onClick={toggleSelectVisible}
               disabled={visibleRelationIds.length === 0 || bulkMutating}
-              className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-medium transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {allVisibleSelected ? 'Clear Visible' : 'Select Visible'}
+              {allVisibleSelected ? t('product.detail.assetsTab.clearVisible') : t('product.detail.assetsTab.selectVisible')}
             </button>
             <button
               onClick={clearSelection}
               disabled={selectedRelationIds.length === 0 || bulkMutating}
-              className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-medium transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Clear Selection
+              {t('product.detail.assetsTab.clearSelection')}
             </button>
           </div>
         </div>
-        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_auto]">
-          <select
+        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
+          <SelectField
             value={bulkRole}
-            disabled={bulkMutating}
-            onChange={event => setBulkRole(event.target.value)}
-            className="w-full glass rounded-lg px-3 py-2 text-sm text-white/80 outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <option value="hero">Hero Image</option>
-            <option value="model_shot">Model Shot</option>
-            <option value="scene_shot">Scene Shot</option>
-            <option value="detail_shot">Detail Shot</option>
-            <option value="listing_attachment">Listing Attachment</option>
-          </select>
+            onChange={v => setBulkRole(v)}
+            disabled={bulkMutating || selectedRelationIds.length === 0}
+            options={[
+              {label: t('product.detail.assetRoles.hero'), value: 'hero'},
+              {label: t('product.detail.assetRoles.model_shot'), value: 'model_shot'},
+              {label: t('product.detail.assetRoles.scene_shot'), value: 'scene_shot'},
+              {label: t('product.detail.assetRoles.detail_shot'), value: 'detail_shot'},
+              {label: t('product.detail.assetRoles.listing_attachment'), value: 'listing_attachment'},
+            ]}
+          />
           <button
             onClick={() => void handleBulkRoleApply()}
             disabled={selectedRelationIds.length === 0 || bulkMutating}
-            className="rounded-xl border border-brand-500/20 bg-brand-500/10 px-4 py-2 text-sm text-brand-200 transition hover:bg-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg border border-brand-500/30 bg-brand-500/10 px-4 py-2 text-sm font-medium text-brand-300 transition hover:bg-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {bulkMutating ? 'Saving...' : 'Apply Role'}
+            {bulkMutating ? t('product.detail.assetsTab.saving') : t('product.detail.assetsTab.applyRole')}
           </button>
           <button
             onClick={() => void handleBulkDelete()}
             disabled={selectedRelationIds.length === 0 || bulkMutating}
-            className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {bulkMutating ? 'Saving...' : 'Remove Selected'}
+            {bulkMutating ? t('product.detail.assetsTab.saving') : t('product.detail.assetsTab.removeSelected')}
           </button>
           <button
             onClick={() => onCreateExportFromSelection(selectedRelationIds)}
             disabled={selectedRelationIds.length === 0 || bulkMutating}
-            className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-200 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Export Selected
+            {t('product.detail.assetsTab.exportSelected')}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
         {filteredAssets.map(({ relation, asset }) => {
           const sourceJobId = asset?.metadata?.job_id || asset?.metadata?.source_job_id
           const mutating = bulkMutating || mutatingRelationId === relation.id
@@ -394,100 +409,107 @@ export function AssetsTab({
           return (
             <div
               key={relation.id}
-              className={`group overflow-hidden glass-strong rounded-2xl transition-all duration-300 hover:border-white/20 hover:shadow-lg ${
-                selected ? 'border-brand-500/40 shadow-[0_0_0_1px_rgba(168,85,247,0.15)]' : 'border-white/10'
+              className={`group overflow-hidden rounded-2xl border bg-[#0c0c10] shadow-lg transition-all duration-300 hover:shadow-xl ${
+                selected ? 'border-brand-500 bg-brand-500/5' : 'border-white/10 hover:border-white/20'
               }`}
             >
-              <div className="relative aspect-square overflow-hidden bg-[#0f0f18]">
+              <div className="relative aspect-square overflow-hidden bg-[#18181b] border-b border-white/10">
                 {asset?.originalUrl ? (
                   <img
                     src={asset.originalUrl}
                     alt={relation.assetRole}
-                    className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                    className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-white/20">
-                    <Image className="h-10 w-10" />
+                    <ImageIcon className="h-10 w-10" />
                   </div>
                 )}
 
                 {relation.isPrimary ? (
-                  <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-brand-500 px-2 py-0.5 text-xs font-medium text-white">
+                  <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-2.5 py-1 text-[11px] font-semibold text-white shadow-md">
                     <Star className="h-3 w-3" />
-                    Primary
+                    {t('product.detail.assetsTab.primary')}
                   </div>
                 ) : null}
 
-                <div className="absolute bottom-2 left-2 rounded-full bg-black/70 px-2 py-0.5 text-xs text-white/80">
-                  {ASSET_ROLE_LABELS[relation.assetRole] || relation.assetRole}
+                <div className="absolute bottom-3 left-3 rounded-full bg-black/80 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-white/90 shadow-md">
+                  {t(`product.detail.assetRoles.${relation.assetRole}` as any, relation.assetRole) || relation.assetRole}
                 </div>
-                <label className="absolute right-2 top-2 inline-flex items-center gap-2 rounded-full bg-black/70 px-2 py-1 text-xs text-white">
+                
+                <label className="absolute right-3 top-3 flex cursor-pointer items-center justify-center h-7 w-7 rounded-full bg-black/50 backdrop-blur-md border border-white/20 hover:bg-black/70 transition-colors">
                   <input
                     type="checkbox"
                     checked={selected}
                     disabled={bulkMutating}
                     onChange={() => toggleSelection(relation.id)}
-                    className="h-3.5 w-3.5 rounded border-white/10 bg-transparent"
+                    className="h-4 w-4 rounded border-white/30 bg-transparent text-brand-500 focus:ring-brand-500/50"
                   />
-                  Select
                 </label>
               </div>
 
-              <div className="space-y-2 p-3">
-                <div className="text-sm font-medium text-white">{asset?.fileName || 'Unnamed asset'}</div>
-                <div className="flex flex-wrap gap-2 text-xs text-white/45">
-                  <span>{asset?.width && asset?.height ? `${asset.width}x${asset.height}` : 'size n/a'}</span>
-                  <span>{asset?.mimeType || 'mime n/a'}</span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-xs text-white/45">
-                    {sourceJobId ? 'AI runtime' : 'manual linked'}
-                  </span>
-                  <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-xs text-white/45">
-                    {relation.relationType}
-                  </span>
-                  <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-xs text-white/45">
-                    sort #{relation.sortOrder}
-                  </span>
-                  {asset?.createdAt ? (
-                    <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-xs text-white/45">
-                      {new Date(asset.createdAt).toLocaleDateString()}
+              <div className="space-y-4 p-5">
+                <div>
+                  <div className="text-sm font-semibold text-white/90 truncate" title={asset?.fileName || t('product.detail.assetsTab.unnamedAsset')}>
+                    {asset?.fileName || t('product.detail.assetsTab.unnamedAsset')}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-white/40 font-mono">
+                    <span>{asset?.width && asset?.height ? `${asset.width}x${asset.height}` : t('product.detail.assetsTab.sizeNa')}</span>
+                    <span>{asset?.mimeType || t('product.detail.assetsTab.mimeNa')}</span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.5 text-[10px] text-white/50">
+                      {sourceJobId ? t('product.detail.assetsTab.sourceGenerated') : t('product.detail.assetsTab.sourceManual')}
                     </span>
-                  ) : null}
+                    <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.5 text-[10px] text-white/50">
+                      {relation.relationType}
+                    </span>
+                    <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.5 text-[10px] text-white/50">
+                      sort #{relation.sortOrder}
+                    </span>
+                    {asset?.createdAt ? (
+                      <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.5 text-[10px] text-white/50">
+                        {new Date(asset.createdAt).toLocaleDateString()}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-                <div className="grid gap-2 pt-1">
-                  <select
+                
+                <div className="space-y-3 pt-2 border-t border-white/5">
+                  <SelectField
                     value={relation.assetRole}
                     disabled={mutating}
-                    onChange={event => onChangeRole(relation.id, event.target.value)}
-                    className="w-full glass rounded-lg px-3 py-2 text-sm text-white/80 outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <option value="hero">Hero Image</option>
-                    <option value="model_shot">Model Shot</option>
-                    <option value="scene_shot">Scene Shot</option>
-                    <option value="detail_shot">Detail Shot</option>
-                    <option value="listing_attachment">Listing Attachment</option>
-                  </select>
-                  <div className="grid grid-cols-[1fr_auto] gap-2">
-                    <input
-                      type="number"
-                      value={relation.sortOrder}
-                      disabled={mutating}
-                      onChange={event => onChangeSortOrder(relation.id, Number(event.target.value) || 0)}
-                      className="w-full glass rounded-lg px-3 py-2 text-sm text-white/80 outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-60"
-                    />
-                    <div className="flex gap-2">
+                    onChange={v => onChangeRole(relation.id, v)}
+                    options={[
+                      {label: t('product.detail.assetRoles.hero'), value: 'hero'},
+                      {label: t('product.detail.assetRoles.model_shot'), value: 'model_shot'},
+                      {label: t('product.detail.assetRoles.scene_shot'), value: 'scene_shot'},
+                      {label: t('product.detail.assetRoles.detail_shot'), value: 'detail_shot'},
+                      {label: t('product.detail.assetRoles.listing_attachment'), value: 'listing_attachment'},
+                    ]}
+                  />
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <input
+                        type="number"
+                        value={relation.sortOrder}
+                        disabled={mutating}
+                        onChange={event => onChangeSortOrder(relation.id, Number(event.target.value) || 0)}
+                        className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
+                      />
+                    </div>
+                    <div className="flex gap-1 shrink-0">
                       <button
                         onClick={() => onMove(relation.id, 'up')}
                         disabled={mutating || !canMoveUp}
-                        className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex h-[38px] w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ArrowUp className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => onMove(relation.id, 'down')}
                         disabled={mutating || !canMoveDown}
-                        className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="flex h-[38px] w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         <ArrowDown className="h-4 w-4" />
                       </button>
@@ -497,14 +519,14 @@ export function AssetsTab({
                     <button
                       onClick={() => onMakePrimary(relation.id)}
                       disabled={mutating || relation.isPrimary}
-                      className="flex-1 rounded-xl border border-brand-500/20 bg-brand-500/10 px-3 py-2 text-sm text-brand-200 transition hover:bg-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex-1 rounded-lg border border-brand-500/30 bg-brand-500/10 py-2 text-xs font-semibold text-brand-300 transition hover:bg-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-white/5 disabled:text-white/40 disabled:border-white/10"
                     >
-                      {mutating ? 'Saving...' : relation.isPrimary ? 'Primary Asset' : 'Set as Primary'}
+                      {mutating ? t('product.detail.assetsTab.saving') : relation.isPrimary ? t('product.detail.assetsTab.primary') : t('product.detail.assetsTab.setAsPrimary')}
                     </button>
                     <button
                       onClick={() => onDelete(relation.id)}
                       disabled={mutating}
-                      className="inline-flex items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-red-300 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex w-[38px] shrink-0 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {mutating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </button>
@@ -516,10 +538,10 @@ export function AssetsTab({
         })}
 
         {filteredAssets.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center glass-strong rounded-2xl border-dashed border-white/10 py-16 text-white/40">
-            <Grid3X3 className="mb-4 h-12 w-12 opacity-40" />
-            <p>No assets match the current filters</p>
-            <p className="mt-1 text-sm">Generate or upload product assets to populate this workspace.</p>
+          <div className="col-span-full flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] py-24 text-white/40">
+            <Grid3X3 className="mb-4 h-12 w-12 opacity-30" />
+            <p className="font-medium text-white/60">{t('product.detail.assetsTab.noAssets')}</p>
+            <p className="mt-1 text-sm">{t('product.detail.assetsTab.noAssetsDesc')}</p>
           </div>
         ) : null}
       </div>
@@ -540,66 +562,79 @@ export function ListingsTab({
   onEdit: (version: ListingVersion) => void
   adoptingVersionId: string | null
 }) {
+  const { t } = useTranslation()
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-white/60">
-          {versions.length} listing version{versions.length !== 1 ? 's' : ''}
+        <p className="text-sm font-medium text-white/60">
+          {t('product.detail.listingsTabExt.count', { count: versions.length })}
         </p>
-        <button onClick={onGenerate} className="flex items-center gap-2 rounded-lg bg-brand-500/10 px-3 py-1.5 text-sm font-medium text-brand-300 transition hover:bg-brand-500/20">
+        <button onClick={onGenerate} className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-400 shadow-md">
           <Wand2 className="h-4 w-4" />
-          Generate Listing
+          {t('product.detail.listingsTabExt.generate')}
         </button>
       </div>
-      <div className="space-y-3">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {versions.map(version => (
-          <div key={version.id} className="glass-strong rounded-xl p-4 transition-all duration-300 hover:border-white/20 hover:shadow-lg">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-white">{version.versionLabel}</span>
-                  <span className="text-sm text-white/40">v{version.versionNo}</span>
+          <div key={version.id} className="rounded-2xl border border-white/10 bg-[#0c0c10] overflow-hidden flex flex-col shadow-lg transition-all hover:border-white/20">
+            <div className="bg-white/5 px-5 py-4 border-b border-white/10 flex items-start justify-between gap-4">
+              <div className="min-w-0 pr-2">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="font-semibold text-white/90 truncate">{version.versionLabel}</span>
+                  <span className="text-[11px] font-mono text-white/40">v{version.versionNo}</span>
                   {version.status === 'adopted' ? (
-                    <span className="flex items-center gap-1 rounded-full bg-emerald-600/20 px-2 py-0.5 text-xs text-emerald-300">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      Adopted
+                    <span className="flex items-center gap-1 rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400 border border-emerald-500/20">
+                      <CheckCircle className="h-3 w-3" />
+                      {t('product.detail.listingsTabExt.adopted')}
                     </span>
                   ) : null}
                 </div>
-                <p className="text-sm text-white/80">{version.title}</p>
-                <div className="flex items-center gap-2 text-xs text-white/50">
-                  <span>{version.platform.toUpperCase()}</span>
-                  <span>•</span>
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-wider text-white/40">
+                  <span>{version.platform}</span>
+                  <span>|</span>
                   <span>{version.site}</span>
-                  <span>•</span>
+                  <span>|</span>
                   <span>{version.locale}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {version.status !== 'adopted' ? (
-                  <button
-                    onClick={() => onAdopt(version.id)}
-                    disabled={adoptingVersionId === version.id}
-                    className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/15 disabled:opacity-50"
-                  >
-                    {adoptingVersionId === version.id ? 'Adopting...' : 'Adopt'}
-                  </button>
-                ) : null}
+              <button
+                onClick={() => onEdit(version)}
+                className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
+              >
+                {t('product.detail.listingsTabExt.edit')}
+              </button>
+            </div>
+            <div className="p-5 flex-1 bg-[#09090b]/50 space-y-4">
+              <div>
+                <div className="text-[10px] uppercase tracking-wider text-white/30 mb-1.5">{t("product.detail.listingsTabExt.titleLabel")}</div>
+                <p className="text-sm text-white/80 leading-snug">{version.title}</p>
+              </div>
+              {version.description && (
+                <div>
+                  <div className="text-[10px] uppercase tracking-wider text-white/30 mb-1.5">{t("product.detail.listingsTabExt.descriptionLabel")}</div>
+                  <p className="text-xs text-white/60 line-clamp-3 leading-relaxed">{version.description}</p>
+                </div>
+              )}
+            </div>
+            {version.status !== 'adopted' && (
+              <div className="p-4 border-t border-white/5 bg-white/[0.02]">
                 <button
-                  onClick={() => onEdit(version)}
-                  className="rounded-lg bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 transition hover:bg-white/10"
+                  onClick={() => onAdopt(version.id)}
+                  disabled={adoptingVersionId === version.id}
+                  className="w-full rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20 disabled:opacity-50 flex justify-center items-center gap-2"
                 >
-                  Edit
+                  {adoptingVersionId === version.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+                  {adoptingVersionId === version.id ? t('product.detail.listingsTabExt.adopting') : t('product.detail.listingsTabExt.adopt')}
                 </button>
               </div>
-            </div>
+            )}
           </div>
         ))}
         {versions.length === 0 ? (
-          <div className="glass-strong rounded-xl p-8 text-center text-white/40">
-            <FileText className="mx-auto mb-3 h-10 w-10 opacity-40" />
-            <p>No listing versions yet</p>
-            <p className="mt-1 text-sm">Generate a listing to get started.</p>
+          <div className="col-span-full rounded-2xl border border-dashed border-white/10 bg-white/[0.02] py-24 text-center text-white/40">
+            <FileText className="mx-auto mb-4 h-12 w-12 opacity-30" />
+            <p className="font-medium text-white/60">{t('product.detail.listingsTabExt.empty')}</p>
+            <p className="mt-1 text-sm">{t('product.detail.listingsTabExt.emptyDesc')}</p>
           </div>
         ) : null}
       </div>
@@ -608,31 +643,32 @@ export function ListingsTab({
 }
 
 export function ProfitTab({ snapshots, onCalculate }: { snapshots: ProfitSnapshot[]; onCalculate: () => void }) {
+  const { t } = useTranslation()
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-white/60">
-          {snapshots.length} profit snapshot{snapshots.length !== 1 ? 's' : ''}
+        <p className="text-sm font-medium text-white/60">
+          {t('product.detail.profitTab.count', { count: snapshots.length })}
         </p>
-        <button onClick={onCalculate} className="flex items-center gap-2 rounded-lg bg-brand-500/10 px-3 py-1.5 text-sm font-medium text-brand-300 transition hover:bg-brand-500/20">
+        <button onClick={onCalculate} className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-400 shadow-md">
           <TrendingUp className="h-4 w-4" />
-          Calculate Profit
+          {t('product.detail.profitTab.calculate')}
         </button>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {snapshots.map(snapshot => (
-          <div key={snapshot.id} className="grid grid-cols-2 gap-4 glass-strong rounded-xl p-4 transition-all duration-300 hover:border-white/20 hover:shadow-lg md:grid-cols-4">
-            <ProfitMetric label="Gross Profit" value={`$${snapshot.grossProfit.toFixed(2)}`} helper={`${(snapshot.grossMargin * 100).toFixed(1)}% margin`} />
-            <ProfitMetric label="Net Profit" value={`$${snapshot.netProfit.toFixed(2)}`} helper={`${(snapshot.netMargin * 100).toFixed(1)}% margin`} />
-            <ProfitMetric label="Breakeven" value={`$${snapshot.breakevenPrice.toFixed(2)}`} helper="Min price to profit" />
-            <ProfitMetric label="Listing Price" value={`$${snapshot.listingPrice.toFixed(2)}`} helper={`Cost $${snapshot.costPrice.toFixed(2)}`} />
+          <div key={snapshot.id} className="grid grid-cols-2 gap-6 rounded-2xl border border-white/10 bg-[#0c0c10] p-6 shadow-lg transition-all hover:border-white/20 md:grid-cols-4">
+            <ProfitMetric label={t('product.detail.profitTab.grossProfit')} value={`$${snapshot.grossProfit.toFixed(2)}`} helper={`${(snapshot.grossMargin * 100).toFixed(1)}% margin`} />
+            <ProfitMetric label={t('product.detail.profitTab.netProfit')} value={`$${snapshot.netProfit.toFixed(2)}`} helper={`${(snapshot.netMargin * 100).toFixed(1)}% margin`} />
+            <ProfitMetric label={t('product.detail.profitTab.breakeven')} value={`$${snapshot.breakevenPrice.toFixed(2)}`} helper={t('product.detail.profitTab.minPrice')} />
+            <ProfitMetric label={t('product.detail.profitTab.listingPrice')} value={`$${snapshot.listingPrice.toFixed(2)}`} helper={`${t('product.detail.profitTab.cost')} $${snapshot.costPrice.toFixed(2)}`} />
           </div>
         ))}
         {snapshots.length === 0 ? (
-          <div className="glass-strong rounded-xl p-8 text-center text-white/40">
-            <TrendingUp className="mx-auto mb-3 h-10 w-10 opacity-40" />
-            <p>No profit snapshots yet</p>
-            <p className="mt-1 text-sm">Calculate profit to get started.</p>
+          <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] py-24 text-center text-white/40">
+            <TrendingUp className="mx-auto mb-4 h-12 w-12 opacity-30" />
+            <p className="font-medium text-white/60">{t('product.detail.profitTab.empty')}</p>
+            <p className="mt-1 text-sm">{t('product.detail.profitTab.emptyDesc')}</p>
           </div>
         ) : null}
       </div>
@@ -659,6 +695,7 @@ export function ExportsTab({
   onCreateFromSelection: () => void
   onInspectAssets: (downloadId: string) => void
 }) {
+  const { t } = useTranslation()
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
   const downloadMap = useMemo(
     () => new Map(downloads.map(item => [item.id, item])),
@@ -675,90 +712,90 @@ export function ExportsTab({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-white/60">
-          {tasks.length} export task{tasks.length !== 1 ? 's' : ''} · {assetCount} linked asset{assetCount !== 1 ? 's' : ''}
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <p className="text-sm font-medium text-white/60">
+          {t('product.detail.exportsTabExt.count', { count: tasks.length })} · {t('product.detail.exportsTabExt.assetCount', { count: assetCount })}
         </p>
-        <div className="flex items-center gap-2">
-          <Link to="/products/workbench/downloads" className="rounded-lg bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 transition hover:bg-white/10">
-            Download Center
+        <div className="flex flex-wrap items-center gap-3">
+          <Link to="/products/workbench/downloads" className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white">
+            {t('product.detail.exportsTabExt.downloadCenter')}
           </Link>
           <button
             onClick={onCreateFromSelection}
             disabled={selectedAssetCount === 0}
-            className="flex items-center gap-2 rounded-lg bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-300 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Eye className="h-4 w-4" />
-            Export Selected ({selectedAssetCount})
+            {t('product.detail.exportsTabExt.exportSelected', { count: selectedAssetCount })}
           </button>
-          <button onClick={onCreate} className="flex items-center gap-2 rounded-lg bg-brand-500/10 px-3 py-1.5 text-sm font-medium text-brand-300 transition hover:bg-brand-500/20">
+          <button onClick={onCreate} className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-400 shadow-md">
             <Download className="h-4 w-4" />
-            Export All
+            {t('product.detail.exportsTabExt.exportAll')}
           </button>
         </div>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {tasks.map(task => {
           const downloadTrace = downloadMap.get(task.id)
           const snapshotAssetCount = downloadTrace?.assetCount ?? task.assetCount ?? assetCount
           const snapshotListingLabel = downloadTrace?.listingVersionLabel ?? task.listingVersionLabel
           const snapshotPrimaryAssetRole = downloadTrace?.primaryAssetRole ?? task.primaryAssetRole
           return (
-            <div key={task.id} className="flex items-center justify-between gap-4 glass-strong rounded-xl p-4 transition-all duration-300 hover:border-white/20 hover:shadow-lg">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-white">{task.platform.toUpperCase()} Export</span>
-                  <span className="text-sm text-white/40">{task.format.toUpperCase()}</span>
+            <div key={task.id} className="flex flex-col md:flex-row md:items-center justify-between gap-6 rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg transition-all hover:border-white/20">
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold text-white/90">{t("product.detail.exportsTabExt.exportTitle", { platform: task.platform.toUpperCase() })}</span>
+                  <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-mono text-white/60">{task.format.toUpperCase()}</span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-white/50">
+                <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-white/40">
                   <span>{task.site}</span>
-                  <span>•</span>
+                  <span>|</span>
                   <span>{task.locale}</span>
-                  {task.fileSize ? <span>• {task.fileSize}</span> : null}
-                  <span>•</span>
-                  <span>{snapshotAssetCount} assets</span>
+                  {task.fileSize ? <><span>|</span><span>{task.fileSize}</span></> : null}
+                  <span>|</span>
+                  <span className="text-white/60">{t("product.detail.exportsTabExt.assetsCount", { count: snapshotAssetCount })}</span>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-1">
                   {downloadTrace ? (
-                    <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-xs text-white/45">
-                      trace ready
+                    <span className="rounded-md border border-brand-500/20 bg-brand-500/10 px-2 py-1 text-[11px] text-brand-300">
+                      {t('product.detail.exportsTabExt.traceReady')}
                     </span>
                   ) : null}
                   {snapshotPrimaryAssetRole ? (
-                    <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-xs text-white/45">
-                      primary {snapshotPrimaryAssetRole}
+                    <span className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/60">
+                      {t('product.detail.exportsTabExt.primary', { role: snapshotPrimaryAssetRole })}
                     </span>
                   ) : null}
                   {snapshotListingLabel ? (
-                    <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-xs text-white/45">
+                    <span className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/60">
                       {snapshotListingLabel}
                     </span>
                   ) : null}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-3 md:shrink-0 border-t border-white/5 pt-4 md:border-none md:pt-0">
                 {downloadTrace ? (
                   <button
                     onClick={() => onInspectAssets(downloadTrace.id)}
-                    className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white/15"
+                    className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
                   >
                     <Eye className="h-4 w-4" />
-                    Inspect Assets
+                    {t('product.detail.exportsTabExt.inspectAssets')}
                   </button>
                 ) : null}
                 {task.status === 'succeeded' ? (
                   <button
                     onClick={() => void handleDownload(task)}
                     disabled={downloadingId === task.id}
-                    className="flex items-center gap-2 rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-brand-600 disabled:bg-brand-500/50"
+                    className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:bg-emerald-600/50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(16,185,129,0.2)]"
                   >
                     {downloadingId === task.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                    Download
+                    {downloadingId === task.id ? t('product.detail.exportsTabExt.downloading') : t('product.detail.exportsTabExt.download')}
                   </button>
                 ) : (
-                  <span className="rounded-lg bg-white/5 px-3 py-1.5 text-sm text-white/60">
-                    {task.status === 'generating' ? 'Generating...' : 'Pending'}
+                  <span className="flex-1 md:flex-none text-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/50">
+                    {task.status === 'generating' ? t('product.detail.exportsTabExt.generating') : t('product.detail.exportsTabExt.pending')}
                   </span>
                 )}
               </div>
@@ -766,10 +803,10 @@ export function ExportsTab({
           )
         })}
         {tasks.length === 0 ? (
-          <div className="glass-strong rounded-xl p-8 text-center text-white/40">
-            <Download className="mx-auto mb-3 h-10 w-10 opacity-40" />
-            <p>No export tasks yet</p>
-            <p className="mt-1 text-sm">Create an export to get started.</p>
+          <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] py-24 text-center text-white/40">
+            <Download className="mx-auto mb-4 h-12 w-12 opacity-30" />
+            <p className="font-medium text-white/60">{t('product.detail.exportsTabExt.empty')}</p>
+            <p className="mt-1 text-sm">{t('product.detail.exportsTabExt.emptyDesc')}</p>
           </div>
         ) : null}
       </div>
@@ -782,24 +819,25 @@ export function HistoryTab({
 }: {
   activities: Array<{ id: string; title: string; summary: string; createdAt: string }>
 }) {
+  const { t } = useTranslation()
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-white/60">
-        {activities.length} recent action{activities.length !== 1 ? 's' : ''}
+    <div className="space-y-5">
+      <p className="text-sm font-medium text-white/60">
+        {t('product.detail.historyTab.count', { count: activities.length })}
       </p>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {activities.map(activity => (
-          <div key={activity.id} className="glass-strong rounded-xl p-4 transition-all duration-300 hover:border-white/20 hover:shadow-lg">
-            <p className="font-medium text-white">{activity.title}</p>
-            <p className="mt-1 text-sm text-white/60">{activity.summary}</p>
-            <p className="mt-2 text-xs text-white/40">{new Date(activity.createdAt).toLocaleString()}</p>
+          <div key={activity.id} className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg transition-all hover:border-white/20">
+            <p className="font-semibold text-white/90">{activity.title}</p>
+            <p className="mt-2 text-sm text-white/60 leading-relaxed">{activity.summary}</p>
+            <p className="mt-3 text-[11px] font-mono text-white/30">{new Date(activity.createdAt).toLocaleString()}</p>
           </div>
         ))}
         {activities.length === 0 ? (
-          <div className="glass-strong rounded-xl p-8 text-center text-white/40">
-            <Wand2 className="mx-auto mb-3 h-10 w-10 opacity-40" />
-            <p>No activity yet</p>
-            <p className="mt-1 text-sm">Activity will show up here as you work.</p>
+          <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] py-24 text-center text-white/40">
+            <Wand2 className="mx-auto mb-4 h-12 w-12 opacity-30" />
+            <p className="font-medium text-white/60">{t('product.detail.historyTab.empty')}</p>
+            <p className="mt-1 text-sm">{t('product.detail.historyTab.emptyDesc')}</p>
           </div>
         ) : null}
       </div>
@@ -809,10 +847,10 @@ export function HistoryTab({
 
 function SummaryChip({ label, value, helper }: { label: string; value: string; helper: string }) {
   return (
-    <div className="glass-strong rounded-2xl p-4 transition-all duration-300 hover:border-white/20 hover:shadow-lg">
-      <div className="text-xs uppercase tracking-[0.18em] text-white/30">{label}</div>
-      <div className="mt-2 text-xl font-semibold text-white">{value}</div>
-      <div className="mt-1 text-xs text-white/40">{helper}</div>
+    <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg">
+      <div className="text-[10px] uppercase tracking-wider text-white/40">{label}</div>
+      <div className="mt-2 text-2xl font-bold text-white/90">{value}</div>
+      <div className="mt-1 text-[11px] text-white/40">{helper}</div>
     </div>
   )
 }
@@ -820,9 +858,9 @@ function SummaryChip({ label, value, helper }: { label: string; value: string; h
 function ProfitMetric({ label, value, helper }: { label: string; value: string; helper: string }) {
   return (
     <div>
-      <p className="text-xs uppercase text-white/40">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-white">{value}</p>
-      <p className="mt-0.5 text-xs text-white/40">{helper}</p>
+      <p className="text-[10px] uppercase tracking-wider text-white/40">{label}</p>
+      <p className="mt-1.5 text-xl font-bold text-white/90">{value}</p>
+      <p className="mt-1 text-xs text-white/40">{helper}</p>
     </div>
   )
 }

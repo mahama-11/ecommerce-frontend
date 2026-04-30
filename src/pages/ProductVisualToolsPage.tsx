@@ -1,19 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { ArrowRight, Bot, LoaderCircle, Package, Sparkles } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { TOOLS, getLocalizedTool } from '@/mock/data'
 import { listProducts } from '@/services/product'
 import type { ProductListItem } from '@/types/product'
 
-const CATEGORY_LABELS: Record<string, string> = {
-  model: 'Model',
-  product: 'Product',
-  suite: 'Suite',
-  video: 'Video',
-  designer: 'Designer',
-}
-
 export default function ProductVisualToolsPage() {
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { toolSlug } = useParams()
   const [searchParams] = useSearchParams()
@@ -82,199 +77,226 @@ export default function ProductVisualToolsPage() {
     navigate(`/products/${selectedProduct.id}/ai/${selectedTool.slug}`)
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 }
+    }
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } }
+  }
+
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_360px]">
-      <section className="glass rounded-3xl p-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="flex flex-col h-full text-white overflow-hidden"
+    >
+      <motion.div variants={itemVariants} className="flex-none px-6 py-6 border-b border-white/5 bg-[#0a0a12]/50 backdrop-blur-sm z-10">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between max-w-[1600px] mx-auto">
           <div>
-            <h2 className="text-lg font-semibold text-white">Visual Production Inside Product Context</h2>
-            <p className="mt-1 text-sm text-white/45">
-              Select a SKU first, then open the exact AI tool inside the product workflow.
-              This replaces the old standalone `draw` entry.
+            <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+              <Sparkles className="w-6 h-6 text-brand-400" />
+              {t('product.visualTools.title')}
+            </h1>
+            <p className="mt-2 text-sm text-white/50 max-w-3xl">
+              {t('product.visualTools.subtitle')}
             </p>
           </div>
-          <Link to="/products" className="text-sm text-brand-300 hover:text-brand-200">
-            Back to products
-          </Link>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Link
-            to="/products"
-            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/70 transition hover:bg-white/[0.05] hover:text-white"
-          >
-            Product home
-          </Link>
-          <Link
-            to="/products/workbench/batch-listing"
-            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/70 transition hover:bg-white/[0.05] hover:text-white"
-          >
-            Batch listing
-          </Link>
-          <Link
-            to="/products/workbench/downloads"
-            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/70 transition hover:bg-white/[0.05] hover:text-white"
-          >
-            Download center
-          </Link>
-          {selectedProduct ? (
+          <div className="flex flex-wrap gap-2">
             <Link
-              to={`/products/${selectedProduct.id}`}
-              className="rounded-xl border border-brand-500/20 bg-brand-500/10 px-3 py-2 text-sm text-brand-200 transition hover:bg-brand-500/20"
+              to="/products"
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
             >
-              Open selected product
+              {t('product.visualTools.productHome')}
             </Link>
-          ) : null}
-        </div>
-
-        <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-          <div className="mb-2 text-sm font-medium text-white">Bound Product</div>
-          {loading ? (
-            <div className="flex items-center gap-2 text-sm text-white/45">
-              <LoaderCircle className="h-4 w-4 animate-spin text-brand-400" />
-              Loading products...
-            </div>
-          ) : products.length === 0 ? (
-            <div className="space-y-3">
-              <div className="text-sm text-white/45">No products available yet. Create a SKU before opening visual production.</div>
+            <Link
+              to="/products/workbench/batch-listing"
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              {t('product.visualTools.batchListing')}
+            </Link>
+            <Link
+              to="/products/workbench/downloads"
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              {t('product.visualTools.downloadCenter')}
+            </Link>
+            {selectedProduct ? (
               <Link
-                to="/products"
-                className="inline-flex items-center rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-600"
+                to={`/products/${selectedProduct.id}`}
+                className="rounded-xl border border-brand-500/20 bg-brand-500/10 px-4 py-2 text-sm text-brand-200 transition hover:bg-brand-500/20"
               >
-                Create or manage products
+                {t('product.visualTools.openSelectedProduct')}
               </Link>
+            ) : null}
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="flex-1 flex overflow-hidden max-w-[1600px] w-full mx-auto relative p-6">
+        <div className="flex-1 flex gap-6 overflow-hidden h-full flex-col xl:flex-row">
+          {/* Main List */}
+          <motion.div variants={itemVariants} className="flex-1 overflow-auto rounded-2xl border border-white/10 bg-[#0a0a12]/80 backdrop-blur-md shadow-2xl p-6 flex flex-col min-w-0">
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 mb-6">
+              <div className="mb-3 text-sm font-medium text-white">{t('product.visualTools.boundProduct')}</div>
+              {loading ? (
+                <div className="flex items-center gap-2 text-sm text-white/45">
+                  <LoaderCircle className="h-4 w-4 animate-spin text-brand-400" />
+                  {t('product.visualTools.loadingProducts')}
+                </div>
+              ) : products.length === 0 ? (
+                <div className="space-y-3">
+                  <div className="text-sm text-white/45">{t('product.visualTools.noProducts')}</div>
+                  <Link
+                    to="/products"
+                    className="inline-flex items-center rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-400"
+                  >
+                    {t('product.visualTools.createProduct')}
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <select
+                    value={selectedProductID}
+                    onChange={event => setSelectedProductID(event.target.value)}
+                    className="w-full max-w-md rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white/90 outline-none transition focus:border-brand-500/50"
+                  >
+                    {products.map(item => (
+                      <option key={item.id} value={item.id}>
+                        {item.skuCode} · {item.title}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedProduct ? (
+                    <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+                      <div className="flex items-center gap-2 text-white">
+                        <Package className="h-4 w-4 text-brand-400" />
+                        <span className="font-medium">{selectedProduct.title}</span>
+                      </div>
+                      <div className="mt-1 text-xs text-white/40">{selectedProduct.skuCode}</div>
+                      <div className="mt-3 flex flex-wrap gap-3 text-xs text-white/50">
+                        <span className="px-2 py-1 rounded bg-white/5">{selectedProduct.assetStatus} {t('product.list.table.assets')}</span>
+                        <span className="px-2 py-1 rounded bg-white/5">{selectedProduct.listingStatus} {t('product.list.table.listing')}</span>
+                        <span className="px-2 py-1 rounded bg-white/5">{t(`product.status.${selectedProduct.status}`)}</span>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="space-y-3">
-              <select
-                value={selectedProductID}
-                onChange={event => setSelectedProductID(event.target.value)}
-                className="w-full rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none"
+
+            <div className="flex-1 overflow-auto space-y-8 pr-2">
+              {groupedTools.map(([category, items]) => (
+                <div key={category}>
+                  <div className="mb-4 flex items-center gap-2">
+                    <div className="h-4 w-1 bg-brand-500 rounded-full" />
+                    <span className="text-sm font-medium text-white/90">{t(`toolCategories.${category}` as any, category)}</span>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {items.map(tool => {
+                      const localized = getLocalizedTool(tool, i18n.language)
+                      const active = tool.slug === selectedToolSlug
+                      return (
+                        <button
+                          key={tool.id}
+                          type="button"
+                          onClick={() => setSelectedToolSlug(tool.slug)}
+                          className={`rounded-xl border p-4 text-left transition-all ${
+                            active
+                              ? 'border-brand-500/40 bg-brand-500/10 shadow-[0_0_15px_rgba(var(--brand-500),0.15)]'
+                              : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'
+                          }`}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xl">
+                              {tool.icon}
+                            </div>
+                            <div className="min-w-0 flex-1 mt-0.5">
+                              <div className={`font-medium ${active ? 'text-brand-300' : 'text-white/90'}`}>{localized.name}</div>
+                              <div className="mt-1.5 text-xs text-white/40 leading-relaxed line-clamp-2">{localized.desc}</div>
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Right Sidebar */}
+          <motion.div variants={itemVariants} className="xl:w-[360px] flex-shrink-0 flex flex-col gap-6 h-full overflow-y-auto">
+            <div className="rounded-2xl border border-white/10 bg-[#0a0a12]/80 backdrop-blur-md p-6 shadow-xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 mb-5">
+                <Sparkles className="h-3.5 w-3.5 text-brand-400" />
+                <span>{t('product.visualTools.selectedTool')}</span>
+              </div>
+              
+              {selectedTool ? (
+                <div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-2xl shadow-inner">
+                      {selectedTool.icon}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-lg text-white/90">{getLocalizedTool(selectedTool, i18n.language).name}</div>
+                      <div className="mt-1 text-xs font-mono text-white/40">{selectedTool.slug}</div>
+                    </div>
+                  </div>
+                  <p className="mt-5 text-sm leading-relaxed text-white/50">
+                    {t('product.visualTools.toolLaunchDesc')}
+                  </p>
+                </div>
+              ) : null}
+
+              <button
+                onClick={openWorkspace}
+                disabled={!selectedProduct || !selectedTool}
+                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-50 shadow-[0_0_20px_rgba(var(--brand-500),0.2)]"
               >
-                {products.map(item => (
-                  <option key={item.id} value={item.id}>
-                    {item.skuCode} · {item.title}
-                  </option>
-                ))}
-              </select>
+                {t('product.visualTools.openWorkspace')}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+
               {selectedProduct ? (
-                <div className="rounded-2xl border border-white/[0.06] bg-black/20 p-4">
-                  <div className="flex items-center gap-2 text-white">
-                    <Package className="h-4 w-4 text-brand-300" />
-                    <span className="font-medium">{selectedProduct.title}</span>
-                  </div>
-                  <div className="mt-1 text-xs text-white/40">{selectedProduct.skuCode}</div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-white/50">
-                    <span>{selectedProduct.assetStatus} assets</span>
-                    <span>{selectedProduct.listingStatus} listing</span>
-                    <span>{selectedProduct.status} product</span>
-                  </div>
+                <div className="mt-4 grid gap-3">
+                  <Link
+                    to={`/products/${selectedProduct.id}`}
+                    className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+                  >
+                    {t('product.visualTools.viewProductDetail')}
+                  </Link>
+                  <Link
+                    to="/products/workbench/downloads"
+                    className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+                  >
+                    {t('product.visualTools.openDownloadCenter')}
+                  </Link>
                 </div>
               ) : null}
             </div>
-          )}
-        </div>
 
-        <div className="mt-6 space-y-6">
-          {groupedTools.map(([category, items]) => (
-            <div key={category}>
-              <div className="mb-3 text-sm font-medium text-white/70">{CATEGORY_LABELS[category] ?? category}</div>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {items.map(tool => {
-                  const localized = getLocalizedTool(tool, 'zh')
-                  const active = tool.slug === selectedToolSlug
-                  return (
-                    <button
-                      key={tool.id}
-                      type="button"
-                      onClick={() => setSelectedToolSlug(tool.slug)}
-                      className={`rounded-2xl border p-4 text-left transition ${
-                        active
-                          ? 'border-brand-500/40 bg-brand-500/10'
-                          : 'border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05]'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-xl">
-                          {tool.icon}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-medium text-white">{localized.name}</div>
-                          <div className="mt-1 text-xs text-white/40">{localized.desc}</div>
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })}
+            <div className="rounded-2xl border border-white/10 bg-[#0a0a12]/80 backdrop-blur-md p-6 shadow-xl">
+              <div className="flex items-center gap-2 text-white/90 mb-4">
+                <Bot className="h-4 w-4 text-brand-400" />
+                <h3 className="font-semibold">{t('product.visualTools.workflowRule')}</h3>
               </div>
+              <ul className="space-y-3 text-sm text-white/50 list-disc list-inside pl-1">
+                <li>{t('product.visualTools.rules.rule1')}</li>
+                <li>{t('product.visualTools.rules.rule2')}</li>
+                <li>{t('product.visualTools.rules.rule3')}</li>
+              </ul>
             </div>
-          ))}
+          </motion.div>
         </div>
-      </section>
-
-      <aside className="space-y-6">
-        <section className="glass rounded-3xl p-5">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-white/55">
-            <Sparkles className="h-3.5 w-3.5 text-brand-400" />
-            <span>Selected Tool</span>
-          </div>
-          {selectedTool ? (
-            <div className="mt-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-2xl">
-                  {selectedTool.icon}
-                </div>
-                <div>
-                  <div className="font-semibold text-white">{getLocalizedTool(selectedTool, 'zh').name}</div>
-                  <div className="mt-1 text-sm text-white/45">{selectedTool.slug}</div>
-                </div>
-              </div>
-              <p className="mt-4 text-sm leading-6 text-white/55">
-                Launch this tool inside the selected product. Source images, runtime jobs,
-                generated assets, and follow-up downloads stay attached to the SKU.
-              </p>
-            </div>
-          ) : null}
-
-          <button
-            onClick={openWorkspace}
-            disabled={!selectedProduct || !selectedTool}
-            className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Open Product AI Workspace
-            <ArrowRight className="h-4 w-4" />
-          </button>
-
-          {selectedProduct ? (
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <Link
-                to={`/products/${selectedProduct.id}`}
-                className="inline-flex items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/70 transition hover:bg-white/[0.05] hover:text-white"
-              >
-                View product detail
-              </Link>
-              <Link
-                to="/products/workbench/downloads"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/70 transition hover:bg-white/[0.05] hover:text-white"
-              >
-                Open download center
-              </Link>
-            </div>
-          ) : null}
-        </section>
-
-        <section className="glass rounded-3xl p-5">
-          <div className="flex items-center gap-2 text-white">
-            <Bot className="h-4 w-4 text-brand-300" />
-            <h3 className="font-semibold">Workflow Rule</h3>
-          </div>
-          <ul className="mt-4 space-y-3 text-sm text-white/55">
-            <li>Bind product first, then upload source assets.</li>
-            <li>Keep generation history under the product workspace.</li>
-            <li>Return all outputs to assets, listing, and download flows.</li>
-          </ul>
-        </section>
-      </aside>
-    </div>
+      </div>
+    </motion.div>
   )
 }

@@ -1,13 +1,22 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   AlertCircle,
   CheckCircle2,
   ChevronLeft,
+  ChevronDown,
   FileText,
   LoaderCircle,
   Search,
   Sparkles,
+  Settings2,
+  LayoutGrid,
+  Layers,
+  TerminalSquare,
+  Package,
+  Eye,
+  ArrowRight
 } from 'lucide-react'
 import { useToastStore } from '@/store/toastStore'
 import {
@@ -35,22 +44,18 @@ type BatchListingFormState = {
   includeProductTags: boolean
 }
 
-const STATUS_LABELS: Record<ProductStatus, string> = {
-  draft: 'Draft',
-  assets_ready: 'Assets Ready',
-  listing_ready: 'Listing Ready',
-  export_ready: 'Export Ready',
-  published: 'Published',
-  archived: 'Archived',
-}
-
-const STATUS_BADGE_CLASS: Record<ProductStatus, string> = {
+const STATUS_BADGE_CLASS: Record<string, string> = {
   draft: 'border-white/10 bg-white/5 text-white/60',
   assets_ready: 'border-blue-500/30 bg-blue-500/10 text-blue-300',
   listing_ready: 'border-purple-500/30 bg-purple-500/10 text-purple-300',
   export_ready: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
   published: 'border-brand-500/30 bg-brand-500/10 text-brand-300',
   archived: 'border-white/10 bg-white/5 text-white/45',
+  missing: 'border-red-500/30 bg-red-500/10 text-red-300',
+  partial: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+  ready: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+  pending: 'border-white/10 bg-white/5 text-white/60',
+  done: 'border-blue-500/30 bg-blue-500/10 text-blue-300'
 }
 
 const DEFAULT_FORM: BatchListingFormState = {
@@ -122,14 +127,92 @@ function buildDraft(product: ProductListItem, form: BatchListingFormState) {
   }
 }
 
-function formatMutationToast(result: BatchListingMutationResult, successText: string, failureText: string) {
-  if (result.failed === 0) {
-    return `${successText}: ${result.succeeded}/${result.total}`
-  }
-  return `${failureText}: ${result.succeeded} succeeded, ${result.failed} failed`
+/* --- UI Components --- */
+function SelectField({ label, value, onChange, options, inline = false }: { label?: string, value: string, onChange: (v: string) => void, options: {label: string, value: string}[], inline?: boolean }) {
+  return (
+    <div className={inline ? "flex items-center gap-2" : "space-y-1.5"}>
+      {label && <label className="text-xs font-medium text-white/60 shrink-0">{label}</label>}
+      <div className="relative flex-1">
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className="w-full appearance-none rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 pr-8 text-sm text-white/90 outline-none transition-all hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+        >
+          {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+      </div>
+    </div>
+  )
+}
+
+function InputField({ label, value, onChange, placeholder }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-white/60">{label}</label>
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+      />
+    </div>
+  )
+}
+
+function TextareaField({ label, value, onChange, placeholder, rows, hint }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string, rows?: number, hint?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-white/60">{label}</label>
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows || 3}
+        className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 resize-y custom-scrollbar"
+      />
+      {hint && <div className="text-[11px] text-white/40">{hint}</div>}
+    </div>
+  )
+}
+
+function CustomCheckbox({ checked, indeterminate, onChange, label }: { checked: boolean, indeterminate?: boolean, onChange: (v: boolean) => void, label?: string }) {
+  return (
+    <label className="group flex cursor-pointer items-center gap-2 w-fit">
+      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-all ${checked || indeterminate ? 'border-brand-500 bg-brand-500' : 'border-white/20 bg-white/5 group-hover:border-white/40'}`}>
+        {checked && (
+          <svg viewBox="0 0 14 14" fill="none" className="h-3 w-3 text-white">
+            <path d="M3 7.5L5.5 10L11 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+        {!checked && indeterminate && <div className="h-1.5 w-2 rounded-[1px] bg-white" />}
+      </div>
+      {label && <span className="text-sm text-white/70 group-hover:text-white/90 transition-colors select-none">{label}</span>}
+      <input type="checkbox" className="hidden" checked={checked} onChange={e => onChange(e.target.checked)} />
+    </label>
+  )
+}
+
+function TabButton({ active, onClick, icon, label, hasDot }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, hasDot?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative flex items-center gap-2 pb-4 text-sm font-medium transition-colors ${
+        active ? 'text-white' : 'text-white/40 hover:text-white/70'
+      }`}
+    >
+      {icon}
+      {label}
+      {hasDot && <span className="absolute top-0 -right-1.5 h-1.5 w-1.5 rounded-full bg-brand-500" />}
+      {active && (
+        <span className="absolute bottom-0 left-0 w-full h-[2px] bg-brand-500 shadow-[0_0_8px_rgba(var(--brand-500),0.6)]" />
+      )}
+    </button>
+  )
 }
 
 export default function BatchListingPage() {
+  const { t } = useTranslation()
   const { showToast } = useToastStore()
   const [products, setProducts] = useState<ProductListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -145,6 +228,17 @@ export default function BatchListingPage() {
   const [creating, setCreating] = useState(false)
   const [adopting, setAdopting] = useState(false)
   const [lastResult, setLastResult] = useState<BatchListingMutationResult | null>(null)
+  
+  const [activeTab, setActiveTab] = useState<'products' | 'preview' | 'versions' | 'logs'>('products')
+
+  const STATUS_LABELS: Partial<Record<ProductStatus, string>> = {
+    draft: t('product.status.draft'),
+    assets_ready: t('product.status.assets_ready'),
+    listing_ready: t('product.status.listing_ready'),
+    export_ready: t('product.status.export_ready'),
+    published: t('product.status.published'),
+    archived: t('product.status.archived'),
+  }
 
   async function loadProducts(options?: { silent?: boolean }) {
     const silent = options?.silent ?? false
@@ -280,15 +374,22 @@ export default function BatchListingPage() {
     setLastResult(null)
   }
 
+  function formatMutationToast(result: BatchListingMutationResult, successText: string, failureText: string) {
+    if (result.failed === 0) {
+      return `${successText}: ${result.succeeded}/${result.total}`
+    }
+    return `${failureText}: ${result.succeeded} succeeded, ${result.failed} failed`
+  }
+
   async function handleBatchCreate() {
     if (selectedProducts.length === 0) {
-      showToast('Select at least one product first.', 'error')
+      showToast(t('batchListing.messages.selectProductFirst'), 'error')
       return
     }
 
     const drafts = selectedProducts.map(product => buildDraft(product, form))
     if (drafts.some(item => !item.versionLabel || !item.title)) {
-      showToast('Version label and generated title are required.', 'error')
+      showToast(t('batchListing.messages.versionLabelRequired'), 'error')
       return
     }
 
@@ -305,7 +406,10 @@ export default function BatchListingPage() {
         })
         return next
       })
-      showToast(formatMutationToast(result, 'Batch listing created', 'Batch listing partially failed'), result.failed ? 'error' : 'success')
+      showToast(
+        formatMutationToast(result, t('batchListing.messages.createFinished'), t('batchListing.messages.createFailed')),
+        result.failed ? 'error' : 'success'
+      )
       await loadProducts({ silent: true })
       const pairs = await Promise.all(
         selectedProducts.map(async product => {
@@ -314,6 +418,7 @@ export default function BatchListingPage() {
         }),
       )
       setVersionsByProduct(Object.fromEntries(pairs))
+      setActiveTab('logs')
     } catch (error) {
       console.error('Failed to batch create listings:', error)
     } finally {
@@ -330,7 +435,7 @@ export default function BatchListingPage() {
       .filter(item => item.versionId)
 
     if (items.length === 0) {
-      showToast('Choose at least one listing version to adopt.', 'error')
+      showToast(t('batchListing.messages.chooseVersionToAdopt'), 'error')
       return
     }
 
@@ -338,7 +443,10 @@ export default function BatchListingPage() {
     try {
       const result = await batchAdoptListingVersions({ items })
       setLastResult(result)
-      showToast(formatMutationToast(result, 'Batch adopt finished', 'Batch adopt partially failed'), result.failed ? 'error' : 'success')
+      showToast(
+        formatMutationToast(result, t('batchListing.messages.adoptFinished'), t('batchListing.messages.adoptFailed')),
+        result.failed ? 'error' : 'success'
+      )
       await loadProducts({ silent: true })
       const pairs = await Promise.all(
         selectedProducts.map(async product => {
@@ -347,6 +455,7 @@ export default function BatchListingPage() {
         }),
       )
       setVersionsByProduct(Object.fromEntries(pairs))
+      setActiveTab('logs')
     } catch (error) {
       console.error('Failed to batch adopt listings:', error)
     } finally {
@@ -354,241 +463,351 @@ export default function BatchListingPage() {
     }
   }
 
-  return (
-    <div className="min-h-[calc(100vh-72px)] bg-[#0a0a12] px-4 py-6 text-white sm:px-6">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <section className="glass-strong rounded-3xl p-6 sm:p-8">
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-white/55">
-                <Sparkles className="h-3.5 w-3.5 text-brand-400" />
-                <span>Real Batch Listing Workflow</span>
-              </div>
-              <div className="space-y-3">
-                <h1 className="text-3xl font-bold gradient-text">Batch Listing</h1>
-                <p className="max-w-2xl text-sm leading-6 text-white/55">
-                  Select real products from Product Center, render a reusable listing template,
-                  create version drafts in bulk, then adopt the chosen versions back to each SKU.
-                </p>
-              </div>
-            </div>
+  const isAllFilteredSelected = filteredProducts.length > 0 && filteredProducts.every(p => selectedProductIDs.includes(p.id))
+  const isSomeFilteredSelected = filteredProducts.some(p => selectedProductIDs.includes(p.id))
 
-            <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[420px]">
-              <div className="glass rounded-2xl p-4">
-                <div className="text-2xl font-semibold text-white">{products.length}</div>
-                <div className="mt-1 text-xs text-white/45">Products in center</div>
-              </div>
-              <div className="glass rounded-2xl p-4">
-                <div className="text-2xl font-semibold text-white">{selectedProducts.length}</div>
-                <div className="mt-1 text-xs text-white/45">Selected for batch</div>
-              </div>
-              <div className="glass rounded-2xl p-4">
-                <div className="text-2xl font-semibold text-white">
-                  {selectedProducts.reduce((sum, product) => sum + (versionsByProduct[product.id]?.length || 0), 0)}
-                </div>
-                <div className="mt-1 text-xs text-white/45">Loaded listing versions</div>
-              </div>
+  function toggleAllFiltered() {
+    if (isAllFilteredSelected) {
+      setSelectedProductIDs(current => current.filter(id => !filteredProducts.some(p => p.id === id)))
+    } else {
+      selectFilteredProducts()
+    }
+  }
+
+  return (
+    <div className="flex h-full w-full bg-[#09090b] text-white overflow-hidden font-sans">
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+      `}</style>
+      
+      {/* Sidebar - Configuration */}
+      <aside className="w-[380px] xl:w-[420px] flex-shrink-0 border-r border-white/5 bg-[#0c0c10] flex flex-col z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+        <div className="flex-none px-6 py-5 border-b border-white/5">
+          <Link to="/products" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/40 hover:text-white/90 transition-colors mb-5">
+            <ChevronLeft className="h-4 w-4" />
+            {t('batchListing.contextLinks.backToProducts')}
+          </Link>
+          <div className="flex items-center gap-2 mb-1.5">
+            <div className="flex h-6 w-6 items-center justify-center rounded bg-brand-500/20 text-brand-400">
+              <Sparkles className="h-3.5 w-3.5" />
+            </div>
+            <h1 className="text-lg font-semibold tracking-tight text-white/90">{t('batchListing.title')}</h1>
+          </div>
+          <p className="text-[13px] text-white/40 leading-relaxed">{t('batchListing.subtitle')}</p>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+          <div className="space-y-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+              <Settings2 className="h-4 w-4 text-brand-400" />
+              Target Marketplace
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <SelectField label={t('batchListing.template.platform')} value={form.platform} onChange={v => setForm({...form, platform: v})} options={[{label: 'Amazon', value: 'amazon'}, {label: 'Shopee', value: 'shopee'}, {label: 'Lazada', value: 'lazada'}]} />
+              <SelectField label={t('batchListing.template.site')} value={form.site} onChange={v => setForm({...form, site: v})} options={[{label: 'US', value: 'US'}, {label: 'UK', value: 'UK'}, {label: 'SG', value: 'SG'}]} />
+            </div>
+            <SelectField label={t('batchListing.template.locale')} value={form.locale} onChange={v => setForm({...form, locale: v})} options={[{label: 'en_US', value: 'en_US'}, {label: 'en_GB', value: 'en_GB'}, {label: 'en_SG', value: 'en_SG'}]} />
+          </div>
+
+          <div className="h-px bg-white/5" />
+
+          <div className="space-y-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+              <FileText className="h-4 w-4 text-brand-400" />
+              Listing Template
+            </div>
+            <InputField label={t('batchListing.template.versionLabel')} value={form.versionLabel} onChange={v => setForm({...form, versionLabel: v})} placeholder="Batch Draft v1" />
+            <InputField label={t('batchListing.template.titleTemplate')} value={form.titleTemplate} onChange={v => setForm({...form, titleTemplate: v})} />
+            <TextareaField label={t('batchListing.template.descriptionTemplate')} value={form.descriptionTemplate} onChange={v => setForm({...form, descriptionTemplate: v})} rows={4} />
+            <TextareaField label={t('batchListing.template.bulletTemplate')} value={form.bulletTemplateText} onChange={v => setForm({...form, bulletTemplateText: v})} rows={5} hint={t('batchListing.template.bulletHint')} />
+            <TextareaField label={t('batchListing.template.keywords')} value={form.keywordText} onChange={v => setForm({...form, keywordText: v})} rows={2} placeholder={t('batchListing.template.keywordHint')} />
+            <div className="pt-1">
+              <CustomCheckbox label={t('batchListing.template.appendTags')} checked={form.includeProductTags} onChange={v => setForm({...form, includeProductTags: v})} />
             </div>
           </div>
-        </section>
+        </div>
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-          <div className="space-y-6">
-            <div className="glass rounded-3xl p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Select Products</h2>
-                  <p className="mt-1 text-sm text-white/45">
-                    Search by title, SKU, or tags and batch-pick the products that should receive a new listing version.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={selectFilteredProducts}
-                    className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 transition hover:bg-white/[0.07] hover:text-white"
-                  >
-                    Select filtered
-                  </button>
-                  <button
-                    onClick={clearSelection}
-                    className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 transition hover:bg-white/[0.07] hover:text-white"
-                  >
-                    Clear
-                  </button>
-                  <button
-                    onClick={() => void loadProducts({ silent: true })}
-                    className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 transition hover:bg-white/[0.07] hover:text-white"
-                  >
-                    {refreshing ? 'Refreshing...' : 'Refresh'}
-                  </button>
-                </div>
-              </div>
+        <div className="flex-none p-6 border-t border-white/5 bg-[#0c0c10]/90 backdrop-blur">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-medium text-white/50 uppercase tracking-wider">Selected</span>
+            <span className="text-sm font-bold text-brand-400">{selectedProducts.length} <span className="text-white/30 font-normal">items</span></span>
+          </div>
+          <button
+            onClick={handleBatchCreate}
+            disabled={creating || selectedProducts.length === 0}
+            className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(var(--brand-500),0.15)] hover:shadow-[0_0_25px_rgba(var(--brand-500),0.25)] overflow-hidden"
+          >
+            {creating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
+            {creating ? t('batchListing.template.creating') : t('batchListing.template.createBtn')}
+          </button>
+        </div>
+      </aside>
 
-              <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                  <input
-                    value={search}
-                    onChange={event => setSearch(event.target.value)}
-                    placeholder="Search products"
-                    className="w-full rounded-2xl border border-white/[0.08] bg-[#0f0f18] py-3 pl-10 pr-4 text-sm text-white/80 outline-none placeholder:text-white/25 focus:border-brand-500/40"
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 bg-[#09090b] relative">
+        <header className="flex-none px-8 pt-8 border-b border-white/5 flex gap-8">
+          <TabButton active={activeTab === 'products'} onClick={() => setActiveTab('products')} icon={<Package className="h-4 w-4" />} label={t('batchListing.tabs.products', { selected: selectedProducts.length, total: products.length })} />
+          <TabButton active={activeTab === 'preview'} onClick={() => setActiveTab('preview')} icon={<Eye className="h-4 w-4" />} label={t('batchListing.tabs.preview')} />
+          <TabButton active={activeTab === 'versions'} onClick={() => setActiveTab('versions')} icon={<Layers className="h-4 w-4" />} label={t('batchListing.tabs.versions')} />
+          <TabButton active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<TerminalSquare className="h-4 w-4" />} label={t('batchListing.tabs.logs')} hasDot={!!lastResult} />
+        </header>
+
+        <div className="flex-1 overflow-auto p-8 custom-scrollbar">
+          {activeTab === 'products' && (
+            <div className="max-w-6xl mx-auto space-y-5 animate-in fade-in duration-300">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative w-64">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                    <input
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      placeholder={t('batchListing.selectProducts.searchPlaceholder')}
+                      className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-4 text-sm text-white placeholder:text-white/30 focus:border-brand-500/50 focus:outline-none focus:ring-1 focus:ring-brand-500/50 transition-all hover:bg-white/[0.07]"
+                    />
+                  </div>
+                  <SelectField
+                    value={statusFilter}
+                    onChange={v => setStatusFilter(v as ProductStatus | 'all')}
+                    options={[
+                      { label: t('batchListing.selectProducts.allStatuses'), value: 'all' },
+                      ...Object.entries(STATUS_LABELS).map(([v, l]) => ({ label: l, value: v }))
+                    ]}
+                    inline
                   />
                 </div>
-                <select
-                  value={statusFilter}
-                  onChange={event => setStatusFilter(event.target.value as ProductStatus | 'all')}
-                  className="rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none"
-                >
-                  <option value="all">All statuses</option>
-                  {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => void loadProducts({ silent: true })} className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 transition-colors">
+                    <LoaderCircle className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin text-brand-400' : ''}`} />
+                    {t('batchListing.selectProducts.refresh')}
+                  </button>
+                  <button onClick={clearSelection} className="px-3 py-2 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 transition-colors">
+                    {t('batchListing.selectProducts.clear')}
+                  </button>
+                </div>
               </div>
 
-              <div className="mt-5 space-y-3">
-                {loading ? (
-                  <div className="flex items-center justify-center py-16">
-                    <LoaderCircle className="h-8 w-8 animate-spin text-brand-400" />
-                  </div>
-                ) : filteredProducts.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-10 text-center text-sm text-white/40">
-                    No products match the current filter.
-                  </div>
-                ) : (
-                  filteredProducts.map(product => {
-                    const selected = selectedProductIDs.includes(product.id)
-                    return (
-                      <button
-                        key={product.id}
-                        type="button"
-                        onClick={() => toggleProduct(product.id)}
-                        className={`flex w-full items-start gap-4 rounded-2xl border p-4 text-left transition ${
-                          selected
-                            ? 'border-brand-500/40 bg-brand-500/10'
-                            : 'border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05]'
-                        }`}
-                      >
-                        <div className={`mt-0.5 flex h-5 w-5 items-center justify-center rounded border ${selected ? 'border-brand-400 bg-brand-500 text-white' : 'border-white/20 bg-transparent text-transparent'}`}>
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="truncate font-medium text-white">{product.title}</span>
-                            <span className={`rounded-full border px-2 py-0.5 text-[11px] ${STATUS_BADGE_CLASS[product.status]}`}>
-                              {STATUS_LABELS[product.status]}
-                            </span>
-                          </div>
-                          <div className="mt-1 text-xs text-white/40">{product.skuCode}</div>
-                          <div className="mt-3 flex flex-wrap gap-2 text-xs text-white/50">
-                            <span>{product.assetsCount} assets</span>
-                            <span>{product.listingVersionsCount} listing versions</span>
-                            <span>{product.assetStatus} assets state</span>
-                            <span>{product.listingStatus} listing state</span>
-                          </div>
-                          {product.tags.length > 0 ? (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {product.tags.slice(0, 4).map(tag => (
-                                <span key={tag} className="rounded-full border border-white/[0.06] bg-white/[0.04] px-2 py-1 text-[11px] text-white/50">
-                                  {tag}
+              <div className="rounded-xl border border-white/10 bg-[#0c0c10] shadow-xl overflow-hidden">
+                <div className="overflow-x-auto custom-scrollbar">
+                  <table className="w-full text-left text-sm text-white/70 whitespace-nowrap">
+                    <thead className="bg-white/5 text-[11px] font-semibold uppercase tracking-wider text-white/40 border-b border-white/10">
+                      <tr>
+                        <th className="w-14 px-4 py-3 text-center">
+                           <div className="flex justify-center">
+                             <CustomCheckbox checked={isAllFilteredSelected} indeterminate={isSomeFilteredSelected && !isAllFilteredSelected} onChange={toggleAllFiltered} />
+                           </div>
+                        </th>
+                        <th className="px-4 py-3">{t('batchListing.selectProducts.columns.productSku')}</th>
+                        <th className="px-4 py-3">{t('batchListing.selectProducts.columns.status')}</th>
+                        <th className="px-4 py-3">{t('batchListing.selectProducts.columns.assetsVersions')}</th>
+                        <th className="px-4 py-3 w-1/3">{t('batchListing.selectProducts.columns.tags')}</th>
+                      </tr>
+                    </thead>
+                    {loading ? (
+                      <tbody>
+                        <tr>
+                          <td colSpan={5} className="py-20 text-center">
+                            <LoaderCircle className="h-6 w-6 animate-spin text-brand-400 mx-auto" />
+                          </td>
+                        </tr>
+                      </tbody>
+                    ) : filteredProducts.length === 0 ? (
+                      <tbody>
+                        <tr>
+                          <td colSpan={5} className="py-20 text-center text-white/40">
+                            {t('batchListing.selectProducts.noMatch')}
+                          </td>
+                        </tr>
+                      </tbody>
+                    ) : (
+                      <tbody className="divide-y divide-white/5">
+                        {filteredProducts.map(product => {
+                          const isSelected = selectedProductIDs.includes(product.id)
+                          return (
+                            <tr key={product.id} className={`transition-colors hover:bg-white/[0.03] ${isSelected ? 'bg-brand-500/[0.03]' : ''}`}>
+                              <td className="px-4 py-3 text-center">
+                                <div className="flex justify-center">
+                                   <CustomCheckbox checked={isSelected} onChange={() => toggleProduct(product.id)} />
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className={`font-medium transition-colors ${isSelected ? 'text-brand-300' : 'text-white/90'}`}>{product.title}</div>
+                                <div className="font-mono text-xs text-white/40 mt-1">{product.skuCode}</div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border ${STATUS_BADGE_CLASS[product.status]}`}>
+                                  {t(`product.status.${product.status}` as any, STATUS_LABELS[product.status] || product.status)}
                                 </span>
-                              ))}
-                            </div>
-                          ) : null}
-                        </div>
-                      </button>
-                    )
-                  })
-                )}
+                              </td>
+                              <td className="px-4 py-3 text-[11px] text-white/50 space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5">{product.assetsCount} {t('batchListing.selectProducts.tableAssets')}</span>
+                                  <span className="text-white/30">{product.assetStatus}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5">{product.listingVersionsCount} {t('batchListing.selectProducts.tableVersions')}</span>
+                                  <span className="text-white/30">{product.listingStatus}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-1.5">
+                                  {product.tags.slice(0, 4).map(tag => (
+                                    <span key={tag} className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-white/50">{tag}</span>
+                                  ))}
+                                  {product.tags.length > 4 && <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-white/50">+{product.tags.length - 4}</span>}
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    )}
+                  </table>
+                </div>
               </div>
             </div>
+          )}
 
-            <div className="glass rounded-3xl p-5">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Selected Listing Versions</h2>
-                  <p className="mt-1 text-sm text-white/45">
-                    Each selected product loads its current listing history. Choose one version per product for batch adopt.
-                  </p>
+          {activeTab === 'preview' && (
+            <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium text-white/60">Previewing the output for:</div>
+                <div className="w-80">
+                  <SelectField
+                    value={previewProductID}
+                    onChange={setPreviewProductID}
+                    options={selectedProducts.map(p => ({label: p.skuCode + ' - ' + p.title, value: p.id}))}
+                  />
+                </div>
+              </div>
+
+              {!previewProduct || !previewDraft ? (
+                <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] py-24 text-center text-sm text-white/40">
+                  {t('batchListing.preview.selectPrompt')}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-white/10 bg-[#0c0c10] shadow-2xl overflow-hidden">
+                  <div className="bg-white/5 px-8 py-5 border-b border-white/10 flex items-center gap-3">
+                    <span className="px-2.5 py-1 rounded bg-brand-500/20 text-brand-300 text-xs font-mono font-medium border border-brand-500/20 uppercase tracking-wider">{previewDraft.platform}</span>
+                    <span className="px-2.5 py-1 rounded bg-white/10 text-white/70 text-xs font-mono font-medium border border-white/10 uppercase tracking-wider">{previewDraft.site}</span>
+                    <span className="px-2.5 py-1 rounded bg-white/10 text-white/70 text-xs font-mono font-medium border border-white/10">{previewDraft.locale}</span>
+                  </div>
+                  <div className="p-8 space-y-10">
+                    <div>
+                      <h2 className="text-2xl font-bold text-white/90 leading-snug">{previewDraft.title || 'Untitled Product'}</h2>
+                      <div className="mt-3 text-sm text-white/40 font-mono">SKU: {previewProduct?.skuCode}</div>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
+                        <FileText className="h-4 w-4" /> About this item
+                      </h3>
+                      <ul className="space-y-3">
+                        {previewDraft.bulletPoints.map((bp, i) => (
+                          <li key={i} className="flex items-start gap-3 text-sm text-white/80">
+                            <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-brand-500/60 shrink-0 shadow-[0_0_8px_rgba(var(--brand-500),0.8)]" />
+                            <span className="leading-relaxed">{bp}</span>
+                          </li>
+                        ))}
+                        {previewDraft.bulletPoints.length === 0 && <li className="text-sm text-white/30 italic">No bullet points provided.</li>}
+                      </ul>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
+                        <LayoutGrid className="h-4 w-4" /> Description
+                      </h3>
+                      <div className="text-sm text-white/70 leading-relaxed whitespace-pre-wrap bg-white/[0.02] p-5 rounded-xl border border-white/5">
+                        {previewDraft.description || 'No description provided.'}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
+                        <Search className="h-4 w-4" /> Search Keywords
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {previewDraft.keywords.map(kw => (
+                          <span key={kw} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[13px] font-medium text-white/60">{kw}</span>
+                        ))}
+                        {previewDraft.keywords.length === 0 && <span className="text-sm text-white/30 italic">No keywords.</span>}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'versions' && (
+            <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
+                <div className="text-sm text-white/70">
+                  Select a version for each product, then batch adopt them to finalize the listing preparation.
                 </div>
                 <button
                   onClick={handleBatchAdopt}
                   disabled={adopting || selectedProducts.length === 0}
-                  className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(16,185,129,0.2)] focus:ring-2 focus:ring-emerald-500/50"
                 >
-                  {adopting ? 'Adopting...' : 'Batch Adopt Selected Versions'}
+                  {adopting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                  {t('batchListing.selectedVersions.batchAdoptBtn')}
                 </button>
               </div>
 
-              <div className="mt-5 space-y-4">
-                {selectedProducts.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-10 text-center text-sm text-white/40">
-                    Select products to inspect and adopt listing versions.
-                  </div>
-                ) : loadingVersions ? (
-                  <div className="flex items-center justify-center py-12">
-                    <LoaderCircle className="h-7 w-7 animate-spin text-brand-400" />
-                  </div>
-                ) : (
-                  selectedProducts.map(product => {
+              {selectedProducts.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] py-20 text-center text-sm text-white/40">
+                  {t('batchListing.selectedVersions.selectFirstPrompt')}
+                </div>
+              ) : loadingVersions ? (
+                <div className="flex items-center justify-center py-20">
+                  <LoaderCircle className="h-8 w-8 animate-spin text-brand-400" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {selectedProducts.map(product => {
                     const versions = versionsByProduct[product.id] || []
                     return (
-                      <div key={product.id} className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div>
-                            <div className="font-medium text-white">{product.title}</div>
-                            <div className="mt-1 text-xs text-white/40">{product.skuCode}</div>
+                      <div key={product.id} className="rounded-xl border border-white/10 bg-[#0c0c10] overflow-hidden flex flex-col shadow-lg">
+                        <div className="bg-white/5 px-5 py-4 border-b border-white/10 flex items-center justify-between">
+                          <div className="min-w-0 pr-4">
+                            <div className="text-sm font-semibold text-white/90 truncate" title={product.title}>{product.title}</div>
+                            <div className="text-[11px] text-white/40 font-mono mt-1">{product.skuCode}</div>
                           </div>
-                          <Link to={`/products/${product.id}`} className="text-sm text-brand-300 hover:text-brand-200">
-                            Open product
+                          <Link to={`/products/${product.id}`} className="shrink-0 text-xs font-medium text-brand-400 hover:text-brand-300">
+                            Details
                           </Link>
                         </div>
-
-                        <div className="mt-4 space-y-3">
+                        <div className="p-4 flex-1 space-y-3 overflow-y-auto max-h-[360px] custom-scrollbar bg-[#09090b]/50">
                           {versions.length === 0 ? (
-                            <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-4 text-sm text-white/40">
-                              No listing versions yet for this product.
+                            <div className="text-xs text-white/40 text-center py-8 italic">
+                              {t('batchListing.selectedVersions.noVersionsYet')}
                             </div>
                           ) : (
-                            versions.map(version => {
-                              const checked = selectedVersionByProduct[product.id] === version.id
+                            versions.map(v => {
+                              const checked = selectedVersionByProduct[product.id] === v.id
                               return (
-                                <label
-                                  key={version.id}
-                                  className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition ${
-                                    checked
-                                      ? 'border-emerald-500/30 bg-emerald-500/10'
-                                      : 'border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04]'
-                                  }`}
-                                >
-                                  <input
-                                    type="radio"
-                                    name={`selected-version-${product.id}`}
-                                    checked={checked}
-                                    onChange={() =>
-                                      setSelectedVersionByProduct(current => ({ ...current, [product.id]: version.id }))
-                                    }
-                                    className="mt-1"
-                                  />
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <span className="font-medium text-white">{version.versionLabel}</span>
-                                      <span className="text-xs text-white/35">v{version.versionNo}</span>
-                                      <span className={`rounded-full px-2 py-0.5 text-[11px] ${
-                                        version.status === 'adopted'
-                                          ? 'bg-emerald-500/15 text-emerald-300'
-                                          : version.status === 'ready'
-                                            ? 'bg-blue-500/15 text-blue-300'
-                                            : 'bg-white/5 text-white/50'
-                                      }`}>
-                                        {version.status}
-                                      </span>
+                                <label key={v.id} className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${checked ? 'border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/5'}`}>
+                                  <div className="mt-0.5 shrink-0">
+                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${checked ? 'border-emerald-500 bg-emerald-500' : 'border-white/30'}`}>
+                                      {checked && <div className="w-1.5 h-1.5 rounded-full bg-[#0c0c10]" />}
                                     </div>
-                                    <div className="mt-1 text-sm text-white/70">{version.title}</div>
-                                    <div className="mt-2 text-xs text-white/40">
-                                      {version.platform.toUpperCase()} · {version.site} · {version.locale}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                                      <span className={`text-sm font-semibold truncate ${checked ? 'text-emerald-400' : 'text-white/80'}`}>{v.versionLabel}</span>
+                                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${v.status === 'adopted' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 'bg-white/10 text-white/50 border border-white/5'}`}>{v.status}</span>
+                                    </div>
+                                    <div className="text-xs text-white/50 truncate mb-2" title={v.title}>{v.title}</div>
+                                    <div className="flex items-center gap-2 text-[10px] text-white/40 font-mono uppercase tracking-wider">
+                                      <span className="text-white/60">v{v.versionNo}</span>
+                                      <span>|</span>
+                                      <span>{v.platform}</span>
+                                      <span>|</span>
+                                      <span>{v.site}</span>
                                     </div>
                                   </div>
                                 </label>
@@ -598,274 +817,58 @@ export default function BatchListingPage() {
                         </div>
                       </div>
                     )
-                  })
-                )}
-              </div>
-            </div>
-
-            {lastResult ? (
-              <div className="glass rounded-3xl p-5">
-                <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-lg font-semibold text-white">Last Batch Result</h2>
-                  <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-xs text-white/55">
-                    {lastResult.succeeded}/{lastResult.total} succeeded
-                  </span>
-                  {lastResult.failed > 0 ? (
-                    <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs text-amber-300">
-                      {lastResult.failed} failed
-                    </span>
-                  ) : null}
+                  })}
                 </div>
-                <div className="mt-4 space-y-3">
-                  {lastResult.items.map(item => (
-                    <div
-                      key={`${item.productId}-${item.versionId || item.message}`}
-                      className={`flex items-start gap-3 rounded-2xl border p-4 ${
-                        item.success
-                          ? 'border-emerald-500/20 bg-emerald-500/10'
-                          : 'border-amber-500/20 bg-amber-500/10'
-                      }`}
-                    >
-                      {item.success ? (
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
-                      ) : (
-                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-white">
-                          {item.productTitle || item.productId}
-                          {item.skuCode ? <span className="ml-2 text-white/35">{item.skuCode}</span> : null}
-                        </div>
-                        <div className="mt-1 text-sm text-white/65">
-                          {item.message || (item.success ? 'Completed' : 'Failed')}
-                        </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'logs' && (
+            <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
+              {!lastResult ? (
+                <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] py-24 text-center text-sm text-white/40">
+                  No actions performed yet in this session.
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-5 bg-[#0c0c10] border border-white/10 rounded-2xl p-6 shadow-xl">
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                      <TerminalSquare className="h-8 w-8 text-white/60" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white/90">Action Completed</h3>
+                      <div className="text-sm text-white/50 mt-1.5 flex items-center gap-3">
+                        <span>Processed <strong className="text-white/80">{lastResult.total}</strong> items</span>
+                        <span className="w-1 h-1 rounded-full bg-white/20" />
+                        <span className="text-emerald-400">{lastResult.succeeded} Succeeded</span>
+                        {lastResult.failed > 0 && (
+                          <>
+                            <span className="w-1 h-1 rounded-full bg-white/20" />
+                            <span className="text-red-400">{lastResult.failed} Failed</span>
+                          </>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="space-y-6">
-            <div className="glass rounded-3xl p-5">
-              <h2 className="text-lg font-semibold text-white">Listing Template</h2>
-              <p className="mt-1 text-sm text-white/45">
-                Use product tokens to render per-SKU drafts: <code>{'{{title}}'}</code>, <code>{'{{skuCode}}'}</code>,
-                <code>{'{{brandId}}'}</code>, <code>{'{{categoryId}}'}</code>, <code>{'{{tags}}'}</code>.
-              </p>
-
-              <div className="mt-5 space-y-4">
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <div>
-                    <label className="mb-1 block text-sm text-white/70">Platform</label>
-                    <select
-                      value={form.platform}
-                      onChange={event => setForm(current => ({ ...current, platform: event.target.value }))}
-                      className="w-full rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none"
-                    >
-                      <option value="amazon">Amazon</option>
-                      <option value="shopee">Shopee</option>
-                      <option value="lazada">Lazada</option>
-                    </select>
                   </div>
-                  <div>
-                    <label className="mb-1 block text-sm text-white/70">Site</label>
-                    <select
-                      value={form.site}
-                      onChange={event => setForm(current => ({ ...current, site: event.target.value }))}
-                      className="w-full rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none"
-                    >
-                      <option value="US">US</option>
-                      <option value="UK">UK</option>
-                      <option value="SG">SG</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm text-white/70">Locale</label>
-                    <select
-                      value={form.locale}
-                      onChange={event => setForm(current => ({ ...current, locale: event.target.value }))}
-                      className="w-full rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none"
-                    >
-                      <option value="en_US">en_US</option>
-                      <option value="en_GB">en_GB</option>
-                      <option value="en_SG">en_SG</option>
-                    </select>
-                  </div>
-                </div>
 
-                <div>
-                  <label className="mb-1 block text-sm text-white/70">Version Label</label>
-                  <input
-                    value={form.versionLabel}
-                    onChange={event => setForm(current => ({ ...current, versionLabel: event.target.value }))}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none placeholder:text-white/25"
-                    placeholder="Batch Draft v1"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm text-white/70">Title Template</label>
-                  <input
-                    value={form.titleTemplate}
-                    onChange={event => setForm(current => ({ ...current, titleTemplate: event.target.value }))}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none placeholder:text-white/25"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm text-white/70">Description Template</label>
-                  <textarea
-                    rows={4}
-                    value={form.descriptionTemplate}
-                    onChange={event => setForm(current => ({ ...current, descriptionTemplate: event.target.value }))}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none placeholder:text-white/25"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm text-white/70">Bullet Template</label>
-                  <textarea
-                    rows={6}
-                    value={form.bulletTemplateText}
-                    onChange={event => setForm(current => ({ ...current, bulletTemplateText: event.target.value }))}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none placeholder:text-white/25"
-                  />
-                  <div className="mt-1 text-xs text-white/35">One bullet per line.</div>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm text-white/70">Keywords</label>
-                  <textarea
-                    rows={3}
-                    value={form.keywordText}
-                    onChange={event => setForm(current => ({ ...current, keywordText: event.target.value }))}
-                    className="w-full rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none placeholder:text-white/25"
-                    placeholder="One keyword per line, or comma-separated"
-                  />
-                  <label className="mt-3 flex items-center gap-2 text-sm text-white/65">
-                    <input
-                      type="checkbox"
-                      checked={form.includeProductTags}
-                      onChange={event => setForm(current => ({ ...current, includeProductTags: event.target.checked }))}
-                    />
-                    Append product tags into keywords
-                  </label>
-                </div>
-
-                <button
-                  onClick={handleBatchCreate}
-                  disabled={creating || selectedProducts.length === 0}
-                  className="inline-flex w-full items-center justify-center rounded-2xl bg-brand-500 px-4 py-3 text-sm font-medium text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {creating ? 'Creating batch drafts...' : 'Create Listing Versions For Selected Products'}
-                </button>
-              </div>
-            </div>
-
-            <div className="glass rounded-3xl p-5">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Preview</h2>
-                  <p className="mt-1 text-sm text-white/45">
-                    Check one rendered draft before sending the batch request.
-                  </p>
-                </div>
-                {selectedProducts.length > 0 ? (
-                  <select
-                    value={previewProductID}
-                    onChange={event => setPreviewProductID(event.target.value)}
-                    className="rounded-2xl border border-white/[0.08] bg-[#0f0f18] px-4 py-3 text-sm text-white/80 outline-none"
-                  >
-                    {selectedProducts.map(product => (
-                      <option key={product.id} value={product.id}>
-                        {product.skuCode} · {product.title}
-                      </option>
+                  <div className="space-y-3">
+                    {lastResult.items.map((item, idx) => (
+                      <div key={`${item.productId}-${idx}`} className={`flex items-start gap-4 p-5 rounded-xl border ${item.success ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
+                        {item.success ? <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" /> : <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />}
+                        <div>
+                          <div className="text-sm font-semibold text-white/90">{item.productTitle || item.productId}</div>
+                          {item.skuCode && <div className="text-[11px] font-mono text-white/40 mt-1">{item.skuCode}</div>}
+                          <div className="text-sm text-white/60 mt-2">{item.message || (item.success ? t('batchListing.lastResult.completed') : t('batchListing.lastResult.failed'))}</div>
+                        </div>
+                      </div>
                     ))}
-                  </select>
-                ) : null}
-              </div>
-
-              <div className="mt-5">
-                {!previewProduct || !previewDraft ? (
-                  <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-10 text-center text-sm text-white/40">
-                    Select at least one product to preview the rendered listing draft.
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-white/30">Product</div>
-                      <div className="mt-2 text-sm text-white/70">
-                        {previewProduct.title} · {previewProduct.skuCode}
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-white/30">Title</div>
-                      <div className="mt-2 text-white">{previewDraft.title || '-'}</div>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-white/30">Description</div>
-                      <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/75">
-                        {previewDraft.description || '-'}
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-                      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/30">
-                        <FileText className="h-3.5 w-3.5" />
-                        Bullet Points
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        {previewDraft.bulletPoints.length > 0 ? (
-                          previewDraft.bulletPoints.map(point => (
-                            <div key={point} className="rounded-xl border border-white/[0.05] bg-white/[0.03] px-3 py-2 text-sm text-white/70">
-                              {point}
-                            </div>
-                          ))
-                        ) : (
-                          <div className="text-sm text-white/40">No bullet points rendered.</div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-white/30">Keywords</div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {previewDraft.keywords.length > 0 ? (
-                          previewDraft.keywords.map(keyword => (
-                            <span key={keyword} className="rounded-full border border-brand-500/20 bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300">
-                              {keyword}
-                            </span>
-                          ))
-                        ) : (
-                          <div className="text-sm text-white/40">No keywords rendered.</div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
-
-            <div className="glass rounded-3xl p-5">
-              <h2 className="text-lg font-semibold text-white">Context Links</h2>
-              <div className="mt-4 space-y-3 text-sm text-white/55">
-                <Link to="/products" className="flex items-center gap-2 text-brand-300 hover:text-brand-200">
-                  <ChevronLeft className="h-4 w-4 rotate-180" />
-                  Back to Product Center
-                </Link>
-                <Link to="/products/workbench/downloads" className="flex items-center gap-2 text-brand-300 hover:text-brand-200">
-                  <ChevronLeft className="h-4 w-4 rotate-180" />
-                  Open Download Center
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
+          )}
+        </div>
+      </main>
     </div>
   )
 }

@@ -3,9 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Boxes,
-  CheckSquare,
   ChevronRight,
-  Columns3,
   Download,
   FileSpreadsheet,
   Filter,
@@ -18,6 +16,7 @@ import {
   Upload,
   X,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
 import type { ProductListItem, ProductStatus } from '@/types/product'
 import { createProduct, deleteProduct, listProducts } from '@/services/product'
@@ -40,17 +39,7 @@ const STATUS_BADGE_CLASS: Record<ProductStatus, string> = {
   archived: 'border-white/10 bg-white/5 text-white/40',
 }
 
-const ASSET_STATUS_BADGE: Record<ProductListItem['assetStatus'], string> = {
-  missing: 'bg-white/5 text-white/40',
-  partial: 'bg-amber-500/10 text-amber-300',
-  ready: 'bg-emerald-500/10 text-emerald-300',
-}
 
-const LISTING_STATUS_BADGE: Record<ProductListItem['listingStatus'], string> = {
-  missing: 'bg-white/5 text-white/40',
-  partial: 'bg-blue-500/10 text-blue-300',
-  ready: 'bg-emerald-500/10 text-emerald-300',
-}
 
 const EXPORT_STATUS_BADGE: Record<ProductListItem['exportStatus'], string> = {
   pending: 'bg-white/5 text-white/40',
@@ -100,18 +89,18 @@ type ColumnKey =
   | 'tags'
   | 'updatedAt'
 
-const COLUMN_LABELS: Record<ColumnKey, string> = {
-  sku: 'SKU',
-  title: 'Title',
-  status: 'Status',
-  assets: 'Assets',
-  listing: 'Listing',
-  export: 'Export',
-  category: 'Category',
-  brand: 'Brand',
-  tags: 'Tags',
-  updatedAt: 'Updated',
-}
+const COLUMN_KEYS: ColumnKey[] = [
+  'sku',
+  'title',
+  'status',
+  'assets',
+  'listing',
+  'export',
+  'category',
+  'brand',
+  'tags',
+  'updatedAt',
+]
 
 const DEFAULT_VISIBLE_COLUMNS: Record<ColumnKey, boolean> = {
   sku: true,
@@ -186,14 +175,16 @@ function normalizeImportRow(raw: Record<string, unknown>, lineNo: number): Impor
 }
 
 function StatusBadge({ status }: { status: ProductStatus }) {
+  const { t } = useTranslation()
   return (
     <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[status]}`}>
-      {STATUS_LABELS[status]}
+      {t(`product.status.${status}`)}
     </span>
   )
 }
 
 function ProductListPage() {
+  const { t } = useTranslation()
   const { showToast } = useToastStore()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [keyword, setKeyword] = useState('')
@@ -447,25 +438,25 @@ function ProductListPage() {
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-3">
               <Boxes className="w-6 h-6 text-brand-400" />
-              Product Center
+              {t('product.list.title')}
             </h1>
             <p className="mt-2 text-sm text-white/50">
-              Enterprise SKU management. Create, import, and track product lifecycle.
+              {t('product.list.description')}
             </p>
           </div>
           
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-6 pr-6 border-r border-white/10">
               <div className="flex flex-col">
-                <span className="text-xs text-white/40 uppercase tracking-wider">Total</span>
+                <span className="text-xs text-white/40 uppercase tracking-wider">{t('product.list.stats.total')}</span>
                 <span className="text-xl font-semibold text-white">{statusSummary.total}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-white/40 uppercase tracking-wider">Draft</span>
+                <span className="text-xs text-white/40 uppercase tracking-wider">{t('product.list.stats.draft')}</span>
                 <span className="text-xl font-semibold text-white">{statusSummary.draft}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-white/40 uppercase tracking-wider">Ready</span>
+                <span className="text-xs text-white/40 uppercase tracking-wider">{t('product.list.stats.ready')}</span>
                 <span className="text-xl font-semibold text-emerald-400">{statusSummary.readyForListing}</span>
               </div>
             </div>
@@ -475,14 +466,14 @@ function ProductListPage() {
                 className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
               >
                 <Upload className="h-4 w-4" />
-                Import
+                {t('product.list.import')}
               </button>
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-400 shadow-[0_0_20px_rgba(var(--brand-500),0.3)]"
               >
                 <Plus className="h-4 w-4" />
-                Create SKU
+                {t('product.list.create')}
               </button>
             </div>
           </div>
@@ -502,7 +493,7 @@ function ProductListPage() {
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
                   <input
                     type="text"
-                    placeholder="Search SKUs, titles, categories..."
+                    placeholder={t('product.list.search')}
                     value={keyword}
                     onChange={event => setKeyword(event.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-white/[0.02] py-2.5 pl-10 pr-4 text-sm text-white/90 outline-none transition focus:border-brand-500/50 focus:bg-white/[0.04] placeholder:text-white/30"
@@ -514,7 +505,7 @@ function ProductListPage() {
                     onChange={event => setFilterStatus(event.target.value as ProductStatus | 'all')}
                     className="appearance-none rounded-xl border border-white/10 bg-white/[0.02] py-2.5 pl-4 pr-10 text-sm text-white/90 outline-none transition hover:bg-white/[0.04] focus:border-brand-500/50"
                   >
-                    <option value="all">All Status</option>
+                    <option value="all">{t('product.list.allStatus')}</option>
                     {Object.entries(STATUS_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
                     ))}
@@ -525,7 +516,7 @@ function ProductListPage() {
 
               <div className="flex items-center gap-3 shrink-0">
                 <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.02] p-1.5 hidden md:flex">
-                  {(Object.keys(COLUMN_LABELS) as ColumnKey[]).filter(k => ['sku', 'title', 'status', 'assets', 'updatedAt'].includes(k)).map(column => (
+                  {COLUMN_KEYS.filter(k => ['sku', 'title', 'status', 'assets', 'updatedAt'].includes(k)).map(column => (
                     <button
                       key={column}
                       onClick={() => toggleColumn(column)}
@@ -535,7 +526,7 @@ function ProductListPage() {
                           : 'text-white/40 hover:text-white/70'
                       }`}
                     >
-                      {COLUMN_LABELS[column]}
+                      {t(`product.list.table.${column}`)}
                     </button>
                   ))}
                 </div>
@@ -550,20 +541,20 @@ function ProductListPage() {
                 className="mt-4 flex items-center gap-4 rounded-xl border border-brand-500/20 bg-brand-500/10 px-4 py-3"
               >
                 <span className="text-sm font-medium text-brand-300">
-                  {selectedProducts.length} selected
+                  {selectedProducts.length} {t('product.list.selected')}
                 </span>
                 <div className="h-4 w-px bg-brand-500/20" />
                 <Link
                   to="/products/workbench/batch-listing"
                   className="text-sm font-medium text-white hover:text-brand-300 transition"
                 >
-                  Generate Batch Listing
+                  {t('product.list.batchListing')}
                 </Link>
                 <button
                   onClick={() => setSelectedIds([])}
                   className="ml-auto text-sm text-white/50 hover:text-white"
                 >
-                  Clear Selection
+                  {t('product.list.clearSelection')}
                 </button>
               </motion.div>
             )}
@@ -582,8 +573,8 @@ function ProductListPage() {
                     <Package className="h-10 w-10 text-white/20" />
                   </div>
                   <div className="text-center">
-                    <div className="text-base font-medium text-white/70 mb-1">No products found</div>
-                    <div className="text-sm text-white/40">Try adjusting your filters or import new SKUs.</div>
+                    <div className="text-base font-medium text-white/70 mb-1">{t('product.list.noProducts')}</div>
+                    <div className="text-sm text-white/40">{t('product.list.noProductsDesc')}</div>
                   </div>
                 </div>
               ) : (
@@ -613,17 +604,17 @@ function ProductListPage() {
                             onChange={handleSelectAllFiltered}
                           />
                         </th>
-                        {visibleColumns.sku ? <th className="px-4 py-4 font-medium">SKU</th> : null}
-                        {visibleColumns.title ? <th className="px-4 py-4 font-medium">Title</th> : null}
-                        {visibleColumns.status ? <th className="px-4 py-4 font-medium">Status</th> : null}
-                        {visibleColumns.assets ? <th className="px-4 py-4 font-medium">Assets</th> : null}
-                        {visibleColumns.listing ? <th className="px-4 py-4 font-medium">Listing</th> : null}
-                        {visibleColumns.export ? <th className="px-4 py-4 font-medium">Export</th> : null}
-                        {visibleColumns.category ? <th className="px-4 py-4 font-medium">Category</th> : null}
-                        {visibleColumns.brand ? <th className="px-4 py-4 font-medium">Brand</th> : null}
-                        {visibleColumns.tags ? <th className="px-4 py-4 font-medium">Tags</th> : null}
-                        {visibleColumns.updatedAt ? <th className="px-4 py-4 font-medium">Updated</th> : null}
-                        <th className="px-4 py-4 font-medium text-right">Actions</th>
+                        {visibleColumns.sku ? <th className="px-4 py-4 font-medium">{t('product.list.table.sku')}</th> : null}
+                        {visibleColumns.title ? <th className="px-4 py-4 font-medium">{t('product.list.table.title')}</th> : null}
+                        {visibleColumns.status ? <th className="px-4 py-4 font-medium">{t('product.list.table.status')}</th> : null}
+                        {visibleColumns.assets ? <th className="px-4 py-4 font-medium">{t('product.list.table.assets')}</th> : null}
+                        {visibleColumns.listing ? <th className="px-4 py-4 font-medium">{t('product.list.table.listing')}</th> : null}
+                        {visibleColumns.export ? <th className="px-4 py-4 font-medium">{t('product.list.table.export')}</th> : null}
+                        {visibleColumns.category ? <th className="px-4 py-4 font-medium">{t('product.list.table.category')}</th> : null}
+                        {visibleColumns.brand ? <th className="px-4 py-4 font-medium">{t('product.list.table.brand')}</th> : null}
+                        {visibleColumns.tags ? <th className="px-4 py-4 font-medium">{t('product.list.table.tags')}</th> : null}
+                        {visibleColumns.updatedAt ? <th className="px-4 py-4 font-medium">{t('product.list.table.updatedAt')}</th> : null}
+                        <th className="px-4 py-4 font-medium text-right">{t('product.list.table.actions')}</th>
                       </tr>
                     </thead>
                     <motion.tbody
@@ -763,7 +754,7 @@ function ProductListPage() {
           {previewProduct ? (
             <>
               <div className="flex items-center justify-between p-6 border-b border-white/10">
-                <h3 className="font-semibold text-white">Quick Preview</h3>
+                <h3 className="font-semibold text-white">{t('product.list.quickPreview')}</h3>
                 <button onClick={() => setPreviewProductId('')} className="p-1.5 text-white/40 hover:text-white rounded-lg hover:bg-white/5 transition">
                   <X className="w-4 h-4" />
                 </button>
@@ -782,7 +773,7 @@ function ProductListPage() {
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-                    <div className="text-xs text-white/40 mb-1">Assets</div>
+                    <div className="text-xs text-white/40 mb-1">{t('product.list.preview.assets')}</div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-bold text-white">{previewProduct.assetsCount}</span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase ${
@@ -795,7 +786,7 @@ function ProductListPage() {
                     </div>
                   </div>
                   <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-                    <div className="text-xs text-white/40 mb-1">Listings</div>
+                    <div className="text-xs text-white/40 mb-1">{t('product.list.preview.listings')}</div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-2xl font-bold text-white">{previewProduct.listingVersionsCount}</span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase ${
@@ -812,15 +803,15 @@ function ProductListPage() {
                 {/* Details List */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between py-3 border-b border-white/5">
-                    <span className="text-sm text-white/40">Category</span>
+                    <span className="text-sm text-white/40">{t('product.list.preview.category')}</span>
                     <span className="text-sm font-medium text-white/80">{previewProduct.categoryId || '-'}</span>
                   </div>
                   <div className="flex items-center justify-between py-3 border-b border-white/5">
-                    <span className="text-sm text-white/40">Brand</span>
+                    <span className="text-sm text-white/40">{t('product.list.preview.brand')}</span>
                     <span className="text-sm font-medium text-white/80">{previewProduct.brandId || '-'}</span>
                   </div>
                   <div className="py-3 border-b border-white/5">
-                    <span className="block text-sm text-white/40 mb-3">Tags</span>
+                    <span className="block text-sm text-white/40 mb-3">{t('product.list.preview.tags')}</span>
                     <div className="flex flex-wrap gap-2">
                       {previewProduct.tags.length > 0 ? (
                         previewProduct.tags.map(tag => (
@@ -829,7 +820,7 @@ function ProductListPage() {
                           </span>
                         ))
                       ) : (
-                        <span className="text-sm text-white/20">No tags</span>
+                        <span className="text-sm text-white/20">{t('product.list.preview.noTags')}</span>
                       )}
                     </div>
                   </div>
@@ -843,13 +834,13 @@ function ProductListPage() {
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-400 shadow-[0_0_20px_rgba(var(--brand-500),0.2)]"
                 >
                   <Sparkles className="h-4 w-4" />
-                  Visual Workspace
+                  {t('product.list.preview.visualWorkspace')}
                 </Link>
                 <Link
                   to={`/products/${previewProduct.id}`}
                   className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-white transition hover:bg-white/10"
                 >
-                  Full Details
+                  {t('product.list.preview.fullDetails')}
                 </Link>
               </div>
             </>
@@ -858,19 +849,19 @@ function ProductListPage() {
       </div>
 
       {showCreateModal ? (
-        <ModalShell title="Create New Product" onClose={() => setShowCreateModal(false)}>
+        <ModalShell title={t('product.list.createModal.title')} onClose={() => setShowCreateModal(false)}>
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="SKU Code *">
+              <Field label={t('product.list.createModal.skuCode')}>
                 <input
                   type="text"
                   value={createForm.skuCode}
                   onChange={event => setCreateForm(prev => ({ ...prev, skuCode: event.target.value }))}
                   className="w-full rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
-                  placeholder="SKU-10001"
+                  placeholder={t('product.list.createModal.skuPlaceholder')}
                 />
               </Field>
-              <Field label="Currency">
+              <Field label={t('product.list.createModal.currency')}>
                 <select
                   value={createForm.costCurrency}
                   onChange={event => setCreateForm(prev => ({ ...prev, costCurrency: event.target.value }))}
@@ -883,38 +874,38 @@ function ProductListPage() {
               </Field>
             </div>
 
-            <Field label="Title *">
+            <Field label={t('product.list.createModal.productTitle')}>
               <input
                 type="text"
                 value={createForm.title}
                 onChange={event => setCreateForm(prev => ({ ...prev, title: event.target.value }))}
                 className="w-full rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
-                placeholder="Product title"
+                placeholder={t('product.list.createModal.titlePlaceholder')}
               />
             </Field>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Category">
+              <Field label={t('product.list.createModal.category')}>
                 <input
                   type="text"
                   value={createForm.categoryId}
                   onChange={event => setCreateForm(prev => ({ ...prev, categoryId: event.target.value }))}
                   className="w-full rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
-                  placeholder="home"
+                  placeholder={t('product.list.createModal.categoryPlaceholder')}
                 />
               </Field>
-              <Field label="Brand">
+              <Field label={t('product.list.createModal.brand')}>
                 <input
                   type="text"
                   value={createForm.brandId}
                   onChange={event => setCreateForm(prev => ({ ...prev, brandId: event.target.value }))}
                   className="w-full rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
-                  placeholder="brand-a"
+                  placeholder={t('product.list.createModal.brandPlaceholder')}
                 />
               </Field>
             </div>
 
-            <Field label="Tags">
+            <Field label={t('product.list.createModal.tags')}>
               <div className="space-y-3">
                 <div className="flex gap-2">
                   <input
@@ -928,13 +919,13 @@ function ProductListPage() {
                       }
                     }}
                     className="flex-1 rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
-                    placeholder="Add a tag"
+                    placeholder={t('product.list.createModal.addTagPlaceholder')}
                   />
                   <button
                     onClick={addTag}
                     className="rounded-md border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-slate-200 transition hover:bg-white/10"
                   >
-                    Add
+                    {t('product.list.createModal.add')}
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -956,28 +947,26 @@ function ProductListPage() {
               onClick={() => setShowCreateModal(false)}
               className="flex-1 rounded-md border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-slate-200 transition hover:bg-white/10"
             >
-              Cancel
+              {t('product.list.createModal.cancel')}
             </button>
             <button
               onClick={() => void handleCreate()}
               disabled={!createForm.skuCode.trim() || !createForm.title.trim()}
               className="flex-1 rounded-md bg-white px-4 py-2.5 text-sm font-medium text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Create Product
-            </button>
+            >{t('product.list.create')}</button>
           </div>
         </ModalShell>
       ) : null}
 
       {showImportModal ? (
-        <ModalShell title="Batch Import Products" onClose={() => setShowImportModal(false)} size="xl">
+        <ModalShell title={t('product.list.importModal.title')} onClose={() => setShowImportModal(false)} size="xl">
           <div className="space-y-5">
             <div className="rounded-md border border-white/10 bg-white/5 p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <div className="font-medium text-white">Spreadsheet Import</div>
+                  <div className="font-medium text-white">{t('product.list.importModal.subtitle')}</div>
                   <div className="mt-1 text-sm text-white/45">
-                    Supports `.xlsx`, `.xls`, and `.csv`. Required headers: {IMPORT_TEMPLATE_HEADERS.join(', ')}.
+                    {t('product.list.importModal.description')}{IMPORT_TEMPLATE_HEADERS.join(', ')}.
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -986,14 +975,14 @@ function ProductListPage() {
                     className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 transition hover:bg-white/10"
                   >
                     <Download className="h-4 w-4" />
-                    Download Template
+                    {t('product.list.importModal.downloadTemplate')}
                   </button>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-medium text-slate-950 transition hover:bg-slate-200"
                   >
                     <FileSpreadsheet className="h-4 w-4" />
-                    Choose File
+                    {t('product.list.importModal.chooseFile')}
                   </button>
                 </div>
               </div>
@@ -1018,20 +1007,20 @@ function ProductListPage() {
               </div>
             ) : importRows.length === 0 ? (
               <div className="rounded-md border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-12 text-center text-sm text-white/40">
-                Upload a spreadsheet to preview rows and validation results.
+                {t('product.list.importModal.uploadPrompt')}
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs text-white/55">
-                    {importRows.length} rows parsed
+                    {importRows.length} {t('product.list.importModal.rowsParsed')}
                   </span>
                   <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-                    {importRows.filter(row => row.errors.length === 0).length} valid
+                    {importRows.filter(row => row.errors.length === 0).length} {t('product.list.importModal.valid')}
                   </span>
                   {importRows.some(row => row.errors.length > 0) ? (
                     <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
-                      {importRows.filter(row => row.errors.length > 0).length} with errors
+                      {importRows.filter(row => row.errors.length > 0).length} {t('product.list.importModal.withErrors')}
                     </span>
                   ) : null}
                 </div>
@@ -1040,13 +1029,13 @@ function ProductListPage() {
                   <table className="min-w-full text-left text-sm">
                     <thead className="bg-white/[0.03] text-white/50">
                       <tr>
-                        <th className="px-4 py-3">Line</th>
-                        <th className="px-4 py-3">SKU</th>
-                        <th className="px-4 py-3">Title</th>
-                        <th className="px-4 py-3">Category</th>
-                        <th className="px-4 py-3">Brand</th>
-                        <th className="px-4 py-3">Tags</th>
-                        <th className="px-4 py-3">Errors</th>
+                        <th className="px-4 py-3">{t('product.list.importModal.columns.line')}</th>
+                        <th className="px-4 py-3">{t('product.list.importModal.columns.sku')}</th>
+                        <th className="px-4 py-3">{t('product.list.importModal.columns.title')}</th>
+                        <th className="px-4 py-3">{t('product.list.importModal.columns.category')}</th>
+                        <th className="px-4 py-3">{t('product.list.importModal.columns.brand')}</th>
+                        <th className="px-4 py-3">{t('product.list.importModal.columns.tags')}</th>
+                        <th className="px-4 py-3">{t('product.list.importModal.columns.errors')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1060,7 +1049,7 @@ function ProductListPage() {
                           <td className="px-4 py-3 text-white/65">{row.tags.join(', ') || '-'}</td>
                           <td className="px-4 py-3">
                             {row.errors.length === 0 ? (
-                              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">valid</span>
+                              <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">{t('product.list.importModal.valid')}</span>
                             ) : (
                               <div className="space-y-1">
                                 {row.errors.map(error => (
@@ -1086,14 +1075,14 @@ function ProductListPage() {
               }}
               className="flex-1 rounded-md border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-slate-200 transition hover:bg-white/10"
             >
-              Close
+              {t('product.list.importModal.close')}
             </button>
             <button
               onClick={() => void handleImportSubmit()}
               disabled={importRows.filter(row => row.errors.length === 0).length === 0 || importing}
               className="flex-1 rounded-md bg-white px-4 py-2.5 text-sm font-medium text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {importing ? 'Importing...' : 'Import Valid Rows'}
+              {importing ? t('product.list.importModal.importing') : t('product.list.importModal.importValidRows')}
             </button>
           </div>
         </ModalShell>

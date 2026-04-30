@@ -1,14 +1,45 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { ArrowLeft, Image, FileText, TrendingUp, Download, Wand2, LoaderCircle, Trash2, Plus } from 'lucide-react'
+import {
+  ArrowLeft,
+  Image as ImageIcon,
+  FileText,
+  TrendingUp,
+  Download,
+  Wand2,
+  LoaderCircle,
+  Trash2,
+  Plus,
+  ChevronDown
+} from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
-import { getProduct, updateProduct, calculateProfit, createExportTask, createListingVersion, updateListingVersion, adoptListingVersion, deleteProduct, deleteProductAsset, updateProductAssetRelation, listDownloads } from '@/services/product'
-import type { Product, ListingVersion, ProfitSnapshot, ExportTask, ProductActivity, ProductAssetItem, DownloadRecord } from '@/types/product'
+import {
+  getProduct,
+  updateProduct,
+  calculateProfit,
+  createExportTask,
+  createListingVersion,
+  updateListingVersion,
+  adoptListingVersion,
+  deleteProduct,
+  deleteProductAsset,
+  updateProductAssetRelation,
+  listDownloads
+} from '@/services/product'
+import type {
+  Product,
+  ListingVersion,
+  ProfitSnapshot,
+  ExportTask,
+  ProductActivity,
+  ProductAssetItem,
+  DownloadRecord
+} from '@/types/product'
 import { AssetsTab, ExportsTab, HistoryTab, ListingsTab, ProfitTab } from './components/ProductDetailTabs'
 
 const TABS = [
-  { id: 'assets', label: 'Assets', icon: Image },
+  { id: 'assets', label: 'Assets', icon: ImageIcon },
   { id: 'listings', label: 'Listings', icon: FileText },
   { id: 'profit', label: 'Profit', icon: TrendingUp },
   { id: 'exports', label: 'Exports', icon: Download },
@@ -33,7 +64,76 @@ type ProductFormState = {
   tags: string[]
 }
 
+/* --- UI Components --- */
+function SelectField({ label, value, onChange, options, inline = false }: { label?: string, value: string, onChange: (v: string) => void, options: {label: string, value: string}[], inline?: boolean }) {
+  return (
+    <div className={inline ? "flex items-center gap-2" : "space-y-1.5"}>
+      {label && <label className="text-xs font-medium text-white/60 shrink-0">{label}</label>}
+      <div className="relative flex-1">
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className="w-full appearance-none rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 pr-8 text-sm text-white/90 outline-none transition-all hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+        >
+          {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+      </div>
+    </div>
+  )
+}
+
+function InputField({ label, value, onChange, placeholder, onBlur }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string, onBlur?: () => void }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-white/60">{label}</label>
+      <input
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+      />
+    </div>
+  )
+}
+
+function TextareaField({ label, value, onChange, placeholder, rows, hint }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string, rows?: number, hint?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-white/60">{label}</label>
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={rows || 3}
+        className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 resize-y custom-scrollbar"
+      />
+      {hint && <div className="text-[11px] text-white/40">{hint}</div>}
+    </div>
+  )
+}
+
+function TabButton({ active, onClick, icon, label, hasDot }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, hasDot?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative flex items-center gap-2 pb-4 text-sm font-medium transition-colors ${
+        active ? 'text-white' : 'text-white/40 hover:text-white/70'
+      }`}
+    >
+      {icon}
+      {label}
+      {hasDot && <span className="absolute top-0 -right-1.5 h-1.5 w-1.5 rounded-full bg-brand-500" />}
+      {active && (
+        <span className="absolute bottom-0 left-0 w-full h-[2px] bg-brand-500 shadow-[0_0_8px_rgba(var(--brand-500),0.6)]" />
+      )}
+    </button>
+  )
+}
+
 export function ProductDetailPage() {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { showToast } = useToastStore()
@@ -127,7 +227,7 @@ export function ProductDetailPage() {
       })
     } catch (error) {
       console.error('Failed to load product:', error)
-      showToast('Failed to load product workspace.', 'error')
+      showToast(t('product.detail.toast.loadFailed'), 'error')
     } finally {
       setLoading(false)
     }
@@ -135,7 +235,7 @@ export function ProductDetailPage() {
 
   async function handleDelete() {
     if (!id) return
-    if (!confirm('Are you sure you want to delete this product? All related data will be lost.')) {
+    if (!confirm(t('product.detail.deleteConfirm'))) {
       return
     }
     setDeleting(true)
@@ -161,7 +261,7 @@ export function ProductDetailPage() {
   ) {
     if (!id || !data) return
     setSavingProduct(true)
-    setProductSaveLabel('Saving...')
+    setProductSaveLabel(t('product.detail.saving'))
     try {
       const updated = await updateProduct(id, patch)
       setData(current => {
@@ -182,11 +282,11 @@ export function ProductDetailPage() {
         costCurrency: updated.costCurrency || 'USD',
         tags: updated.tags || [],
       })
-      setProductSaveLabel('Saved just now')
+      setProductSaveLabel(t('product.detail.savedJustNow'))
     } catch (error) {
       console.error('Failed to update product:', error)
-      setProductSaveLabel('Save failed')
-      showToast('Failed to save product changes.', 'error')
+      setProductSaveLabel(t('product.detail.saveFailed'))
+      showToast(t('product.detail.toast.saveFailed'), 'error')
     } finally {
       setSavingProduct(false)
     }
@@ -372,10 +472,10 @@ export function ProductDetailPage() {
     try {
       await updateProductAssetRelation(id, assetRelationId, { isPrimary: true })
       await loadProductWorkspace(id)
-      showToast('Primary asset updated.', 'success')
+      showToast(t('product.detail.toast.primaryUpdated'), 'success')
     } catch (error) {
       console.error('Failed to update primary asset:', error)
-      showToast('Failed to update primary asset.', 'error')
+      showToast(t('product.detail.toast.primaryUpdateFailed'), 'error')
     } finally {
       setAssetMutatingRelationId(null)
     }
@@ -387,10 +487,10 @@ export function ProductDetailPage() {
     try {
       await updateProductAssetRelation(id, assetRelationId, { assetRole })
       await loadProductWorkspace(id)
-      showToast('Asset role updated.', 'success')
+      showToast(t('product.detail.toast.roleUpdated'), 'success')
     } catch (error) {
       console.error('Failed to update asset role:', error)
-      showToast('Failed to update asset role.', 'error')
+      showToast(t('product.detail.toast.roleUpdateFailed'), 'error')
     } finally {
       setAssetMutatingRelationId(null)
     }
@@ -398,17 +498,14 @@ export function ProductDetailPage() {
 
   async function handleDeleteAssetRelation(assetRelationId: string) {
     if (!id) return
-    if (!confirm('Remove this asset from the product workspace?')) {
-      return
-    }
     setAssetMutatingRelationId(assetRelationId)
     try {
       await deleteProductAsset(id, assetRelationId)
       await loadProductWorkspace(id)
-      showToast('Asset removed from product.', 'success')
+      showToast(t('product.detail.toast.assetRemoved'), 'success')
     } catch (error) {
       console.error('Failed to delete product asset relation:', error)
-      showToast('Failed to remove asset.', 'error')
+      showToast(t('product.detail.toast.assetRemoveFailed'), 'error')
     } finally {
       setAssetMutatingRelationId(null)
     }
@@ -420,10 +517,10 @@ export function ProductDetailPage() {
     try {
       await Promise.all(assetRelationIds.map(assetRelationId => updateProductAssetRelation(id, assetRelationId, { assetRole })))
       await loadProductWorkspace(id)
-      showToast(`Updated ${assetRelationIds.length} assets.`, 'success')
+      showToast(t('product.detail.toast.bulkRoleUpdated', { count: assetRelationIds.length }), 'success')
     } catch (error) {
       console.error('Failed to bulk update asset role:', error)
-      showToast('Failed to update selected assets.', 'error')
+      showToast(t('product.detail.toast.bulkRoleFailed'), 'error')
     } finally {
       setAssetBulkMutating(false)
     }
@@ -431,17 +528,14 @@ export function ProductDetailPage() {
 
   async function handleBulkDeleteAssetRelations(assetRelationIds: string[]) {
     if (!id || assetRelationIds.length === 0) return
-    if (!confirm(`Remove ${assetRelationIds.length} selected assets from the product workspace?`)) {
-      return
-    }
     setAssetBulkMutating(true)
     try {
       await Promise.all(assetRelationIds.map(assetRelationId => deleteProductAsset(id, assetRelationId)))
       await loadProductWorkspace(id)
-      showToast(`Removed ${assetRelationIds.length} assets.`, 'success')
+      showToast(t('product.detail.toast.bulkRemoved', { count: assetRelationIds.length }), 'success')
     } catch (error) {
       console.error('Failed to bulk delete asset relations:', error)
-      showToast('Failed to remove selected assets.', 'error')
+      showToast(t('product.detail.toast.bulkRemoveFailed'), 'error')
     } finally {
       setAssetBulkMutating(false)
     }
@@ -453,10 +547,10 @@ export function ProductDetailPage() {
     try {
       await updateProductAssetRelation(id, assetRelationId, { sortOrder })
       await loadProductWorkspace(id)
-      showToast('Asset order updated.', 'success')
+      showToast(t('product.detail.toast.orderUpdated'), 'success')
     } catch (error) {
       console.error('Failed to update asset order:', error)
-      showToast('Failed to update asset order.', 'error')
+      showToast(t('product.detail.toast.orderUpdateFailed'), 'error')
     } finally {
       setAssetMutatingRelationId(null)
     }
@@ -482,10 +576,10 @@ export function ProductDetailPage() {
       await updateProductAssetRelation(id, current.relation.id, { sortOrder: target.relation.sortOrder })
       await updateProductAssetRelation(id, target.relation.id, { sortOrder: current.relation.sortOrder })
       await loadProductWorkspace(id)
-      showToast(`Asset moved ${direction}.`, 'success')
+      showToast(t('product.detail.toast.moved'), 'success')
     } catch (error) {
       console.error(`Failed to move asset ${direction}:`, error)
-      showToast('Failed to reorder assets.', 'error')
+      showToast(t('product.detail.toast.moveFailed'), 'error')
     } finally {
       setAssetMutatingRelationId(null)
     }
@@ -498,7 +592,7 @@ export function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-72px)] bg-[#0a0a12] text-white p-6 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-72px)] bg-[#09090b] text-white p-6 flex items-center justify-center">
         <LoaderCircle className="h-8 w-8 text-brand-500 animate-spin" />
       </div>
     )
@@ -506,11 +600,11 @@ export function ProductDetailPage() {
 
   if (!data) {
     return (
-      <div className="min-h-[calc(100vh-72px)] bg-[#0a0a12] text-white p-6 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-72px)] bg-[#09090b] text-white p-6 flex items-center justify-center">
         <div className="text-center text-white/40">
-          <p>Product not found</p>
+          <p>{t('product.detail.notFound')}</p>
           <Link to="/products" className="text-brand-400 hover:underline mt-2 inline-block">
-            Back to product center
+            {t('product.detail.backToProducts')}
           </Link>
         </div>
       </div>
@@ -519,617 +613,362 @@ export function ProductDetailPage() {
 
   const { product } = data
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.05 }
-    }
-  }
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } }
-  }
-
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-      className="min-h-[calc(100vh-72px)] bg-[#0a0a12] text-white"
-    >
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
-        <motion.div variants={itemVariants} className="flex items-center gap-4">
-          <Link to="/products" className="text-white/60 hover:text-white transition">
-            <ArrowLeft className="h-5 w-5" />
+    <div className="flex h-[calc(100vh-72px)] w-full bg-[#09090b] text-white overflow-hidden font-sans">
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+      `}</style>
+      
+      {/* Sidebar - Configuration */}
+      <aside className="w-[380px] xl:w-[420px] flex-shrink-0 border-r border-white/5 bg-[#0c0c10] flex flex-col z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+        <div className="flex-none px-6 py-5 border-b border-white/5">
+          <Link to="/products" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/40 hover:text-white/90 transition-colors mb-5">
+            <ArrowLeft className="h-4 w-4" />
+            {t('productWorkbench.nav.productList')}
           </Link>
-          <div>
-            <h1 className="text-2xl font-semibold text-white">{product.title}</h1>
-            <div className="flex items-center gap-3 mt-1 text-sm">
-              <span className="text-white/50">{product.skuCode}</span>
-              {product.brandId && <span className="text-white/50">• Brand: {product.brandId}</span>}
-              {product.categoryId && <span className="text-white/50">• Category: {product.categoryId}</span>}
-            </div>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <button onClick={handleDelete} disabled={deleting} className="px-4 py-2 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium transition disabled:opacity-50">
-              {deleting ? (
-                <LoaderCircle className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
+          <div className="flex items-center justify-between mb-1.5">
+            <h1 className="text-lg font-semibold tracking-tight text-white/90 truncate mr-2">{product.title}</h1>
+            <button onClick={handleDelete} disabled={deleting} className="shrink-0 p-1.5 rounded-md hover:bg-red-500/10 text-white/40 hover:text-red-400 transition disabled:opacity-50">
+              {deleting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             </button>
-            <Link
-              to={`/products/${product.id}/ai/ai-product`}
-              className="px-4 py-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition"
-            >
-              Generate Assets
-            </Link>
-            <button onClick={openCreateListingModal} className="px-4 py-2 rounded-md bg-white hover:bg-slate-200 text-slate-950 text-sm font-medium transition">
-              Generate Listing
-            </button>
-            <div className="px-4 py-2 rounded-md bg-white/5 border border-white/10 text-white/70 text-sm font-medium">
-              Status: {product.status}
-            </div>
           </div>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_340px]">
-          <div className="glass-strong rounded-xl p-6 transition-all duration-300 hover:border-white/15 hover:shadow-lg">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-white">Basic Information</h2>
-                <p className="mt-1 text-sm text-white/45">
-                  Edit product metadata inline. Fields save on blur so the workbench behaves like an active product editor instead of a read-only detail page.
-                </p>
+          <p className="text-[13px] text-white/40 leading-relaxed font-mono">{product.skuCode}</p>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+                {t('product.detail.basicInfo')}
               </div>
-              <div className="rounded-full border border-white/5 bg-white/5 px-3 py-1 text-xs text-white/55">
-                {savingProduct ? 'Saving...' : productSaveLabel || 'Auto-save on blur'}
+              <div className="text-[11px] text-white/40">
+                {savingProduct ? t('product.detail.saving') : productSaveLabel || t('product.detail.autoSave')}
               </div>
             </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <InputField label={t('product.detail.skuCode')} value={productForm.skuCode} onChange={v => setProductForm({...productForm, skuCode: v})} onBlur={() => void handleProductFieldBlur('skuCode')} />
+              <SelectField label={t('product.detail.currency')} value={productForm.costCurrency} onChange={v => { setProductForm({...productForm, costCurrency: v}); void persistProductPatch({costCurrency: v}); }} options={[{label: t('product.detail.currencies.USD'), value: 'USD'}, {label: t('product.detail.currencies.CNY'), value: 'CNY'}, {label: t('product.detail.currencies.EUR'), value: 'EUR'}]} />
+            </div>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <InlineField label="SKU Code">
+            <InputField label={t('product.detail.titleLabel')} value={productForm.title} onChange={v => setProductForm({...productForm, title: v})} onBlur={() => void handleProductFieldBlur('title')} />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <InputField label={t('product.detail.category')} value={productForm.categoryId} onChange={v => setProductForm({...productForm, categoryId: v})} onBlur={() => void handleProductFieldBlur('categoryId')} />
+              <InputField label={t('product.detail.brand')} value={productForm.brandId} onChange={v => setProductForm({...productForm, brandId: v})} onBlur={() => void handleProductFieldBlur('brandId')} />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-white/60">{t('product.detail.tags')}</label>
+              <div className="flex gap-2">
                 <input
-                  value={productForm.skuCode}
-                  onChange={event => setProductForm(prev => ({ ...prev, skuCode: event.target.value }))}
-                  onBlur={() => void handleProductFieldBlur('skuCode')}
-                  className="w-full glass rounded-lg px-4 py-2.5 text-white outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05]"
+                  value={detailTagInput}
+                  onChange={event => setDetailTagInput(event.target.value)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault()
+                      void addDetailTag()
+                    }
+                  }}
+                  className="flex-1 rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+                  placeholder={t('product.detail.addTagPlaceholder')}
                 />
-              </InlineField>
-              <InlineField label="Currency">
-                <select
-                  value={productForm.costCurrency}
-                  onChange={event => setProductForm(prev => ({ ...prev, costCurrency: event.target.value }))}
-                  onBlur={() => void handleProductFieldBlur('costCurrency')}
-                  className="w-full glass rounded-lg px-4 py-2.5 text-white outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05]"
-                >
-                  <option value="USD">USD</option>
-                  <option value="CNY">CNY</option>
-                  <option value="EUR">EUR</option>
-                </select>
-              </InlineField>
-            </div>
-
-            <div className="mt-4">
-              <InlineField label="Title">
-                <input
-                  value={productForm.title}
-                  onChange={event => setProductForm(prev => ({ ...prev, title: event.target.value }))}
-                  onBlur={() => void handleProductFieldBlur('title')}
-                  className="w-full glass rounded-lg px-4 py-2.5 text-white outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05]"
-                />
-              </InlineField>
-            </div>
-
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <InlineField label="Category">
-                <input
-                  value={productForm.categoryId}
-                  onChange={event => setProductForm(prev => ({ ...prev, categoryId: event.target.value }))}
-                  onBlur={() => void handleProductFieldBlur('categoryId')}
-                  className="w-full glass rounded-lg px-4 py-2.5 text-white outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05]"
-                  placeholder="Category ID"
-                />
-              </InlineField>
-              <InlineField label="Brand">
-                <input
-                  value={productForm.brandId}
-                  onChange={event => setProductForm(prev => ({ ...prev, brandId: event.target.value }))}
-                  onBlur={() => void handleProductFieldBlur('brandId')}
-                  className="w-full glass rounded-lg px-4 py-2.5 text-white outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05]"
-                  placeholder="Brand ID"
-                />
-              </InlineField>
-            </div>
-
-            <div className="mt-4">
-              <InlineField label="Tags">
-                <div className="space-y-3">
-                  <div className="flex gap-2">
-                    <input
-                      value={detailTagInput}
-                      onChange={event => setDetailTagInput(event.target.value)}
-                      onKeyDown={event => {
-                        if (event.key === 'Enter') {
-                          event.preventDefault()
-                          void addDetailTag()
-                        }
-                      }}
-                      className="flex-1 glass rounded-lg px-4 py-2.5 text-white outline-none transition-all focus:border-brand-500/50 focus:bg-white/[0.05]"
-                      placeholder="Add a tag"
-                    />
-                    <button
-                      onClick={() => void addDetailTag()}
-                      className="rounded-md border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white transition hover:bg-white/10"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {productForm.tags.length > 0 ? (
-                      productForm.tags.map(tag => (
-                        <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300">
-                          {tag}
-                          <button onClick={() => void removeDetailTag(tag)}>×</button>
-                        </span>
-                      ))
-                    ) : (
-                      <div className="text-sm text-white/35">No tags assigned.</div>
-                    )}
-                  </div>
-                </div>
-              </InlineField>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="glass-strong rounded-xl p-6 transition-all duration-300 hover:border-white/15 hover:shadow-lg">
-              <h3 className="text-lg font-semibold text-white">Status Snapshot</h3>
-              <div className="mt-4 grid gap-3">
-                <DetailMetric label="Product Status" value={product.status} />
-                <DetailMetric label="Asset Status" value={product.assetStatus} />
-                <DetailMetric label="Listing Status" value={product.listingStatus} />
-                <DetailMetric label="Export Status" value={product.exportStatus} />
-              </div>
-            </div>
-            <div className="glass-strong rounded-xl p-6 transition-all duration-300 hover:border-white/15 hover:shadow-lg">
-              <h3 className="text-lg font-semibold text-white">Quick Actions</h3>
-              <div className="mt-4 grid gap-3">
-                <Link
-                  to={`/products/${product.id}/ai/ai-product`}
-                  className="rounded-md border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:bg-white/10 hover:text-white"
-                >
-                  Open Product AI Workspace
-                </Link>
-                <Link
-                  to="/products/workbench/batch-listing"
-                  className="rounded-md border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:bg-white/10 hover:text-white"
-                >
-                  Open Batch Listing Workbench
-                </Link>
-                <Link
-                  to="/products/workbench/downloads"
-                  className="rounded-md border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 transition hover:bg-white/10 hover:text-white"
-                >
-                  Open Download Center
-                </Link>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        <div className="border-b border-white/5">
-          <div className="flex items-center gap-1">
-            {TABS.map((tab) => {
-              const Icon = tab.icon
-              const isActive = activeTab === tab.id
-              return (
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition ${
-                    isActive
-                      ? 'border-brand-500 text-white'
-                      : 'border-transparent text-white/50 hover:text-white/80'
-                  }`}
+                  onClick={() => void addDetailTag()}
+                  className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
                 >
-                  <Icon className="h-4 w-4" />
-                  {tab.label}
+                  {t('product.detail.addTag')}
                 </button>
-              )
-            })}
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {productForm.tags.length > 0 ? (
+                  productForm.tags.map(tag => (
+                    <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs text-white/70">
+                      {tag}
+                      <button onClick={() => void removeDetailTag(tag)} className="hover:text-white">×</button>
+                    </span>
+                  ))
+                ) : (
+                  <div className="text-xs text-white/30 italic">{t('product.detail.noTags')}</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="h-px bg-white/5" />
+
+          <div className="space-y-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+              {t('product.detail.statusSnapshot')}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <DetailMetric label={t('product.detail.productStatus')} value={t(`status.${product.status}` as any, product.status)} />
+              <DetailMetric label={t('product.detail.assetStatus')} value={product.assetStatus} />
+              <DetailMetric label={t('product.detail.listingStatus')} value={product.listingStatus} />
+              <DetailMetric label={t('product.detail.exportStatus')} value={product.exportStatus} />
+            </div>
           </div>
         </div>
 
-        <div className="pt-2">
-          {activeTab === 'assets' && (
-            <AssetsTab
-              productId={product.id}
-              assets={data.assets}
-              downloads={productDownloads}
-              selectedDownloadId={selectedDownloadId}
-              mutatingRelationId={assetMutatingRelationId}
-              bulkMutating={assetBulkMutating}
-              onSelectDownload={setSelectedDownloadId}
-              onMakePrimary={handleMakePrimaryAsset}
-              onDelete={handleDeleteAssetRelation}
-              onChangeRole={handleAssetRoleChange}
-              onChangeSortOrder={handleAssetSortOrderChange}
-              onMove={handleMoveAsset}
-              onBulkChangeRole={handleBulkAssetRoleChange}
-              onBulkDelete={handleBulkDeleteAssetRelations}
-              onCreateExportFromSelection={openExportModalForSelection}
-              onSelectionChange={setSelectedAssetRelationIds}
-            />
-          )}
-          {activeTab === 'listings' && (
-            <ListingsTab
-              versions={data.listingVersions}
-              onGenerate={openCreateListingModal}
-              onAdopt={handleAdoptListing}
-              onEdit={openEditListingModal}
-              adoptingVersionId={adoptingVersionId}
-            />
-          )}
-          {activeTab === 'profit' && <ProfitTab snapshots={data.profitSnapshots} onCalculate={() => setShowProfitModal(true)} />}
-          {activeTab === 'exports' && (
-            <ExportsTab
-              tasks={data.exportTasks}
-              downloads={productDownloads}
-              productTitle={product.title}
-              assetCount={data.assets.length}
-              selectedAssetCount={selectedAssetRelationIds.length}
-              onCreate={openExportModalForAllAssets}
-              onCreateFromSelection={() => openExportModalForSelection(selectedAssetRelationIds)}
-              onInspectAssets={handleInspectExportAssets}
-            />
-          )}
-          {activeTab === 'history' && <HistoryTab activities={data.activities} />}
+        <div className="flex-none p-6 border-t border-white/5 bg-[#0c0c10]/90 backdrop-blur space-y-3">
+          <Link
+            to={`/products/${product.id}/ai/ai-product`}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-500/20 bg-brand-500/10 py-2.5 text-sm font-semibold text-brand-300 transition-all hover:bg-brand-500/20 focus:outline-none"
+          >
+            {t('product.detail.openAIWorkspace')}
+          </Link>
+          <Link
+            to="/products/workbench/batch-listing"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-white/80 transition-all hover:bg-white/10 focus:outline-none"
+          >
+            {t('product.detail.openBatchListing')}
+          </Link>
+          <Link
+            to="/products/workbench/downloads"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-white/80 transition-all hover:bg-white/10 focus:outline-none"
+          >
+            {t('product.detail.openDownloadCenter')}
+          </Link>
         </div>
-      </div>
+      </aside>
 
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 bg-[#09090b] relative">
+        <header className="flex-none px-8 pt-8 border-b border-white/5 flex gap-8">
+          {TABS.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            return (
+              <TabButton 
+                key={tab.id} 
+                active={isActive} 
+                onClick={() => setActiveTab(tab.id)} 
+                icon={<Icon className="h-4 w-4" />} 
+                label={t(`product.detail.tabs.${tab.id}` as any, tab.label)} 
+              />
+            )
+          })}
+        </header>
+
+        <div className="flex-1 overflow-auto p-8 custom-scrollbar">
+          <div className="max-w-6xl mx-auto animate-in fade-in duration-300">
+            {activeTab === 'assets' && (
+              <AssetsTab
+                productId={product.id}
+                assets={data.assets}
+                downloads={productDownloads}
+                selectedDownloadId={selectedDownloadId}
+                mutatingRelationId={assetMutatingRelationId}
+                bulkMutating={assetBulkMutating}
+                onSelectDownload={setSelectedDownloadId}
+                onMakePrimary={handleMakePrimaryAsset}
+                onDelete={handleDeleteAssetRelation}
+                onChangeRole={handleAssetRoleChange}
+                onChangeSortOrder={handleAssetSortOrderChange}
+                onMove={handleMoveAsset}
+                onBulkChangeRole={handleBulkAssetRoleChange}
+                onBulkDelete={handleBulkDeleteAssetRelations}
+                onCreateExportFromSelection={openExportModalForSelection}
+                onSelectionChange={setSelectedAssetRelationIds}
+              />
+            )}
+            {activeTab === 'listings' && (
+              <ListingsTab
+                versions={data.listingVersions}
+                onGenerate={openCreateListingModal}
+                onAdopt={handleAdoptListing}
+                onEdit={openEditListingModal}
+                adoptingVersionId={adoptingVersionId}
+              />
+            )}
+            {activeTab === 'profit' && <ProfitTab snapshots={data.profitSnapshots} onCalculate={() => setShowProfitModal(true)} />}
+            {activeTab === 'exports' && (
+              <ExportsTab
+                tasks={data.exportTasks}
+                downloads={productDownloads}
+                productTitle={product.title}
+                assetCount={data.assets.length}
+                selectedAssetCount={selectedAssetRelationIds.length}
+                onCreate={openExportModalForAllAssets}
+                onCreateFromSelection={() => openExportModalForSelection(selectedAssetRelationIds)}
+                onInspectAssets={handleInspectExportAssets}
+              />
+            )}
+            {activeTab === 'history' && <HistoryTab activities={data.activities} />}
+          </div>
+        </div>
+      </main>
+
+      {/* Modals */}
       {showProfitModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#10101a] rounded-xl w-full max-w-md border border-white/5">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Calculate Profit</h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-white/80 text-sm mb-1">Platform</label>
-                    <select
-                      value={profitForm.platform}
-                      onChange={(e) => setProfitForm(prev => ({ ...prev, platform: e.target.value }))}
-                      className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                    >
-                      <option value="amazon">Amazon</option>
-                      <option value="shopify">Shopify</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-white/80 text-sm mb-1">Site</label>
-                    <select
-                      value={profitForm.site}
-                      onChange={(e) => setProfitForm(prev => ({ ...prev, site: e.target.value }))}
-                      className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                    >
-                      <option value="US">US</option>
-                      <option value="CA">CA</option>
-                      <option value="UK">UK</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Cost Price ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={profitForm.costPrice}
-                    onChange={(e) => setProfitForm(prev => ({ ...prev, costPrice: parseFloat(e.target.value) || 0 }))}
-                    className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Listing Price ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={profitForm.listingPrice}
-                    onChange={(e) => setProfitForm(prev => ({ ...prev, listingPrice: parseFloat(e.target.value) || 0 }))}
-                    className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-white/80 text-sm mb-1">Logistics ($)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={profitForm.logisticsCost}
-                      onChange={(e) => setProfitForm(prev => ({ ...prev, logisticsCost: parseFloat(e.target.value) || 0 }))}
-                      className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/80 text-sm mb-1">Platform Fee ($)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={profitForm.platformFee}
-                      onChange={(e) => setProfitForm(prev => ({ ...prev, platformFee: parseFloat(e.target.value) || 0 }))}
-                      className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-white/80 text-sm mb-1">Other Fee ($)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={profitForm.otherFee}
-                      onChange={(e) => setProfitForm(prev => ({ ...prev, otherFee: parseFloat(e.target.value) || 0 }))}
-                      className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                    />
-                  </div>
-                </div>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-white/5">
+              <h2 className="text-lg font-semibold text-white/90">{t('product.detail.profitModal.title')}</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <SelectField label={t('product.detail.profitModal.platform')} value={profitForm.platform} onChange={v => setProfitForm({...profitForm, platform: v})} options={[{label: t('product.detail.platforms.amazon'), value: 'amazon'}, {label: t('product.detail.platforms.shopify'), value: 'shopify'}]} />
+                <SelectField label={t('product.detail.profitModal.site')} value={profitForm.site} onChange={v => setProfitForm({...profitForm, site: v})} options={[{label: t('product.detail.sites.US'), value: 'US'}, {label: t('product.detail.sites.CA'), value: 'CA'}, {label: t('product.detail.sites.UK'), value: 'UK'}]} />
               </div>
-              <div className="flex gap-3 mt-6">
-                <button onClick={() => setShowProfitModal(false)} className="flex-1 px-4 py-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition">
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCalculateProfit}
-                  disabled={!profitForm.costPrice || !profitForm.listingPrice}
-                  className="flex-1 px-4 py-2 rounded-md bg-white text-slate-950 hover:bg-slate-200 disabled:bg-white/20 disabled:cursor-not-allowed text-sm font-medium transition"
-                >
-                  Calculate
-                </button>
+              <InputField label={t('product.detail.profitModal.costPrice')} value={String(profitForm.costPrice)} onChange={v => setProfitForm({...profitForm, costPrice: parseFloat(v) || 0})} />
+              <InputField label={t('product.detail.profitModal.listingPrice')} value={String(profitForm.listingPrice)} onChange={v => setProfitForm({...profitForm, listingPrice: parseFloat(v) || 0})} />
+              <div className="grid grid-cols-3 gap-4">
+                <InputField label={t('product.detail.profitModal.logisticsCost')} value={String(profitForm.logisticsCost)} onChange={v => setProfitForm({...profitForm, logisticsCost: parseFloat(v) || 0})} />
+                <InputField label={t('product.detail.profitModal.platformFee')} value={String(profitForm.platformFee)} onChange={v => setProfitForm({...profitForm, platformFee: parseFloat(v) || 0})} />
+                <InputField label={t('product.detail.profitModal.otherFee')} value={String(profitForm.otherFee)} onChange={v => setProfitForm({...profitForm, otherFee: parseFloat(v) || 0})} />
               </div>
+            </div>
+            <div className="px-6 py-5 bg-white/[0.02] border-t border-white/5 flex gap-3">
+              <button onClick={() => setShowProfitModal(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 text-sm font-semibold transition">
+                {t('product.detail.profitModal.cancel')}
+              </button>
+              <button
+                onClick={handleCalculateProfit}
+                disabled={!profitForm.costPrice || !profitForm.listingPrice}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white disabled:bg-brand-500/50 disabled:cursor-not-allowed text-sm font-semibold transition"
+              >
+                {t('product.detail.profitModal.calculate')}
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {showExportModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#10101a] rounded-xl w-full max-w-md border border-white/5">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Create Export</h2>
-              <div className="space-y-4">
-                <div className="rounded-lg border border-white/5 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
-                  {exportScopedRelationIds.length > 0
-                    ? `Export scope: ${exportScopedRelationIds.length} selected assets from the current workspace.`
-                    : `Export scope: all ${data.assets.length} linked assets.`}
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Platform</label>
-                  <select
-                    value={exportForm.platform}
-                    onChange={(e) => setExportForm(prev => ({ ...prev, platform: e.target.value }))}
-                    className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                  >
-                    <option value="amazon">Amazon</option>
-                    <option value="shopify">Shopify</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Site</label>
-                  <select
-                    value={exportForm.site}
-                    onChange={(e) => setExportForm(prev => ({ ...prev, site: e.target.value }))}
-                    className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                  >
-                    <option value="US">US</option>
-                    <option value="CA">CA</option>
-                    <option value="UK">UK</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Locale</label>
-                  <select
-                    value={exportForm.locale}
-                    onChange={(e) => setExportForm(prev => ({ ...prev, locale: e.target.value }))}
-                    className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                  >
-                    <option value="en_US">en_US</option>
-                    <option value="en_CA">en_CA</option>
-                    <option value="en_GB">en_GB</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Format</label>
-                  <select
-                    value={exportForm.format}
-                    onChange={(e) => setExportForm(prev => ({ ...prev, format: e.target.value }))}
-                    className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                  >
-                    <option value="csv">CSV</option>
-                    <option value="xlsx">XLSX</option>
-                  </select>
-                </div>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-white/5">
+              <h2 className="text-lg font-semibold text-white/90">{t('product.detail.exportModal.title')}</h2>
+            </div>
+            <div className="p-6 space-y-5">
+              <div className="rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
+                {exportScopedRelationIds.length > 0
+                  ? t('product.detail.exportModal.scopeSelected', { count: exportScopedRelationIds.length })
+                  : t('product.detail.exportModal.scopeAll', { count: data.assets.length })}
               </div>
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={() => {
-                    setShowExportModal(false)
-                    setExportScopedRelationIds([])
-                  }}
-                  className="flex-1 px-4 py-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition"
-                >
-                  Cancel
-                </button>
-                <button onClick={handleCreateExport} className="flex-1 px-4 py-2 rounded-md bg-white text-slate-950 hover:bg-slate-200 text-sm font-medium transition">
-                  Create Export
-                </button>
-              </div>
+              <SelectField label={t('product.detail.exportModal.platform')} value={exportForm.platform} onChange={v => setExportForm({...exportForm, platform: v})} options={[{label: t('product.detail.platforms.amazon'), value: 'amazon'}, {label: t('product.detail.platforms.shopify'), value: 'shopify'}]} />
+              <SelectField label={t('product.detail.exportModal.site')} value={exportForm.site} onChange={v => setExportForm({...exportForm, site: v})} options={[{label: t('product.detail.sites.US'), value: 'US'}, {label: t('product.detail.sites.CA'), value: 'CA'}, {label: t('product.detail.sites.UK'), value: 'UK'}]} />
+              <SelectField label={t('product.detail.exportModal.locale')} value={exportForm.locale} onChange={v => setExportForm({...exportForm, locale: v})} options={[{label: t('product.detail.locales.en_US'), value: 'en_US'}, {label: t('product.detail.locales.en_CA'), value: 'en_CA'}, {label: t('product.detail.locales.en_GB'), value: 'en_GB'}]} />
+              <SelectField label={t('product.detail.exportModal.format')} value={exportForm.format} onChange={v => setExportForm({...exportForm, format: v})} options={[{label: t('product.detail.formats.CSV'), value: 'csv'}, {label: t('product.detail.formats.XLSX'), value: 'xlsx'}]} />
+            </div>
+            <div className="px-6 py-5 bg-white/[0.02] border-t border-white/5 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowExportModal(false)
+                  setExportScopedRelationIds([])
+                }}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 text-sm font-semibold transition"
+              >
+                {t('product.detail.exportModal.cancel')}
+              </button>
+              <button onClick={handleCreateExport} className="flex-1 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold transition">
+                {t('product.detail.exportModal.create')}
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {showListingModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#10101a] rounded-xl w-full max-w-lg border border-white/5 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">{editingVersion ? 'Edit Listing Version' : 'Generate Listing'}</h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-white/80 text-sm mb-1">Platform</label>
-                    <select
-                      value={listingForm.platform}
-                      onChange={(e) => setListingForm(prev => ({ ...prev, platform: e.target.value }))}
-                      className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                    >
-                      <option value="amazon">Amazon</option>
-                      <option value="shopify">Shopify</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-white/80 text-sm mb-1">Site</label>
-                    <select
-                      value={listingForm.site}
-                      onChange={(e) => setListingForm(prev => ({ ...prev, site: e.target.value }))}
-                      className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                    >
-                      <option value="US">US</option>
-                      <option value="CA">CA</option>
-                      <option value="UK">UK</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-white/80 text-sm mb-1">Locale</label>
-                    <select
-                      value={listingForm.locale}
-                      onChange={(e) => setListingForm(prev => ({ ...prev, locale: e.target.value }))}
-                      className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                    >
-                      <option value="en_US">en_US</option>
-                      <option value="en_CA">en_CA</option>
-                      <option value="en_GB">en_GB</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Version Label</label>
-                  <input
-                    type="text"
-                    value={listingForm.versionLabel}
-                    onChange={(e) => setListingForm(prev => ({ ...prev, versionLabel: e.target.value }))}
-                    className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                    placeholder="e.g., Auto-generated v1"
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Title</label>
-                  <input
-                    type="text"
-                    value={listingForm.title}
-                    onChange={(e) => setListingForm(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                    placeholder="Product title"
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Description</label>
-                  <textarea
-                    value={listingForm.description}
-                    onChange={(e) => setListingForm(prev => ({ ...prev, description: e.target.value }))}
-                    rows={3}
-                    className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
-                    placeholder="Product description"
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Bullet Points</label>
-                  <div className="space-y-2">
-                    {listingForm.bulletPoints.map((point, index) => (
-                      <input
-                        key={index}
-                        type="text"
-                        value={point}
-                        onChange={(e) => {
-                          const newPoints = [...listingForm.bulletPoints]
-                          newPoints[index] = e.target.value
-                          setListingForm(prev => ({ ...prev, bulletPoints: newPoints }))
-                        }}
-                        className="w-full bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                        placeholder={`Feature ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Keywords</label>
-                  <div className="flex gap-2 mb-2">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-lg border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="px-6 py-5 border-b border-white/5 shrink-0">
+              <h2 className="text-lg font-semibold text-white/90">{editingVersion ? t('product.detail.listingModal.titleEdit') : t('product.detail.listingModal.titleCreate')}</h2>
+            </div>
+            <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-3 gap-4">
+                <SelectField label={t('product.detail.listingModal.platform')} value={listingForm.platform} onChange={v => setListingForm({...listingForm, platform: v})} options={[{label: t('product.detail.platforms.amazon'), value: 'amazon'}, {label: t('product.detail.platforms.shopify'), value: 'shopify'}]} />
+                <SelectField label={t('product.detail.listingModal.site')} value={listingForm.site} onChange={v => setListingForm({...listingForm, site: v})} options={[{label: t('product.detail.sites.US'), value: 'US'}, {label: t('product.detail.sites.CA'), value: 'CA'}, {label: t('product.detail.sites.UK'), value: 'UK'}]} />
+                <SelectField label={t('product.detail.listingModal.locale')} value={listingForm.locale} onChange={v => setListingForm({...listingForm, locale: v})} options={[{label: t('product.detail.locales.en_US'), value: 'en_US'}, {label: t('product.detail.locales.en_CA'), value: 'en_CA'}, {label: t('product.detail.locales.en_GB'), value: 'en_GB'}]} />
+              </div>
+              <InputField label={t('product.detail.listingModal.versionLabel')} value={listingForm.versionLabel} onChange={v => setListingForm({...listingForm, versionLabel: v})} placeholder={t('product.detail.listingModal.versionLabelPlaceholder')} />
+              <InputField label={t('product.detail.listingModal.title')} value={listingForm.title} onChange={v => setListingForm({...listingForm, title: v})} placeholder={t('product.detail.listingModal.titlePlaceholder')} />
+              <TextareaField label={t('product.detail.listingModal.description')} value={listingForm.description} onChange={v => setListingForm({...listingForm, description: v})} placeholder={t('product.detail.listingModal.descriptionPlaceholder')} rows={3} />
+              
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-white/60">{t('product.detail.listingModal.bulletPoints')}</label>
+                <div className="space-y-2">
+                  {listingForm.bulletPoints.map((point, index) => (
                     <input
+                      key={index}
                       type="text"
-                      value={listingForm.newKeyword}
-                      onChange={(e) => setListingForm(prev => ({ ...prev, newKeyword: e.target.value }))}
-                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addKeyword())}
-                      className="flex-1 bg-[#0a0a12] border border-white/10 rounded-md px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-                      placeholder="Add keyword"
+                      value={point}
+                      onChange={(e) => {
+                        const newPoints = [...listingForm.bulletPoints]
+                        newPoints[index] = e.target.value
+                        setListingForm(prev => ({ ...prev, bulletPoints: newPoints }))
+                      }}
+                      className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+                      placeholder={`${t('product.detail.listingModal.bulletPlaceholder')} ${index + 1}`}
                     />
-                    <button onClick={addKeyword} className="px-4 py-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition">
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {listingForm.keywords.map((kw) => (
-                      <span
-                        key={kw}
-                        className="px-2 py-1 rounded-full bg-brand-500/20 text-brand-300 text-xs flex items-center gap-1"
-                      >
-                        {kw}
-                        <button onClick={() => setListingForm(prev => ({ ...prev, keywords: prev.keywords.filter(k => k !== kw) }))}>
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               </div>
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={() => {
-                    setShowListingModal(false)
-                    setEditingVersion(null)
-                  }}
-                  className="flex-1 px-4 py-2 rounded-md border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateListing}
-                  disabled={!listingForm.versionLabel || !listingForm.title || savingListing}
-                  className="flex-1 px-4 py-2 rounded-md bg-white text-slate-950 hover:bg-slate-200 disabled:bg-white/20 disabled:cursor-not-allowed text-sm font-medium transition"
-                >
-                  {savingListing ? 'Saving...' : editingVersion ? 'Save Changes' : 'Generate'}
-                </button>
+              
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-white/60">{t('product.detail.listingModal.keywords')}</label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={listingForm.newKeyword}
+                    onChange={(e) => setListingForm(prev => ({ ...prev, newKeyword: e.target.value }))}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addKeyword())}
+                    className="flex-1 rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+                    placeholder={t('product.detail.listingModal.addKeyword')}
+                  />
+                  <button onClick={addKeyword} className="px-4 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition">
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {listingForm.keywords.map((kw) => (
+                    <span
+                      key={kw}
+                      className="px-2.5 py-1 rounded-lg bg-white/10 text-white/80 text-xs flex items-center gap-1.5"
+                    >
+                      {kw}
+                      <button onClick={() => setListingForm(prev => ({ ...prev, keywords: prev.keywords.filter(k => k !== kw) }))} className="hover:text-white">
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
+            </div>
+            <div className="px-6 py-5 bg-white/[0.02] border-t border-white/5 flex gap-3 shrink-0">
+              <button
+                onClick={() => {
+                  setShowListingModal(false)
+                  setEditingVersion(null)
+                }}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 text-sm font-semibold transition"
+              >
+                {t('product.detail.listingModal.cancel')}
+              </button>
+              <button
+                onClick={handleCreateListing}
+                disabled={!listingForm.versionLabel || !listingForm.title || savingListing}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 disabled:bg-brand-500/50 disabled:cursor-not-allowed text-white text-sm font-semibold transition"
+              >
+                {savingListing ? t('product.detail.listingModal.saving') : editingVersion ? t('product.detail.listingModal.saveChanges') : t('product.detail.listingModal.generate')}
+              </button>
             </div>
           </div>
         </div>
       )}
-    </motion.div>
-  )
-}
-
-function InlineField({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <div className="mb-1.5 text-sm text-white/70">{label}</div>
-      {children}
-    </label>
+    </div>
   )
 }
 
 function DetailMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-white/10 bg-[#0a0a12] px-4 py-3">
-      <div className="text-xs uppercase tracking-[0.18em] text-white/30">{label}</div>
-      <div className="mt-1 text-sm font-medium text-white">{value}</div>
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3">
+      <div className="text-[10px] uppercase tracking-wider text-white/40">{label}</div>
+      <div className="mt-1.5 text-sm font-medium text-white/90">{value}</div>
     </div>
   )
 }
