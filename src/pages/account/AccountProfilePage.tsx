@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Save } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getPlanLabelByT, resolveAppLocale } from '@/i18n/helpers'
 import { useAuth } from '@/hooks/useAuth'
+import { commercialService } from '@/services/commercial'
 import { patchAuthUser } from '@/state/auth'
 import { useToastStore } from '@/store/toastStore'
+import type { CommercialOrderView, WalletSummary } from '@/types/commercial'
+import { formatPackageName, getCurrentSubscription } from '@/utils/commercialDisplay'
 
 import { motion } from 'framer-motion'
 
@@ -50,13 +53,15 @@ function saveStoredPreferences(next: PreferenceState) {
 export default function AccountProfilePage() {
   const { t, i18n } = useTranslation()
   const locale: Locale = resolveAppLocale(i18n.resolvedLanguage ?? i18n.language)
-  const { user, credits } = useAuth({ refreshOnMount: false })
+  const { user } = useAuth({ refreshOnMount: false })
   const { showToast } = useToastStore()
+  const [walletSummary, setWalletSummary] = useState<WalletSummary | null>(null)
+  const [orders, setOrders] = useState<CommercialOrderView[]>([])
   const [state, setState] = useState<PreferenceState>({
     fullName: user?.full_name || '',
     avatarUrl: user?.avatar_url || '',
     language: locale,
-    defaultWorkspace: '/draw/changing-model',
+    defaultWorkspace: '/products/workbench/visual-tools/changing-model',
     emailNotifications: true,
     deliveryNotifications: true,
     weeklyDigest: false,
@@ -68,12 +73,35 @@ export default function AccountProfilePage() {
       fullName: user?.full_name || '',
       avatarUrl: user?.avatar_url || '',
       language: (stored.language as Locale | undefined) || locale,
-      defaultWorkspace: stored.defaultWorkspace || '/draw/changing-model',
+      defaultWorkspace: stored.defaultWorkspace || '/products/workbench/visual-tools/changing-model',
       emailNotifications: stored.emailNotifications ?? true,
       deliveryNotifications: stored.deliveryNotifications ?? true,
       weeklyDigest: stored.weeklyDigest ?? false,
     })
   }, [locale, user?.avatar_url, user?.full_name])
+
+  useEffect(() => {
+    let cancelled = false
+    void Promise.all([
+      commercialService.getWalletSummary(),
+      commercialService.listOrders(),
+    ]).then(([wallet, orderResult]) => {
+      if (cancelled) return
+      setWalletSummary(wallet)
+      setOrders(orderResult.items || [])
+    }).catch(() => {
+      if (cancelled) return
+      setWalletSummary(null)
+      setOrders([])
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  const currentSubscription = useMemo(() => getCurrentSubscription(orders), [orders])
+  const planLabel = currentSubscription?.order?.package_code
+    ? formatPackageName(currentSubscription.order.package_code, locale)
+    : getPlanLabelByT(t, user?.plan_id)
+  const remainingQuota = walletSummary?.quota?.remaining ?? 0
 
   const setField = <K extends keyof PreferenceState>(key: K, value: PreferenceState[K]) => {
     setState(prev => ({ ...prev, [key]: value }))
@@ -110,7 +138,7 @@ export default function AccountProfilePage() {
           <div className="border-b border-white/5 px-6 py-5">
             <h2 className="font-medium text-slate-100">{t('account.profile.plan.current')}</h2>
             <p className="mt-1 text-sm text-slate-400">
-              {getPlanLabelByT(t, user?.plan_id)} &middot; {t('account.profile.plan.remainingCredits')}: {credits?.balance ?? 0}
+              {planLabel} &middot; {t('account.profile.plan.remainingCredits')}: {remainingQuota}
             </p>
           </div>
           
@@ -151,10 +179,10 @@ export default function AccountProfilePage() {
                   onChange={event => setField('defaultWorkspace', event.target.value)}
                   className="w-full rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-100 focus:border-brand-500/50 focus:outline-none focus:ring-1 focus:ring-brand-500/50 transition-colors"
                 >
-                  <option value="/draw/changing-model">{t('account.profile.details.modelSwap')}</option>
+                  <option value="/products/workbench/visual-tools/changing-model">{t('account.profile.details.modelSwap')}</option>
                   <option value="/aiChat/template">{t('account.profile.details.templateMarket')}</option>
                   <option value="/chat">{t('account.profile.details.aiChat')}</option>
-                  <option value="/draw/product-home">{t('account.profile.details.productCenter')}</option>
+                  <option value="/products">{t('account.profile.details.productCenter')}</option>
                 </select>
               </label>
 

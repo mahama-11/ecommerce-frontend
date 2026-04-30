@@ -97,7 +97,7 @@ export default function SolutionDetailPage() {
             return (
               <Link
                 key={tool.id}
-                to={`/draw/${tool.slug}`}
+                to={`/products/workbench/visual-tools/${tool.slug}`}
                 className="glass tool-card rounded-xl p-5 block group"
               >
                 <div className="text-3xl mb-3">{localizedTool.icon}</div>

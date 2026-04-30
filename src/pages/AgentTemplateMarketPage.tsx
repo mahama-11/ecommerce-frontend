@@ -75,6 +75,47 @@ const MODALITY_FILTERS = [
   { key: 'workflow', zh: '工作流模板', en: 'Workflow' },
 ] as const
 
+const TERM_LABELS: Record<string, { zh: string; en: string }> = {
+  amazon: { zh: '亚马逊', en: 'Amazon' },
+  walmart: { zh: '沃尔玛', en: 'Walmart' },
+  'tiktok-shop': { zh: 'TikTok Shop', en: 'TikTok Shop' },
+  independent: { zh: '独立站', en: 'DTC Site' },
+  official: { zh: '官方', en: 'Official' },
+  text: { zh: '文本', en: 'Text' },
+  image: { zh: '图片', en: 'Image' },
+  video: { zh: '视频', en: 'Video' },
+  workflow: { zh: '工作流', en: 'Workflow' },
+  chat: { zh: '对话执行', en: 'Chat' },
+  image_tool: { zh: '图片生成', en: 'Image Tool' },
+  video_tool: { zh: '视频生成', en: 'Video Tool' },
+  batch_pipeline: { zh: '批量流水线', en: 'Batch Pipeline' },
+  hybrid_workflow: { zh: '混合工作流', en: 'Hybrid Workflow' },
+  model_image: { zh: '模特图', en: 'Model Image' },
+  product_image: { zh: '商品图', en: 'Product Image' },
+  workflow_suite: { zh: '套图工作流', en: 'Workflow Suite' },
+  model_swap: { zh: '换模特', en: 'Model Swap' },
+  mannequin_to_model: { zh: '人台转真人', en: 'Mannequin To Model' },
+  background_replace: { zh: '换背景', en: 'Background Replace' },
+  virtual_tryon: { zh: 'AI 试穿', en: 'Virtual Try-On' },
+  accessory_on_model: { zh: '商品上身', en: 'Accessory On Model' },
+  pose_variation: { zh: '姿势裂变', en: 'Pose Variation' },
+  product_scene_compositing: { zh: '场景合成', en: 'Scene Compositing' },
+  product_swap: { zh: '商品替换', en: 'Product Replace' },
+  scene_multiplication: { zh: '场景裂变', en: 'Scene Fission' },
+  scene_asset_generation: { zh: '场景素材生成', en: 'Scene Asset Generation' },
+  hand_hold_product: { zh: '手持商品', en: 'Handheld Product' },
+  product_retouch: { zh: '商品精修', en: 'Product Retouch' },
+  clothing_photo_package: { zh: '服装套图', en: 'Clothing Suite' },
+  product_photo_package: { zh: '商品套图', en: 'Product Suite' },
+  resource_pack: { zh: '资源包', en: 'Resource Pack' },
+  promo_pack: { zh: '活动包', en: 'Promo Pack' },
+  recurring: { zh: '周期型', en: 'Recurring' },
+  cycle_reset: { zh: '周期重置', en: 'Cycle Reset' },
+  form_based: { zh: '表单填写', en: 'Form Based' },
+  guided_workflow: { zh: '引导式流程', en: 'Guided Workflow' },
+  freeform_prompt: { zh: '自由输入', en: 'Freeform Prompt' },
+}
+
 function copy(locale: Locale, zh: string, en: string) {
   return locale === 'zh' ? zh : en
 }
@@ -89,39 +130,26 @@ function primaryPlatform(item: TemplateListItem) {
   return item.platformTags[0] ?? 'official'
 }
 
+function formatFallbackLabel(raw: string) {
+  return raw
+    .replaceAll(/[_-]+/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase())
+}
+
+function displayTerm(locale: Locale, raw?: string | null) {
+  if (!raw) return copy(locale, '未定义', 'Not set')
+  const normalized = raw.trim()
+  const mapped = TERM_LABELS[normalized]
+  if (mapped) return copy(locale, mapped.zh, mapped.en)
+  return locale === 'zh' ? normalized.replaceAll(/[_-]+/g, ' / ') : formatFallbackLabel(normalized)
+}
+
 function templateType(locale: Locale, item: TemplateListItem) {
-  const modalityMap: Record<TemplateListItem['modality'], string> = {
-    text: copy(locale, '文本', 'Text'),
-    image: copy(locale, '图片', 'Image'),
-    video: copy(locale, '视频', 'Video'),
-    workflow: copy(locale, '工作流', 'Workflow'),
-  }
-  return `${modalityMap[item.modality]} / ${item.executorType}`
+  return `${displayTerm(locale, item.modality)} / ${displayTerm(locale, item.executorType)}`
 }
 
 function displayFacetLabel(locale: Locale, bucket: CatalogFacetBucket) {
-  const mapping: Record<string, { zh: string; en: string }> = {
-    model_image: { zh: '模特图', en: 'Model Image' },
-    product_image: { zh: '商品图', en: 'Product Image' },
-    workflow_suite: { zh: '套图工作流', en: 'Workflow Suite' },
-    model_swap: { zh: '换模特', en: 'Model Swap' },
-    mannequin_to_model: { zh: '人台转真人', en: 'Mannequin To Model' },
-    background_replace: { zh: '换背景', en: 'Background Replace' },
-    virtual_tryon: { zh: 'AI 穿衣', en: 'Virtual Try-On' },
-    accessory_on_model: { zh: '穿戴商品', en: 'Accessory On Model' },
-    pose_variation: { zh: '姿势裂变', en: 'Pose Variation' },
-    product_scene_compositing: { zh: '场景合成', en: 'Scene Compositing' },
-    product_swap: { zh: '商品替换', en: 'Product Replace' },
-    scene_multiplication: { zh: '场景裂变', en: 'Scene Fission' },
-    scene_asset_generation: { zh: '场景素材生成', en: 'Scene Asset Generation' },
-    hand_hold_product: { zh: '手持商品', en: 'Handheld Product' },
-    product_retouch: { zh: '商品精修', en: 'Product Retouch' },
-    clothing_photo_package: { zh: '服装套图', en: 'Clothing Suite' },
-    product_photo_package: { zh: '商品套图', en: 'Product Suite' },
-  }
-  const mapped = mapping[bucket.key]
-  if (mapped) return copy(locale, mapped.zh, mapped.en)
-  return bucket.label.replaceAll('_', ' ')
+  return displayTerm(locale, bucket.key || bucket.label)
 }
 
 function readInputFields(detail: TemplateDetail | null) {
@@ -681,7 +709,7 @@ export default function AgentTemplateMarketPage() {
                           </div>
                         )}
                         <div className="absolute top-3 left-3 rounded-full bg-black/60 px-2 py-1 text-[10px] text-white/90 backdrop-blur-md">
-                          {primaryPlatform(item).toUpperCase()}
+                          {displayTerm(locale, primaryPlatform(item))}
                         </div>
                         <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] text-amber-400 backdrop-blur-md">
                           <Star className="h-3 w-3 fill-current" />
@@ -752,9 +780,9 @@ export default function AgentTemplateMarketPage() {
                 <span className="text-white/80">{visibleTemplates.length}</span>
               </span>
               <div className="flex flex-wrap items-center justify-end gap-2">
-                {activeModality && (
+                    {activeModality && (
                   <span className="rounded-full border border-brand-500/20 bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300">
-                    {copy(locale, '当前模态', 'Active Modality')}: {activeModality}
+                    {copy(locale, '当前模态', 'Active Modality')}: {displayTerm(locale, activeModality)}
                   </span>
                 )}
                 {activeSeries && (
@@ -848,7 +876,7 @@ export default function AgentTemplateMarketPage() {
 
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div>
-                        <div className="mb-2 text-xs text-white/35">{primaryPlatform(card).toUpperCase()}</div>
+                        <div className="mb-2 text-xs text-white/35">{displayTerm(locale, primaryPlatform(card))}</div>
                         <h3 className="text-base font-semibold text-white">{card.name}</h3>
                       </div>
                       <button
@@ -874,7 +902,7 @@ export default function AgentTemplateMarketPage() {
                     <div className="mb-4 flex flex-wrap gap-2">
                       {[...card.platformTags, ...card.industryTags].slice(0, 4).map(tag => (
                         <span key={tag} className="rounded-full border border-brand-500/20 bg-brand-500/10 px-2.5 py-1 text-[11px] text-brand-300">
-                          {tag}
+                          {displayTerm(locale, tag)}
                         </span>
                       ))}
                     </div>
@@ -946,7 +974,7 @@ export default function AgentTemplateMarketPage() {
         <DetailDrawer
           open={detailOpen && !!selectedTemplate}
           onClose={() => setDetailOpen(false)}
-          subtitle={selectedTemplate ? primaryPlatform(selectedTemplate).toUpperCase() : ''}
+          subtitle={selectedTemplate ? displayTerm(locale, primaryPlatform(selectedTemplate)) : ''}
           title={selectedTemplate?.name ?? copy(locale, '模板详情', 'Template Detail')}
         >
           {selectedTemplate ? (
@@ -972,7 +1000,7 @@ export default function AgentTemplateMarketPage() {
                           <div className="text-sm font-medium text-white/75">
                             {example.title || copy(locale, '示例预览', 'Example Preview')}
                           </div>
-                          <div className="mt-1 text-xs text-white/40">{example.exampleType}</div>
+                          <div className="mt-1 text-xs text-white/40">{displayTerm(locale, example.exampleType)}</div>
                         </div>
                       </div>
                     ))}
@@ -983,7 +1011,7 @@ export default function AgentTemplateMarketPage() {
               <div className="flex flex-wrap gap-2">
                 {[...selectedTemplate.platformTags, ...selectedTemplate.industryTags, ...selectedTemplate.scenarioTags].slice(0, 8).map(tag => (
                   <span key={tag} className="rounded-full border border-brand-500/20 bg-brand-500/10 px-2.5 py-1 text-[11px] text-brand-300">
-                    {tag}
+                    {displayTerm(locale, tag)}
                   </span>
                 ))}
               </div>
@@ -1034,8 +1062,11 @@ export default function AgentTemplateMarketPage() {
                 </div>
                 <div className="space-y-2 text-sm text-white/50">
                   <div>{copy(locale, `版本: ${selectedDetail?.version.versionLabel ?? 'v1'}`, `Version: ${selectedDetail?.version.versionLabel ?? 'v1'}`)}</div>
-                  <div>{copy(locale, `执行器: ${selectedTemplate.executorType}`, `Executor: ${selectedTemplate.executorType}`)}</div>
-                  <div>{copy(locale, `模态: ${selectedTemplate.modality}`, `Modality: ${selectedTemplate.modality}`)}</div>
+                  <div>{copy(locale, `执行器: ${displayTerm(locale, selectedTemplate.executorType)}`, `Executor: ${displayTerm(locale, selectedTemplate.executorType)}`)}</div>
+                  <div>{copy(locale, `模态: ${displayTerm(locale, selectedTemplate.modality)}`, `Modality: ${displayTerm(locale, selectedTemplate.modality)}`)}</div>
+                  <div>{copy(locale, `系列: ${displayTerm(locale, selectedTemplate.series)}`, `Series: ${displayTerm(locale, selectedTemplate.series)}`)}</div>
+                  <div>{copy(locale, `能力: ${displayTerm(locale, selectedTemplate.capabilityType)}`, `Capability: ${displayTerm(locale, selectedTemplate.capabilityType)}`)}</div>
+                  <div>{copy(locale, `交互方式: ${displayTerm(locale, selectedTemplate.interactionMode)}`, `Interaction Mode: ${displayTerm(locale, selectedTemplate.interactionMode)}`)}</div>
                   <div>{copy(locale, `目标路由: ${readExecutionFlag(selectedDetail, 'route') || '-'}`, `Target route: ${readExecutionFlag(selectedDetail, 'route') || '-'}`)}</div>
                   {selectedDetail?.version.sourceAssetRef && (
                     <div className="break-all">

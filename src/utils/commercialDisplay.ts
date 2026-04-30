@@ -1,3 +1,8 @@
+import type { TFunction } from 'i18next'
+import {
+  getCommercialAssetLabel,
+  getWalletHistoryTitleLabel,
+} from '@/i18n/helpers'
 import type { CommercialOrderView, WalletHistoryEntry, WalletSummary } from '@/types/commercial'
 
 export function buildAssetBalanceMap(walletSummary?: WalletSummary | null) {
@@ -30,10 +35,22 @@ export function formatMoney(cents: number) {
   return `¥${((cents || 0) / 100).toLocaleString()}`
 }
 
-export function formatWalletHistoryAmount(entry: WalletHistoryEntry) {
+export function formatWalletHistoryAmount(t: TFunction, entry: WalletHistoryEntry) {
   const prefix = entry.direction === 'credit' ? '+' : entry.direction === 'debit' ? '-' : ''
   if (entry.asset_code === 'ECOMMERCE_CASH') return `${prefix}${formatMoney(entry.amount)}`
-  if (entry.asset_code === 'ECOMMERCE_MONTHLY_ALLOWANCE') return `${prefix}${entry.amount} quota`
-  if (entry.asset_code === 'ECOMMERCE_CREDIT' || entry.asset_code === 'ECOMMERCE_PROMO_CREDIT') return `${prefix}${entry.amount} credits`
+  if (entry.asset_code === 'ecommerce.image.generate') {
+    return `${prefix}${entry.quota_consumed || entry.amount || 0} ${t('account.common.unit.quota')}`
+  }
+  if (entry.asset_code === 'ECOMMERCE_CREDIT' || entry.asset_code === 'ECOMMERCE_PROMO_CREDIT') {
+    return `${prefix}${entry.amount} ${t('account.common.unit.credits')}`
+  }
   return `${prefix}${entry.amount}`
+}
+
+export function getWalletHistoryAssetSummary(t: TFunction, entry: WalletHistoryEntry) {
+  return entry.description || getCommercialAssetLabel(t, entry.asset_code)
+}
+
+export function getWalletHistoryTitle(t: TFunction, entry: WalletHistoryEntry) {
+  return getWalletHistoryTitleLabel(t, entry)
 }

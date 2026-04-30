@@ -137,7 +137,7 @@ export default function ConsoleLayout() {
                         {item.children.map((child: (typeof item.children)[number]) => (
                           <NavLink
                             key={child.id}
-                            to={`/draw/${child.slug}`}
+                            to={`/products/workbench/visual-tools/${child.slug}`}
                             onClick={() => setMobileOpen(false)}
                             className={({ isActive }) =>
                               `sidebar-item${isActive ? ' active' : ''} text-white/50`

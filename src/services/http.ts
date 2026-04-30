@@ -17,6 +17,11 @@ export function getAccessToken() {
   return localStorage.getItem(TOKEN_STORAGE_KEY) ?? ''
 }
 
+export function shouldHandleUnauthorized(responseStatus: number, payloadCode?: number, errorCode?: string) {
+  const token = getAccessToken()
+  return Boolean(token) && (responseStatus === 401 || payloadCode === 401 || errorCode === 'TOKEN_INVALID')
+}
+
 function clearStoredAuth() {
   localStorage.removeItem(TOKEN_STORAGE_KEY)
   localStorage.removeItem(SESSION_STORAGE_KEY)
@@ -31,6 +36,15 @@ function redirectToLogin() {
   window.location.replace(target)
 }
 
+export function handleUnauthorized(responseStatus: number, payloadCode?: number, errorCode?: string) {
+  if (!shouldHandleUnauthorized(responseStatus, payloadCode, errorCode)) {
+    return false
+  }
+  clearStoredAuth()
+  redirectToLogin()
+  return true
+}
+
 export function buildHeaders(init?: HeadersInit) {
   const token = getAccessToken()
   return {
@@ -41,7 +55,6 @@ export function buildHeaders(init?: HeadersInit) {
 }
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getAccessToken()
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: buildHeaders(init?.headers),
@@ -49,17 +62,41 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   const payload = (await response.json()) as Envelope<T>
   if (!response.ok || payload.code !== 0) {
-    const isTokenInvalid =
-      Boolean(token) &&
-      (response.status === 401 || payload.code === 401 || payload.error_code === 'TOKEN_INVALID')
     const errorMsg = payload.error_hint || payload.error || payload.message || 'Request failed'
     useToastStore.getState().showToast(errorMsg, 'error')
-    if (isTokenInvalid) {
-      clearStoredAuth()
-      redirectToLogin()
-    }
+    handleUnauthorized(response.status, payload.code, payload.error_code)
     throw new Error(errorMsg)
   }
 
   return payload.data
+}
+
+export async function downloadBinary(path: string, fileName?: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'GET',
+    headers: buildHeaders(),
+  })
+
+  if (!response.ok) {
+    let errorMsg = 'Download failed'
+    try {
+      const payload = (await response.json()) as Envelope<unknown>
+      errorMsg = payload.error_hint || payload.error || payload.message || errorMsg
+      handleUnauthorized(response.status, payload.code, payload.error_code)
+    } catch {
+      handleUnauthorized(response.status)
+    }
+    useToastStore.getState().showToast(errorMsg, 'error')
+    throw new Error(errorMsg)
+  }
+
+  const blob = await response.blob()
+  const objectUrl = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = fileName || 'download'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(objectUrl)
 }

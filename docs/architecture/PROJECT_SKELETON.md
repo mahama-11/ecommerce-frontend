@@ -31,6 +31,15 @@ These two shells share:
 - route-level lazy loading
 - visual tokens from `index.css`
 
+The frontend also now contains two detached management shells:
+
+- **Account shell**
+  - personal profile, assets, history, templates, billing, promotion, commission, downloads
+  - owned by `AccountLayout`
+- **Org shell**
+  - organization-admin view and management entry
+  - owned by `OrgLayout`
+
 ## 3. Route Map
 
 ### 3.1 Portal Routes
@@ -96,6 +105,21 @@ These two shells share:
 - `/settings/personal`
 - `/settings/organization`
 
+### 3.3 Account Routes
+
+- `/account/profile`
+- `/account/assets`
+- `/account/history`
+- `/account/templates`
+- `/account/billing`
+- `/account/promotion`
+- `/account/commission`
+- `/account/downloads`
+
+### 3.4 Org Routes
+
+- `/org/overview`
+
 ## 4. Page Ownership
 
 ### 4.1 Portal Pages
@@ -122,6 +146,15 @@ Workbench routes are grouped into dedicated route pages:
 - `AssetCommercePage.tsx`
 - `DesignWorkbenchPage.tsx`
 - `SettingsWorkbenchPage.tsx`
+- `AccountProfilePage.tsx`
+- `AccountAssetsPage.tsx`
+- `AccountHistoryPage.tsx`
+- `AccountTemplatesPage.tsx`
+- `AccountBillingPage.tsx`
+- `AccountPromotionPage.tsx`
+- `AccountCommissionPage.tsx`
+- `AccountDownloadsPage.tsx`
+- `OrgOverviewPage.tsx`
 
 ## 5. State Flow Skeleton
 
@@ -142,7 +175,8 @@ Primary helpers:
 
 - design workbench can create mock tasks
 - selected design assets can sync into the picture library
-- selected design assets can create download-center bundles
+- selected design assets can still create mock download-center bundles for design-flow continuity
+- account download center now primarily renders real product-export download records from backend APIs
 - design templates can bridge into Agent templates
 
 Primary helpers:
@@ -185,6 +219,11 @@ The current codebase already includes:
 - i18n at both page and mock-data levels
 - mobile/desktop split sidebar behavior
 - localStorage-backed workflow continuity
+- product-facing auth/session wiring
+- account and org route separation outside the console shell
+- real wallet, billing, promotion, and commission API integration for account-center pages
+- real product center and download center API integration for product pages and `/account/downloads`
+- shared authenticated request handling with token-invalid redirect behavior
 
 ## 8. Known Boundaries
 
@@ -194,6 +233,7 @@ Current limitations:
 
 - no finalized backend integration for most workbench actions
 - no persistent server-owned workflow state
-- no real identity, organization, billing, or permission API wiring
+- design-workbench delivery continuity still keeps mock bundle helpers while account download center has moved to real product-export data
+- mock state remains in a few legacy cross-page delivery helpers and should not be treated as source of truth for download history
 
 These are intentionally separated from the current UI structure so they can be replaced progressively without rewriting the route skeleton.

@@ -34,5 +34,5 @@ export type ActiveTemplateState = {
 
 export type ToolTemplateOption = Pick<
   TemplateListItem,
-  'id' | 'slug' | 'name' | 'summary' | 'externalCode' | 'recommendScore' | 'coverAssetUrl'
+  'id' | 'slug' | 'toolSlug' | 'name' | 'summary' | 'externalCode' | 'recommendScore' | 'coverAssetUrl'
 >

@@ -18,7 +18,7 @@ const TOPICS = [
     icon: Wrench,
     title: { zh: '视觉工具使用', en: 'Visual Tool Usage' },
     desc: { zh: '从上传素材、配置参数到查看生成记录的完整说明。', en: 'Guides from uploading assets and setting parameters to reviewing generated records.' },
-    to: '/draw/changing-model',
+    to: '/products/workbench/visual-tools/changing-model',
   },
   {
     icon: BookOpen,

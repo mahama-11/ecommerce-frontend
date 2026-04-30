@@ -1,19 +1,9 @@
-import { API_BASE_URL } from '@/services/apiBase'
-import { getAccessToken } from '@/services/auth'
-import { useToastStore } from '@/store/toastStore'
-
-type Envelope<T> = {
-  code: number
-  message: string
-  data: T
-  error?: string
-  error_code?: string
-  error_hint?: string
-}
+import { request } from '@/services/http'
 
 export type TemplateListItem = {
   id: string
   slug: string
+  toolSlug?: string
   externalCode?: string
   name: string
   summary: string
@@ -123,27 +113,6 @@ export type TemplateInstanceItem = {
 
 export const TEMPLATE_USE_PAYLOAD_KEY = 'ae_template_center_use_payload'
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getAccessToken()
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers ?? {}),
-    },
-    ...init,
-  })
-
-  const payload = (await response.json()) as Envelope<T>
-  if (!response.ok || payload.code !== 0) {
-    const errorMsg = payload.error_hint || payload.error || payload.message || 'Request failed'
-    useToastStore.getState().showToast(errorMsg, 'error')
-    throw new Error(errorMsg)
-  }
-
-  return payload.data
-}
-
 function toQuery(params: Record<string, string | number | boolean | undefined>) {
   const query = new URLSearchParams()
   Object.entries(params).forEach(([key, value]) => {
@@ -156,6 +125,7 @@ function toQuery(params: Record<string, string | number | boolean | undefined>) 
 
 export async function listCatalog(params: {
   locale: string
+  toolSlug?: string
   keyword?: string
   modality?: string
   series?: string
@@ -166,6 +136,7 @@ export async function listCatalog(params: {
   return request<TemplateListItem[]>(
     `/api/v1/ecommerce/template-center/catalog${toQuery({
       locale: params.locale,
+      tool_slug: params.toolSlug,
       keyword: params.keyword,
       modality: params.modality,
       series: params.series,
@@ -178,6 +149,7 @@ export async function listCatalog(params: {
 
 export async function listCatalogFacets(params: {
   locale: string
+  toolSlug?: string
   keyword?: string
   modality?: string
   series?: string
@@ -187,6 +159,7 @@ export async function listCatalogFacets(params: {
   return request<TemplateCatalogFacets>(
     `/api/v1/ecommerce/template-center/catalog/facets${toQuery({
       locale: params.locale,
+      tool_slug: params.toolSlug,
       keyword: params.keyword,
       modality: params.modality,
       series: params.series,

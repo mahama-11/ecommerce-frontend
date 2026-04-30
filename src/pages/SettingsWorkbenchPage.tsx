@@ -75,7 +75,7 @@ export default function SettingsWorkbenchPage({ forcedSection }: { forcedSection
     fullName: user?.full_name || '',
     avatarUrl: user?.avatar_url || '',
     language: locale,
-    defaultWorkspace: '/draw/changing-model',
+    defaultWorkspace: '/products/workbench/visual-tools/changing-model',
     emailNotifications: true,
     deliveryNotifications: true,
     weeklyDigest: false,
@@ -88,7 +88,7 @@ export default function SettingsWorkbenchPage({ forcedSection }: { forcedSection
       fullName: user?.full_name || '',
       avatarUrl: user?.avatar_url || '',
       language: (stored.language as Locale | undefined) || locale,
-      defaultWorkspace: stored.defaultWorkspace || '/draw/changing-model',
+      defaultWorkspace: stored.defaultWorkspace || '/products/workbench/visual-tools/changing-model',
       emailNotifications: stored.emailNotifications ?? true,
       deliveryNotifications: stored.deliveryNotifications ?? true,
       weeklyDigest: stored.weeklyDigest ?? false,
@@ -154,7 +154,7 @@ export default function SettingsWorkbenchPage({ forcedSection }: { forcedSection
     {
       title: pick(locale, { zh: '下载中心', en: 'Download Center' }),
       desc: pick(locale, { zh: '查看最近交付包、生成结果和导出文件。', en: 'Access recent deliveries, generated assets, and exported files.' }),
-      to: '/account/downloads',
+      to: '/downloadCenter',
     },
     {
       title: pick(locale, { zh: '订单与额度', en: 'Orders & Credits' }),
@@ -310,10 +310,10 @@ export default function SettingsWorkbenchPage({ forcedSection }: { forcedSection
                     onChange={event => handleChange('defaultWorkspace', event.target.value)}
                     className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition-colors focus:border-brand-500/40"
                   >
-                    <option value="/draw/changing-model">{pick(locale, { zh: '模特换图', en: 'Model Swap' })}</option>
+                    <option value="/products/workbench/visual-tools/changing-model">{pick(locale, { zh: '模特换图', en: 'Model Swap' })}</option>
                     <option value="/aiChat/template">{pick(locale, { zh: '模板市场', en: 'Template Market' })}</option>
                     <option value="/chat">{pick(locale, { zh: 'AI 对话', en: 'AI Chat' })}</option>
-                    <option value="/draw/product-home">{pick(locale, { zh: '商品中心', en: 'Product Center' })}</option>
+                    <option value="/products">{pick(locale, { zh: '商品中心', en: 'Product Center' })}</option>
                   </select>
                 </label>
                 <label className="space-y-2">

@@ -18,6 +18,13 @@ export type WalletSummary = {
   allowance_balance: number
   assets: WalletAssetSummary[]
   primary_asset_code?: string
+  quota?: {
+    billable_item_code: string
+    granted: number
+    consumed: number
+    reserved: number
+    remaining: number
+  }
 }
 
 export type Product = {

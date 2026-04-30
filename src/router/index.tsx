@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react'
+import type { RouteObject } from 'react-router-dom'
 
 const RequireAuth = lazy(() => import('@/components/auth/RequireAuth'))
 const RequireOrgAdmin = lazy(() => import('@/components/auth/RequireOrgAdmin'))
@@ -7,10 +8,14 @@ const PortalLayout = lazy(() => import('@/layouts/PortalLayout'))
 const ConsoleLayout = lazy(() => import('@/layouts/ConsoleLayout'))
 const AccountLayout = lazy(() => import('@/layouts/AccountLayout'))
 const OrgLayout = lazy(() => import('@/layouts/OrgLayout'))
+const ProductWorkbenchLayout = lazy(() => import('@/layouts/ProductWorkbenchLayout'))
 const HomePage = lazy(() => import('@/pages/HomePage'))
 const PricingPage = lazy(() => import('@/pages/PricingPage'))
 const SolutionDetailPage = lazy(() => import('@/pages/SolutionDetailPage'))
 const ToolPage = lazy(() => import('@/pages/ToolPage'))
+const ProductAiWorkspacePage = lazy(() => import('@/pages/ToolPage').then(module => ({ default: module.ProductScopedToolPage })))
+const BatchListingPage = lazy(() => import('@/pages/BatchListingPage'))
+const ProductVisualToolsPage = lazy(() => import('@/pages/ProductVisualToolsPage'))
 const AboutUsPage = lazy(() => import('@/pages/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('@/pages/HelpCenterPage'))
 const ContactPage = lazy(() => import('@/pages/ContactPage'))
@@ -37,6 +42,8 @@ const OrgOverviewPage = lazy(() => import('@/pages/org/OrgOverviewPage'))
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'))
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'))
+const ProductListPage = lazy(() => import('@/pages/product/ProductListPage'))
+const ProductDetailPage = lazy(() => import('@/pages/product/ProductDetailPage'))
 
 function Fallback() {
   return (
@@ -77,6 +84,15 @@ const orgPage = (Element: LazyExoticComponent<ComponentType<any>>) => ({
   }],
 })
 
+const productWorkbenchPage = (children: RouteObject[]): RouteObject => ({
+  element: <S><RequireAuth /></S>,
+  children: [{
+    path: '/products',
+    element: <S><ProductWorkbenchLayout /></S>,
+    children,
+  }],
+})
+
 export const router = createBrowserRouter([
   {
     element: <S><PortalLayout /></S>,
@@ -103,7 +119,7 @@ export const router = createBrowserRouter([
   { path: '/chat', ...consolePage(ChatWorkspacePage) },
   { path: '/chat/doc', ...consolePage(ChatWorkspacePage) },
   { path: '/aiChat/template', ...consolePage(AgentTemplateMarketPage) },
-  { path: '/aiChat/batchListing', ...consolePage(OpsWorkbenchPage) },
+  { path: '/aiChat/batchListing', element: <Navigate to="/products/workbench/batch-listing" replace /> },
   { path: '/aiChat/history', ...consolePage(OpsWorkbenchPage) },
   { path: '/aiChat/myTemplate', ...consolePage(OpsWorkbenchPage) },
   { path: '/aiChat/analysisRecords', ...consolePage(OpsWorkbenchPage) },
@@ -114,18 +130,31 @@ export const router = createBrowserRouter([
   { path: '/database/sensitiveThesaurus', ...consolePage(AssetCommercePage) },
   { path: '/database/tagManage', ...consolePage(AssetCommercePage) },
   { path: '/draw/scene-reference', ...consolePage(DesignWorkbenchPage) },
-  { path: '/draw/product-home', ...consolePage(DesignWorkbenchPage) },
-  { path: '/draw/product-records', ...consolePage(DesignWorkbenchPage) },
+  { path: '/draw/product-home', element: <Navigate to="/products" replace /> },
+  { path: '/draw/product-records', element: <Navigate to="/products/workbench/visual-tools" replace /> },
   { path: '/draw/designer-home', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/my-design', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/my-template', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/team-space', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/history', ...consolePage(DesignWorkbenchPage) },
+  productWorkbenchPage([
+    { index: true, element: <S><ProductListPage /></S> },
+    { path: 'workbench', element: <Navigate to="/products" replace /> },
+    { path: 'downloads', element: <Navigate to="/products/workbench/downloads" replace /> },
+    { path: 'visual-tools', element: <Navigate to="/products/workbench/visual-tools" replace /> },
+    { path: 'batch-listing', element: <Navigate to="/products/workbench/batch-listing" replace /> },
+    { path: ':id', element: <S><ProductDetailPage /></S> },
+    { path: 'workbench/batch-listing', element: <S><BatchListingPage /></S> },
+    { path: 'workbench/visual-tools', element: <S><ProductVisualToolsPage /></S> },
+    { path: 'workbench/visual-tools/:toolSlug', element: <S><ProductVisualToolsPage /></S> },
+    { path: 'workbench/downloads', element: <S><AccountDownloadsPage /></S> },
+    { path: ':productId/ai/:toolSlug', element: <S><ProductAiWorkspacePage /></S> },
+  ]),
   { path: '/settings/profile', element: <Navigate to="/account/profile" replace /> },
   { path: '/settings/personal', element: <Navigate to="/account/assets" replace /> },
   { path: '/settings/organization', element: <Navigate to="/org/overview" replace /> },
   { path: '/orderList', element: <Navigate to="/account/billing" replace /> },
-  { path: '/downloadCenter', element: <Navigate to="/account/downloads" replace /> },
+  { path: '/downloadCenter', element: <Navigate to="/products/workbench/downloads" replace /> },
   { path: '/account/profile', ...accountPage(AccountProfilePage) },
   { path: '/account/assets', ...accountPage(AccountAssetsPage) },
   { path: '/account/history', ...accountPage(AccountHistoryPage) },

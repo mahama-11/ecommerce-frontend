@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useLocation, useNavigate, useParams, Link } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, Link, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
 import { ArrowLeft, Loader2, Sparkles, Upload, Image as ImageIcon, Wand2, X, ChevronRight, Play, Search } from 'lucide-react'
@@ -23,6 +23,8 @@ import {
   type TemplateUseResponse,
   useTemplateNow,
 } from '@/services/templateCenter'
+import { getProduct } from '@/services/product'
+import type { Product } from '@/types/product'
 import { ToolNotFoundView } from './tool-page/components/ToolNotFoundView'
 import type { ActiveTemplateState, AssetRequirement, GeneratedResult, Locale, ToolTemplateOption } from './tool-page/types'
 import {
@@ -42,13 +44,9 @@ type ToolPageLocationState = {
   templateUsePayload?: TemplateUseResponse
 }
 
-function matchesToolTemplateSlug(templateSlug: string, toolSlug: string) {
-  return (
-    templateSlug === toolSlug ||
-    templateSlug.startsWith(`${toolSlug}-`) ||
-    templateSlug.endsWith(`-${toolSlug}`) ||
-    templateSlug.includes(`-${toolSlug}-`)
-  )
+type ToolContentProps = {
+  tool: ToolDef
+  productId: string
 }
 
 function buildHistorySourceAsset(sourceAssetID: string): SourceAssetSummary {
@@ -64,7 +62,7 @@ function buildHistorySourceAsset(sourceAssetID: string): SourceAssetSummary {
   }
 }
 
-function ToolContent({ tool }: { tool: ToolDef }) {
+function ToolContent({ tool, productId }: ToolContentProps) {
   const { i18n } = useTranslation()
   const { showToast } = useToastStore()
   const locale: Locale = (i18n.resolvedLanguage ?? i18n.language).startsWith('en') ? 'en' : 'zh'
@@ -75,6 +73,8 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   const resultPreviewByAssetIDRef = useRef<Record<string, string>>({})
   const notifiedJobIDsRef = useRef<Set<string>>(new Set())
   const consumedTemplatePayloadKeyRef = useRef<string | null>(null)
+  const templateOptionsRequestKeyRef = useRef<string>('')
+  const templateOptionsLoadingRef = useRef(false)
   const [creatingJob, setCreatingJob] = useState(false)
   const [cancelingJob, setCancelingJob] = useState(false)
   const [uploadingSource, setUploadingSource] = useState(false)
@@ -82,13 +82,38 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   const [negativePrompt, setNegativePrompt] = useState('')
   const [activeTemplate, setActiveTemplate] = useState<ActiveTemplateState | null>(null)
   const [templateOptions, setTemplateOptions] = useState<ToolTemplateOption[]>([])
+  const [templateOptionsLoading, setTemplateOptionsLoading] = useState(false)
+  const [templateOptionsLoaded, setTemplateOptionsLoaded] = useState(false)
+  const [templateOptionsError, setTemplateOptionsError] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [templateSearchTerm, setTemplateSearchTerm] = useState('')
   const [selectingTemplateID, setSelectingTemplateID] = useState<string | null>(null)
+  const [productLoading, setProductLoading] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [sourcePreviewUrl, setSourcePreviewUrl] = useState<string | null>(null)
   const [sourceAsset, setSourceAsset] = useState<SourceAssetSummary | null>(null)
   const [results, setResults] = useState<GeneratedResult[]>([])
   const [activeJobID, setActiveJobID] = useState<string | null>(null)
   const [pollingJobID, setPollingJobID] = useState<string | null>(null)
   const localizedTool = getLocalizedTool(tool, i18n.resolvedLanguage ?? i18n.language)
+  const resetJobState = useCallback(() => {
+    setActiveJobID(null)
+    setPollingJobID(null)
+  }, [])
+  const resetSourceState = useCallback((options?: { clearPrompt?: boolean; clearFileInput?: boolean; clearResults?: boolean }) => {
+    setSourcePreviewUrl(null)
+    setSourceAsset(null)
+    resetJobState()
+    if (options?.clearPrompt) {
+      setPrompt('')
+    }
+    if (options?.clearResults) {
+      setResults([])
+    }
+    if (options?.clearFileInput && fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }, [resetJobState])
   const sourceGuide = (() => {
     const fallback = defaultAssetGuide(locale, tool.slug)
     if (!activeTemplate) return { ...fallback, requirements: [] as AssetRequirement[] }
@@ -119,16 +144,37 @@ function ToolContent({ tool }: { tool: ToolDef }) {
     resultObjectURLsRef.current = []
     resultPreviewByAssetIDRef.current = {}
     notifiedJobIDsRef.current.clear()
-    setSourcePreviewUrl(null)
-    setSourceAsset(null)
-    setResults([])
-    setActiveJobID(null)
-    setPrompt('')
+    resetSourceState({ clearPrompt: true, clearResults: true })
     setNegativePrompt('')
     setActiveTemplate(null)
     setTemplateOptions([])
     setSelectingTemplateID(null)
-  }, [tool.slug])
+  }, [resetSourceState, tool.slug])
+
+  useEffect(() => {
+    let canceled = false
+    const loadCurrentProduct = async () => {
+      setProductLoading(true)
+      try {
+        const detail = await getProduct(productId)
+        if (!canceled) {
+          setSelectedProduct(detail.product)
+        }
+      } catch {
+        if (!canceled) {
+          setSelectedProduct(null)
+        }
+      } finally {
+        if (!canceled) {
+          setProductLoading(false)
+        }
+      }
+    }
+    void loadCurrentProduct()
+    return () => {
+      canceled = true
+    }
+  }, [productId])
 
   const applyTemplatePayload = useCallback((payload: TemplateUseResponse, options?: { replacePrompt?: boolean; fallbackId?: string }) => {
     const replacePrompt = options?.replacePrompt ?? false
@@ -155,14 +201,6 @@ function ToolContent({ tool }: { tool: ToolDef }) {
             ([key, value]) => [key, String(value)] as [string, string],
           )
         : []
-    const promptLayers = payload.preloadedTemplatePayload?.promptLayers
-    const l3Default =
-      promptLayers &&
-      typeof promptLayers === 'object' &&
-      typeof (promptLayers as Record<string, unknown>).l3 === 'object' &&
-      typeof ((promptLayers as Record<string, unknown>).l3 as Record<string, unknown>).defaultContent === 'string'
-        ? (((promptLayers as Record<string, unknown>).l3 as Record<string, unknown>).defaultContent as string)
-        : ''
     const inputSchema =
       payload.prefilledInputSchema && typeof payload.prefilledInputSchema === 'object'
         ? (payload.prefilledInputSchema as Record<string, unknown>)
@@ -194,29 +232,12 @@ function ToolContent({ tool }: { tool: ToolDef }) {
             : undefined,
       })
     }
-    const injectedPrompt =
-      typeof defaultVariablesRecord?.prompt === 'string'
-        ? defaultVariablesRecord.prompt
-        : typeof defaultVariablesRecord?.mainPrompt === 'string'
-          ? defaultVariablesRecord.mainPrompt
-          : ''
     const injectedNegativePrompt =
       typeof defaultVariablesRecord?.negativePrompt === 'string'
         ? defaultVariablesRecord.negativePrompt
         : typeof defaultVariablesRecord?.negative_prompt === 'string'
           ? defaultVariablesRecord.negative_prompt
           : ''
-    const nextPrompt =
-      l3Default ||
-      injectedPrompt ||
-      copy(
-        locale,
-        `已加载模板: ${templateName}`,
-        `Loaded template: ${templateName}`,
-      )
-    if (nextPrompt) {
-      setPrompt(current => ((replacePrompt || !current.trim()) ? nextPrompt : current))
-    }
     setNegativePrompt(current => {
       if (replacePrompt) {
         return injectedNegativePrompt || ''
@@ -227,6 +248,53 @@ function ToolContent({ tool }: { tool: ToolDef }) {
       return current
     })
   }, [locale])
+
+  const loadTemplateOptions = useCallback(async (force: boolean = false) => {
+    const requestKey = `${locale}:${tool.slug}`
+    if (templateOptionsLoadingRef.current) return
+    if (!force && templateOptionsRequestKeyRef.current === requestKey && templateOptionsLoaded && !templateOptionsError) return
+    templateOptionsLoadingRef.current = true
+    setTemplateOptionsLoading(true)
+    setTemplateOptionsError('')
+    try {
+      const items = await listCatalog({
+        locale,
+        toolSlug: tool.slug,
+        sortBy: 'recommended',
+      })
+      const matched = items
+        .sort((left, right) => right.recommendScore - left.recommendScore)
+        .map(item => ({
+          id: item.id,
+          slug: item.slug,
+          toolSlug: item.toolSlug,
+          name: item.name,
+          summary: item.summary,
+          externalCode: item.externalCode,
+          recommendScore: item.recommendScore,
+          coverAssetUrl: item.coverAssetUrl,
+        }))
+      setTemplateOptions(matched)
+      setTemplateOptionsLoaded(true)
+      templateOptionsRequestKeyRef.current = requestKey
+      setActiveTemplate(prev => {
+        if (prev && prev.name === prev.id) {
+          const found = matched.find(m => m.id === prev.id)
+          if (found) {
+            return { ...prev, name: found.name, templateCode: found.externalCode || prev.templateCode }
+          }
+        }
+        return prev
+      })
+    } catch {
+      setTemplateOptions([])
+      setTemplateOptionsLoaded(true)
+      setTemplateOptionsError(copy(locale, '模板加载失败，请重试', 'Failed to load templates. Please retry.'))
+    } finally {
+      templateOptionsLoadingRef.current = false
+      setTemplateOptionsLoading(false)
+    }
+  }, [locale, tool.slug])
 
   useEffect(() => {
     const payloadFromLocation = (location.state as ToolPageLocationState | null)?.templateUsePayload
@@ -260,50 +328,19 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   }, [applyTemplatePayload, location.pathname, location.search, location.state, navigate, tool.slug])
 
   useEffect(() => {
-    let canceled = false
-    const loadTemplateOptions = async () => {
-      try {
-        const items = await listCatalog({
-          locale,
-          sortBy: 'recommended',
-        })
-        if (canceled) return
-        const matched = items
-          .filter(item => matchesToolTemplateSlug(item.slug, tool.slug))
-          .sort((left, right) => right.recommendScore - left.recommendScore)
-          .map(item => ({
-            id: item.id,
-            slug: item.slug,
-            name: item.name,
-            summary: item.summary,
-            externalCode: item.externalCode,
-            recommendScore: item.recommendScore,
-            coverAssetUrl: item.coverAssetUrl,
-          }))
-        setTemplateOptions(matched)
-        
-        // If there's an active template that only has an ID (from a payload fallback),
-        // try to enrich it with the real name from the catalog
-        setActiveTemplate(prev => {
-          if (prev && prev.name === prev.id) {
-            const found = matched.find(m => m.id === prev.id)
-            if (found) {
-              return { ...prev, name: found.name, templateCode: found.externalCode || prev.templateCode }
-            }
-          }
-          return prev
-        })
-      } catch {
-        if (!canceled) {
-          setTemplateOptions([])
-        }
-      }
+    templateOptionsRequestKeyRef.current = ''
+    setTemplateOptions([])
+    setTemplateOptionsLoaded(false)
+    setTemplateOptionsError('')
+    void loadTemplateOptions(true)
+  }, [loadTemplateOptions])
+
+  useEffect(() => {
+    if (!pickerOpen) return
+    if (!templateOptionsLoaded || templateOptions.length === 0 || templateOptionsError) {
+      void loadTemplateOptions(true)
     }
-    void loadTemplateOptions()
-    return () => {
-      canceled = true
-    }
-  }, [locale, tool.slug])
+  }, [loadTemplateOptions, pickerOpen, templateOptions.length, templateOptionsError, templateOptionsLoaded])
 
   useEffect(() => {
     return () => {
@@ -378,8 +415,13 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   useEffect(() => {
     let canceled = false
     const loadHistory = async () => {
+      if (!productId) {
+        setResults([])
+        resetJobState()
+        return
+      }
       try {
-        const jobs = await listImageJobs({ sceneType: toolToSceneType(tool.slug), limit: 6 })
+        const jobs = await listImageJobs({ sceneType: toolToSceneType(tool.slug), productId, limit: 6 })
         if (canceled) return
         setResults([])
         for (const job of jobs) {
@@ -403,7 +445,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
     return () => {
       canceled = true
     }
-  }, [applyJobSummary, tool.slug])
+  }, [applyJobSummary, productId, resetJobState, tool.slug])
 
   useEffect(() => {
     if (!pollingJobID) return
@@ -461,28 +503,28 @@ function ToolContent({ tool }: { tool: ToolDef }) {
   const hasValidCanvas = sourcePreviewUrl || currentResult?.previewUrl || isProcessing
 
   const handleSelectFile = () => {
+    if (!selectedProduct) {
+      showToast(copy(locale, '请先选择一个商品，再上传源图。', 'Select a product before uploading a source image.'), 'error')
+      return
+    }
     fileInputRef.current?.click()
   }
 
   const handleClearSource = () => {
-    setSourceAsset(null)
-    setSourcePreviewUrl(null)
-    setActiveJobID(null)
-    setPollingJobID(null)
-    setPrompt('')
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
+    resetSourceState({ clearPrompt: true, clearFileInput: true })
   }
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
+    if (!selectedProduct) {
+      showToast(copy(locale, '请先选择一个商品，再上传源图。', 'Select a product before uploading a source image.'), 'error')
+      return
+    }
 
     setUploadingSource(true)
-    setActiveJobID(null)
-    setPollingJobID(null)
+    resetJobState()
     const localPreviewUrl = await fileToDataURL(file)
     setSourcePreviewUrl(localPreviewUrl)
 
@@ -490,6 +532,8 @@ function ToolContent({ tool }: { tool: ToolDef }) {
       const dimensions = await getImageDimensions(file)
       const payload = await fileToDataURL(file)
       const registered = await registerSourceAsset({
+        productId,
+        skuCode: selectedProduct.skuCode,
         fileName: file.name,
         mimeType: file.type || 'image/png',
         payload,
@@ -522,10 +566,16 @@ function ToolContent({ tool }: { tool: ToolDef }) {
       showToast(copy(locale, '请先填写生成描述。', 'Enter a prompt before starting generation.'), 'error')
       return
     }
+    if (!selectedProduct) {
+      showToast(copy(locale, '请先绑定一个商品，再发起生成。', 'Bind a product before starting generation.'), 'error')
+      return
+    }
 
     setCreatingJob(true)
     try {
       const job = await createImageJob({
+        productId,
+        skuCode: selectedProduct.skuCode,
         sceneType: toolToSceneType(tool.slug),
         sourceAssetID: currentSourceAsset.id,
         prompt,
@@ -587,9 +637,6 @@ function ToolContent({ tool }: { tool: ToolDef }) {
     }
   }
 
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const [templateSearchTerm, setTemplateSearchTerm] = useState('')
-
   return (
     <div className="min-h-screen bg-[#060608] flex flex-col relative overflow-hidden">
       <input
@@ -604,7 +651,10 @@ function ToolContent({ tool }: { tool: ToolDef }) {
       {/* Header */}
       <header className="absolute top-0 w-full z-40 p-4 flex items-center justify-between pointer-events-none">
         <div className="flex items-center gap-3 pointer-events-auto">
-          <Link to="/" className="glass-strong rounded-xl p-2.5 text-white/60 hover:text-white transition-colors border border-white/10 hover:border-white/20">
+          <Link
+            to={selectedProduct ? `/products/${selectedProduct.id}` : '/products/workbench/visual-tools'}
+            className="glass-strong rounded-xl p-2.5 text-white/60 hover:text-white transition-colors border border-white/10 hover:border-white/20"
+          >
             <ArrowLeft size={18} />
           </Link>
           <div className="glass-strong rounded-2xl px-4 py-2 flex items-center gap-3 border border-white/10 shadow-lg">
@@ -621,6 +671,57 @@ function ToolContent({ tool }: { tool: ToolDef }) {
         {/* Ambient Glow */}
         <div className="pointer-events-none absolute -right-40 top-0 h-[600px] w-[600px] rounded-full bg-brand-500/10 blur-[120px]" />
         <div className="pointer-events-none absolute -left-40 bottom-0 h-[600px] w-[600px] rounded-full bg-indigo-500/10 blur-[120px]" />
+
+        <div className="w-full max-w-4xl mx-auto mb-6 z-20">
+          <div className="glass-strong rounded-3xl border border-white/10 px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-white">
+                {copy(locale, '商品上下文 AI 工作区', 'Product-scoped AI workspace')}
+              </div>
+              <div className="mt-1 text-xs text-white/45">
+                {selectedProduct
+                  ? copy(locale, `当前绑定 ${selectedProduct.skuCode} · ${selectedProduct.title}`, `Bound to ${selectedProduct.skuCode} · ${selectedProduct.title}`)
+                  : copy(locale, '所有源图和生成结果都会自动沉淀到这个商品素材区。', 'Source images and generated results are archived into this product.')}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-brand-500/20 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
+              {productLoading
+                ? copy(locale, '正在加载商品上下文...', 'Loading product context...')
+                : selectedProduct
+                  ? copy(locale, '商品上下文由商品工作台注入，AI 结果会直接归档到该商品。', 'Product context is injected by the workbench and results are archived into this product.')
+                  : copy(locale, '未找到商品上下文，请返回商品工作台重新进入。', 'Missing product context. Return to the product workbench.')}
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              to="/products"
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              {copy(locale, '商品首页', 'Product home')}
+            </Link>
+            <Link
+              to="/products/workbench/visual-tools"
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              {copy(locale, '返回工具选择', 'Back to tool picker')}
+            </Link>
+            <Link
+              to="/products/workbench/downloads"
+              className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
+            >
+              {copy(locale, '下载中心', 'Download center')}
+            </Link>
+            {selectedProduct ? (
+              <Link
+                to={`/products/${selectedProduct.id}`}
+                className="rounded-xl border border-brand-500/20 bg-brand-500/10 px-3 py-2 text-sm text-brand-200 transition hover:bg-brand-500/20"
+              >
+                {copy(locale, '查看当前商品', 'Open current product')}
+              </Link>
+            ) : null}
+          </div>
+        </div>
 
         {!hasValidCanvas ? (
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center z-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
@@ -823,7 +924,10 @@ function ToolContent({ tool }: { tool: ToolDef }) {
 
           {/* Visual Parameters: Template Trigger */}
           <button 
-            onClick={() => setPickerOpen(true)} 
+            onClick={() => {
+              setPickerOpen(true)
+              void loadTemplateOptions(!templateOptionsLoaded || templateOptions.length === 0)
+            }} 
             className="px-4 py-2.5 rounded-full hover:bg-white/10 text-brand-400 transition-colors flex items-center gap-2 shrink-0 border border-transparent hover:border-brand-500/30"
           >
             <Sparkles size={18} />
@@ -852,7 +956,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
           {/* Generate CTA */}
           <button 
             onClick={handleGenerate}
-            disabled={creatingJob || uploadingSource || !currentSourceAsset}
+            disabled={creatingJob || uploadingSource || !currentSourceAsset || !selectedProduct || productLoading}
             className="h-14 px-8 rounded-full bg-brand-500 text-white font-black text-sm flex items-center gap-2.5 hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-[0_0_20px_rgba(var(--brand-500),0.3)] hover:shadow-[0_0_40px_rgba(var(--brand-500),0.6)] shrink-0"
           >
             {creatingJob ? <Loader2 size={20} className="animate-spin" /> : <Wand2 size={20} />}
@@ -882,8 +986,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
                 <button 
                   key={res.id} 
                   onClick={() => {
-                    setSourceAsset(null)
-                    setSourcePreviewUrl(null)
+                    resetSourceState()
                     setActiveJobID(res.id)
                   }}
                   className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
@@ -932,10 +1035,35 @@ function ToolContent({ tool }: { tool: ToolDef }) {
               />
             </div>
             
+            {templateOptionsLoading ? (
+              <div className="flex min-h-[240px] items-center justify-center text-white/60">
+                <Loader2 size={20} className="mr-3 animate-spin" />
+                {copy(locale, '正在加载模板...', 'Loading templates...')}
+              </div>
+            ) : templateOptionsError ? (
+              <div className="flex min-h-[240px] flex-col items-center justify-center text-center">
+                <p className="text-sm text-white/60">{templateOptionsError}</p>
+                <button
+                  type="button"
+                  onClick={() => void loadTemplateOptions(true)}
+                  className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
+                >
+                  {copy(locale, '重试加载', 'Retry')}
+                </button>
+              </div>
+            ) : templateOptions
+              .filter(item =>
+                item.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
+                item.summary.toLowerCase().includes(templateSearchTerm.toLowerCase())
+              ).length === 0 ? (
+              <div className="flex min-h-[240px] items-center justify-center text-sm text-white/50">
+                {copy(locale, '暂无可用模板', 'No templates available')}
+              </div>
+            ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto scrollbar-hide pr-2 pb-4">
               {templateOptions
-                .filter(item => 
-                  item.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) || 
+                .filter(item =>
+                  item.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
                   item.summary.toLowerCase().includes(templateSearchTerm.toLowerCase())
                 )
                 .map(item => {
@@ -965,6 +1093,7 @@ function ToolContent({ tool }: { tool: ToolDef }) {
                 )
               })}
             </div>
+            )}
           </div>
         </div>
       )}
@@ -974,9 +1103,15 @@ function ToolContent({ tool }: { tool: ToolDef }) {
 
 export default function ToolPage() {
   const { toolSlug } = useParams()
+  if (!toolSlug) return <ToolNotFoundView />
+  return <Navigate to={`/products/workbench/visual-tools/${toolSlug}`} replace />
+}
+
+export function ProductScopedToolPage() {
+  const { toolSlug, productId } = useParams()
   const tool = TOOLS.find((t) => t.slug === toolSlug)
 
-  if (!tool) return <ToolNotFoundView />
+  if (!tool || !productId) return <ToolNotFoundView />
 
-  return <ToolContent tool={tool} />
+  return <ToolContent tool={tool} productId={productId} />
 }

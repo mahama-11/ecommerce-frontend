@@ -37,7 +37,7 @@ export default function PortalLayout() {
   const FOOTER_COLUMNS = [
     {
       title: t('footer.products'),
-      links: TOOL_CATEGORIES.map(c => ({ label: t(c.labelKey), to: `/draw/${TOOLS.find(tool => tool.category === c.key)?.slug ?? ''}` })),
+      links: TOOL_CATEGORIES.map(c => ({ label: t(c.labelKey), to: `/products/workbench/visual-tools/${TOOLS.find(tool => tool.category === c.key)?.slug ?? ''}` })),
     },
     {
       title: t('footer.solutions'),
@@ -134,7 +134,7 @@ export default function PortalLayout() {
                       return (
                         <Link
                           key={tool.id}
-                          to={`/draw/${tool.slug}`}
+                          to={`/products/workbench/visual-tools/${tool.slug}`}
                           onClick={() => setMegaOpen(false)}
                           className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/[0.06] hover:text-white transition-colors group"
                         >
@@ -215,7 +215,7 @@ export default function PortalLayout() {
                       return item.children.map((tool: (typeof item.children)[number]) => (
                         <Link
                           key={tool.id}
-                          to={`/draw/${tool.slug}`}
+                          to={`/products/workbench/visual-tools/${tool.slug}`}
                           onClick={() => setMobileOpen(false)}
                           className="sidebar-item"
                         >

@@ -88,6 +88,24 @@ Console pages should:
 - provide mobile-first fallbacks for sidebars and action groups
 - avoid horizontal crowding in headers and tool panels
 
+### 5.3 Account And Org Layouts
+
+`src/layouts/AccountLayout.tsx` and `src/layouts/OrgLayout.tsx` now own the detached user-center and organization-management surfaces.
+
+Current account and org routes include:
+
+- `/account/profile`
+- `/account/assets`
+- `/account/history`
+- `/account/templates`
+- `/account/billing`
+- `/account/promotion`
+- `/account/commission`
+- `/account/downloads`
+- `/org/overview`
+
+Legacy settings-style entry routes such as `/settings/profile`, `/settings/personal`, `/settings/organization`, `/orderList`, and `/downloadCenter` currently redirect into these dedicated pages.
+
 ## 6. Route And Page Conventions
 
 ### 6.1 Public Pages
@@ -128,7 +146,7 @@ Key files:
 
 - `src/mock/data.ts`: navigation, tools, and static portal data
 - `src/mock/templateLibrary.ts`: saved template localStorage bridge
-- `src/mock/assetCommerce.ts`: upload, order, and delivery mock data
+- `src/mock/assetCommerce.ts`: upload, order, and legacy delivery mock data
 - `src/mock/designWorkbench.ts`: design-task and design-asset state
 - `src/mock/opsWorkbench.ts`: operations records
 - `src/mock/workflowBridge.ts`: cross-page workflow feed and design/template/delivery links
@@ -138,6 +156,7 @@ Guidelines:
 - keep cross-page mock writes in dedicated helper files
 - do not scatter raw `localStorage` calls across route pages
 - prefer route-specific readers on top of shared state helpers
+- do not use mock delivery bundles as the source of truth for `/account/downloads`; that page is now backed by real product export APIs
 
 ## 8. Real API Integration
 
@@ -146,11 +165,19 @@ The frontend now contains two product-facing API clients that should be preferre
 - `src/services/templateCenter.ts`: template catalog, detail, favorite, copy, and use-now flows
 - `src/services/imageRuntime.ts`: source asset registration, image job creation, job polling, and asset preview loading
 - `src/services/auth.ts`: login, register, password reset, and token lifecycle
+- `src/services/http.ts`: shared authenticated request helper with token-invalid redirect handling
+- `src/services/commercial.ts`: wallet, billing, promotion, commission, and channel-commercial APIs
 
 Shared UX infrastructure used by these real integrations:
 
 - `src/store/toastStore.ts`: global success/error toast state
 - `src/components/Toast.tsx`: top-level toast rendering mounted from `src/main.tsx`
+
+Authenticated product API rule:
+
+- prefer `src/services/http.ts` for JSON requests that depend on product login state
+- `401 / TOKEN_INVALID` responses must clear local auth state and redirect to `/login`
+- avoid adding new authenticated `fetch(...)` wrappers that bypass the shared auth-expiration behavior
 
 Current real image runtime routes used by `src/pages/ToolPage.tsx`:
 
@@ -159,6 +186,9 @@ Current real image runtime routes used by `src/pages/ToolPage.tsx`:
 - `POST /api/v1/ecommerce/image-jobs`
 - `GET /api/v1/ecommerce/image-jobs/:jobID`
 - `GET /api/v1/ecommerce/assets/:assetID/content`
+- product-scoped AI workspace requests must include `product_id` and `sku_code`; AI generation is no longer allowed without a bound product
+- product-scoped history should prefer `GET /api/v1/ecommerce/image-jobs?productID=...` so the page only shows jobs for the current SKU
+- source uploads and generated results are now expected to flow back into the selected product asset set instead of living as isolated runtime-only assets
 
 Current real template center routes used by `src/pages/AgentTemplateMarketPage.tsx` and `src/pages/ToolPage.tsx`:
 
@@ -171,12 +201,77 @@ Current real template center routes used by `src/pages/AgentTemplateMarketPage.t
 - `POST /api/v1/ecommerce/template-center/catalog/:templateId/copy`
 - `POST /api/v1/ecommerce/template-center/catalog/:templateId/use`
 
+Current real commercial routes used by account and commerce pages:
+
+- `GET /api/v1/ecommerce/wallet/summary`
+- `GET /api/v1/ecommerce/wallet/history`
+- `GET /api/v1/ecommerce/commercial/offerings`
+- `POST /api/v1/ecommerce/commercial/orders`
+- `GET /api/v1/ecommerce/commercial/orders`
+- `GET /api/v1/ecommerce/commercial/orders/:orderID`
+- `POST /api/v1/ecommerce/commercial/orders/:orderID/confirm-payment`
+- `GET /api/v1/ecommerce/billing/summary`
+- `GET /api/v1/ecommerce/billing/charges`
+- `GET /api/v1/ecommerce/promotions/programs`
+- `GET /api/v1/ecommerce/promotions/me/overview`
+- `GET /api/v1/ecommerce/promotions/me/codes`
+- `POST /api/v1/ecommerce/promotions/me/codes/ensure`
+- `POST /api/v1/ecommerce/promotions/me/codes`
+- `GET /api/v1/ecommerce/promotions/me/conversions`
+- `GET /api/v1/ecommerce/commissions/me/overview`
+- `GET /api/v1/ecommerce/commissions/me/referrals`
+- `POST /api/v1/ecommerce/commissions/me/referrals/redeem`
+- `GET /api/v1/ecommerce/commissions/me/channel/overview`
+- `GET /api/v1/ecommerce/commissions/me/channel/bindings`
+- `GET /api/v1/ecommerce/commissions/me/channel/commissions`
+- `GET /api/v1/ecommerce/commissions/me/channel/settlements`
+
+Current real product-center and download-center routes used by product and account pages:
+
+- `GET /api/v1/ecommerce/products`
+- `POST /api/v1/ecommerce/products`
+- `GET /api/v1/ecommerce/products/:product_id`
+- `PATCH /api/v1/ecommerce/products/:product_id`
+- `PATCH /api/v1/ecommerce/products/:product_id/status`
+- `DELETE /api/v1/ecommerce/products/:product_id`
+- `GET /api/v1/ecommerce/products/:product_id/assets`
+- `POST /api/v1/ecommerce/products/:product_id/assets`
+- `DELETE /api/v1/ecommerce/products/:product_id/assets/:asset_relation_id`
+- `GET /api/v1/ecommerce/products/:product_id/listing-versions`
+- `POST /api/v1/ecommerce/products/:product_id/listing-versions`
+- `POST /api/v1/ecommerce/products/listing-versions/batch`
+- `POST /api/v1/ecommerce/products/:product_id/listing-versions/adopt`
+- `POST /api/v1/ecommerce/products/listing-versions/batch-adopt`
+- `PATCH /api/v1/ecommerce/products/:product_id/listing-versions/:version_id`
+- `DELETE /api/v1/ecommerce/products/:product_id/listing-versions/:version_id`
+- `GET /api/v1/ecommerce/products/:product_id/profit-snapshots`
+- `POST /api/v1/ecommerce/products/:product_id/profit-snapshots/calculate`
+- `GET /api/v1/ecommerce/products/:product_id/export-tasks`
+- `POST /api/v1/ecommerce/products/:product_id/export-tasks`
+- `PATCH /api/v1/ecommerce/products/:product_id/export-tasks/status`
+- `GET /api/v1/ecommerce/downloads`
+- `GET /api/v1/ecommerce/downloads/:download_id/content`
+
 Template center UX baseline:
 
 - list cards render `coverAssetUrl`
 - detail drawer renders `examples[].previewAssetUrl`
 - drawer scroll is isolated from the background list scroll
 - `Use Now` and in-tool template switching must overwrite the active prompt/template state only once per payload
+- `/account/downloads` should prefer the real download-center aggregation over mock `DELIVERY_ITEMS`
+- binary downloads behind authenticated routes should use the shared request auth headers instead of naked browser navigation to protected URLs
+- download-center cards should expose enough product/export context for traceability, including linked asset count and manifest snippets when available
+- the primary visual-production entry is now product-centric: `src/layouts/ProductWorkbenchLayout.tsx` + `src/pages/ProductVisualToolsPage.tsx` route users through `/products/workbench/visual-tools` before entering a tool
+- `/products` no longer renders inside `src/layouts/ConsoleLayout.tsx`; product center now owns its own standalone shell, sidebar, top bar, and internal navigation instead of sharing the generic tool console menu
+- `src/pages/ToolPage.tsx` is now a pure product-scoped AI workspace mounted at `/products/:productId/ai/:toolSlug`; legacy `/draw/:toolSlug` no longer hosts the real page and only redirects into the product workbench
+- `/products/workbench/batch-listing` is now the canonical batch-listing route inside product center; `/aiChat/batchListing` only redirects for backward compatibility
+- `src/pages/product/ProductListPage.tsx` is no longer a card-only placeholder; it now serves as a table-first product workbench with row selection, column toggles, right-side quick preview, and spreadsheet-based batch import
+- batch import in product workbench uses client-side `xlsx` parsing and reuses the real create-product API row by row so validation failures stay isolated instead of blocking the full import; the parser is now lazy-loaded to avoid inflating the initial product-workbench bundle
+- product detail listing cards now wire the `Adopt` action to the real product-center API instead of leaving it as a dead button
+- product detail listing cards now also wire the `Edit` action to a real modal + patch request, so version maintenance is no longer read-only after generation
+- product detail `Generate Assets` now enters the product-scoped visual workspace instead of leaving the user inside an isolated tool universe
+- `src/pages/product/ProductDetailPage.tsx` now exposes inline metadata editing for SKU/title/category/brand/currency/tags and persists changes through blur-triggered product patch requests
+- product-detail tab workbench sections are split into `src/pages/product/components/ProductDetailTabs.tsx`, where assets/listings/profit/exports/history now evolve independently instead of staying embedded in one monolithic page file
 
 ## 9. Internationalization
 

@@ -94,7 +94,7 @@ export default function HomePage() {
               : t('home.subtitle')}
           </p>
 
-          <div className="flex items-center justify-center gap-4 mb-20 animate-slide-up">
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-20 animate-slide-up">
             <Link
               to={isAuthenticated ? workbenchPath : startPath}
               className="btn-primary px-8 py-3.5 rounded-xl text-base font-semibold text-white inline-flex items-center gap-2"
@@ -102,6 +102,12 @@ export default function HomePage() {
               {isAuthenticated
                 ? (locale === 'zh' ? '继续工作' : 'Continue Working')
                 : t('home.cta_start')} <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/products"
+              className="btn-outline px-8 py-3.5 rounded-xl text-base font-semibold inline-flex items-center gap-2"
+            >
+              <ImagePlus className="w-4 h-4" /> {locale === 'zh' ? '进入商品中心' : 'Product Center'}
             </Link>
             <Link
               to={isAuthenticated ? '/aiChat/template' : '/solutions/boutique'}

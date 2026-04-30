@@ -594,7 +594,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       },
     ],
     actions: [
-      { label: { zh: '生成记录', en: 'Generation Records' }, to: '/draw/product-records' },
+      { label: { zh: '生成记录', en: 'Generation Records' }, to: '/products/workbench/visual-tools' },
       { label: { zh: '下载中心', en: 'Download Center' }, to: '/downloadCenter' },
     ],
   },
@@ -625,7 +625,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       },
     ],
     actions: [
-      { label: { zh: '商品中心', en: 'Product Center' }, to: '/draw/product-home' },
+      { label: { zh: '商品中心', en: 'Product Center' }, to: '/products' },
       { label: { zh: '历史记录', en: 'History' }, to: '/draw/history' },
     ],
   },
@@ -780,7 +780,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       },
     ],
     actions: [
-      { label: { zh: '生成记录', en: 'Generation Records' }, to: '/draw/product-records' },
+      { label: { zh: '生成记录', en: 'Generation Records' }, to: '/products/workbench/visual-tools' },
       { label: { zh: '下载中心', en: 'Download Center' }, to: '/downloadCenter' },
     ],
   },

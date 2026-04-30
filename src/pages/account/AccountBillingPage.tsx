@@ -3,10 +3,21 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { CreditCard, FileText, Receipt, Sparkles, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getCommercialStatusLabel } from '@/i18n/helpers'
+import {
+  getCommercialAssetLabel,
+  getCommercialStatusLabel,
+  getWalletHistoryCategoryLabel,
+  getWalletHistoryTitleLabel,
+} from '@/i18n/helpers'
 import { commercialService } from '@/services/commercial'
 import type { BillingChargeRecord, BillingSummary, CommercialOrderView, WalletHistoryEntry, WalletSummary } from '@/types/commercial'
-import { buildAssetBalanceMap, formatMoney, formatPackageName, formatWalletHistoryAmount, getCurrentSubscription } from '@/utils/commercialDisplay'
+import {
+  buildAssetBalanceMap,
+  formatMoney,
+  formatPackageName,
+  formatWalletHistoryAmount,
+  getCurrentSubscription,
+} from '@/utils/commercialDisplay'
 
 
 const containerVariants = {
@@ -53,12 +64,13 @@ export default function AccountBillingPage() {
   }, [chargeFilter, charges])
 
   const assetMap = useMemo(() => buildAssetBalanceMap(walletSummary), [walletSummary])
+  const quota = walletSummary?.quota
   const currentSubscription = useMemo(() => getCurrentSubscription(orders), [orders])
 
   const stats = useMemo(
     () => [
       { label: t('account.billing.stats.currentPlan'), value: formatPackageName(currentSubscription?.order?.package_code, 'zh'), icon: CreditCard },
-      { label: t('account.billing.stats.remainingCredits'), value: `${assetMap.get('ECOMMERCE_MONTHLY_ALLOWANCE') || 0} quota`, icon: Sparkles },
+      { label: t('account.billing.stats.remainingCredits'), value: `${quota?.remaining || 0} ${t('account.common.unit.quota')}`, icon: Sparkles },
       { label: t('account.billing.stats.walletBalance'), value: formatMoney(assetMap.get('ECOMMERCE_CASH') || 0), icon: Wallet },
       { label: t('account.billing.stats.chargeRecords'), value: `${summary?.charge_count ?? charges.length}`, icon: Receipt },
     ],
@@ -114,10 +126,10 @@ export default function AccountBillingPage() {
         </div>
           <div className="divide-y divide-white/5">
             {[
-              { label: '支付余额 / Cash', value: formatMoney(assetMap.get('ECOMMERCE_CASH') || 0) },
-              { label: '永久积分 / Credit', value: `${assetMap.get('ECOMMERCE_CREDIT') || 0} credits` },
-              { label: '活动积分 / Promo', value: `${assetMap.get('ECOMMERCE_PROMO_CREDIT') || 0} credits` },
-              { label: '月套餐额度 / Quota', value: `${assetMap.get('ECOMMERCE_MONTHLY_ALLOWANCE') || 0} quota` },
+              { label: getCommercialAssetLabel(t, 'ECOMMERCE_CASH'), value: formatMoney(assetMap.get('ECOMMERCE_CASH') || 0) },
+              { label: getCommercialAssetLabel(t, 'ECOMMERCE_CREDIT'), value: `${assetMap.get('ECOMMERCE_CREDIT') || 0} ${t('account.common.unit.credits')}` },
+              { label: getCommercialAssetLabel(t, 'ECOMMERCE_PROMO_CREDIT'), value: `${assetMap.get('ECOMMERCE_PROMO_CREDIT') || 0} ${t('account.common.unit.credits')}` },
+              { label: getCommercialAssetLabel(t, 'ecommerce.image.generate'), value: `${quota?.remaining || 0} ${t('account.common.unit.quota')}` },
             ].map(item => (
               <motion.div variants={itemVariants} key={item.label} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
                 <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">{item.label}</div>
@@ -141,14 +153,18 @@ export default function AccountBillingPage() {
             {walletHistory.length ? walletHistory.slice(0, 5).map(item => (
               <motion.div variants={itemVariants} key={item.id} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-medium text-slate-100">{item.title}</div>
+                  <div className="truncate text-sm font-medium text-slate-100">{getWalletHistoryTitleLabel(t, item)}</div>
                   <div className="mt-1 truncate text-xs text-slate-500">
-                    {[item.category, item.asset_code, item.reference_type && item.reference_id ? `${item.reference_type}:${item.reference_id}` : item.reference_type].filter(Boolean).join(' · ')}
+                    {[
+                      getWalletHistoryCategoryLabel(t, item.category),
+                      getCommercialAssetLabel(t, item.asset_code),
+                      item.reference_type && item.reference_id ? `${item.reference_type}:${item.reference_id}` : item.reference_type,
+                    ].filter(Boolean).join(' · ')}
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
                   <div className={`text-sm font-semibold ${item.direction === 'credit' ? 'text-emerald-400' : 'text-slate-100'}`}>
-                    {formatWalletHistoryAmount(item)}
+                    {formatWalletHistoryAmount(t, item)}
                   </div>
                   <div className="mt-1 text-xs text-slate-500">{getCommercialStatusLabel(t, item.status)}</div>
                 </div>

@@ -1,5 +1,5 @@
 const PREFERENCE_STORAGE_KEY = 'ecommerce_user_preferences'
-const DEFAULT_WORKBENCH_PATH = '/draw/changing-model'
+const DEFAULT_WORKBENCH_PATH = '/products/workbench/visual-tools/changing-model'
 
 function readPreferredWorkspace() {
   if (typeof window === 'undefined') return DEFAULT_WORKBENCH_PATH

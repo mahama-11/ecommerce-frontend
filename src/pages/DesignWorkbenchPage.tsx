@@ -72,7 +72,7 @@ const DESIGN_CONFIG: Record<string, DesignConfig> = {
     ],
     actions: [
       { label: { zh: '图片素材库', en: 'Image Library' }, to: '/database/picturelibrary' },
-      { label: { zh: '商品中心', en: 'Product Center' }, to: '/draw/product-home' },
+      { label: { zh: '商品中心', en: 'Product Center' }, to: '/products' },
     ],
   },
   '/draw/product-home': {
@@ -101,7 +101,7 @@ const DESIGN_CONFIG: Record<string, DesignConfig> = {
       },
     ],
     actions: [
-      { label: { zh: '生成记录', en: 'Generation Records' }, to: '/draw/product-records' },
+      { label: { zh: '生成记录', en: 'Generation Records' }, to: '/products/workbench/visual-tools' },
       { label: { zh: '下载中心', en: 'Download Center' }, to: '/downloadCenter' },
     ],
   },
@@ -131,7 +131,7 @@ const DESIGN_CONFIG: Record<string, DesignConfig> = {
       },
     ],
     actions: [
-      { label: { zh: '商品中心', en: 'Product Center' }, to: '/draw/product-home' },
+      { label: { zh: '商品中心', en: 'Product Center' }, to: '/products' },
       { label: { zh: '历史记录', en: 'History' }, to: '/draw/history' },
     ],
   },
@@ -281,7 +281,7 @@ const DESIGN_CONFIG: Record<string, DesignConfig> = {
       },
     ],
     actions: [
-      { label: { zh: '生成记录', en: 'Generation Records' }, to: '/draw/product-records' },
+      { label: { zh: '生成记录', en: 'Generation Records' }, to: '/products/workbench/visual-tools' },
       { label: { zh: '下载中心', en: 'Download Center' }, to: '/downloadCenter' },
     ],
   },

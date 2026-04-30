@@ -1,15 +1,6 @@
 import { API_BASE_URL } from '@/services/apiBase'
-import { getAccessToken } from '@/services/auth'
+import { buildHeaders, handleUnauthorized, request } from '@/services/http'
 import { useToastStore } from '@/store/toastStore'
-
-type ApiEnvelope<T> = {
-  code: number
-  message: string
-  data: T
-  error?: string
-  error_code?: string
-  error_hint?: string
-}
 
 export type SourceAssetSummary = {
   id: string
@@ -43,6 +34,8 @@ export type ImageJobSummary = {
 }
 
 export async function registerSourceAsset(input: {
+  productId: string
+  skuCode: string
   fileName: string
   mimeType: string
   payload: string
@@ -50,9 +43,11 @@ export async function registerSourceAsset(input: {
   height?: number
   metadata?: Record<string, unknown>
 }) {
-  return requestJSON<SourceAssetSummary>('/api/v1/ecommerce/assets/source', {
+  return request<SourceAssetSummary>('/api/v1/ecommerce/assets/source', {
     method: 'POST',
     body: JSON.stringify({
+      product_id: input.productId,
+      sku_code: input.skuCode,
       file_name: input.fileName,
       mime_type: input.mimeType,
       payload: input.payload,
@@ -64,6 +59,8 @@ export async function registerSourceAsset(input: {
 }
 
 export async function createImageJob(input: {
+  productId: string
+  skuCode: string
   sceneType: string
   sourceAssetID: string
   prompt: string
@@ -74,9 +71,11 @@ export async function createImageJob(input: {
   height?: number
   templateCode?: string
 }) {
-  return requestJSON<ImageJobSummary>('/api/v1/ecommerce/image-jobs', {
+  return request<ImageJobSummary>('/api/v1/ecommerce/image-jobs', {
     method: 'POST',
     body: JSON.stringify({
+      product_id: input.productId,
+      sku_code: input.skuCode,
       scene_type: input.sceneType,
       input_mode: 'image_to_image',
       source_asset_id: input.sourceAssetID,
@@ -92,55 +91,41 @@ export async function createImageJob(input: {
 }
 
 export async function getImageJob(jobID: string) {
-  return requestJSON<ImageJobSummary>(`/api/v1/ecommerce/image-jobs/${jobID}`)
+  return request<ImageJobSummary>(`/api/v1/ecommerce/image-jobs/${jobID}`)
 }
 
 export async function cancelImageJob(jobID: string) {
-  return requestJSON<ImageJobSummary>(`/api/v1/ecommerce/image-jobs/${jobID}/cancel`, {
+  return request<ImageJobSummary>(`/api/v1/ecommerce/image-jobs/${jobID}/cancel`, {
     method: 'POST',
     body: JSON.stringify({}),
   })
 }
 
-export async function listImageJobs(params: { sceneType?: string; limit?: number } = {}) {
+export async function listImageJobs(params: { sceneType?: string; productId?: string; limit?: number } = {}) {
   const query = new URLSearchParams()
   if (params.sceneType) query.set('sceneType', params.sceneType)
+  if (params.productId) query.set('productID', params.productId)
   if (typeof params.limit === 'number') query.set('limit', String(params.limit))
   const suffix = query.toString() ? `?${query.toString()}` : ''
-  return requestJSON<ImageJobSummary[]>(`/api/v1/ecommerce/image-jobs${suffix}`)
+  return request<ImageJobSummary[]>(`/api/v1/ecommerce/image-jobs${suffix}`)
 }
 
 export async function fetchAssetObjectURL(assetID: string) {
-  const token = getAccessToken()
   const response = await fetch(`${API_BASE_URL}/api/v1/ecommerce/assets/${assetID}/content`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    headers: buildHeaders(),
   })
   if (!response.ok) {
-    const errorMsg = `Failed to load asset content: ${response.status}`
+    let errorMsg = `Failed to load asset content: ${response.status}`
+    try {
+      const payload = (await response.clone().json()) as { code?: number; error?: string; error_code?: string; error_hint?: string; message?: string }
+      errorMsg = payload.error_hint || payload.error || payload.message || errorMsg
+      handleUnauthorized(response.status, payload.code, payload.error_code)
+    } catch {
+      handleUnauthorized(response.status)
+    }
     useToastStore.getState().showToast(errorMsg, 'error')
     throw new Error(errorMsg)
   }
   const blob = await response.blob()
   return URL.createObjectURL(blob)
-}
-
-async function requestJSON<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getAccessToken()
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init?.headers ?? {}),
-    },
-    ...init,
-  })
-
-  const payload = (await response.json()) as ApiEnvelope<T>
-  if (!response.ok || payload.code !== 0) {
-    const errorMsg = payload.error_hint || payload.error || payload.message || `Request failed with status ${response.status}`
-    useToastStore.getState().showToast(errorMsg, 'error')
-    throw new Error(errorMsg)
-  }
-
-  return payload.data
 }

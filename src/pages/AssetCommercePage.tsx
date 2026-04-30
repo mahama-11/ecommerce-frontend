@@ -113,7 +113,7 @@ const PAGE_CONFIG: Record<string, PageConfig> = {
     ],
     actions: [
       { label: { zh: '场景参考图库', en: 'Scene Reference Gallery' }, to: '/draw/scene-reference' },
-      { label: { zh: '商品中心', en: 'Product Center' }, to: '/draw/product-home' },
+      { label: { zh: '商品中心', en: 'Product Center' }, to: '/products' },
     ],
   },
   '/brandLibrary': {
@@ -232,7 +232,7 @@ const PAGE_CONFIG: Record<string, PageConfig> = {
       },
     ],
     actions: [
-      { label: { zh: '下载中心', en: 'Download Center' }, to: '/account/downloads' },
+      { label: { zh: '下载中心', en: 'Download Center' }, to: '/downloadCenter' },
       { label: { zh: '定价页', en: 'Pricing Page' }, to: '/pricing' },
     ],
   },
@@ -262,7 +262,7 @@ const PAGE_CONFIG: Record<string, PageConfig> = {
       },
     ],
     actions: [
-      { label: { zh: '下载中心', en: 'Download Center' }, to: '/account/downloads' },
+      { label: { zh: '下载中心', en: 'Download Center' }, to: '/downloadCenter' },
       { label: { zh: '定价页', en: 'Pricing Page' }, to: '/pricing' },
     ],
   },
@@ -293,7 +293,7 @@ const PAGE_CONFIG: Record<string, PageConfig> = {
     ],
     actions: [
       { label: { zh: '订单与额度', en: 'Orders & Credits' }, to: '/account/billing' },
-      { label: { zh: '商品中心', en: 'Product Center' }, to: '/draw/product-home' },
+      { label: { zh: '商品中心', en: 'Product Center' }, to: '/products' },
     ],
   },
   '/account/downloads': {
@@ -322,7 +322,7 @@ const PAGE_CONFIG: Record<string, PageConfig> = {
       },
     ],
     actions: [
-      { label: { zh: '商品中心', en: 'Product Center' }, to: '/draw/product-home' },
+      { label: { zh: '商品中心', en: 'Product Center' }, to: '/products' },
       { label: { zh: '订单与额度', en: 'Orders & Credits' }, to: '/account/billing' },
     ],
   },

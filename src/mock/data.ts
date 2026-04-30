@@ -361,7 +361,6 @@ export const NAV_TOOL_GROUPS = [
       { label: '商品图系列', labelKey: 'toolCategories.product', icon: '📦', children: TOOLS.filter(t => t.category === 'product') },
       { label: '套图系列', labelKey: 'toolCategories.suite', icon: '🖼️', children: TOOLS.filter(t => t.category === 'suite') },
       { label: 'AI 视频', labelKey: 'toolCategories.video', icon: '🎬', children: TOOLS.filter(t => t.category === 'video') },
-      { label: '设计器', labelKey: 'toolCategories.designer', icon: '🎨', children: TOOLS.filter(t => t.category === 'designer') },
     ],
   },
   {
@@ -369,22 +368,18 @@ export const NAV_TOOL_GROUPS = [
     labelKey: 'navGroups.ops',
     items: [
       { label: 'AI对话', labelKey: 'pages.chat', icon: '💬', path: '/chat' },
-      { label: '知识库对话', labelKey: 'pages.chatDoc', icon: '📚', path: '/chat/doc' },
-      { label: '批量Listing', labelKey: 'pages.aiChatBatchListing', icon: '📝', path: '/aiChat/batchListing' },
       { label: 'AI Agent模板', labelKey: 'pages.aiChatTemplate', icon: '🤖', path: '/aiChat/template' },
       { label: '分析记录', labelKey: 'pages.aiChatAnalysisRecords', icon: '📊', path: '/aiChat/analysisRecords' },
-      { label: 'AI训练(选品)', labelKey: 'pages.aiChatTraining', icon: '🎯', path: '/aiChat/training' },
     ],
   },
   {
     label: '数据资料库',
     labelKey: 'navGroups.data',
     items: [
+      { label: '资产库', labelKey: 'pages.assetLibrary', icon: '🖼️', path: '/account/assets' },
+      { label: '商品模板', labelKey: 'pages.productTemplates', icon: '📋', path: '/account/templates' },
       { label: '智能知识库', labelKey: 'pages.databaseKnowledge', icon: '📖', path: '/database/knowledge' },
-      { label: '图片素材库', labelKey: 'pages.databasePicturelibrary', icon: '🖼️', path: '/database/picturelibrary' },
       { label: '品牌库', labelKey: 'pages.brandLibrary', icon: '🏷️', path: '/brandLibrary' },
-      { label: '敏感词库', labelKey: 'pages.databaseSensitiveThesaurus', icon: '🚫', path: '/database/sensitiveThesaurus' },
-      { label: '标签管理', labelKey: 'pages.databaseTagManage', icon: '🏷️', path: '/database/tagManage' },
     ],
   },
 ]

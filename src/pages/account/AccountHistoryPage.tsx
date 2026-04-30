@@ -2,8 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Filter } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { resolveAppLocale } from '@/i18n/helpers'
+import {
+  getCommercialAssetLabel,
+  getCommercialStatusLabel,
+  getWalletHistoryTitleLabel,
+  resolveAppLocale,
+} from '@/i18n/helpers'
 import { commercialService } from '@/services/commercial'
+import { formatWalletHistoryAmount, getWalletHistoryAssetSummary } from '@/utils/commercialDisplay'
 import type { WalletHistoryEntry } from '@/types/commercial'
 
 type HistoryFilter = 'all' | 'cash' | 'quota' | 'credits'
@@ -35,7 +41,7 @@ export default function AccountHistoryPage() {
   const visibleEntries = useMemo(() => {
     if (filter === 'all') return entries
     if (filter === 'cash') return entries.filter(item => item.asset_code === 'ECOMMERCE_CASH')
-    if (filter === 'quota') return entries.filter(item => item.asset_code === 'ECOMMERCE_MONTHLY_ALLOWANCE')
+    if (filter === 'quota') return entries.filter(item => item.asset_code === 'ecommerce.image.generate')
     return entries.filter(item => item.asset_code === 'ECOMMERCE_CREDIT' || item.asset_code === 'ECOMMERCE_PROMO_CREDIT')
   }, [entries, filter])
 
@@ -81,19 +87,20 @@ export default function AccountHistoryPage() {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 rounded-md border border-white/5 bg-white/5 px-2 py-0.5 text-xs font-medium uppercase tracking-wider text-slate-400">
                   <Filter className="h-3 w-3" />
-                  {assetLabel(entry)}
+                  {getCommercialAssetLabel(t, entry.asset_code)}
                 </span>
                 <div className="text-xs text-slate-500">{entry.occurred_at ? new Date(entry.occurred_at).toLocaleString() : ''}</div>
               </div>
               <div className="mt-3 text-base font-medium text-slate-100 transition-colors group-hover:text-white truncate">
-                {entry.title}
+                {getWalletHistoryTitleLabel(t, entry)}
               </div>
               <div className="mt-1 text-sm text-slate-400 break-words">
-                {entry.description || assetLabel(entry)}
+                {getWalletHistoryAssetSummary(t, entry)}
               </div>
+              <div className="mt-1 text-xs text-slate-500">{getCommercialStatusLabel(t, entry.status)}</div>
             </div>
             <div className={`shrink-0 text-right text-lg font-semibold ${entry.direction === 'credit' ? 'text-emerald-300' : 'text-orange-300'}`}>
-              {formatHistoryAmount(entry)}
+              {formatWalletHistoryAmount(t, entry)}
             </div>
           </motion.div>)) : (
           <div className="rounded-xl border border-dashed border-white/5 bg-white/5/20 p-12 text-center text-sm font-medium text-slate-500">
@@ -116,27 +123,4 @@ function historyFilterLabel(filter: HistoryFilter, locale: string) {
     default:
       return locale === 'zh' ? '全部' : 'All'
   }
-}
-
-function assetLabel(entry: WalletHistoryEntry) {
-  switch (entry.asset_code) {
-    case 'ECOMMERCE_CASH':
-      return 'Cash Balance'
-    case 'ECOMMERCE_MONTHLY_ALLOWANCE':
-      return 'Subscription Quota'
-    case 'ECOMMERCE_CREDIT':
-      return 'Permanent Credits'
-    case 'ECOMMERCE_PROMO_CREDIT':
-      return 'Promo Credits'
-    default:
-      return entry.asset_code || 'Activity'
-  }
-}
-
-function formatHistoryAmount(entry: WalletHistoryEntry) {
-  const prefix = entry.direction === 'credit' ? '+' : entry.direction === 'debit' ? '-' : ''
-  if (entry.asset_code === 'ECOMMERCE_CASH') return `${prefix}¥${((entry.amount || 0) / 100).toLocaleString()}`
-  if (entry.asset_code === 'ECOMMERCE_MONTHLY_ALLOWANCE') return `${prefix}${entry.amount} quota`
-  if (entry.asset_code === 'ECOMMERCE_CREDIT' || entry.asset_code === 'ECOMMERCE_PROMO_CREDIT') return `${prefix}${entry.amount} credits`
-  return `${prefix}${entry.amount}`
 }

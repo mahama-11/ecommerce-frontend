@@ -3,11 +3,23 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Coins, CreditCard, History, PackageCheck, Wallet } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { resolveAppLocale } from '@/i18n/helpers'
+import {
+  getCommercialAssetLabel,
+  getCommercialStatusLabel,
+  getWalletHistoryTitleLabel,
+  resolveAppLocale,
+} from '@/i18n/helpers'
 import { useAuth } from '@/hooks/useAuth'
 import { commercialService } from '@/services/commercial'
 import type { BillingSummary, CommercialOrderView, CommissionOverview, PromotionOverview, WalletHistoryEntry, WalletSummary } from '@/types/commercial'
-import { buildAssetBalanceMap, formatMoney, formatPackageName, formatWalletHistoryAmount, getCurrentSubscription } from '@/utils/commercialDisplay'
+import {
+  buildAssetBalanceMap,
+  formatMoney,
+  formatPackageName,
+  formatWalletHistoryAmount,
+  getCurrentSubscription,
+  getWalletHistoryAssetSummary,
+} from '@/utils/commercialDisplay'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -59,12 +71,13 @@ export default function AccountAssetsPage() {
   ]
 
   const assetMap = useMemo(() => buildAssetBalanceMap(walletSummary), [walletSummary])
+  const quota = walletSummary?.quota
   const currentSubscription = useMemo(() => getCurrentSubscription(orders), [orders])
 
   const stats = useMemo(
     () => [
       { label: t('account.assets.stats.currentPlan'), value: formatPackageName(currentSubscription?.order?.package_code, locale) || '-' },
-      { label: t('account.assets.stats.remainingCredits'), value: `${assetMap.get('ECOMMERCE_MONTHLY_ALLOWANCE') || 0}` },
+      { label: t('account.assets.stats.remainingCredits'), value: `${quota?.remaining || 0} ${t('account.common.unit.quota')}` },
       { label: t('account.assets.stats.walletBalance'), value: formatMoney(assetMap.get('ECOMMERCE_CASH') || 0) },
       { label: t('account.assets.stats.promotionConversions'), value: `${promotionOverview?.total_conversions ?? 0}` },
       { label: t('account.assets.stats.redeemableCommission'), value: `${commissionOverview?.redeemable_commission ?? 0}` },
@@ -72,7 +85,7 @@ export default function AccountAssetsPage() {
       { label: t('account.assets.stats.primaryRole'), value: access?.product_roles?.[0] || user?.org_role || '-' },
       { label: locale === 'zh' ? '已购套餐' : 'Purchased plans', value: `${orders.filter(item => item.order?.status === 'fulfilled').length}` },
     ],
-    [access?.product_roles, assetMap, billingSummary?.charge_count, commissionOverview?.redeemable_commission, currentSubscription?.order?.package_code, locale, orders, promotionOverview?.total_conversions, t, user?.org_role],
+    [access?.product_roles, assetMap, billingSummary?.charge_count, commissionOverview?.redeemable_commission, currentSubscription?.order?.package_code, locale, orders, promotionOverview?.total_conversions, quota?.remaining, t, user?.org_role],
   )
 
   return (
@@ -120,8 +133,8 @@ export default function AccountAssetsPage() {
               <p className="mt-2 text-sm text-slate-400">
                 {currentSubscription?.order
                   ? (locale === 'zh'
-                    ? `实付 ${formatMoney(currentSubscription.order.total_amount)}，状态 ${currentSubscription.order.status}`
-                    : `Paid ${formatMoney(currentSubscription.order.total_amount)}, status ${currentSubscription.order.status}`)
+                    ? `实付 ${formatMoney(currentSubscription.order.total_amount)}，状态 ${getCommercialStatusLabel(t, currentSubscription.order.status)}`
+                    : `Paid ${formatMoney(currentSubscription.order.total_amount)}, status ${getCommercialStatusLabel(t, currentSubscription.order.status)}`)
                   : (locale === 'zh' ? '还没有已生效套餐' : 'No active package yet')}
               </p>
             </div>
@@ -131,20 +144,20 @@ export default function AccountAssetsPage() {
           </div>
           <div className="mt-5 grid grid-cols-2 gap-4">
             <div className="rounded-xl border border-white/5 bg-black/20 p-4">
-              <div className="text-xs uppercase tracking-wider text-slate-500">{locale === 'zh' ? '支付余额' : 'Payment balance'}</div>
+              <div className="text-xs uppercase tracking-wider text-slate-500">{getCommercialAssetLabel(t, 'ECOMMERCE_CASH')}</div>
               <div className="mt-2 text-xl font-semibold text-white">{formatMoney(assetMap.get('ECOMMERCE_CASH') || 0)}</div>
             </div>
             <div className="rounded-xl border border-white/5 bg-black/20 p-4">
-              <div className="text-xs uppercase tracking-wider text-slate-500">{locale === 'zh' ? '月额度 / Quota' : 'Monthly allowance / Quota'}</div>
-              <div className="mt-2 text-xl font-semibold text-white">{assetMap.get('ECOMMERCE_MONTHLY_ALLOWANCE') || 0}</div>
+              <div className="text-xs uppercase tracking-wider text-slate-500">{getCommercialAssetLabel(t, 'ecommerce.image.generate')}</div>
+              <div className="mt-2 text-xl font-semibold text-white">{`${quota?.remaining || 0} ${t('account.common.unit.quota')}`}</div>
             </div>
             <div className="rounded-xl border border-white/5 bg-black/20 p-4">
-              <div className="text-xs uppercase tracking-wider text-slate-500">{locale === 'zh' ? '永久积分 / Credit' : 'Permanent credit'}</div>
-              <div className="mt-2 text-xl font-semibold text-white">{assetMap.get('ECOMMERCE_CREDIT') || 0}</div>
+              <div className="text-xs uppercase tracking-wider text-slate-500">{getCommercialAssetLabel(t, 'ECOMMERCE_CREDIT')}</div>
+              <div className="mt-2 text-xl font-semibold text-white">{`${assetMap.get('ECOMMERCE_CREDIT') || 0} ${t('account.common.unit.credits')}`}</div>
             </div>
             <div className="rounded-xl border border-white/5 bg-black/20 p-4">
-              <div className="text-xs uppercase tracking-wider text-slate-500">{locale === 'zh' ? '活动积分 / Promo' : 'Promo credit'}</div>
-              <div className="mt-2 text-xl font-semibold text-white">{assetMap.get('ECOMMERCE_PROMO_CREDIT') || 0}</div>
+              <div className="text-xs uppercase tracking-wider text-slate-500">{getCommercialAssetLabel(t, 'ECOMMERCE_PROMO_CREDIT')}</div>
+              <div className="mt-2 text-xl font-semibold text-white">{`${assetMap.get('ECOMMERCE_PROMO_CREDIT') || 0} ${t('account.common.unit.credits')}`}</div>
             </div>
           </div>
         </motion.section>
@@ -163,7 +176,7 @@ export default function AccountAssetsPage() {
                 </div>
                 <div className="shrink-0 text-right">
                   <div className="text-sm font-semibold text-emerald-300">{formatMoney(item.order?.total_amount || 0)}</div>
-                  <div className="mt-1 text-xs text-slate-500">{item.order?.status || '-'}</div>
+                  <div className="mt-1 text-xs text-slate-500">{getCommercialStatusLabel(t, item.order?.status)}</div>
                 </div>
               </motion.div>
             )) : (
@@ -182,11 +195,11 @@ export default function AccountAssetsPage() {
           {history.length ? history.map(item => (
             <div key={item.id} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
               <div className="min-w-0">
-                <div className="truncate text-sm font-medium text-slate-100">{item.title}</div>
-                <div className="mt-1 truncate text-xs text-slate-500">{item.description || item.asset_code || '-'}</div>
+                <div className="truncate text-sm font-medium text-slate-100">{getWalletHistoryTitleLabel(t, item)}</div>
+                <div className="mt-1 truncate text-xs text-slate-500">{getWalletHistoryAssetSummary(t, item)}</div>
               </div>
               <div className="shrink-0 text-right">
-                <div className={`text-sm font-semibold ${item.direction === 'credit' ? 'text-emerald-300' : 'text-orange-300'}`}>{formatWalletHistoryAmount(item)}</div>
+                <div className={`text-sm font-semibold ${item.direction === 'credit' ? 'text-emerald-300' : 'text-orange-300'}`}>{formatWalletHistoryAmount(t, item)}</div>
                 <div className="mt-1 text-xs text-slate-500">{item.occurred_at ? new Date(item.occurred_at).toLocaleString() : ''}</div>
               </div>
             </div>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Building2, Coins, Gift, Loader2, ShieldCheck, Wallet } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getCommercialStatusLabel } from '@/i18n/helpers'
+import { getCommercialAssetLabel, getCommercialStatusLabel } from '@/i18n/helpers'
 import { commercialService } from '@/services/commercial'
 import type { ChannelBindingView, ChannelCommissionView, ChannelOverview, ChannelSettlementView, CommissionLedger, CommissionOverview } from '@/types/commercial'
 import { useToastStore } from '@/store/toastStore'
@@ -119,7 +119,13 @@ export default function AccountCommissionPage() {
     setRedeeming(true)
     try {
       const result = await commercialService.redeemCommissions()
-      showToast(t('account.commission.toast.redeemedTo', { amount: result.total_amount, asset: result.asset_code }), 'success')
+      showToast(
+        t('account.commission.toast.redeemedTo', {
+          amount: result.total_amount,
+          asset: getCommercialAssetLabel(t, result.asset_code),
+        }),
+        'success',
+      )
       await fetchData()
     } finally {
       setRedeeming(false)
