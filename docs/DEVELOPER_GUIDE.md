@@ -25,7 +25,7 @@ The project is not a generic marketing site. It is a mixed frontend composed of:
 Because `react-i18next` currently declares a TypeScript `^5` peer range while this project uses TypeScript 6, use the following install command:
 
 ```bash
-cd v-ecommerce-frontend
+cd /root/work/v/ecommerce-frontend
 npm install --legacy-peer-deps
 ```
 
