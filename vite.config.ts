@@ -17,7 +17,7 @@ export default defineConfig({
     port: 5180,
     proxy: {
       '/api/v1/ecommerce': {
-        target: 'http://localhost:8296',
+        target: 'http://localhost:8396',
         changeOrigin: true,
       },
     },

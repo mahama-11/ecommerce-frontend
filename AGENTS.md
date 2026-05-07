@@ -21,7 +21,7 @@
 ## 3. Commands
 
 ```bash
-cd v-ecommerce-frontend
+cd /root/work/v/ecommerce-frontend
 npm install --legacy-peer-deps
 npm run dev
 npx tsc --noEmit
