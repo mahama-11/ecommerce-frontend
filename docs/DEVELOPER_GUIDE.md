@@ -249,6 +249,10 @@ Current real product-center and download-center routes used by product and accou
 - `GET /api/v1/ecommerce/products/:product_id/export-tasks`
 - `POST /api/v1/ecommerce/products/:product_id/export-tasks`
 - `PATCH /api/v1/ecommerce/products/:product_id/export-tasks/status`
+- `GET /api/v1/ecommerce/products/:product_id/parsed-info`
+- `GET /api/v1/ecommerce/products/:product_id/prompts`
+- `POST /api/v1/ecommerce/products/:product_id/prompts`
+- `POST /api/v1/ecommerce/products/:product_id/prompts/generate`
 - `GET /api/v1/ecommerce/downloads`
 - `GET /api/v1/ecommerce/downloads/:download_id/content`
 

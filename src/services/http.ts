@@ -54,18 +54,39 @@ export function buildHeaders(init?: HeadersInit) {
   }
 }
 
-export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export class ApiRequestError extends Error {
+  readonly status: number
+  readonly code?: number
+  readonly errorCode?: string
+
+  constructor(message: string, status: number, code?: number, errorCode?: string) {
+    super(message)
+    this.name = 'ApiRequestError'
+    this.status = status
+    this.code = code
+    this.errorCode = errorCode
+  }
+}
+
+type RequestOptions = RequestInit & {
+  silent?: boolean
+}
+
+export async function request<T>(path: string, init?: RequestOptions): Promise<T> {
+  const { silent, ...requestInit } = init ?? {}
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...init,
-    headers: buildHeaders(init?.headers),
+    ...requestInit,
+    headers: buildHeaders(requestInit.headers),
   })
 
   const payload = (await response.json()) as Envelope<T>
   if (!response.ok || payload.code !== 0) {
     const errorMsg = payload.error_hint || payload.error || payload.message || 'Request failed'
-    useToastStore.getState().showToast(errorMsg, 'error')
+    if (!silent) {
+      useToastStore.getState().showToast(errorMsg, 'error')
+    }
     handleUnauthorized(response.status, payload.code, payload.error_code)
-    throw new Error(errorMsg)
+    throw new ApiRequestError(errorMsg, response.status, payload.code, payload.error_code)
   }
 
   return payload.data
