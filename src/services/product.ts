@@ -9,8 +9,13 @@ import type {
   ExportTask,
   DownloadRecord,
   BatchListingMutationResult,
+  ProductParsedInfo,
+  ProductPrompt,
+  GenerateProductPromptInput,
+  CreateProductPromptInput,
+  JsonObject,
 } from '@/types/product'
-import { downloadBinary, request } from './http'
+import { ApiRequestError, downloadBinary, request } from './http'
 
 export function listProducts() {
   return request<ProductListItem[]>('/api/v1/ecommerce/products', { method: 'GET' })
@@ -42,6 +47,167 @@ export function getProduct(productId: string) {
     exportTasks: ExportTask[]
     activities: ProductActivity[]
   }>(`/api/v1/ecommerce/products/${productId}`, { method: 'GET' })
+}
+
+type JsonStringOrObject = string | JsonObject | null | undefined
+
+type ParsedInfoDTO = {
+  id?: string
+  product_id?: string
+  productId?: string
+  status?: ProductParsedInfo['status']
+  category_guess?: string
+  categoryGuess?: string
+  platform_fit?: string | string[]
+  platformFit?: string | string[]
+  image_type_suggestions?: string[]
+  imageTypeSuggestions?: string[]
+  visual_features?: JsonStringOrObject
+  visualFeatures?: JsonStringOrObject
+  usage_scenarios?: string[]
+  usageScenarios?: string[]
+  confidence?: number
+  parser_version?: string
+  parserVersion?: string
+  source_asset_ids?: string[]
+  sourceAssetIds?: string[]
+  error_message?: string
+  errorMessage?: string
+  created_at?: string
+  createdAt?: string
+  updated_at?: string
+  updatedAt?: string
+}
+
+type PromptDTO = {
+  id: string
+  product_id?: string
+  productId?: string
+  version_no?: number
+  versionNo?: number
+  status?: ProductPrompt['status']
+  generation_type?: string
+  generationType?: string
+  module?: string
+  template_ids?: string[]
+  templateIds?: string[]
+  schema_json?: JsonStringOrObject
+  schemaJson?: JsonStringOrObject
+  source_map_json?: JsonStringOrObject
+  sourceMapJson?: JsonStringOrObject
+  content?: string
+  created_at?: string
+  createdAt?: string
+}
+
+function parseJsonObject(value: JsonStringOrObject): JsonObject {
+  if (!value) return {}
+  if (typeof value === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(value)
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as JsonObject : {}
+    } catch {
+      return {}
+    }
+  }
+  return value
+}
+
+function normalizeStringList(value: string | string[] | undefined): string[] {
+  if (Array.isArray(value)) return value.filter(Boolean)
+  if (!value) return []
+  return value.split(',').map(item => item.trim()).filter(Boolean)
+}
+
+function isOptionalMissing(error: unknown) {
+  if (!(error instanceof ApiRequestError)) return false
+  const message = error.message.toLowerCase()
+  return error.status === 404 || error.errorCode === 'NOT_FOUND' || message.includes('not found') || message.includes('record not found')
+}
+
+function normalizeParsedInfo(input: ParsedInfoDTO | null | undefined, productId: string): ProductParsedInfo | null {
+  if (!input) return null
+  return {
+    id: input.id,
+    productId: input.productId ?? input.product_id ?? productId,
+    status: input.status ?? 'pending',
+    categoryGuess: input.categoryGuess ?? input.category_guess,
+    platformFit: normalizeStringList(input.platformFit ?? input.platform_fit),
+    imageTypeSuggestions: input.imageTypeSuggestions ?? input.image_type_suggestions ?? [],
+    visualFeatures: parseJsonObject(input.visualFeatures ?? input.visual_features),
+    usageScenarios: input.usageScenarios ?? input.usage_scenarios ?? [],
+    confidence: input.confidence,
+    parserVersion: input.parserVersion ?? input.parser_version,
+    sourceAssetIds: input.sourceAssetIds ?? input.source_asset_ids ?? [],
+    errorMessage: input.errorMessage ?? input.error_message,
+    createdAt: input.createdAt ?? input.created_at,
+    updatedAt: input.updatedAt ?? input.updated_at,
+  }
+}
+
+function normalizePrompt(input: PromptDTO, productId: string): ProductPrompt {
+  return {
+    id: input.id,
+    productId: input.productId ?? input.product_id ?? productId,
+    versionNo: input.versionNo ?? input.version_no ?? 1,
+    status: input.status ?? 'draft',
+    generationType: input.generationType ?? input.generation_type ?? 'image',
+    module: input.module ?? 'image',
+    templateIds: input.templateIds ?? input.template_ids ?? [],
+    schemaJson: parseJsonObject(input.schemaJson ?? input.schema_json),
+    sourceMapJson: parseJsonObject(input.sourceMapJson ?? input.source_map_json),
+    content: input.content ?? '',
+    createdAt: input.createdAt ?? input.created_at ?? '',
+  }
+}
+
+export async function getProductParsedInfo(productId: string) {
+  try {
+    const result = await request<ParsedInfoDTO | null>(`/api/v1/ecommerce/products/${productId}/parsed-info`, { method: 'GET', silent: true })
+    return normalizeParsedInfo(result, productId)
+  } catch (error) {
+    if (isOptionalMissing(error)) return null
+    throw error
+  }
+}
+
+export async function listProductPrompts(productId: string) {
+  try {
+    const result = await request<PromptDTO[]>(`/api/v1/ecommerce/products/${productId}/prompts`, { method: 'GET', silent: true })
+    return result.map(item => normalizePrompt(item, productId)).sort((left, right) => right.versionNo - left.versionNo)
+  } catch (error) {
+    if (isOptionalMissing(error)) return []
+    throw error
+  }
+}
+
+export async function generateProductPrompt(productId: string, input: GenerateProductPromptInput = {}) {
+  const result = await request<PromptDTO>(`/api/v1/ecommerce/products/${productId}/prompts/generate`, {
+    method: 'POST',
+    body: JSON.stringify({
+      generation_type: input.generationType ?? 'image',
+      module: input.module ?? 'image',
+      template_ids: input.templateIds ?? [],
+      source_map: input.sourceMap,
+      content: input.content,
+    }),
+  })
+  return normalizePrompt(result, productId)
+}
+
+export async function createProductPrompt(productId: string, input: CreateProductPromptInput) {
+  const result = await request<PromptDTO>(`/api/v1/ecommerce/products/${productId}/prompts`, {
+    method: 'POST',
+    body: JSON.stringify({
+      generation_type: input.generationType ?? 'image',
+      module: input.module ?? 'image',
+      template_ids: input.templateIds ?? [],
+      schema_json: JSON.stringify(input.schemaJson),
+      source_map_json: JSON.stringify(input.sourceMapJson),
+      content: input.content,
+    }),
+  })
+  return normalizePrompt(result, productId)
 }
 
 export function updateProduct(
@@ -207,7 +373,7 @@ export async function batchCreateListingVersions(data: {
 }
 
 export function adoptListingVersion(productId: string, versionId: string) {
-  return request<any>(`/api/v1/ecommerce/products/${productId}/listing-versions/adopt`, {
+  return request<unknown>(`/api/v1/ecommerce/products/${productId}/listing-versions/adopt`, {
     method: 'POST',
     body: JSON.stringify({ versionId }),
   })

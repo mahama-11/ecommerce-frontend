@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -6,7 +6,7 @@ import {
   FileText,
   TrendingUp,
   Download,
-  Wand2,
+  FileCode2,
   LoaderCircle,
   Trash2,
   Plus,
@@ -25,7 +25,10 @@ import {
   deleteProduct,
   deleteProductAsset,
   updateProductAssetRelation,
-  listDownloads
+  listDownloads,
+  getProductParsedInfo,
+  listProductPrompts,
+  generateProductPrompt
 } from '@/services/product'
 import type {
   Product,
@@ -34,17 +37,40 @@ import type {
   ExportTask,
   ProductActivity,
   ProductAssetItem,
-  DownloadRecord
+  DownloadRecord,
+  ProductParsedInfo,
+  ProductPrompt,
+  ProductStatus
 } from '@/types/product'
 import { AssetsTab, ExportsTab, HistoryTab, ListingsTab, ProfitTab } from './components/ProductDetailTabs'
+import { ProductAIPipelinePanel } from './components/ProductAIPipelinePanel'
 
 const TABS = [
   { id: 'assets', label: 'Assets', icon: ImageIcon },
   { id: 'listings', label: 'Listings', icon: FileText },
-  { id: 'profit', label: 'Profit', icon: TrendingUp },
   { id: 'exports', label: 'Exports', icon: Download },
-  { id: 'history', label: 'History', icon: Wand2 },
+  { id: 'profit', label: 'Profit', icon: TrendingUp },
+  { id: 'history', label: 'History', icon: FileCode2 },
 ] as const
+
+type ProductTabId = typeof TABS[number]['id']
+
+const PRODUCT_STATUS_LABEL_KEYS: Record<ProductStatus, string> = {
+  draft: 'status.draft',
+  assets_ready: 'status.assets_ready',
+  listing_ready: 'status.listing_ready',
+  export_ready: 'status.export_ready',
+  published: 'status.published',
+  archived: 'status.archived',
+}
+
+const TAB_LABEL_KEYS: Record<ProductTabId, string> = {
+  assets: 'product.detail.tabs.assets',
+  listings: 'product.detail.tabs.listings',
+  exports: 'product.detail.tabs.exports',
+  profit: 'product.detail.tabs.profit',
+  history: 'product.detail.tabs.history',
+}
 
 type ProductDetailResponse = {
   product: Product
@@ -114,9 +140,10 @@ function TextareaField({ label, value, onChange, placeholder, rows, hint }: { la
   )
 }
 
-function TabButton({ active, onClick, icon, label, hasDot }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, hasDot?: boolean }) {
+function TabButton({ active, onClick, icon, label, hasDot, testId }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, hasDot?: boolean, testId?: string }) {
   return (
     <button
+      data-testid={testId}
       onClick={onClick}
       className={`relative flex items-center gap-2 pb-4 text-sm font-medium transition-colors ${
         active ? 'text-white' : 'text-white/40 hover:text-white/70'
@@ -138,6 +165,12 @@ export function ProductDetailPage() {
   const navigate = useNavigate()
   const { showToast } = useToastStore()
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [parsedInfo, setParsedInfo] = useState<ProductParsedInfo | null>(null)
+  const [prompts, setPrompts] = useState<ProductPrompt[]>([])
+  const [generatingPrompt, setGeneratingPrompt] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [adoptingVersionId, setAdoptingVersionId] = useState<string | null>(null)
   const [data, setData] = useState<ProductDetailResponse | null>(null)
@@ -201,35 +234,84 @@ export function ProductDetailPage() {
     locale: 'en_US',
   })
 
-  useEffect(() => {
-    if (id) {
-      void loadProductWorkspace(id)
-    }
-  }, [id])
-
-  async function loadProductWorkspace(productId: string) {
+  const loadProductWorkspace = useCallback(async (productId: string) => {
     setLoading(true)
+    setLoadError(false)
+    setAiLoading(true)
+    setAiError(null)
     try {
-      const [result, downloads] = await Promise.all([getProduct(productId), listDownloads()])
-      setData(result)
-      const scopedDownloads = downloads.filter(item => item.productId === productId)
-      setProductDownloads(scopedDownloads)
-      setSelectedDownloadId(current => (
-        current === 'all' || scopedDownloads.some(item => item.id === current) ? current : 'all'
-      ))
+      const [result, downloads, parsedResult, promptsResult] = await Promise.allSettled([
+        getProduct(productId),
+        listDownloads(),
+        getProductParsedInfo(productId),
+        listProductPrompts(productId),
+      ])
+
+      if (result.status !== 'fulfilled') {
+        throw result.reason
+      }
+
+      setData(result.value)
+
+      if (downloads.status === 'fulfilled') {
+        const scopedDownloads = downloads.value.filter(item => item.productId === productId)
+        setProductDownloads(scopedDownloads)
+        setSelectedDownloadId(current => (
+          current === 'all' || scopedDownloads.some(item => item.id === current) ? current : 'all'
+        ))
+      }
+
+      if (parsedResult.status === 'fulfilled') {
+        setParsedInfo(parsedResult.value)
+      } else {
+        setParsedInfo(null)
+        setAiError('parsed-info')
+      }
+
+      if (promptsResult.status === 'fulfilled') {
+        setPrompts(promptsResult.value)
+      } else {
+        setPrompts([])
+        setAiError(current => current ? `${current},prompts` : 'prompts')
+      }
+
       setProductForm({
-        skuCode: result.product.skuCode,
-        title: result.product.title,
-        categoryId: result.product.categoryId || '',
-        brandId: result.product.brandId || '',
-        costCurrency: result.product.costCurrency || 'USD',
-        tags: result.product.tags || [],
+        skuCode: result.value.product.skuCode,
+        title: result.value.product.title,
+        categoryId: result.value.product.categoryId || '',
+        brandId: result.value.product.brandId || '',
+        costCurrency: result.value.product.costCurrency || 'USD',
+        tags: result.value.product.tags || [],
       })
     } catch (error) {
       console.error('Failed to load product:', error)
+      setData(null)
+      setLoadError(true)
       showToast(t('product.detail.toast.loadFailed'), 'error')
     } finally {
       setLoading(false)
+      setAiLoading(false)
+    }
+  }, [showToast, t])
+
+  useEffect(() => {
+    if (id) {
+      void Promise.resolve().then(() => loadProductWorkspace(id))
+    }
+  }, [id, loadProductWorkspace])
+
+  async function handleGeneratePrompt() {
+    if (!id || parsedInfo?.status !== 'succeeded') return
+    setGeneratingPrompt(true)
+    try {
+      const created = await generateProductPrompt(id, { generationType: 'image', module: 'image' })
+      setPrompts(current => [created, ...current.filter(item => item.id !== created.id)].sort((left, right) => right.versionNo - left.versionNo))
+      showToast(t('product.detail.toast.promptGenerated'), 'success')
+    } catch (error) {
+      console.error('Failed to generate product prompt:', error)
+      showToast(t('product.detail.toast.promptGenerateFailed'), 'error')
+    } finally {
+      setGeneratingPrompt(false)
     }
   }
 
@@ -592,15 +674,47 @@ export function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[calc(100vh-72px)] bg-[#09090b] text-white p-6 flex items-center justify-center">
-        <LoaderCircle className="h-8 w-8 text-brand-500 animate-spin" />
+      <div data-testid="product-detail-loading" className="min-h-[calc(100vh-72px)] bg-[#09090b] p-4 text-white md:p-6">
+        <div className="mx-auto max-w-7xl space-y-4">
+          <div className="h-32 rounded-[24px] border border-white/10 bg-white/[0.04]" />
+          <div className="grid gap-3 md:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, index) => <div key={index} className="h-28 rounded-2xl border border-white/10 bg-white/[0.03]" />)}
+          </div>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div className="h-72 rounded-2xl border border-white/10 bg-white/[0.03]" />
+            <div className="h-72 rounded-2xl border border-white/10 bg-white/[0.03]" />
+          </div>
+          <div className="flex items-center justify-center gap-2 text-sm text-white/45">
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+            {t('product.detail.ai.loading')}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div data-testid="product-detail-error" className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-[#09090b] p-6 text-white">
+        <div className="max-w-md rounded-[24px] border border-rose-400/25 bg-rose-400/10 p-6 text-center">
+          <div className="text-lg font-semibold text-rose-100">{t('product.detail.loadError.title')}</div>
+          <p className="mt-2 text-sm leading-relaxed text-rose-100/70">{t('product.detail.loadError.desc')}</p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <button onClick={() => id && void loadProductWorkspace(id)} className="rounded-xl bg-rose-300 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-rose-200">
+              {t('product.detail.loadError.retry')}
+            </button>
+            <Link to="/products" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/75 transition hover:bg-white/10">
+              {t('product.detail.backToProducts')}
+            </Link>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!data) {
     return (
-      <div className="min-h-[calc(100vh-72px)] bg-[#09090b] text-white p-6 flex items-center justify-center">
+      <div data-testid="product-detail-empty" className="min-h-[calc(100vh-72px)] bg-[#09090b] text-white p-6 flex items-center justify-center">
         <div className="text-center text-white/40">
           <p>{t('product.detail.notFound')}</p>
           <Link to="/products" className="text-brand-400 hover:underline mt-2 inline-block">
@@ -614,7 +728,7 @@ export function ProductDetailPage() {
   const { product } = data
 
   return (
-    <div className="flex h-[calc(100vh-72px)] w-full bg-[#09090b] text-white overflow-hidden font-sans">
+    <div data-testid="product-detail-page" className="flex min-h-[calc(100vh-72px)] w-full flex-col bg-[#09090b] text-white font-sans lg:h-[calc(100vh-72px)] lg:flex-row lg:overflow-hidden">
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -623,7 +737,7 @@ export function ProductDetailPage() {
       `}</style>
       
       {/* Sidebar - Configuration */}
-      <aside className="w-[380px] xl:w-[420px] flex-shrink-0 border-r border-white/5 bg-[#0c0c10] flex flex-col z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
+      <aside className="order-2 w-full flex-shrink-0 border-b border-white/5 bg-[#0c0c10] shadow-[4px_0_24px_rgba(0,0,0,0.2)] lg:order-1 lg:flex lg:w-[360px] lg:flex-col lg:border-b-0 lg:border-r xl:w-[400px]">
         <div className="flex-none px-6 py-5 border-b border-white/5">
           <Link to="/products" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/40 hover:text-white/90 transition-colors mb-5">
             <ArrowLeft className="h-4 w-4" />
@@ -638,7 +752,7 @@ export function ProductDetailPage() {
           <p className="text-[13px] text-white/40 leading-relaxed font-mono">{product.skuCode}</p>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+        <div className="overflow-y-auto p-4 space-y-6 custom-scrollbar sm:p-6 lg:max-h-none lg:flex-1">
           <div className="space-y-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
@@ -705,7 +819,7 @@ export function ProductDetailPage() {
               {t('product.detail.statusSnapshot')}
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <DetailMetric label={t('product.detail.productStatus')} value={t(`status.${product.status}` as any, product.status)} />
+              <DetailMetric label={t('product.detail.productStatus')} value={t(PRODUCT_STATUS_LABEL_KEYS[product.status], product.status)} />
               <DetailMetric label={t('product.detail.assetStatus')} value={product.assetStatus} />
               <DetailMetric label={t('product.detail.listingStatus')} value={product.listingStatus} />
               <DetailMetric label={t('product.detail.exportStatus')} value={product.exportStatus} />
@@ -715,18 +829,21 @@ export function ProductDetailPage() {
 
         <div className="flex-none p-6 border-t border-white/5 bg-[#0c0c10]/90 backdrop-blur space-y-3">
           <Link
+            data-testid="sidebar-open-ai-workspace-link"
             to={`/products/${product.id}/ai/ai-product`}
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-500/20 bg-brand-500/10 py-2.5 text-sm font-semibold text-brand-300 transition-all hover:bg-brand-500/20 focus:outline-none"
           >
             {t('product.detail.openAIWorkspace')}
           </Link>
           <Link
+            data-testid="sidebar-open-batch-listing-link"
             to="/products/workbench/batch-listing"
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-white/80 transition-all hover:bg-white/10 focus:outline-none"
           >
             {t('product.detail.openBatchListing')}
           </Link>
           <Link
+            data-testid="sidebar-open-download-center-link"
             to="/products/workbench/downloads"
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-white/80 transition-all hover:bg-white/10 focus:outline-none"
           >
@@ -736,76 +853,95 @@ export function ProductDetailPage() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#09090b] relative">
-        <header className="flex-none px-8 pt-8 border-b border-white/5 flex gap-8">
-          {TABS.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
-            return (
-              <TabButton 
-                key={tab.id} 
-                active={isActive} 
-                onClick={() => setActiveTab(tab.id)} 
-                icon={<Icon className="h-4 w-4" />} 
-                label={t(`product.detail.tabs.${tab.id}` as any, tab.label)} 
-              />
-            )
-          })}
-        </header>
+      <main className="relative order-1 flex-1 min-w-0 bg-[#09090b] lg:order-2 lg:overflow-auto custom-scrollbar">
+        <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+          <ProductAIPipelinePanel
+            product={product}
+            assets={data.assets}
+            listingVersions={data.listingVersions}
+            exportTasks={data.exportTasks}
+            parsedInfo={parsedInfo}
+            prompts={prompts}
+            aiLoading={aiLoading}
+            aiError={aiError}
+            generatingPrompt={generatingPrompt}
+            onGeneratePrompt={() => void handleGeneratePrompt()}
+            onOpenAssets={() => setActiveTab('assets')}
+            onOpenListings={() => setActiveTab('listings')}
+            onOpenExports={() => setActiveTab('exports')}
+          />
 
-        <div className="flex-1 overflow-auto p-8 custom-scrollbar">
-          <div className="max-w-6xl mx-auto animate-in fade-in duration-300">
-            {activeTab === 'assets' && (
-              <AssetsTab
-                productId={product.id}
-                assets={data.assets}
-                downloads={productDownloads}
-                selectedDownloadId={selectedDownloadId}
-                mutatingRelationId={assetMutatingRelationId}
-                bulkMutating={assetBulkMutating}
-                onSelectDownload={setSelectedDownloadId}
-                onMakePrimary={handleMakePrimaryAsset}
-                onDelete={handleDeleteAssetRelation}
-                onChangeRole={handleAssetRoleChange}
-                onChangeSortOrder={handleAssetSortOrderChange}
-                onMove={handleMoveAsset}
-                onBulkChangeRole={handleBulkAssetRoleChange}
-                onBulkDelete={handleBulkDeleteAssetRelations}
-                onCreateExportFromSelection={openExportModalForSelection}
-                onSelectionChange={setSelectedAssetRelationIds}
-              />
-            )}
-            {activeTab === 'listings' && (
-              <ListingsTab
-                versions={data.listingVersions}
-                onGenerate={openCreateListingModal}
-                onAdopt={handleAdoptListing}
-                onEdit={openEditListingModal}
-                adoptingVersionId={adoptingVersionId}
-              />
-            )}
-            {activeTab === 'profit' && <ProfitTab snapshots={data.profitSnapshots} onCalculate={() => setShowProfitModal(true)} />}
-            {activeTab === 'exports' && (
-              <ExportsTab
-                tasks={data.exportTasks}
-                downloads={productDownloads}
-                productTitle={product.title}
-                assetCount={data.assets.length}
-                selectedAssetCount={selectedAssetRelationIds.length}
-                onCreate={openExportModalForAllAssets}
-                onCreateFromSelection={() => openExportModalForSelection(selectedAssetRelationIds)}
-                onInspectAssets={handleInspectExportAssets}
-              />
-            )}
-            {activeTab === 'history' && <HistoryTab activities={data.activities} />}
-          </div>
+          <section className="rounded-[24px] border border-white/10 bg-[#0d0d11] p-4 sm:p-5">
+            <header className="flex gap-6 overflow-x-auto border-b border-white/5 custom-scrollbar">
+              {TABS.map((tab) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
+                return (
+                  <TabButton
+                    key={tab.id}
+                    active={isActive}
+                    onClick={() => setActiveTab(tab.id)}
+                    icon={<Icon className="h-4 w-4" />}
+                    label={t(TAB_LABEL_KEYS[tab.id], tab.label)}
+                    testId={`product-${tab.id === 'profit' ? 'profit' : tab.id}-tab-trigger`}
+                  />
+                )
+              })}
+            </header>
+
+            <div className="pt-6 animate-in fade-in duration-300">
+              {activeTab === 'assets' && (
+                <AssetsTab
+                  productId={product.id}
+                  assets={data.assets}
+                  downloads={productDownloads}
+                  selectedDownloadId={selectedDownloadId}
+                  mutatingRelationId={assetMutatingRelationId}
+                  bulkMutating={assetBulkMutating}
+                  onSelectDownload={setSelectedDownloadId}
+                  onMakePrimary={handleMakePrimaryAsset}
+                  onDelete={handleDeleteAssetRelation}
+                  onChangeRole={handleAssetRoleChange}
+                  onChangeSortOrder={handleAssetSortOrderChange}
+                  onMove={handleMoveAsset}
+                  onBulkChangeRole={handleBulkAssetRoleChange}
+                  onBulkDelete={handleBulkDeleteAssetRelations}
+                  onCreateExportFromSelection={openExportModalForSelection}
+                  onSelectionChange={setSelectedAssetRelationIds}
+                />
+              )}
+              {activeTab === 'listings' && (
+                <ListingsTab
+                  versions={data.listingVersions}
+                  onGenerate={openCreateListingModal}
+                  onAdopt={handleAdoptListing}
+                  onEdit={openEditListingModal}
+                  adoptingVersionId={adoptingVersionId}
+                />
+              )}
+              {activeTab === 'profit' && <ProfitTab snapshots={data.profitSnapshots} onCalculate={() => setShowProfitModal(true)} />}
+              {activeTab === 'exports' && (
+                <ExportsTab
+                  tasks={data.exportTasks}
+                  downloads={productDownloads}
+                  productTitle={product.title}
+                  assetCount={data.assets.length}
+                  selectedAssetCount={selectedAssetRelationIds.length}
+                  onCreate={openExportModalForAllAssets}
+                  onCreateFromSelection={() => openExportModalForSelection(selectedAssetRelationIds)}
+                  onInspectAssets={handleInspectExportAssets}
+                />
+              )}
+              {activeTab === 'history' && <HistoryTab activities={data.activities} />}
+            </div>
+          </section>
         </div>
       </main>
 
       {/* Modals */}
       {showProfitModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-end bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4">
+          <div className="max-h-[90dvh] w-full overflow-hidden rounded-t-2xl border border-white/10 bg-[#0c0c10] shadow-2xl sm:max-w-md sm:rounded-2xl">
             <div className="px-6 py-5 border-b border-white/5">
               <h2 className="text-lg font-semibold text-white/90">{t('product.detail.profitModal.title')}</h2>
             </div>
@@ -839,8 +975,8 @@ export function ProductDetailPage() {
       )}
 
       {showExportModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-end bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4">
+          <div className="max-h-[90dvh] w-full overflow-hidden rounded-t-2xl border border-white/10 bg-[#0c0c10] shadow-2xl sm:max-w-md sm:rounded-2xl">
             <div className="px-6 py-5 border-b border-white/5">
               <h2 className="text-lg font-semibold text-white/90">{t('product.detail.exportModal.title')}</h2>
             </div>
@@ -874,8 +1010,8 @@ export function ProductDetailPage() {
       )}
 
       {showListingModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-lg border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-end bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4">
+          <div className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-[#0c0c10] shadow-2xl sm:max-w-lg sm:rounded-2xl">
             <div className="px-6 py-5 border-b border-white/5 shrink-0">
               <h2 className="text-lg font-semibold text-white/90">{editingVersion ? t('product.detail.listingModal.titleEdit') : t('product.detail.listingModal.titleCreate')}</h2>
             </div>

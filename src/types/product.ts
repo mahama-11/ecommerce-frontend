@@ -195,6 +195,60 @@ export type ProductActivity = {
   createdAt: string
 }
 
+export type ProductParsedInfoStatus = 'pending' | 'succeeded' | 'failed'
+
+export type JsonObject = Record<string, unknown>
+
+export type ProductParsedInfo = {
+  id?: string
+  productId: string
+  status: ProductParsedInfoStatus
+  categoryGuess?: string
+  platformFit: string[]
+  imageTypeSuggestions: string[]
+  visualFeatures: JsonObject
+  usageScenarios: string[]
+  confidence?: number
+  parserVersion?: string
+  sourceAssetIds: string[]
+  errorMessage?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type ProductPromptStatus = 'draft' | 'ready' | 'failed' | 'archived' | string
+
+export type ProductPrompt = {
+  id: string
+  productId: string
+  versionNo: number
+  status: ProductPromptStatus
+  generationType: 'image' | 'video' | '3d' | string
+  module: string
+  templateIds: string[]
+  schemaJson: JsonObject
+  sourceMapJson: JsonObject
+  content: string
+  createdAt: string
+}
+
+export type GenerateProductPromptInput = {
+  generationType?: 'image' | 'video' | '3d' | string
+  module?: string
+  templateIds?: string[]
+  sourceMap?: JsonObject
+  content?: string
+}
+
+export type CreateProductPromptInput = {
+  schemaJson: JsonObject
+  sourceMapJson: JsonObject
+  content: string
+  generationType?: 'image' | 'video' | '3d' | string
+  module?: string
+  templateIds?: string[]
+}
+
 export type ProductListItem = {
   id: string
   organizationId: string
@@ -225,4 +279,6 @@ export type Product = ProductListItem & {
   exportTasks: ExportTask[]
   profitSnapshots: ProfitSnapshot[]
   activities: ProductActivity[]
+  parsedInfo?: ProductParsedInfo | null
+  prompts?: ProductPrompt[]
 }
