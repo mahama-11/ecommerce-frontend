@@ -174,6 +174,14 @@ function normalizeImportRow(raw: Record<string, unknown>, lineNo: number): Impor
   return row
 }
 
+function getImportRowErrors(row: Partial<ImportRow>) {
+  return Array.isArray(row.errors) ? row.errors : []
+}
+
+function isImportRowValid(row: Partial<ImportRow>) {
+  return getImportRowErrors(row).length === 0
+}
+
 function StatusBadge({ status }: { status: ProductStatus }) {
   const { t } = useTranslation()
   return (
@@ -349,7 +357,7 @@ function ProductListPage() {
   }
 
   async function handleImportSubmit() {
-    const validRows = importRows.filter(row => row.errors.length === 0)
+    const validRows = importRows.filter(isImportRowValid)
     if (validRows.length === 0) {
       showToast('No valid import rows available.', 'error')
       return
@@ -1016,11 +1024,11 @@ function ProductListPage() {
                     {importRows.length} {t('product.list.importModal.rowsParsed')}
                   </span>
                   <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-                    {importRows.filter(row => row.errors.length === 0).length} {t('product.list.importModal.valid')}
+                    {importRows.filter(isImportRowValid).length} {t('product.list.importModal.valid')}
                   </span>
-                  {importRows.some(row => row.errors.length > 0) ? (
+                  {importRows.some(row => getImportRowErrors(row).length > 0) ? (
                     <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs text-amber-300">
-                      {importRows.filter(row => row.errors.length > 0).length} {t('product.list.importModal.withErrors')}
+                      {importRows.filter(row => getImportRowErrors(row).length > 0).length} {t('product.list.importModal.withErrors')}
                     </span>
                   ) : null}
                 </div>
@@ -1048,11 +1056,11 @@ function ProductListPage() {
                           <td className="px-4 py-3 text-white/65">{row.brandId || '-'}</td>
                           <td className="px-4 py-3 text-white/65">{row.tags.join(', ') || '-'}</td>
                           <td className="px-4 py-3">
-                            {row.errors.length === 0 ? (
+                            {getImportRowErrors(row).length === 0 ? (
                               <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">{t('product.list.importModal.valid')}</span>
                             ) : (
                               <div className="space-y-1">
-                                {row.errors.map(error => (
+                                {getImportRowErrors(row).map(error => (
                                   <div key={error} className="text-xs text-amber-300">{error}</div>
                                 ))}
                               </div>
@@ -1079,7 +1087,7 @@ function ProductListPage() {
             </button>
             <button
               onClick={() => void handleImportSubmit()}
-              disabled={importRows.filter(row => row.errors.length === 0).length === 0 || importing}
+              disabled={importRows.filter(isImportRowValid).length === 0 || importing}
               className="flex-1 rounded-md bg-white px-4 py-2.5 text-sm font-medium text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {importing ? t('product.list.importModal.importing') : t('product.list.importModal.importValidRows')}
