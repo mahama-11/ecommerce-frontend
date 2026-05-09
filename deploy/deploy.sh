@@ -103,7 +103,11 @@ dev)
   echo "Building Frontend Locally..."
   # react-i18next currently declares a TypeScript ^5 peer range, while this project uses TS6.
   # Keep local deploy aligned with the existing lockfile and development install strategy.
-  npm ci --legacy-peer-deps
+  if [ "${SKIP_NPM_CI:-0}" = "1" ]; then
+    echo "Skipping npm ci because SKIP_NPM_CI=1"
+  else
+    npm ci --legacy-peer-deps
+  fi
   npm run build
 
   # Build Docker Image (Use pre-built dist)
