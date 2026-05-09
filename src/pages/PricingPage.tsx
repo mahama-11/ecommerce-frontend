@@ -96,6 +96,7 @@ export default function PricingPage() {
         name: pkg.name,
         desc: subscriptionDescription(pkg.code, language),
         price: formatMoney(unitAmount),
+        priceAmount: unitAmount,
         period: language.startsWith('zh') ? '/月' : '/mo',
         features: subscriptionFeatures(pkg.code, language),
         cta: language.startsWith('zh') ? '立即购买' : 'Buy now',
@@ -103,6 +104,10 @@ export default function PricingPage() {
         packageCode: pkg.code,
         skuCode: sku?.code || '',
       }
+    }).sort((a, b) => {
+      const byPrice = a.priceAmount - b.priceAmount
+      if (byPrice !== 0) return byPrice
+      return a.name.localeCompare(b.name)
     })
   }, [language, offerings])
 
