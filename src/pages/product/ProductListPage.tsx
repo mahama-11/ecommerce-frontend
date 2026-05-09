@@ -266,7 +266,7 @@ function ProductListPage() {
           || product.tags.some(tag => tag.toLowerCase().includes(q))
       })
     }
-    return result.sort((a, b) => a.stageIndex - b.stageIndex || b.healthScore - a.healthScore)
+    return [...result].sort((a, b) => a.stageIndex - b.stageIndex || b.healthScore - a.healthScore)
   }, [activeStage, keyword, missionUnits])
 
   const focusedUnit = missionUnits.find(unit => unit.product.id === focusedProductId) ?? filteredUnits[0] ?? missionUnits[0] ?? null
@@ -291,19 +291,19 @@ function ProductListPage() {
             <div className="max-w-4xl">
               <div className="mb-3 flex flex-wrap items-center gap-3">
                 <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/20 bg-cyan-200/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
-                  <Boxes className="h-4 w-4" /> Mission Control
+                  <Boxes className="h-4 w-4" /> {t('product.list.missionControl.badge')}
                 </span>
                 <StationNav />
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">SKU Mission Control / Production Cockpit</h1>
+              <h1 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">{t('product.list.missionControl.title')}</h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-white/56">
-                Production Rail, SKU Board / Command Queue, Mission Dossier and Command Strip for moving real product records through AI commerce operations without faking generation, export, download or commercial readiness.
+                {t('product.list.missionControl.description')}
               </p>
             </div>
             <div className="grid min-w-[320px] grid-cols-3 gap-3">
-              <HeaderStat label="Work units" value={String(products.length)} />
-              <HeaderStat label="Blocked" value={String(blockedCount)} tone="warn" />
-              <HeaderStat label="Contract-needed" value={String(contractNeededCount)} tone="amber" />
+              <HeaderStat label={t('product.list.missionControl.workUnits')} value={String(products.length)} />
+              <HeaderStat label={t('product.list.missionControl.blocked')} value={String(blockedCount)} tone="warn" />
+              <HeaderStat label={t('product.list.missionControl.contractNeeded')} value={String(contractNeededCount)} tone="amber" />
             </div>
           </div>
           <div className="mt-5 flex flex-col gap-3 border-t border-white/8 pt-5 lg:flex-row lg:items-center lg:justify-between">
@@ -311,7 +311,7 @@ function ProductListPage() {
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
               <input
                 type="text"
-                placeholder="Search SKU Board / Command Queue by SKU, title, brand, tag..."
+                placeholder={t('product.list.missionControl.searchPlaceholder')} aria-label={t('product.list.missionControl.searchLabel')}
                 value={keyword}
                 onChange={event => setKeyword(event.target.value)}
                 className="w-full rounded-2xl border border-white/10 bg-black/25 py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-cyan-300/40 focus:bg-black/35"
@@ -336,12 +336,12 @@ function ProductListPage() {
           <motion.main variants={itemVariants} className="rounded-[30px] border border-white/10 bg-[#080b11]/88 p-4 shadow-[0_28px_90px_rgba(0,0,0,0.38)]">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.24em] text-white/38">SKU Board / Command Queue</div>
-                <h2 className="mt-1 text-xl font-semibold text-white">Production work units · {filteredUnits.length}</h2>
+                <div className="text-xs font-semibold uppercase tracking-[0.24em] text-white/38">{t('product.list.missionControl.skuBoard')}</div>
+                <h2 className="mt-1 text-xl font-semibold text-white">{t('product.list.missionControl.productionUnits', { count: filteredUnits.length })}</h2>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button onClick={() => setSelectedIds(filteredUnits.map(unit => unit.product.id))} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/55 transition hover:text-white">Select filtered</button>
-                <button onClick={() => setSelectedIds([])} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/55 transition hover:text-white">Clear</button>
+                <button onClick={() => setSelectedIds(filteredUnits.map(unit => unit.product.id))} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/55 transition hover:text-white">{t('product.list.missionControl.selectFiltered')}</button>
+                <button onClick={() => setSelectedIds([])} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/55 transition hover:text-white">{t('product.list.missionControl.clear')}</button>
               </div>
             </div>
 
@@ -353,7 +353,7 @@ function ProductListPage() {
               <div className="flex min-h-[360px] flex-col items-center justify-center rounded-3xl border border-dashed border-white/12 bg-white/[0.025] p-12 text-center text-white/45">
                 <Package className="mb-4 h-10 w-10 text-white/25" />
                 <div className="text-base font-semibold text-white/70">{t('product.list.noProducts')}</div>
-                <div className="mt-1 text-sm">No SKU work units match this Production Rail filter.</div>
+                <div className="mt-1 text-sm">{t('product.list.missionControl.noUnits')}</div>
               </div>
             ) : (
               <div className="grid gap-3 2xl:grid-cols-2">
@@ -493,10 +493,10 @@ function HeaderStat({ label, value, tone = 'normal' }: { label: string; value: s
 function ModalShell({ title, onClose, size = 'md', children }: { title: string; onClose: () => void; size?: 'md' | 'xl'; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className={`w-full rounded-xl border border-white/10 bg-[#0a0a12] ${size === 'xl' ? 'max-w-5xl' : 'max-w-2xl'}`}>
+      <div role="dialog" aria-modal="true" aria-labelledby="product-modal-title" className={`w-full rounded-xl border border-white/10 bg-[#0a0a12] ${size === 'xl' ? 'max-w-5xl' : 'max-w-2xl'}`}>
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
-          <h2 className="text-xl font-semibold text-white">{title}</h2>
-          <button onClick={onClose} className="rounded-md border border-white/10 bg-white/5 p-2 text-white/60 transition hover:bg-white/10 hover:text-white"><X className="h-4 w-4" /></button>
+          <h2 id="product-modal-title" className="text-xl font-semibold text-white">{title}</h2>
+          <button onClick={onClose} aria-label="Close modal" className="rounded-md border border-white/10 bg-white/5 p-2 text-white/60 transition hover:bg-white/10 hover:text-white"><X className="h-4 w-4" /></button>
         </div>
         <div className="max-h-[80vh] overflow-auto px-6 py-5">{children}</div>
       </div>

@@ -161,9 +161,9 @@ export function deriveMissionWorkUnit(product: ProductListItem): MissionWorkUnit
     nextBestAction = {
       label: 'Route to Listing Station',
       station: 'listing',
-      href: `/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}`,
+      href: '/products/workbench/batch-listing',
       state: 'available',
-      helper: 'Open Batch Listing with SKU context for real validation/adoption workflow.',
+      helper: 'Open Batch Listing as route handoff only; station context is not wired to selected SKU yet.',
     }
   } else if (product.exportStatus === 'pending') {
     blocker = 'Export package is not confirmed ready from list data.'

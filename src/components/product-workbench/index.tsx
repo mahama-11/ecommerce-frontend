@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle, ArrowRight, CheckCircle2, CircleDashed, LockKeyhole, PackageCheck, RadioTower, Route, ShieldAlert, Sparkles, Trash2, XCircle } from 'lucide-react'
 import type { CapabilityState, MissionStage, MissionWorkUnit, ProductionStageSummary } from '@/pages/product/utils/productMission'
 
@@ -31,11 +32,12 @@ export function CapabilityBadge({ state, label }: { state: CapabilityState; labe
 }
 
 export function ContractNeededNotice({ notes }: { notes: string[] }) {
+  const { t } = useTranslation()
   return (
     <div className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.07] p-4 text-sm text-amber-100/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
       <div className="mb-2 flex items-center gap-2 font-semibold text-amber-100">
         <LockKeyhole className="h-4 w-4" />
-        Contract-needed / no-fake capability guard
+        {t('product.list.missionControl.contractGuard')}
       </div>
       <ul className="space-y-1 text-xs leading-5 text-amber-100/70">
         {notes.map(note => <li key={note}>• {note}</li>)}
@@ -53,21 +55,23 @@ export function ProductionRail({
   activeStage: MissionStage | 'all'
   onStageChange: (stage: MissionStage | 'all') => void
 }) {
+  const { t } = useTranslation()
   const total = stages.reduce((sum, stage) => sum + stage.count, 0)
   return (
     <section className="rounded-[28px] border border-white/10 bg-[#080b11]/95 p-4 shadow-[0_28px_90px_rgba(0,0,0,0.42)] ring-1 ring-cyan-300/5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.26em] text-cyan-200/70">
-            <RadioTower className="h-4 w-4" /> Production Rail
+            <RadioTower className="h-4 w-4" /> {t('product.list.missionControl.productionRail')}
           </div>
-          <h2 className="mt-1 text-xl font-semibold text-white">SKU Mission Control stage system</h2>
+          <h2 className="mt-1 text-xl font-semibold text-white">{t('product.list.missionControl.stageSystem')}</h2>
         </div>
         <button
           onClick={() => onStageChange('all')}
+          aria-pressed={activeStage === 'all'}
           className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition ${activeStage === 'all' ? 'border-cyan-300/50 bg-cyan-300/15 text-cyan-100' : 'border-white/10 bg-white/5 text-white/55 hover:text-white'}`}
         >
-          All queue · {total}
+          {t('product.list.missionControl.allQueue', { count: total })}
         </button>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
@@ -77,6 +81,7 @@ export function ProductionRail({
             <button
               key={stage.stage}
               onClick={() => onStageChange(stage.stage)}
+              aria-pressed={active}
               className={`group relative min-h-[132px] overflow-hidden rounded-2xl border p-3 text-left transition ${active ? 'border-cyan-300/50 bg-cyan-300/[0.12] shadow-[0_0_34px_rgba(103,232,249,0.12)]' : 'border-white/10 bg-white/[0.035] hover:border-white/20 hover:bg-white/[0.06]'}`}
             >
               <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-cyan-300/10 blur-2xl transition group-hover:bg-cyan-300/20" />
@@ -92,8 +97,8 @@ export function ProductionRail({
                 <div className="flex items-end justify-between">
                   <div className="text-3xl font-semibold tabular-nums text-white">{stage.count}</div>
                   <div className="text-right text-[11px] leading-4 text-white/45">
-                    <div>{stage.blocked} blocked</div>
-                    <div>{stage.contractNeeded ? 'contract-needed' : 'ready data'}</div>
+                    <div>{t('product.list.missionControl.blockedCount', { count: stage.blocked })}</div>
+                    <div>{stage.contractNeeded ? t('product.list.missionControl.contractNeeded') : t('product.list.missionControl.readyData')}</div>
                   </div>
                 </div>
               </div>
@@ -106,11 +111,12 @@ export function ProductionRail({
 }
 
 export function StationNav() {
+  const { t } = useTranslation()
   const stations = [
-    { label: 'Mission Control', href: '/products', active: true },
-    { label: 'Listing Station', href: '/products/workbench/batch-listing' },
-    { label: 'Visual Station', href: '/products/workbench/visual-tools' },
-    { label: 'Delivery Station', href: '/products/workbench/downloads' },
+    { label: t('product.list.missionControl.nav.mission'), href: '/products', active: true },
+    { label: t('product.list.missionControl.nav.listing'), href: '/products/workbench/batch-listing' },
+    { label: t('product.list.missionControl.nav.visual'), href: '/products/workbench/visual-tools' },
+    { label: t('product.list.missionControl.nav.delivery'), href: '/products/workbench/downloads' },
   ]
   return (
     <nav className="flex flex-wrap gap-2">
@@ -144,10 +150,22 @@ export function SkuWorkUnitCard({
   onDelete?: () => void
   deleting?: boolean
 }) {
+  const { t } = useTranslation()
   const { product } = unit
+  const handleKeyboardFocus = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      onFocus()
+    }
+  }
   return (
     <article
+      role="button"
+      tabIndex={0}
+      aria-pressed={focused}
+      aria-label={t('product.list.missionControl.cardFocusLabel', { sku: product.skuCode, title: product.title })}
       onClick={onFocus}
+      onKeyDown={handleKeyboardFocus}
       className={`group rounded-3xl border bg-[#0b0f16]/90 p-4 transition hover:border-cyan-200/30 hover:bg-[#101722] ${focused ? 'border-cyan-300/50 shadow-[0_0_35px_rgba(103,232,249,0.10)]' : 'border-white/10'} ${selected ? 'ring-1 ring-emerald-300/40' : ''}`}
     >
       <div className="flex items-start gap-3">
@@ -159,6 +177,7 @@ export function SkuWorkUnitCard({
             onSelect()
           }}
           onClick={event => event.stopPropagation()}
+          aria-label={t('product.list.missionControl.selectSkuLabel', { sku: product.skuCode })}
           className="mt-1 rounded border-white/20 bg-black/30 accent-cyan-400"
         />
         <div className="min-w-0 flex-1">
@@ -171,19 +190,19 @@ export function SkuWorkUnitCard({
         </div>
         <div className="text-right">
           <div className="text-2xl font-semibold tabular-nums text-white">{unit.healthScore}</div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-white/35">readiness</div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-white/35">{t('product.list.missionControl.readiness')}</div>
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2">
-        <MiniMetric label="Assets" value={String(product.assetsCount)} state={product.assetStatus} />
-        <MiniMetric label="Listing" value={String(product.listingVersionsCount)} state={product.listingStatus} />
-        <MiniMetric label="Export" value={product.exportStatus} state={product.exportStatus} />
+        <MiniMetric label={t('product.list.missionControl.metrics.assets')} value={String(product.assetsCount)} state={product.assetStatus} />
+        <MiniMetric label={t('product.list.missionControl.metrics.listing')} value={String(product.listingVersionsCount)} state={product.listingStatus} />
+        <MiniMetric label={t('product.list.missionControl.metrics.export')} value={product.exportStatus} state={product.exportStatus} />
       </div>
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/8 pt-3">
         <div className="text-[11px] text-white/38">
-          {product.categoryId || 'No category'} · {product.brandId || 'No brand'}
+          {product.categoryId || t('product.list.missionControl.noCategory')} · {product.brandId || t('product.list.missionControl.noBrand')}
         </div>
         <div className="flex items-center gap-2">
           {onDelete ? (
@@ -197,7 +216,7 @@ export function SkuWorkUnitCard({
               className="inline-flex items-center gap-1.5 rounded-full border border-rose-300/20 bg-rose-300/8 px-3 py-1.5 text-xs font-semibold text-rose-100/70 transition hover:bg-rose-300/14 hover:text-rose-100 disabled:cursor-wait disabled:opacity-45"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              {deleting ? 'Deleting' : 'Delete'}
+              {deleting ? t('product.list.missionControl.deleting') : t('product.list.missionControl.delete')}
             </button>
           ) : null}
           <Link
@@ -225,10 +244,11 @@ function MiniMetric({ label, value, state }: { label: string; value: string; sta
 }
 
 export function NextBestActionPanel({ unit }: { unit: MissionWorkUnit }) {
+  const { t } = useTranslation()
   return (
     <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/[0.08] p-4">
       <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-100/75">
-        <Sparkles className="h-4 w-4" /> Next Best Action
+        <Sparkles className="h-4 w-4" /> {t('product.list.missionControl.nextBestAction')}
       </div>
       <div className="text-lg font-semibold text-white">{unit.nextBestAction.label}</div>
       <p className="mt-2 text-sm leading-6 text-white/60">{unit.nextBestAction.helper}</p>
@@ -236,7 +256,7 @@ export function NextBestActionPanel({ unit }: { unit: MissionWorkUnit }) {
         to={unit.nextBestAction.href}
         className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-cyan-200 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-white"
       >
-        Route / handoff only
+        {t('product.list.missionControl.routeHandoffOnly')}
         <Route className="h-4 w-4" />
       </Link>
     </div>
@@ -244,10 +264,11 @@ export function NextBestActionPanel({ unit }: { unit: MissionWorkUnit }) {
 }
 
 export function MissionDossier({ unit }: { unit: MissionWorkUnit | null }) {
+  const { t } = useTranslation()
   if (!unit) {
     return (
       <aside className="rounded-[28px] border border-white/10 bg-[#080b11]/95 p-6 text-white/55">
-        Select a SKU work unit to open the Mission Dossier.
+        {t('product.list.missionControl.selectDossierPrompt')}
       </aside>
     )
   }
@@ -256,7 +277,7 @@ export function MissionDossier({ unit }: { unit: MissionWorkUnit | null }) {
     <aside className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[28px] border border-white/10 bg-[#080b11]/95 p-5 shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
-          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/65">Mission Dossier</div>
+          <div className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/65">{t('product.list.missionControl.dossier')}</div>
           <h2 className="text-xl font-semibold leading-tight text-white">{product.title}</h2>
           <div className="mt-2 font-mono text-xs text-white/45">{product.skuCode}</div>
         </div>
@@ -267,7 +288,7 @@ export function MissionDossier({ unit }: { unit: MissionWorkUnit | null }) {
 
       <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.035] p-4">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
-          <PackageCheck className="h-4 w-4 text-cyan-200" /> Readiness breakdown
+          <PackageCheck className="h-4 w-4 text-cyan-200" /> {t('product.list.missionControl.readinessBreakdown')}
         </div>
         <div className="space-y-3">
           {unit.readiness.map(item => (
@@ -283,9 +304,9 @@ export function MissionDossier({ unit }: { unit: MissionWorkUnit | null }) {
       </div>
 
       <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.035] p-4">
-        <div className="mb-3 text-sm font-semibold text-white">Stage timeline</div>
+        <div className="mb-3 text-sm font-semibold text-white">{t('product.list.missionControl.stageTimeline')}</div>
         <div className="space-y-2">
-          {['Intake', 'Template', 'Visual', 'Listing', 'Export', 'Delivery', 'Commercial'].map((label, index) => (
+          {[t('product.list.missionControl.stages.intake'), t('product.list.missionControl.stages.template'), t('product.list.missionControl.stages.visual'), t('product.list.missionControl.stages.listing'), t('product.list.missionControl.stages.export'), t('product.list.missionControl.stages.delivery'), t('product.list.missionControl.stages.commercial')].map((label, index) => (
             <div key={label} className="flex items-center gap-3 text-xs">
               <div className={`h-2.5 w-2.5 rounded-full ${index <= unit.stageIndex ? 'bg-cyan-200' : 'bg-white/15'}`} />
               <div className={index <= unit.stageIndex ? 'text-white/75' : 'text-white/32'}>{label}</div>
@@ -295,10 +316,10 @@ export function MissionDossier({ unit }: { unit: MissionWorkUnit | null }) {
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-2">
-        <Link to={`/products/${product.id}`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">Full detail</Link>
-        <Link to={`/products/${product.id}/ai/ai-product`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">Visual workspace</Link>
-        <Link to={`/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">Listing Station</Link>
-        <Link to="/products/workbench/downloads" className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">Delivery Station</Link>
+        <Link to={`/products/${product.id}`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.fullDetail')}</Link>
+        <Link to={`/products/${product.id}/ai/ai-product`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.visualWorkspace')}</Link>
+        <Link to="/products/workbench/batch-listing" className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.nav.listing')}</Link>
+        <Link to="/products/workbench/downloads" className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.nav.delivery')}</Link>
       </div>
 
       <div className="mt-5">
@@ -315,20 +336,32 @@ export function CommandStrip({
   selectedUnits: MissionWorkUnit[]
   onClear: () => void
 }) {
-  const ids = selectedUnits.map(unit => unit.product.id)
-  const query = ids.length > 0 ? `?productIds=${encodeURIComponent(ids.join(','))}` : ''
+  const { t } = useTranslation()
+  const hasSelection = selectedUnits.length > 0
   return (
     <div className="fixed bottom-5 left-1/2 z-30 w-[min(1180px,calc(100vw-2rem))] -translate-x-1/2 rounded-[24px] border border-white/12 bg-[#05070b]/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.65)] backdrop-blur-xl">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <div className="text-sm font-semibold text-white">Command Strip · {selectedUnits.length} selected SKU{selectedUnits.length === 1 ? '' : 's'}</div>
-          <div className="mt-1 text-xs text-white/45">Handoff only. Export/download/commercial success is not claimed from Mission Control.</div>
+          <div className="text-sm font-semibold text-white">{t('product.list.missionControl.commandStripTitle', { count: selectedUnits.length })}</div>
+          <div className="mt-1 text-xs text-white/45">{hasSelection ? t('product.list.missionControl.commandStripHelper') : t('product.list.missionControl.commandStripEmpty')}</div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link to={`/products/workbench/batch-listing${query}`} className="rounded-full bg-cyan-200 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-white">Listing Station</Link>
-          <Link to={selectedUnits[0] ? `/products/${selectedUnits[0].product.id}/ai/ai-product` : '/products/workbench/visual-tools'} className="rounded-full border border-white/12 bg-white/7 px-4 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/12">Visual Station</Link>
-          <Link to="/products/workbench/downloads" className="rounded-full border border-amber-300/25 bg-amber-300/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-300/15">Delivery handoff</Link>
-          <button onClick={onClear} className="rounded-full border border-white/12 px-4 py-2 text-xs font-semibold text-white/45 transition hover:text-white">Clear</button>
+          {hasSelection ? (
+            <Link to="/products/workbench/batch-listing" className="rounded-full bg-cyan-200 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-white">{t('product.list.missionControl.nav.listing')}</Link>
+          ) : (
+            <button type="button" disabled className="rounded-full bg-cyan-200/35 px-4 py-2 text-xs font-semibold text-slate-950/55 disabled:cursor-not-allowed">{t('product.list.missionControl.nav.listing')}</button>
+          )}
+          {hasSelection ? (
+            <Link to={`/products/${selectedUnits[0].product.id}/ai/ai-product`} className="rounded-full border border-white/12 bg-white/7 px-4 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/12">{t('product.list.missionControl.nav.visual')}</Link>
+          ) : (
+            <button type="button" disabled className="rounded-full border border-white/12 bg-white/5 px-4 py-2 text-xs font-semibold text-white/35 disabled:cursor-not-allowed">{t('product.list.missionControl.nav.visual')}</button>
+          )}
+          {hasSelection ? (
+            <Link to="/products/workbench/downloads" className="rounded-full border border-amber-300/25 bg-amber-300/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-300/15">{t('product.list.missionControl.deliveryHandoff')}</Link>
+          ) : (
+            <button type="button" disabled className="rounded-full border border-amber-300/15 bg-amber-300/5 px-4 py-2 text-xs font-semibold text-amber-100/35 disabled:cursor-not-allowed">{t('product.list.missionControl.deliveryHandoff')}</button>
+          )}
+          <button type="button" onClick={onClear} disabled={!hasSelection} className="rounded-full border border-white/12 px-4 py-2 text-xs font-semibold text-white/45 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40">{t('product.list.missionControl.clear')}</button>
         </div>
       </div>
     </div>
