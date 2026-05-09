@@ -21,6 +21,11 @@ const STATE_ICON: Record<CapabilityState, typeof CheckCircle2> = {
   'commercial-gate': AlertTriangle,
 }
 
+function stationHref(path: string, productIds: string[]) {
+  if (productIds.length === 0) return path
+  return `${path}?productIds=${encodeURIComponent(productIds.join(','))}&source=mission-control`
+}
+
 export function CapabilityBadge({ state, label }: { state: CapabilityState; label: string }) {
   const Icon = STATE_ICON[state]
   return (
@@ -318,8 +323,8 @@ export function MissionDossier({ unit }: { unit: MissionWorkUnit | null }) {
       <div className="mt-5 grid grid-cols-2 gap-2">
         <Link to={`/products/${product.id}`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.fullDetail')}</Link>
         <Link to={`/products/${product.id}/ai/ai-product`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.visualWorkspace')}</Link>
-        <Link to="/products/workbench/batch-listing" className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.nav.listing')}</Link>
-        <Link to="/products/workbench/downloads" className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.nav.delivery')}</Link>
+        <Link to={stationHref('/products/workbench/batch-listing', [product.id])} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.nav.listing')}</Link>
+        <Link to={stationHref('/products/workbench/downloads', [product.id])} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.nav.delivery')}</Link>
       </div>
 
       <div className="mt-5">
@@ -338,6 +343,7 @@ export function CommandStrip({
 }) {
   const { t } = useTranslation()
   const hasSelection = selectedUnits.length > 0
+  const selectedProductIds = selectedUnits.map(unit => unit.product.id)
   return (
     <div className="relative z-10 mx-auto w-full max-w-[1180px] rounded-[24px] border border-white/12 bg-[#05070b]/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.65)] backdrop-blur-xl">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -347,7 +353,7 @@ export function CommandStrip({
         </div>
         <div className="flex flex-wrap gap-2">
           {hasSelection ? (
-            <Link to="/products/workbench/batch-listing" className="rounded-full bg-cyan-200 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-white">{t('product.list.missionControl.nav.listing')}</Link>
+            <Link to={stationHref('/products/workbench/batch-listing', selectedProductIds)} className="rounded-full bg-cyan-200 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-white">{t('product.list.missionControl.nav.listing')}</Link>
           ) : (
             <button type="button" disabled className="rounded-full bg-cyan-200/35 px-4 py-2 text-xs font-semibold text-slate-950/55 disabled:cursor-not-allowed">{t('product.list.missionControl.nav.listing')}</button>
           )}
@@ -357,7 +363,7 @@ export function CommandStrip({
             <button type="button" disabled className="rounded-full border border-white/12 bg-white/5 px-4 py-2 text-xs font-semibold text-white/35 disabled:cursor-not-allowed">{t('product.list.missionControl.nav.visual')}</button>
           )}
           {hasSelection ? (
-            <Link to="/products/workbench/downloads" className="rounded-full border border-amber-300/25 bg-amber-300/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-300/15">{t('product.list.missionControl.deliveryHandoff')}</Link>
+            <Link to={stationHref('/products/workbench/downloads', selectedProductIds)} className="rounded-full border border-amber-300/25 bg-amber-300/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-300/15">{t('product.list.missionControl.deliveryHandoff')}</Link>
           ) : (
             <button type="button" disabled className="rounded-full border border-amber-300/15 bg-amber-300/5 px-4 py-2 text-xs font-semibold text-amber-100/35 disabled:cursor-not-allowed">{t('product.list.missionControl.deliveryHandoff')}</button>
           )}

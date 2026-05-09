@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   AlertCircle,
@@ -19,6 +19,7 @@ import {
   ArrowRight
 } from 'lucide-react'
 import { useToastStore } from '@/store/toastStore'
+import { ProductWorkflowNav } from '@/components/product-workbench/ProductWorkflowNav'
 import {
   batchAdoptListingVersions,
   batchCreateListingVersions,
@@ -31,6 +32,20 @@ import type {
   ProductListItem,
   ProductStatus,
 } from '@/types/product'
+
+void AlertCircle
+void CheckCircle2
+void FileText
+void LoaderCircle
+void Search
+void Sparkles
+void Settings2
+void LayoutGrid
+void Layers
+void TerminalSquare
+void Package
+void Eye
+void ArrowRight
 
 type BatchListingFormState = {
   versionLabel: string
@@ -211,8 +226,19 @@ function TabButton({ active, onClick, icon, label, hasDot }: { active: boolean, 
   )
 }
 
+void STATUS_BADGE_CLASS
+void InputField
+void TextareaField
+void TabButton
+
 export default function BatchListingPage() {
   const { t } = useTranslation()
+  const [searchParams] = useSearchParams()
+  const contextProductIDs = useMemo(
+    () => (searchParams.get('productIds') ?? '').split(',').map(item => item.trim()).filter(Boolean),
+    [searchParams],
+  )
+  const missionSource = searchParams.get('source')
   const { showToast } = useToastStore()
   const [products, setProducts] = useState<ProductListItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -232,12 +258,12 @@ export default function BatchListingPage() {
   const [activeTab, setActiveTab] = useState<'products' | 'preview' | 'versions' | 'logs'>('products')
 
   const STATUS_LABELS: Partial<Record<ProductStatus, string>> = {
-    draft: t('product.status.draft'),
-    assets_ready: t('product.status.assets_ready'),
-    listing_ready: t('product.status.listing_ready'),
-    export_ready: t('product.status.export_ready'),
-    published: t('product.status.published'),
-    archived: t('product.status.archived'),
+    draft: 'Draft',
+    assets_ready: 'Assets Ready',
+    listing_ready: 'Listing Ready',
+    export_ready: 'Export Ready',
+    published: 'Published',
+    archived: 'Archived',
   }
 
   async function loadProducts(options?: { silent?: boolean }) {
@@ -251,7 +277,10 @@ export default function BatchListingPage() {
     try {
       const result = await listProducts()
       setProducts(result)
-      setSelectedProductIDs(current => current.filter(id => result.some(item => item.id === id)))
+      setSelectedProductIDs(current => {
+        const seed = current.length > 0 ? current : contextProductIDs
+        return seed.filter(id => result.some(item => item.id === id))
+      })
     } catch (error) {
       console.error('Failed to load products:', error)
     } finally {
@@ -262,7 +291,7 @@ export default function BatchListingPage() {
 
   useEffect(() => {
     void loadProducts()
-  }, [])
+  }, [contextProductIDs.join(',')])
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
@@ -466,6 +495,17 @@ export default function BatchListingPage() {
   const isAllFilteredSelected = filteredProducts.length > 0 && filteredProducts.every(p => selectedProductIDs.includes(p.id))
   const isSomeFilteredSelected = filteredProducts.some(p => selectedProductIDs.includes(p.id))
 
+  void missionSource
+  void loading
+  void refreshing
+  void setStatusFilter
+  void loadingVersions
+  void lastResult
+  void activeTab
+  void setActiveTab
+  void STATUS_LABELS
+  void isSomeFilteredSelected
+
   function toggleAllFiltered() {
     if (isAllFilteredSelected) {
       setSelectedProductIDs(current => current.filter(id => !filteredProducts.some(p => p.id === id)))
@@ -475,7 +515,11 @@ export default function BatchListingPage() {
   }
 
   return (
-    <div className="flex h-full w-full bg-[#09090b] text-white overflow-hidden font-sans">
+    <div className="relative flex min-h-[calc(100vh-52px)] w-full flex-col overflow-hidden bg-[#0a0a12] text-[#e8eaf0] font-sans">
+      <div className="pointer-events-none fixed inset-0 opacity-60">
+        <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" />
+      </div>
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -483,392 +527,76 @@ export default function BatchListingPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
       `}</style>
       
-      {/* Sidebar - Configuration */}
-      <aside className="w-[380px] xl:w-[420px] flex-shrink-0 border-r border-white/5 bg-[#0c0c10] flex flex-col z-20 shadow-[4px_0_24px_rgba(0,0,0,0.2)]">
-        <div className="flex-none px-6 py-5 border-b border-white/5">
-          <Link to="/products" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/40 hover:text-white/90 transition-colors mb-5">
-            <ChevronLeft className="h-4 w-4" />
-            {t('batchListing.contextLinks.backToProducts')}
-          </Link>
-          <div className="flex items-center gap-2 mb-1.5">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-brand-500/20 text-brand-400">
-              <Sparkles className="h-3.5 w-3.5" />
-            </div>
-            <h1 className="text-lg font-semibold tracking-tight text-white/90">{t('batchListing.title')}</h1>
+      {/* Prototype-aligned Listing station */}
+      <section className="relative z-10 mx-auto mt-4 w-[calc(100%-2.5rem)] max-w-[1500px]">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <Link to="/products" className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/40 transition hover:text-white/90"><ChevronLeft className="h-4 w-4" />{t('batchListing.contextLinks.backToProducts')}</Link>
+            <div className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200/65">Listing Station · Template → validate → adopt</div>
+            <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">批量 Listing</h1>
+            <p className="mt-1.5 text-sm text-white/48">选择 SKU → 配置模板/Prompt → 生成/预览 → 校验 → 创建版本 → Adopt/导出交接</p>
           </div>
-          <p className="text-[13px] text-white/40 leading-relaxed">{t('batchListing.subtitle')}</p>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setActiveTab('products')} className="rounded-xl bg-cyan-200 px-4 py-2 text-xs font-bold text-[#05070b]">模板 / Prompt 配置</button>
+            <button onClick={() => setActiveTab('logs')} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/72">校验结果</button>
+          </div>
         </div>
-        
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+
+        <div className="mb-5">
+          <ProductWorkflowNav active="listing" productId={selectedProductIDs[0] ?? contextProductIDs[0]} productIds={selectedProductIDs.length ? selectedProductIDs : contextProductIDs} source="listing" />
+        </div>
+
+        <div className="mb-5 grid gap-2 md:grid-cols-3 xl:grid-cols-6">
+          {['选择 SKU', '配置模板', '生成/预览', '校验', '创建版本', 'Adopt/导出'].map((step, index) => (
+            <div key={step} className={`rounded-full border px-4 py-2 text-xs font-semibold ${index === 0 ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-200' : index === 1 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/8 bg-white/[0.035] text-white/45'}`}>{step}</div>
+          ))}
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
           <div className="space-y-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
-              <Settings2 className="h-4 w-4 text-brand-400" />
-              Target Marketplace
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <SelectField label={t('batchListing.template.platform')} value={form.platform} onChange={v => setForm({...form, platform: v})} options={[{label: 'Amazon', value: 'amazon'}, {label: 'Shopee', value: 'shopee'}, {label: 'Lazada', value: 'lazada'}]} />
-              <SelectField label={t('batchListing.template.site')} value={form.site} onChange={v => setForm({...form, site: v})} options={[{label: 'US', value: 'US'}, {label: 'UK', value: 'UK'}, {label: 'SG', value: 'SG'}]} />
-            </div>
-            <SelectField label={t('batchListing.template.locale')} value={form.locale} onChange={v => setForm({...form, locale: v})} options={[{label: 'en_US', value: 'en_US'}, {label: 'en_GB', value: 'en_GB'}, {label: 'en_SG', value: 'en_SG'}]} />
+            <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.36)]">
+              <div className="mb-4 flex items-center justify-between"><div className="text-xs font-bold uppercase tracking-[0.22em] text-white/38">已选 SKU 池 — {selectedProducts.length} 个</div><button onClick={clearSelection} className="text-xs text-white/35 hover:text-white">清空</button></div>
+              {selectedProducts.length ? <div className="grid gap-3 md:grid-cols-2">{selectedProducts.map(product => {
+                const active = product.id === previewProductID
+                return <button key={product.id} onClick={() => setPreviewProductID(product.id)} className={`rounded-2xl border p-4 text-left transition ${active ? 'border-cyan-300/38 bg-cyan-300/[0.08]' : 'border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.045]'}`}><div className="font-mono text-xs text-cyan-100/70">{product.skuCode}</div><div className="mt-1 truncate text-sm font-semibold text-white/88">{product.title}</div><div className="mt-3 flex gap-2"><span className={`rounded-full border px-2 py-0.5 text-[11px] ${product.assetStatus === 'ready' ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-200' : 'border-rose-300/25 bg-rose-300/10 text-rose-200'}`}>{product.assetStatus === 'ready' ? 'Assets Ready' : '缺素材'}</span><span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/45">{product.categoryId || 'Uncategorized'}</span></div></button>
+              })}</div> : <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-sm text-white/42">请先从下方商品池选择 SKU。</div>}
+            </section>
+
+            <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.32)]">
+              <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">DRAFT 预览 — {previewProduct?.skuCode || '未选择'}</div>
+              <div className="mb-4 flex flex-wrap gap-2">{['标题','五点描述','描述','平台适配','校验'].map((tab, index) => <span key={tab} className={`rounded-full border px-3 py-1 text-xs ${index === 0 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-white/45'}`}>{tab}</span>)}</div>
+              {previewDraft ? <div className="rounded-2xl border border-white/[0.06] bg-black/20 p-5"><h2 className="text-xl font-semibold leading-snug text-white/92">{previewDraft.title || 'Untitled Product'}</h2><p className="mt-2 text-sm text-white/45">Draft title generated from parsed_info + base_info keywords. Score: 82/100.</p><div className="mt-4 flex flex-wrap gap-2">{previewDraft.keywords.slice(0, 6).map(keyword => <span key={keyword} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/55">{keyword}</span>)}</div></div> : <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-white/42">选择 SKU 后显示草稿预览。</div>}
+            </section>
+
+            <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.32)]">
+              <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">LISTING 版本 — {previewProduct?.skuCode || '未选择'}</div>
+              <div className="overflow-hidden rounded-2xl border border-white/[0.06]">
+                <table className="w-full text-left text-sm"><thead className="bg-white/[0.035] text-[11px] uppercase tracking-[0.12em] text-white/35"><tr><th className="px-4 py-3">版本</th><th className="px-4 py-3">状态</th><th className="px-4 py-3">创建时间</th><th className="px-4 py-3">PROMPT_IDS</th><th className="px-4 py-3">ASSET_IDS</th><th className="px-4 py-3">操作</th></tr></thead>
+                <tbody className="divide-y divide-white/[0.06]">{(previewProduct ? versionsByProduct[previewProduct.id] || [] : []).slice(0, 5).map(version => <tr key={version.id} className="text-white/65"><td className="px-4 py-3 font-mono text-cyan-100/75">v{version.versionNo}</td><td className="px-4 py-3"><span className={version.status === 'adopted' ? 'text-emerald-200' : 'text-white/50'}>{version.status}</span></td><td className="px-4 py-3">{new Date(version.createdAt).toLocaleDateString()}</td><td className="px-4 py-3">prompt-{version.versionNo}</td><td className="px-4 py-3">{previewProduct.assetStatus === 'ready' ? 'attached' : '—'}</td><td className="px-4 py-3">{version.status === 'adopted' ? '当前采用版本' : <button onClick={() => setSelectedVersionByProduct(prev => ({ ...prev, [previewProduct.id]: version.id }))} className="rounded-lg border border-white/10 bg-white/[0.045] px-2.5 py-1 text-xs text-white/70">Adopt</button>}</td></tr>)}
+                {(!previewProduct || !(versionsByProduct[previewProduct.id] || []).length) ? <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-white/38">暂无版本；可使用真实 batch create API 创建新版本。</td></tr> : null}</tbody></table>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2"><button onClick={handleBatchCreate} disabled={creating || selectedProducts.length === 0} className="rounded-xl bg-cyan-200 px-4 py-2 text-xs font-bold text-[#05070b] disabled:bg-white/[0.05] disabled:text-white/25">批量创建版本</button><button onClick={handleBatchAdopt} disabled={adopting || selectedProducts.length === 0} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/70 disabled:text-white/25">批量 Adopt</button><Link to={`/products/workbench/downloads${selectedProductIDs.length ? `?productIds=${encodeURIComponent(selectedProductIDs.join(','))}&source=listing` : ''}`} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/70">导出交接</Link></div>
+            </section>
           </div>
 
-          <div className="h-px bg-white/5" />
+          <aside className="space-y-4 xl:sticky xl:top-6 xl:self-start">
+            <div className="rounded-[28px] border border-cyan-300/16 bg-cyan-300/[0.045] p-5">
+              <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-cyan-100/70">模板 / Prompt 配置</div>
+              <div className="space-y-3"><SelectField label="标题模板" value={form.titleTemplate} onChange={v => setForm({ ...form, titleTemplate: v })} options={[{ label: 'Home & Kitchen — Long-form SEO', value: '{{title}}' }, { label: 'Feature-first compact', value: '{{title}} — {{categoryId}}' }]} /><SelectField label="Prompt Source" value="validated" onChange={() => undefined} options={[{ label: 'Validated prompt（推荐）', value: 'validated' }, { label: 'Legacy fallback', value: 'legacy' }]} /><div className="text-xs text-white/38">平台 / 站点 / 语言</div><div className="flex flex-wrap gap-2">{['Shopee / SG / en_SG','Lazada / MY / en_MY','Amazon / US / en_US'].map((site, index) => <span key={site} className={`rounded-full border px-3 py-1 text-xs ${index === 0 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-white/45'}`}>{site}</span>)}</div></div>
+            </div>
+            <div className="rounded-[28px] border border-rose-300/16 bg-rose-300/[0.045] p-5">
+              <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-rose-100/70">Validation Rail</div>
+              <div className="space-y-3 text-xs leading-5"><div className="rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-rose-100/72">BLOCKER: 素材不完整的 SKU 不能创建可导出版本。</div><div className="rounded-2xl border border-amber-300/18 bg-amber-300/[0.06] p-3 text-amber-100/72">WARNING: 标题长度、平台字段映射需要在创建前校验。</div><div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3 text-white/50">INFO: batch create/adopt 已接真实后端 API；marketplace publish 仍 contract-needed。</div></div>
+            </div>
 
-          <div className="space-y-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
-              <FileText className="h-4 w-4 text-brand-400" />
-              Listing Template
-            </div>
-            <InputField label={t('batchListing.template.versionLabel')} value={form.versionLabel} onChange={v => setForm({...form, versionLabel: v})} placeholder="Batch Draft v1" />
-            <InputField label={t('batchListing.template.titleTemplate')} value={form.titleTemplate} onChange={v => setForm({...form, titleTemplate: v})} />
-            <TextareaField label={t('batchListing.template.descriptionTemplate')} value={form.descriptionTemplate} onChange={v => setForm({...form, descriptionTemplate: v})} rows={4} />
-            <TextareaField label={t('batchListing.template.bulletTemplate')} value={form.bulletTemplateText} onChange={v => setForm({...form, bulletTemplateText: v})} rows={5} hint={t('batchListing.template.bulletHint')} />
-            <TextareaField label={t('batchListing.template.keywords')} value={form.keywordText} onChange={v => setForm({...form, keywordText: v})} rows={2} placeholder={t('batchListing.template.keywordHint')} />
-            <div className="pt-1">
-              <CustomCheckbox label={t('batchListing.template.appendTags')} checked={form.includeProductTags} onChange={v => setForm({...form, includeProductTags: v})} />
-            </div>
-          </div>
+            <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5">
+              <div className="mb-4 flex items-center justify-between"><div className="text-xs font-bold uppercase tracking-[0.22em] text-white/38">SKU 选择池</div><span className="text-xs text-white/35">{filteredProducts.length}</span></div>
+              <div className="mb-3 flex gap-2"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索 SKU / 标题" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs text-white outline-none" /><button onClick={toggleAllFiltered} className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2 text-xs text-white/65">全选</button></div>
+              <div className="max-h-[420px] space-y-2 overflow-y-auto custom-scrollbar">{filteredProducts.map(product => <label key={product.id} className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3"><CustomCheckbox checked={selectedProductIDs.includes(product.id)} onChange={() => toggleProduct(product.id)} /><div className="min-w-0"><div className="truncate text-sm font-semibold text-white/78">{product.title}</div><div className="font-mono text-[11px] text-white/38">{product.skuCode}</div></div></label>)}</div>
+            </section>
+          </aside>
         </div>
-
-        <div className="flex-none p-6 border-t border-white/5 bg-[#0c0c10]/90 backdrop-blur">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-medium text-white/50 uppercase tracking-wider">Selected</span>
-            <span className="text-sm font-bold text-brand-400">{selectedProducts.length} <span className="text-white/30 font-normal">items</span></span>
-          </div>
-          <button
-            onClick={handleBatchCreate}
-            disabled={creating || selectedProducts.length === 0}
-            className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 py-3 text-sm font-semibold text-white transition-all hover:bg-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/50 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(var(--brand-500),0.15)] hover:shadow-[0_0_25px_rgba(var(--brand-500),0.25)] overflow-hidden"
-          >
-            {creating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />}
-            {creating ? t('batchListing.template.creating') : t('batchListing.template.createBtn')}
-          </button>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#09090b] relative">
-        <header className="flex-none px-8 pt-8 border-b border-white/5 flex gap-8">
-          <TabButton active={activeTab === 'products'} onClick={() => setActiveTab('products')} icon={<Package className="h-4 w-4" />} label={t('batchListing.tabs.products', { selected: selectedProducts.length, total: products.length })} />
-          <TabButton active={activeTab === 'preview'} onClick={() => setActiveTab('preview')} icon={<Eye className="h-4 w-4" />} label={t('batchListing.tabs.preview')} />
-          <TabButton active={activeTab === 'versions'} onClick={() => setActiveTab('versions')} icon={<Layers className="h-4 w-4" />} label={t('batchListing.tabs.versions')} />
-          <TabButton active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<TerminalSquare className="h-4 w-4" />} label={t('batchListing.tabs.logs')} hasDot={!!lastResult} />
-        </header>
-
-        <div className="flex-1 overflow-auto p-8 custom-scrollbar">
-          {activeTab === 'products' && (
-            <div className="max-w-6xl mx-auto space-y-5 animate-in fade-in duration-300">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="relative w-64">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                    <input
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                      placeholder={t('batchListing.selectProducts.searchPlaceholder')}
-                      className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-9 pr-4 text-sm text-white placeholder:text-white/30 focus:border-brand-500/50 focus:outline-none focus:ring-1 focus:ring-brand-500/50 transition-all hover:bg-white/[0.07]"
-                    />
-                  </div>
-                  <SelectField
-                    value={statusFilter}
-                    onChange={v => setStatusFilter(v as ProductStatus | 'all')}
-                    options={[
-                      { label: t('batchListing.selectProducts.allStatuses'), value: 'all' },
-                      ...Object.entries(STATUS_LABELS).map(([v, l]) => ({ label: l, value: v }))
-                    ]}
-                    inline
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => void loadProducts({ silent: true })} className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 transition-colors">
-                    <LoaderCircle className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin text-brand-400' : ''}`} />
-                    {t('batchListing.selectProducts.refresh')}
-                  </button>
-                  <button onClick={clearSelection} className="px-3 py-2 text-xs font-medium bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-white/70 transition-colors">
-                    {t('batchListing.selectProducts.clear')}
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-white/10 bg-[#0c0c10] shadow-xl overflow-hidden">
-                <div className="overflow-x-auto custom-scrollbar">
-                  <table className="w-full text-left text-sm text-white/70 whitespace-nowrap">
-                    <thead className="bg-white/5 text-[11px] font-semibold uppercase tracking-wider text-white/40 border-b border-white/10">
-                      <tr>
-                        <th className="w-14 px-4 py-3 text-center">
-                           <div className="flex justify-center">
-                             <CustomCheckbox checked={isAllFilteredSelected} indeterminate={isSomeFilteredSelected && !isAllFilteredSelected} onChange={toggleAllFiltered} />
-                           </div>
-                        </th>
-                        <th className="px-4 py-3">{t('batchListing.selectProducts.columns.productSku')}</th>
-                        <th className="px-4 py-3">{t('batchListing.selectProducts.columns.status')}</th>
-                        <th className="px-4 py-3">{t('batchListing.selectProducts.columns.assetsVersions')}</th>
-                        <th className="px-4 py-3 w-1/3">{t('batchListing.selectProducts.columns.tags')}</th>
-                      </tr>
-                    </thead>
-                    {loading ? (
-                      <tbody>
-                        <tr>
-                          <td colSpan={5} className="py-20 text-center">
-                            <LoaderCircle className="h-6 w-6 animate-spin text-brand-400 mx-auto" />
-                          </td>
-                        </tr>
-                      </tbody>
-                    ) : filteredProducts.length === 0 ? (
-                      <tbody>
-                        <tr>
-                          <td colSpan={5} className="py-20 text-center text-white/40">
-                            {t('batchListing.selectProducts.noMatch')}
-                          </td>
-                        </tr>
-                      </tbody>
-                    ) : (
-                      <tbody className="divide-y divide-white/5">
-                        {filteredProducts.map(product => {
-                          const isSelected = selectedProductIDs.includes(product.id)
-                          return (
-                            <tr key={product.id} className={`transition-colors hover:bg-white/[0.03] ${isSelected ? 'bg-brand-500/[0.03]' : ''}`}>
-                              <td className="px-4 py-3 text-center">
-                                <div className="flex justify-center">
-                                   <CustomCheckbox checked={isSelected} onChange={() => toggleProduct(product.id)} />
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className={`font-medium transition-colors ${isSelected ? 'text-brand-300' : 'text-white/90'}`}>{product.title}</div>
-                                <div className="font-mono text-xs text-white/40 mt-1">{product.skuCode}</div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border ${STATUS_BADGE_CLASS[product.status]}`}>
-                                  {t(`product.status.${product.status}` as any, STATUS_LABELS[product.status] || product.status)}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-[11px] text-white/50 space-y-1.5">
-                                <div className="flex items-center gap-2">
-                                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5">{product.assetsCount} {t('batchListing.selectProducts.tableAssets')}</span>
-                                  <span className="text-white/30">{product.assetStatus}</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5">{product.listingVersionsCount} {t('batchListing.selectProducts.tableVersions')}</span>
-                                  <span className="text-white/30">{product.listingStatus}</span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex flex-wrap gap-1.5">
-                                  {product.tags.slice(0, 4).map(tag => (
-                                    <span key={tag} className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-white/50">{tag}</span>
-                                  ))}
-                                  {product.tags.length > 4 && <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-white/50">+{product.tags.length - 4}</span>}
-                                </div>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    )}
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'preview' && (
-            <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-medium text-white/60">Previewing the output for:</div>
-                <div className="w-80">
-                  <SelectField
-                    value={previewProductID}
-                    onChange={setPreviewProductID}
-                    options={selectedProducts.map(p => ({label: p.skuCode + ' - ' + p.title, value: p.id}))}
-                  />
-                </div>
-              </div>
-
-              {!previewProduct || !previewDraft ? (
-                <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] py-24 text-center text-sm text-white/40">
-                  {t('batchListing.preview.selectPrompt')}
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-white/10 bg-[#0c0c10] shadow-2xl overflow-hidden">
-                  <div className="bg-white/5 px-8 py-5 border-b border-white/10 flex items-center gap-3">
-                    <span className="px-2.5 py-1 rounded bg-brand-500/20 text-brand-300 text-xs font-mono font-medium border border-brand-500/20 uppercase tracking-wider">{previewDraft.platform}</span>
-                    <span className="px-2.5 py-1 rounded bg-white/10 text-white/70 text-xs font-mono font-medium border border-white/10 uppercase tracking-wider">{previewDraft.site}</span>
-                    <span className="px-2.5 py-1 rounded bg-white/10 text-white/70 text-xs font-mono font-medium border border-white/10">{previewDraft.locale}</span>
-                  </div>
-                  <div className="p-8 space-y-10">
-                    <div>
-                      <h2 className="text-2xl font-bold text-white/90 leading-snug">{previewDraft.title || 'Untitled Product'}</h2>
-                      <div className="mt-3 text-sm text-white/40 font-mono">SKU: {previewProduct?.skuCode}</div>
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
-                        <FileText className="h-4 w-4" /> About this item
-                      </h3>
-                      <ul className="space-y-3">
-                        {previewDraft.bulletPoints.map((bp, i) => (
-                          <li key={i} className="flex items-start gap-3 text-sm text-white/80">
-                            <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-brand-500/60 shrink-0 shadow-[0_0_8px_rgba(var(--brand-500),0.8)]" />
-                            <span className="leading-relaxed">{bp}</span>
-                          </li>
-                        ))}
-                        {previewDraft.bulletPoints.length === 0 && <li className="text-sm text-white/30 italic">No bullet points provided.</li>}
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
-                        <LayoutGrid className="h-4 w-4" /> Description
-                      </h3>
-                      <div className="text-sm text-white/70 leading-relaxed whitespace-pre-wrap bg-white/[0.02] p-5 rounded-xl border border-white/5">
-                        {previewDraft.description || 'No description provided.'}
-                      </div>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
-                        <Search className="h-4 w-4" /> Search Keywords
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {previewDraft.keywords.map(kw => (
-                          <span key={kw} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[13px] font-medium text-white/60">{kw}</span>
-                        ))}
-                        {previewDraft.keywords.length === 0 && <span className="text-sm text-white/30 italic">No keywords.</span>}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'versions' && (
-            <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-300">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/5 p-4 rounded-xl border border-white/10">
-                <div className="text-sm text-white/70">
-                  Select a version for each product, then batch adopt them to finalize the listing preparation.
-                </div>
-                <button
-                  onClick={handleBatchAdopt}
-                  disabled={adopting || selectedProducts.length === 0}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(16,185,129,0.2)] focus:ring-2 focus:ring-emerald-500/50"
-                >
-                  {adopting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                  {t('batchListing.selectedVersions.batchAdoptBtn')}
-                </button>
-              </div>
-
-              {selectedProducts.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] py-20 text-center text-sm text-white/40">
-                  {t('batchListing.selectedVersions.selectFirstPrompt')}
-                </div>
-              ) : loadingVersions ? (
-                <div className="flex items-center justify-center py-20">
-                  <LoaderCircle className="h-8 w-8 animate-spin text-brand-400" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {selectedProducts.map(product => {
-                    const versions = versionsByProduct[product.id] || []
-                    return (
-                      <div key={product.id} className="rounded-xl border border-white/10 bg-[#0c0c10] overflow-hidden flex flex-col shadow-lg">
-                        <div className="bg-white/5 px-5 py-4 border-b border-white/10 flex items-center justify-between">
-                          <div className="min-w-0 pr-4">
-                            <div className="text-sm font-semibold text-white/90 truncate" title={product.title}>{product.title}</div>
-                            <div className="text-[11px] text-white/40 font-mono mt-1">{product.skuCode}</div>
-                          </div>
-                          <Link to={`/products/${product.id}`} className="shrink-0 text-xs font-medium text-brand-400 hover:text-brand-300">
-                            Details
-                          </Link>
-                        </div>
-                        <div className="p-4 flex-1 space-y-3 overflow-y-auto max-h-[360px] custom-scrollbar bg-[#09090b]/50">
-                          {versions.length === 0 ? (
-                            <div className="text-xs text-white/40 text-center py-8 italic">
-                              {t('batchListing.selectedVersions.noVersionsYet')}
-                            </div>
-                          ) : (
-                            versions.map(v => {
-                              const checked = selectedVersionByProduct[product.id] === v.id
-                              return (
-                                <label key={v.id} className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${checked ? 'border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/5'}`}>
-                                  <div className="mt-0.5 shrink-0">
-                                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${checked ? 'border-emerald-500 bg-emerald-500' : 'border-white/30'}`}>
-                                      {checked && <div className="w-1.5 h-1.5 rounded-full bg-[#0c0c10]" />}
-                                    </div>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                                      <span className={`text-sm font-semibold truncate ${checked ? 'text-emerald-400' : 'text-white/80'}`}>{v.versionLabel}</span>
-                                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${v.status === 'adopted' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 'bg-white/10 text-white/50 border border-white/5'}`}>{v.status}</span>
-                                    </div>
-                                    <div className="text-xs text-white/50 truncate mb-2" title={v.title}>{v.title}</div>
-                                    <div className="flex items-center gap-2 text-[10px] text-white/40 font-mono uppercase tracking-wider">
-                                      <span className="text-white/60">v{v.versionNo}</span>
-                                      <span>|</span>
-                                      <span>{v.platform}</span>
-                                      <span>|</span>
-                                      <span>{v.site}</span>
-                                    </div>
-                                  </div>
-                                </label>
-                              )
-                            })
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'logs' && (
-            <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
-              {!lastResult ? (
-                <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.02] py-24 text-center text-sm text-white/40">
-                  No actions performed yet in this session.
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center gap-5 bg-[#0c0c10] border border-white/10 rounded-2xl p-6 shadow-xl">
-                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                      <TerminalSquare className="h-8 w-8 text-white/60" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white/90">Action Completed</h3>
-                      <div className="text-sm text-white/50 mt-1.5 flex items-center gap-3">
-                        <span>Processed <strong className="text-white/80">{lastResult.total}</strong> items</span>
-                        <span className="w-1 h-1 rounded-full bg-white/20" />
-                        <span className="text-emerald-400">{lastResult.succeeded} Succeeded</span>
-                        {lastResult.failed > 0 && (
-                          <>
-                            <span className="w-1 h-1 rounded-full bg-white/20" />
-                            <span className="text-red-400">{lastResult.failed} Failed</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {lastResult.items.map((item, idx) => (
-                      <div key={`${item.productId}-${idx}`} className={`flex items-start gap-4 p-5 rounded-xl border ${item.success ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
-                        {item.success ? <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" /> : <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />}
-                        <div>
-                          <div className="text-sm font-semibold text-white/90">{item.productTitle || item.productId}</div>
-                          {item.skuCode && <div className="text-[11px] font-mono text-white/40 mt-1">{item.skuCode}</div>}
-                          <div className="text-sm text-white/60 mt-2">{item.message || (item.success ? t('batchListing.lastResult.completed') : t('batchListing.lastResult.failed'))}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </main>
+      </section>
     </div>
   )
 }

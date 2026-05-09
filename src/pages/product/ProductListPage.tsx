@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Boxes, Download, FileSpreadsheet, LoaderCircle, Package, Plus, Search, Upload, X } from 'lucide-react'
+import { Download, FileSpreadsheet, LoaderCircle, Plus, Search, Upload, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { CommandStrip, MissionDossier, ProductionRail, SkuWorkUnitCard, StationNav } from '@/components/product-workbench'
 import { useToastStore } from '@/store/toastStore'
 import type { ProductListItem } from '@/types/product'
-import { createProduct, deleteProduct, listProducts } from '@/services/product'
+import { createProduct, listProducts } from '@/services/product'
+import { ProductWorkflowNav } from '@/components/product-workbench/ProductWorkflowNav'
 import type { MissionStage } from './utils/productMission'
-import { buildProductionRail, deriveMissionWorkUnit } from './utils/productMission'
+import { deriveMissionWorkUnit } from './utils/productMission'
 
 const IMPORT_TEMPLATE_HEADERS = [
   'skuCode',
@@ -100,6 +101,7 @@ function isImportRowValid(row: Partial<ImportRow>) {
 
 function ProductListPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { showToast } = useToastStore()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [keyword, setKeyword] = useState('')
@@ -108,7 +110,8 @@ function ProductListPage() {
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showImportModal, setShowImportModal] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [showCommandPalette, setShowCommandPalette] = useState(false)
+  const [showPreviewDrawer, setShowPreviewDrawer] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [focusedProductId, setFocusedProductId] = useState<string>('')
   const [createForm, setCreateForm] = useState<ProductCreateForm>(INITIAL_CREATE_FORM)
@@ -118,6 +121,21 @@ function ProductListPage() {
 
   useEffect(() => {
     void loadProducts()
+  }, [])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setShowCommandPalette(true)
+      }
+      if (event.key === 'Escape') {
+        setShowCommandPalette(false)
+        setShowPreviewDrawer(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
   async function loadProducts() {
@@ -153,19 +171,6 @@ function ProductListPage() {
     }
   }
 
-  async function handleDelete(productId: string) {
-    if (!confirm('Are you sure you want to delete this product? All related data will be lost.')) return
-    setDeletingId(productId)
-    try {
-      await deleteProduct(productId)
-      showToast('Product deleted.', 'success')
-      await loadProducts()
-    } catch (error) {
-      console.error('Failed to delete product:', error)
-    } finally {
-      setDeletingId(null)
-    }
-  }
 
   function addTag() {
     const nextTag = createForm.newTag.trim()
@@ -251,7 +256,6 @@ function ProductListPage() {
   }
 
   const missionUnits = useMemo(() => products.map(deriveMissionWorkUnit), [products])
-  const productionRail = useMemo(() => buildProductionRail(products), [products])
   const filteredUnits = useMemo(() => {
     let result = missionUnits
     if (activeStage !== 'all') result = result.filter(unit => unit.stage === activeStage)
@@ -271,117 +275,136 @@ function ProductListPage() {
 
   const focusedUnit = missionUnits.find(unit => unit.product.id === focusedProductId) ?? filteredUnits[0] ?? missionUnits[0] ?? null
   const selectedUnits = missionUnits.filter(unit => selectedIds.includes(unit.product.id))
-  const blockedCount = missionUnits.filter(unit => unit.readiness.some(item => item.state === 'blocked')).length
-  const contractNeededCount = missionUnits.filter(unit => unit.readiness.some(item => item.state === 'contract-needed')).length
 
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } }
   const itemVariants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 260, damping: 26 } } }
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="show" className="relative min-h-full bg-[#05070b] text-white">
-      <div className="pointer-events-none fixed inset-0 opacity-70">
-        <div className="absolute left-[-14rem] top-[-10rem] h-[34rem] w-[34rem] rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute right-[-10rem] top-[18rem] h-[30rem] w-[30rem] rounded-full bg-amber-500/8 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(circle_at_top,black,transparent_74%)]" />
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="relative min-h-full bg-[#0a0a12] text-[#e8eaf0]">
+      <div className="pointer-events-none fixed inset-0 opacity-60">
+        <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-[1760px] flex-col gap-5 px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom))] lg:px-6">
-        <motion.header variants={itemVariants} className="rounded-[30px] border border-white/10 bg-[#080b11]/90 p-5 shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-            <div className="max-w-4xl">
-              <div className="mb-3 flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200/20 bg-cyan-200/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-100/80">
-                  <Boxes className="h-4 w-4" /> {t('product.list.missionControl.badge')}
-                </span>
-                <StationNav />
-              </div>
-              <h1 className="text-3xl font-semibold tracking-tight text-white md:text-5xl">{t('product.list.missionControl.title')}</h1>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-white/56">
-                {t('product.list.missionControl.description')}
-              </p>
-            </div>
-            <div className="grid min-w-[320px] grid-cols-3 gap-3">
-              <HeaderStat label={t('product.list.missionControl.workUnits')} value={String(products.length)} />
-              <HeaderStat label={t('product.list.missionControl.blocked')} value={String(blockedCount)} tone="warn" />
-              <HeaderStat label={t('product.list.missionControl.contractNeeded')} value={String(contractNeededCount)} tone="amber" />
-            </div>
+      <div className="relative mx-auto w-full max-w-[1400px] px-5 pb-10">
+        <motion.header variants={itemVariants} className="mb-4 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-[1.65rem] font-bold tracking-[-0.03em] text-white">商品中心 / SKU 队列</h1>
+            <p className="mt-1 text-[13px] text-white/55">Create/Import → Queue → SKU Detail → Visual/Video → Assets → Listing → Export → Downloads</p>
           </div>
-          <div className="mt-5 flex flex-col gap-3 border-t border-white/8 pt-5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative min-w-0 flex-1 lg:max-w-2xl">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-              <input
-                type="text"
-                placeholder={t('product.list.missionControl.searchPlaceholder')} aria-label={t('product.list.missionControl.searchLabel')}
-                value={keyword}
-                onChange={event => setKeyword(event.target.value)}
-                className="w-full rounded-2xl border border-white/10 bg-black/25 py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-cyan-300/40 focus:bg-black/35"
-              />
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => setShowImportModal(true)} className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/10">
-                <Upload className="h-4 w-4" /> {t('product.list.import')}
-              </button>
-              <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center gap-2 rounded-2xl bg-cyan-200 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-white">
-                <Plus className="h-4 w-4" /> {t('product.list.create')}
-              </button>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-cyan-200 px-4 py-2 text-sm font-semibold text-[#05070b] transition hover:bg-white"><Plus className="h-4 w-4" />新建 SKU</button>
+            <button onClick={() => setShowImportModal(true)} className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/82 transition hover:bg-white/[0.07]"><Upload className="h-4 w-4" />导入表格</button>
+            <button onClick={() => setShowPreviewDrawer(true)} className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/82 transition hover:bg-white/[0.07]">快速预览</button>
           </div>
         </motion.header>
 
-        <motion.div variants={itemVariants}>
-          <ProductionRail stages={productionRail} activeStage={activeStage} onStageChange={setActiveStage} />
+        <motion.div variants={itemVariants} className="mb-4">
+          <ProductWorkflowNav active="queue" productId={focusedUnit?.product.id} productIds={selectedIds} source="queue" />
         </motion.div>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
-          <motion.main variants={itemVariants} className="rounded-[30px] border border-white/10 bg-[#080b11]/88 p-4 shadow-[0_28px_90px_rgba(0,0,0,0.38)]">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-xs font-semibold uppercase tracking-[0.24em] text-white/38">{t('product.list.missionControl.skuBoard')}</div>
-                <h2 className="mt-1 text-xl font-semibold text-white">{t('product.list.missionControl.productionUnits', { count: filteredUnits.length })}</h2>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button onClick={() => setSelectedIds(filteredUnits.map(unit => unit.product.id))} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/55 transition hover:text-white">{t('product.list.missionControl.selectFiltered')}</button>
-                <button onClick={() => setSelectedIds([])} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/55 transition hover:text-white">{t('product.list.missionControl.clear')}</button>
-              </div>
-            </div>
+        <motion.div variants={itemVariants} className="mb-4 flex flex-wrap items-center gap-3">
+          <div className="relative min-w-[260px] flex-1 max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+            <input value={keyword} onChange={event => setKeyword(event.target.value)} placeholder="搜索 SKU / 标题 / 标签..." className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-cyan-300/35" />
+          </div>
+          {[
+            ['all', '全部'],
+            ['visual', '缺素材'],
+            ['listing', '待 Listing'],
+            ['export', '可导出'],
+            ['delivery', '交付中心'],
+          ].map(([stage, label]) => (
+            <button key={stage} onClick={() => setActiveStage(stage as MissionStage | 'all')} className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${activeStage === stage ? 'border-cyan-300/40 bg-cyan-300/12 text-cyan-100' : 'border-white/[0.08] bg-white/[0.035] text-white/50 hover:text-white/75'}`}>{label}</button>
+          ))}
+        </motion.div>
 
+        <motion.section variants={itemVariants} className="mb-5">
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">SKU 工作队列 — {filteredUnits.length} 个活跃</div>
+          <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-[#0b0d14] shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
+            <div className="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(72px,0.5fr)_minmax(80px,0.55fr)_minmax(72px,0.5fr)_minmax(72px,0.5fr)_minmax(150px,0.9fr)] border-b border-white/[0.06] bg-[#0b0d14] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/34 max-xl:hidden">
+              <div>SKU</div><div>标题 / 类目</div><div>Readiness</div><div>素材</div><div>Listing</div><div>导出</div><div>更新时间</div><div>操作</div>
+            </div>
             {loading ? (
-              <div className="flex min-h-[360px] items-center justify-center rounded-3xl border border-white/8 bg-white/[0.025]">
-                <LoaderCircle className="h-8 w-8 animate-spin text-cyan-200" />
-              </div>
+              <div className="flex min-h-[300px] items-center justify-center"><LoaderCircle className="h-7 w-7 animate-spin text-cyan-200" /></div>
             ) : filteredUnits.length === 0 ? (
-              <div className="flex min-h-[360px] flex-col items-center justify-center rounded-3xl border border-dashed border-white/12 bg-white/[0.025] p-12 text-center text-white/45">
-                <Package className="mb-4 h-10 w-10 text-white/25" />
-                <div className="text-base font-semibold text-white/70">{t('product.list.noProducts')}</div>
-                <div className="mt-1 text-sm">{t('product.list.missionControl.noUnits')}</div>
-              </div>
+              <div className="flex min-h-[260px] items-center justify-center text-sm text-white/40">没有匹配的 SKU。</div>
             ) : (
-              <div className="grid gap-3 2xl:grid-cols-2">
-                {filteredUnits.map(unit => (
-                  <SkuWorkUnitCard
-                    key={unit.product.id}
-                    unit={unit}
-                    selected={selectedIds.includes(unit.product.id)}
-                    focused={focusedUnit?.product.id === unit.product.id}
-                    onSelect={() => toggleSelect(unit.product.id)}
-                    onFocus={() => setFocusedProductId(unit.product.id)}
-                    onDelete={() => void handleDelete(unit.product.id)}
-                    deleting={deletingId === unit.product.id}
-                  />
-                ))}
+              <div className="divide-y divide-white/[0.06]">
+                {filteredUnits.slice(0, 8).map(unit => {
+                  const product = unit.product
+                  const focused = focusedUnit?.product.id === product.id
+                  const selected = selectedIds.includes(product.id)
+                  return (
+                    <div key={product.id} onClick={() => navigate(`/products/${product.id}`)} className={`grid cursor-pointer gap-3 px-3 py-3 text-sm transition max-xl:grid-cols-1 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(72px,0.5fr)_minmax(80px,0.55fr)_minmax(72px,0.5fr)_minmax(72px,0.5fr)_minmax(150px,0.9fr)] xl:items-center ${focused ? 'bg-cyan-300/[0.075]' : 'hover:bg-white/[0.025]'} ${selected ? 'outline outline-1 outline-cyan-300/30' : ''}`}>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <input type="checkbox" checked={selected} onClick={event => event.stopPropagation()} onChange={() => { setFocusedProductId(product.id); toggleSelect(product.id) }} className="shrink-0 rounded border-white/20 bg-black/30 accent-cyan-300" />
+                        <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} title={product.skuCode} className="min-w-0 truncate font-mono text-xs text-cyan-100/82 underline-offset-4 transition hover:text-white hover:underline">{product.skuCode}</Link>
+                      </div>
+                      <div className="min-w-0 overflow-hidden"><Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} title={product.title} className="block truncate font-semibold text-white/90 underline-offset-4 transition hover:text-cyan-100 hover:underline">{product.title}</Link><div className="mt-0.5 truncate text-xs text-white/40">{product.categoryId || 'Uncategorized'} / {product.brandId || 'No brand'}</div></div>
+                      <div className="min-w-0 overflow-hidden"><div className="flex flex-wrap gap-1.5">{unit.readiness.slice(0, 4).map(item => <QueueTag key={item.key} label={item.label.replace('Template/Prompt Lineage', 'Info').replace('SKU.assets', 'Assets').replace('Listing Station', 'Listing').replace('Delivery Downloadability', 'Export')} tone={item.state === 'available' ? 'green' : item.state === 'partial' ? 'orange' : item.state === 'contract-needed' ? 'orange' : item.state === 'blocked' ? 'red' : 'muted'} />)}</div></div>
+                      <QueueTag label={`${product.assetsCount}/5`} tone={product.assetStatus === 'ready' ? 'green' : product.assetsCount > 0 ? 'orange' : 'red'} />
+                      <QueueTag label={product.listingStatus === 'ready' ? 'Adopted' : product.listingStatus === 'partial' ? 'Draft' : 'Missing'} tone={product.listingStatus === 'ready' ? 'green' : product.listingStatus === 'partial' ? 'orange' : 'red'} />
+                      <QueueTag label={product.exportStatus === 'done' ? 'Done' : product.exportStatus === 'ready' ? 'Ready' : 'Pending'} tone={product.exportStatus === 'done' || product.exportStatus === 'ready' ? 'green' : 'red'} />
+                      <div className="text-xs text-white/38">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#05070b] transition hover:bg-cyan-100">详情</Link>
+                        <Link to={unit.nextBestAction.href} onClick={event => event.stopPropagation()} className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold transition ${unit.nextBestAction.station === 'visual' || unit.nextBestAction.station === 'listing' ? 'bg-cyan-200 text-[#05070b] hover:bg-white' : 'border border-white/[0.08] bg-white/[0.04] text-white/72 hover:bg-white/[0.08]'}`}>{unit.nextBestAction.label.replace('Route to Visual Station', '生成素材').replace('Route to Listing Station', '生成 Listing').replace('Route to Delivery Station', '查看下载').replace('Open Export Handoff', '创建导出任务')}</Link>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )}
-          </motion.main>
+          </div>
+        </motion.section>
 
-          <motion.div variants={itemVariants}>
-            <MissionDossier unit={focusedUnit} />
-          </motion.div>
-        </div>
+        <motion.section variants={itemVariants} className="mb-5">
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">批量操作栏（选中后激活）</div>
+          <div className="flex flex-wrap items-center gap-2 rounded-[28px] border border-white/[0.06] bg-[#0b0d14] p-4 shadow-[0_16px_48px_rgba(0,0,0,0.42)]">
+            <span className="text-sm text-white/50">已选 {selectedUnits.length} 个 SKU</span>
+            <Link to={selectedUnits.length ? `/products/workbench/batch-listing?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>批量生成 Listing</Link>
+            <button disabled className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-1.5 text-xs font-semibold text-white/25">批量 Adopt</button>
+            <Link to={selectedUnits.length ? `/products/workbench/downloads?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>批量导出</Link>
+            <Link to={selectedUnits[0] ? `/products/${selectedUnits[0].product.id}/ai/ai-product` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>打开视觉工作区</Link>
+            <span className="text-xs text-white/34">真实后端未接的批量动作保持 disabled / contract-needed。</span>
+          </div>
+        </motion.section>
 
-        <motion.div variants={itemVariants}>
-          <CommandStrip selectedUnits={selectedUnits} onClear={() => setSelectedIds([])} />
-        </motion.div>
+        <motion.section variants={itemVariants}>
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">工作站点</div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <StationCard code="SKU" title="SKU 详情 / 生产中心" desc="基础信息、素材、Listing、利润、导出、状态总览" status="业务锚点页面" tone="info" href={focusedUnit ? `/products/${focusedUnit.product.id}` : '/products'} />
+            <StationCard code="LST" title="批量 Listing" desc="选择 SKU → 配置模板 → 生成/预览 → 校验 → 创建版本 → Adopt/导出" status={`${products.reduce((sum, item) => sum + item.listingVersionsCount, 0)} versions live`} tone="draft" href={focusedUnit ? `/products/workbench/batch-listing?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/batch-listing'} />
+            <StationCard code="VIS" title="视觉工作区" desc="SKU 绑定生成、素材角色、任务队列、结果回流 SKU.assets" status="Video contract needed" tone="blocked" href={focusedUnit ? `/products/${focusedUnit.product.id}/ai/ai-product` : '/products/workbench/visual-tools'} />
+            <StationCard code="DLV" title="交付中心" desc="导出任务队列、下载追踪、包完整性校验" status="real DownloadRecord gate" tone="ready" href={focusedUnit ? `/products/workbench/downloads?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/downloads'} />
+          </div>
+        </motion.section>
       </div>
+
+      {showCommandPalette ? (
+        <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-md" onClick={() => setShowCommandPalette(false)}>
+          <div className="mx-auto mt-[12vh] w-full max-w-xl overflow-hidden rounded-2xl border border-white/12 bg-[#0b0d14] shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()}>
+            <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3"><Search className="h-4 w-4 text-white/35" /><input autoFocus placeholder="搜索命令、SKU、站点..." className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/32" /><span className="text-xs text-white/28">ESC</span></div>
+            <div className="p-2 text-sm">{['商品队列 ⌘1', '批量 Listing ⌘2', '视觉工作区 ⌘3', '交付中心 ⌘4'].map(item => <div key={item} className="rounded-xl px-3 py-2 text-white/70 hover:bg-white/[0.05]">{item}</div>)}</div>
+          </div>
+        </div>
+      ) : null}
+
+      {showPreviewDrawer && focusedUnit ? (
+        <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setShowPreviewDrawer(false)}>
+          <aside className="ml-auto h-full w-full max-w-md border-l border-white/10 bg-[#0b0d14] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()}>
+            <button className="float-right rounded-lg border border-white/10 px-2 py-1 text-xs text-white/50" onClick={() => setShowPreviewDrawer(false)}>x</button>
+            <h3 className="text-lg font-semibold text-white">{focusedUnit.product.skuCode}</h3>
+            <p className="mt-1 text-sm text-white/55">{focusedUnit.product.title}</p>
+            <div className="mt-5 space-y-4">
+              <div><h4 className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-white/35">READINESS 维度</h4><div className="flex flex-wrap gap-2">{focusedUnit.readiness.map(item => <QueueTag key={item.key} label={item.label} tone={item.state === 'available' ? 'green' : item.state === 'partial' ? 'orange' : item.state === 'blocked' ? 'red' : 'orange'} />)}</div></div>
+              <div><h4 className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-white/35">下一步动作</h4><p className="text-sm text-white/55">{focusedUnit.nextBestAction.helper}</p></div>
+            </div>
+            <div className="mt-6 flex gap-2"><button onClick={() => setShowPreviewDrawer(false)} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-white/70">关闭</button><Link to={`/products/${focusedUnit.product.id}`} className="rounded-xl bg-cyan-200 px-4 py-2 text-sm font-semibold text-[#05070b]">进入 SKU 详情</Link></div>
+          </aside>
+        </div>
+      ) : null}
 
       {showCreateModal ? (
         <ModalShell title={t('product.list.createModal.title')} onClose={() => setShowCreateModal(false)}>
@@ -482,13 +505,36 @@ function ProductListPage() {
 
 export default ProductListPage
 
-function HeaderStat({ label, value, tone = 'normal' }: { label: string; value: string; tone?: 'normal' | 'warn' | 'amber' }) {
-  const toneClass = tone === 'warn' ? 'text-rose-200' : tone === 'amber' ? 'text-amber-200' : 'text-white'
+function QueueTag({ label, tone = 'muted' }: { label: string; tone?: 'green' | 'orange' | 'red' | 'cyan' | 'muted' }) {
+  const cls = tone === 'green'
+    ? 'border-emerald-300/30 bg-emerald-300/12 text-emerald-200'
+    : tone === 'orange'
+      ? 'border-amber-300/30 bg-amber-300/12 text-amber-200'
+      : tone === 'red'
+        ? 'border-rose-300/30 bg-rose-300/12 text-rose-200'
+        : tone === 'cyan'
+          ? 'border-cyan-300/30 bg-cyan-300/12 text-cyan-100'
+          : 'border-white/[0.08] bg-white/[0.045] text-white/55'
+  return <span className={`inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${cls}`}>{label}</span>
+}
+
+function StationCard({ code, title, desc, status, tone, href }: { code: string; title: string; desc: string; status: string; tone: 'info' | 'draft' | 'blocked' | 'ready'; href: string }) {
+  const statusClass = tone === 'ready'
+    ? 'bg-emerald-300/12 text-emerald-200'
+    : tone === 'draft'
+      ? 'bg-amber-300/12 text-amber-200'
+      : tone === 'blocked'
+        ? 'bg-rose-300/12 text-rose-200'
+        : 'bg-cyan-300/12 text-cyan-100'
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.045] p-4">
-      <div className="text-[10px] uppercase tracking-[0.22em] text-white/35">{label}</div>
-      <div className={`mt-2 text-2xl font-semibold tabular-nums ${toneClass}`}>{value}</div>
-    </div>
+    <Link to={href} className="group flex min-h-[150px] flex-col gap-3 rounded-[28px] border border-white/[0.06] bg-[#0b0d14] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.42)] transition hover:border-white/12 hover:bg-white/[0.025]">
+      <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-300/18 bg-cyan-300/10 text-[11px] font-bold tracking-[0.08em] text-cyan-100">{code}</div>
+      <div>
+        <div className="font-semibold text-white/90">{title}</div>
+        <div className="mt-1 text-[13px] leading-5 text-white/48">{desc}</div>
+      </div>
+      <div className={`mt-auto w-fit rounded-full px-2.5 py-1 text-xs font-medium ${statusClass}`}>{status}</div>
+    </Link>
   )
 }
 

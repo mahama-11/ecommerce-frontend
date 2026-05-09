@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
@@ -6,7 +6,7 @@ import {
   FileText,
   TrendingUp,
   Download,
-  FileCode2,
+  Wand2,
   LoaderCircle,
   Trash2,
   Plus,
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
+import { ProductWorkflowNav } from '@/components/product-workbench/ProductWorkflowNav'
 import {
   getProduct,
   updateProduct,
@@ -25,10 +26,7 @@ import {
   deleteProduct,
   deleteProductAsset,
   updateProductAssetRelation,
-  listDownloads,
-  getProductParsedInfo,
-  listProductPrompts,
-  generateProductPrompt
+  listDownloads
 } from '@/services/product'
 import type {
   Product,
@@ -37,40 +35,19 @@ import type {
   ExportTask,
   ProductActivity,
   ProductAssetItem,
-  DownloadRecord,
-  ProductParsedInfo,
-  ProductPrompt,
-  ProductStatus
+  DownloadRecord
 } from '@/types/product'
 import { AssetsTab, ExportsTab, HistoryTab, ListingsTab, ProfitTab } from './components/ProductDetailTabs'
-import { ProductAIPipelinePanel } from './components/ProductAIPipelinePanel'
+
+void Trash2
 
 const TABS = [
   { id: 'assets', label: 'Assets', icon: ImageIcon },
   { id: 'listings', label: 'Listings', icon: FileText },
-  { id: 'exports', label: 'Exports', icon: Download },
   { id: 'profit', label: 'Profit', icon: TrendingUp },
-  { id: 'history', label: 'History', icon: FileCode2 },
+  { id: 'exports', label: 'Exports', icon: Download },
+  { id: 'history', label: 'History', icon: Wand2 },
 ] as const
-
-type ProductTabId = typeof TABS[number]['id']
-
-const PRODUCT_STATUS_LABEL_KEYS: Record<ProductStatus, string> = {
-  draft: 'status.draft',
-  assets_ready: 'status.assets_ready',
-  listing_ready: 'status.listing_ready',
-  export_ready: 'status.export_ready',
-  published: 'status.published',
-  archived: 'status.archived',
-}
-
-const TAB_LABEL_KEYS: Record<ProductTabId, string> = {
-  assets: 'product.detail.tabs.assets',
-  listings: 'product.detail.tabs.listings',
-  exports: 'product.detail.tabs.exports',
-  profit: 'product.detail.tabs.profit',
-  history: 'product.detail.tabs.history',
-}
 
 type ProductDetailResponse = {
   product: Product
@@ -140,10 +117,9 @@ function TextareaField({ label, value, onChange, placeholder, rows, hint }: { la
   )
 }
 
-function TabButton({ active, onClick, icon, label, hasDot, testId }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, hasDot?: boolean, testId?: string }) {
+function TabButton({ active, onClick, icon, label, hasDot }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, hasDot?: boolean }) {
   return (
     <button
-      data-testid={testId}
       onClick={onClick}
       className={`relative flex items-center gap-2 pb-4 text-sm font-medium transition-colors ${
         active ? 'text-white' : 'text-white/40 hover:text-white/70'
@@ -159,18 +135,50 @@ function TabButton({ active, onClick, icon, label, hasDot, testId }: { active: b
   )
 }
 
+function parseReadonlyProductInfo(specJson?: string) {
+  if (!specJson) return [] as Array<{ key: string; value: string }>
+  try {
+    const parsed = JSON.parse(specJson) as Record<string, unknown>
+    return Object.entries(parsed)
+      .slice(0, 8)
+      .map(([key, value]) => ({
+        key,
+        value: typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+          ? String(value)
+          : JSON.stringify(value),
+      }))
+  } catch {
+    return [{ key: 'raw_spec', value: specJson }]
+  }
+}
+
 export function ProductDetailPage() {
   const { t } = useTranslation()
+  const copy = {
+    basicInfo: t('product.detail.dossier.basicInfo'),
+    autoSave: t('product.detail.dossier.autoSave'),
+    saving: t('product.detail.dossier.saving'),
+    skuCode: t('product.detail.dossier.skuCode'),
+    currency: t('product.detail.dossier.currency'),
+    title: t('product.detail.dossier.title'),
+    category: t('product.detail.dossier.category'),
+    brand: t('product.detail.dossier.brand'),
+    tags: t('product.detail.dossier.tags'),
+    addTag: t('product.detail.dossier.addTag'),
+    addTagPlaceholder: t('product.detail.dossier.addTagPlaceholder'),
+    noTags: t('product.detail.dossier.noTags'),
+    productStatus: t('product.detail.dossier.productStatus'),
+    assetStatus: t('product.detail.dossier.assetStatus'),
+    listingStatus: t('product.detail.dossier.listingStatus'),
+    exportStatus: t('product.detail.dossier.exportStatus'),
+    openAIWorkspace: t('product.detail.dossier.openAIWorkspace'),
+    openBatchListing: t('product.detail.dossier.openBatchListing'),
+    openDownloadCenter: t('product.detail.dossier.openDownloadCenter'),
+  }
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { showToast } = useToastStore()
   const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiError, setAiError] = useState<string | null>(null)
-  const [parsedInfo, setParsedInfo] = useState<ProductParsedInfo | null>(null)
-  const [prompts, setPrompts] = useState<ProductPrompt[]>([])
-  const [generatingPrompt, setGeneratingPrompt] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [adoptingVersionId, setAdoptingVersionId] = useState<string | null>(null)
   const [data, setData] = useState<ProductDetailResponse | null>(null)
@@ -234,84 +242,35 @@ export function ProductDetailPage() {
     locale: 'en_US',
   })
 
-  const loadProductWorkspace = useCallback(async (productId: string) => {
+  useEffect(() => {
+    if (id) {
+      void loadProductWorkspace(id)
+    }
+  }, [id])
+
+  async function loadProductWorkspace(productId: string) {
     setLoading(true)
-    setLoadError(false)
-    setAiLoading(true)
-    setAiError(null)
     try {
-      const [result, downloads, parsedResult, promptsResult] = await Promise.allSettled([
-        getProduct(productId),
-        listDownloads(),
-        getProductParsedInfo(productId),
-        listProductPrompts(productId),
-      ])
-
-      if (result.status !== 'fulfilled') {
-        throw result.reason
-      }
-
-      setData(result.value)
-
-      if (downloads.status === 'fulfilled') {
-        const scopedDownloads = downloads.value.filter(item => item.productId === productId)
-        setProductDownloads(scopedDownloads)
-        setSelectedDownloadId(current => (
-          current === 'all' || scopedDownloads.some(item => item.id === current) ? current : 'all'
-        ))
-      }
-
-      if (parsedResult.status === 'fulfilled') {
-        setParsedInfo(parsedResult.value)
-      } else {
-        setParsedInfo(null)
-        setAiError('parsed-info')
-      }
-
-      if (promptsResult.status === 'fulfilled') {
-        setPrompts(promptsResult.value)
-      } else {
-        setPrompts([])
-        setAiError(current => current ? `${current},prompts` : 'prompts')
-      }
-
+      const [result, downloads] = await Promise.all([getProduct(productId), listDownloads()])
+      setData(result)
+      const scopedDownloads = downloads.filter(item => item.productId === productId)
+      setProductDownloads(scopedDownloads)
+      setSelectedDownloadId(current => (
+        current === 'all' || scopedDownloads.some(item => item.id === current) ? current : 'all'
+      ))
       setProductForm({
-        skuCode: result.value.product.skuCode,
-        title: result.value.product.title,
-        categoryId: result.value.product.categoryId || '',
-        brandId: result.value.product.brandId || '',
-        costCurrency: result.value.product.costCurrency || 'USD',
-        tags: result.value.product.tags || [],
+        skuCode: result.product.skuCode,
+        title: result.product.title,
+        categoryId: result.product.categoryId || '',
+        brandId: result.product.brandId || '',
+        costCurrency: result.product.costCurrency || 'USD',
+        tags: result.product.tags || [],
       })
     } catch (error) {
       console.error('Failed to load product:', error)
-      setData(null)
-      setLoadError(true)
       showToast(t('product.detail.toast.loadFailed'), 'error')
     } finally {
       setLoading(false)
-      setAiLoading(false)
-    }
-  }, [showToast, t])
-
-  useEffect(() => {
-    if (id) {
-      void Promise.resolve().then(() => loadProductWorkspace(id))
-    }
-  }, [id, loadProductWorkspace])
-
-  async function handleGeneratePrompt() {
-    if (!id || parsedInfo?.status !== 'succeeded') return
-    setGeneratingPrompt(true)
-    try {
-      const created = await generateProductPrompt(id, { generationType: 'image', module: 'image' })
-      setPrompts(current => [created, ...current.filter(item => item.id !== created.id)].sort((left, right) => right.versionNo - left.versionNo))
-      showToast(t('product.detail.toast.promptGenerated'), 'success')
-    } catch (error) {
-      console.error('Failed to generate product prompt:', error)
-      showToast(t('product.detail.toast.promptGenerateFailed'), 'error')
-    } finally {
-      setGeneratingPrompt(false)
     }
   }
 
@@ -672,52 +631,29 @@ export function ProductDetailPage() {
     setActiveTab('assets')
   }
 
+  void copy
+  void deleting
+  void savingProduct
+  void productSaveLabel
+  void handleDelete
+  void handleProductFieldBlur
+  void addDetailTag
+  void removeDetailTag
+
   if (loading) {
     return (
-      <div data-testid="product-detail-loading" className="min-h-[calc(100vh-72px)] bg-[#09090b] p-4 text-white md:p-6">
-        <div className="mx-auto max-w-7xl space-y-4">
-          <div className="h-32 rounded-[24px] border border-white/10 bg-white/[0.04]" />
-          <div className="grid gap-3 md:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, index) => <div key={index} className="h-28 rounded-2xl border border-white/10 bg-white/[0.03]" />)}
-          </div>
-          <div className="grid gap-4 xl:grid-cols-2">
-            <div className="h-72 rounded-2xl border border-white/10 bg-white/[0.03]" />
-            <div className="h-72 rounded-2xl border border-white/10 bg-white/[0.03]" />
-          </div>
-          <div className="flex items-center justify-center gap-2 text-sm text-white/45">
-            <LoaderCircle className="h-4 w-4 animate-spin" />
-            {t('product.detail.ai.loading')}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (loadError) {
-    return (
-      <div data-testid="product-detail-error" className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-[#09090b] p-6 text-white">
-        <div className="max-w-md rounded-[24px] border border-rose-400/25 bg-rose-400/10 p-6 text-center">
-          <div className="text-lg font-semibold text-rose-100">{t('product.detail.loadError.title')}</div>
-          <p className="mt-2 text-sm leading-relaxed text-rose-100/70">{t('product.detail.loadError.desc')}</p>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <button onClick={() => id && void loadProductWorkspace(id)} className="rounded-xl bg-rose-300 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-rose-200">
-              {t('product.detail.loadError.retry')}
-            </button>
-            <Link to="/products" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/75 transition hover:bg-white/10">
-              {t('product.detail.backToProducts')}
-            </Link>
-          </div>
-        </div>
+      <div className="min-h-[calc(100vh-72px)] bg-[#09090b] text-white p-6 flex items-center justify-center">
+        <LoaderCircle className="h-8 w-8 text-brand-500 animate-spin" />
       </div>
     )
   }
 
   if (!data) {
     return (
-      <div data-testid="product-detail-empty" className="min-h-[calc(100vh-72px)] bg-[#09090b] text-white p-6 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-72px)] bg-[#09090b] text-white p-6 flex items-center justify-center">
         <div className="text-center text-white/40">
           <p>{t('product.detail.notFound')}</p>
-          <Link to="/products" className="text-brand-400 hover:underline mt-2 inline-block">
+          <Link to="/products" className="text-cyan-200 hover:underline mt-2 inline-block">
             {t('product.detail.backToProducts')}
           </Link>
         </div>
@@ -726,9 +662,15 @@ export function ProductDetailPage() {
   }
 
   const { product } = data
+  const parsedInfo = parseReadonlyProductInfo(product.specJson)
+  const latestProfit = data.profitSnapshots[0]
 
   return (
-    <div data-testid="product-detail-page" className="flex min-h-[calc(100vh-72px)] w-full flex-col bg-[#09090b] text-white font-sans lg:h-[calc(100vh-72px)] lg:flex-row lg:overflow-hidden">
+    <div className="relative flex min-h-[calc(100vh-52px)] w-full flex-col overflow-hidden bg-[#0a0a12] text-[#e8eaf0] font-sans">
+      <div className="pointer-events-none fixed inset-0 opacity-60">
+        <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" />
+      </div>
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
@@ -736,218 +678,203 @@ export function ProductDetailPage() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
       `}</style>
       
-      {/* Sidebar - Configuration */}
-      <aside className="order-2 w-full flex-shrink-0 border-b border-white/5 bg-[#0c0c10] shadow-[4px_0_24px_rgba(0,0,0,0.2)] lg:order-1 lg:flex lg:w-[360px] lg:flex-col lg:border-b-0 lg:border-r xl:w-[400px]">
-        <div className="flex-none px-6 py-5 border-b border-white/5">
-          <Link to="/products" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-white/40 hover:text-white/90 transition-colors mb-5">
-            <ArrowLeft className="h-4 w-4" />
-            {t('productWorkbench.nav.productList')}
-          </Link>
-          <div className="flex items-center justify-between mb-1.5">
-            <h1 className="text-lg font-semibold tracking-tight text-white/90 truncate mr-2">{product.title}</h1>
-            <button onClick={handleDelete} disabled={deleting} className="shrink-0 p-1.5 rounded-md hover:bg-red-500/10 text-white/40 hover:text-red-400 transition disabled:opacity-50">
-              {deleting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-            </button>
+      {/* Prototype-aligned single-SKU production dossier */}
+      <section className="relative z-10 mx-auto mt-4 w-[calc(100%-2.5rem)] max-w-[1500px]">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <Link to="/products" className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/40 transition-colors hover:text-white/90">
+              <ArrowLeft className="h-4 w-4" />
+              {t('productWorkbench.nav.productList')}
+            </Link>
+            <div className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200/65">SKU Detail Station · Production dossier</div>
+            <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">SKU 详情 / 生产中心</h1>
+            <p className="mt-1.5 text-sm text-white/48">
+              {product.skuCode} · {product.title} · {product.categoryId || 'Uncategorized'} · {product.status} / {product.assetStatus} / {product.listingStatus}
+            </p>
           </div>
-          <p className="text-[13px] text-white/40 leading-relaxed font-mono">{product.skuCode}</p>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => setShowListingModal(true)} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/72 transition hover:bg-white/[0.08]">新建 Listing 版本</button>
+            <button onClick={() => setShowProfitModal(true)} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/72 transition hover:bg-white/[0.08]">利润计算</button>
+            <Link to={`/products/workbench/visual-tools?productId=${encodeURIComponent(product.id)}&source=sku-detail`} className="rounded-xl bg-cyan-200 px-4 py-2 text-xs font-bold text-[#05070b] transition hover:bg-white">打开视觉工作区</Link>
+          </div>
         </div>
-        
-        <div className="overflow-y-auto p-4 space-y-6 custom-scrollbar sm:p-6 lg:max-h-none lg:flex-1">
+
+        <div className="mb-5">
+          <ProductWorkflowNav active="detail" productId={product.id} source="sku-detail" />
+        </div>
+
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
-                {t('product.detail.basicInfo')}
+            <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.36)]">
+              <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">基础信息</div>
+              <div className="divide-y divide-white/[0.06] text-sm">
+                {[
+                  ['SKU', product.skuCode],
+                  ['标题', product.title],
+                  ['类目', product.categoryId || '—'],
+                  ['成本', `${product.costCurrency || 'USD'} ${product.costJson || '—'}`],
+                  ['品牌', product.brandId || '—'],
+                  ['标签', product.tags?.join(', ') || '—'],
+                  ['状态', product.status],
+                  ['素材 / Listing / Export', `${product.assetStatus} / ${product.listingStatus} / ${product.exportStatus}`],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between gap-6 py-2.5">
+                    <span className="text-white/38">{label}</span>
+                    <span className="max-w-[70%] truncate text-right font-medium text-white/82">{value}</span>
+                  </div>
+                ))}
               </div>
-              <div className="text-[11px] text-white/40">
-                {savingProduct ? t('product.detail.saving') : productSaveLabel || t('product.detail.autoSave')}
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <InputField label={t('product.detail.skuCode')} value={productForm.skuCode} onChange={v => setProductForm({...productForm, skuCode: v})} onBlur={() => void handleProductFieldBlur('skuCode')} />
-              <SelectField label={t('product.detail.currency')} value={productForm.costCurrency} onChange={v => { setProductForm({...productForm, costCurrency: v}); void persistProductPatch({costCurrency: v}); }} options={[{label: t('product.detail.currencies.USD'), value: 'USD'}, {label: t('product.detail.currencies.CNY'), value: 'CNY'}, {label: t('product.detail.currencies.EUR'), value: 'EUR'}]} />
-            </div>
+            </section>
 
-            <InputField label={t('product.detail.titleLabel')} value={productForm.title} onChange={v => setProductForm({...productForm, title: v})} onBlur={() => void handleProductFieldBlur('title')} />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <InputField label={t('product.detail.category')} value={productForm.categoryId} onChange={v => setProductForm({...productForm, categoryId: v})} onBlur={() => void handleProductFieldBlur('categoryId')} />
-              <InputField label={t('product.detail.brand')} value={productForm.brandId} onChange={v => setProductForm({...productForm, brandId: v})} onBlur={() => void handleProductFieldBlur('brandId')} />
-            </div>
+            <section className="rounded-[28px] border border-cyan-300/18 bg-cyan-300/[0.04] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.32)]">
+              <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-cyan-100/70">PARSED_INFO（系统解析 · 只读）</div>
+              {parsedInfo.length > 0 ? (
+                <div className="divide-y divide-white/[0.06] text-sm">
+                  {parsedInfo.slice(0, 5).map(item => (
+                    <div key={item.key} className="grid gap-3 py-2.5 md:grid-cols-[180px_1fr]">
+                      <span className="text-white/38">{item.key}</span>
+                      <span className="text-white/78">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-white/10 bg-black/15 p-4 text-sm leading-6 text-white/45">后端当前未返回结构化 spec_json；此处保持真实空状态，不伪造解析结果。</div>
+              )}
+              <div className="mt-4 rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3 text-xs text-cyan-100/58">parsed_info 由系统自动解析写入，前端不可修改；后续模块只读取，不重复解析。</div>
+            </section>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-white/60">{t('product.detail.tags')}</label>
-              <div className="flex gap-2">
-                <input
-                  value={detailTagInput}
-                  onChange={event => setDetailTagInput(event.target.value)}
-                  onKeyDown={event => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault()
-                      void addDetailTag()
-                    }
-                  }}
-                  className="flex-1 rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
-                  placeholder={t('product.detail.addTagPlaceholder')}
-                />
-                <button
-                  onClick={() => void addDetailTag()}
-                  className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
-                >
-                  {t('product.detail.addTag')}
-                </button>
+            <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.32)]">
+              <div className="mb-4 flex items-center justify-between"><div className="text-xs font-bold uppercase tracking-[0.22em] text-white/38">SKU.ASSETS 素材库</div><span className="text-xs text-white/35">{data.assets.length}/5</span></div>
+              <div className="mb-4 flex flex-wrap gap-2">{['主图','场景','模特','详情','视频'].map((role, index) => <span key={role} className={`rounded-full border px-3 py-1 text-xs ${index === 0 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-white/45'}`}>{role}</span>)}</div>
+              {data.assets.length ? <div className="grid gap-3 sm:grid-cols-2">{data.assets.slice(0,4).map(asset => <div key={asset.relation.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.035] p-3 text-xs text-white/65"><div className="font-semibold text-white/80">{asset.relation.assetRole || 'asset'}</div><div className="mt-1 truncate text-white/40">{asset.asset?.fileName || asset.asset?.id || asset.relation.assetId}</div></div>)}</div> : <div className="rounded-2xl border border-dashed border-rose-300/25 bg-rose-300/[0.055] p-5 text-sm text-rose-100/75">主图缺失。请进入视觉工作区生成并绑定到 SKU.assets。</div>}
+            </section>
+
+            <section className="grid gap-5 xl:grid-cols-2">
+              <div className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5">
+                <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">LISTING 版本</div>
+                <div className="space-y-2">
+                  {data.listingVersions.slice(0, 4).map(version => <div key={version.id} className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm"><span className="font-mono text-white/75">v{version.versionNo}</span><span className={version.status === 'adopted' ? 'text-emerald-200' : 'text-white/48'}>{version.status} · {version.versionLabel}</span></div>)}
+                  {!data.listingVersions.length ? <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/42">暂无 Listing 版本。</div> : null}
+                </div>
+                <button onClick={() => setShowListingModal(true)} className="mt-4 rounded-xl bg-cyan-200 px-4 py-2 text-xs font-bold text-[#05070b]">新建版本</button>
+                <p className="mt-3 text-xs leading-5 text-white/42">Listing = 只增不改的版本仓库。任何编辑必须通过新版本生成实现。</p>
               </div>
-              <div className="flex flex-wrap gap-2 mt-3">
-                {productForm.tags.length > 0 ? (
-                  productForm.tags.map(tag => (
-                    <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs text-white/70">
-                      {tag}
-                      <button onClick={() => void removeDetailTag(tag)} className="hover:text-white">×</button>
-                    </span>
-                  ))
-                ) : (
-                  <div className="text-xs text-white/30 italic">{t('product.detail.noTags')}</div>
-                )}
+              <div className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5">
+                <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">导出前校验</div>
+                <div className="space-y-2 text-sm">
+                  <PrecheckLine label="已采用 Listing" ok={product.listingStatus === 'ready' || data.listingVersions.some(v => v.status === 'adopted')} value={data.listingVersions.find(v => v.status === 'adopted')?.versionLabel || '未采用'} />
+                  <PrecheckLine label="必需素材" ok={product.assetStatus === 'ready'} value={product.assetStatus === 'ready' ? '素材完整' : '主图/必需素材缺失'} />
+                  <PrecheckLine label="平台/站点/语言" ok value={`${exportForm.platform} / ${exportForm.site} / ${exportForm.locale}`} />
+                  <PrecheckLine label="Manifest" ok={product.exportStatus === 'done'} value={product.exportStatus === 'done' ? '已生成' : '未生成'} />
+                </div>
+                <button onClick={() => setShowExportModal(true)} disabled={product.assetStatus !== 'ready'} className="mt-4 w-full rounded-xl bg-cyan-200 px-4 py-2.5 text-xs font-bold text-[#05070b] disabled:cursor-not-allowed disabled:bg-white/[0.05] disabled:text-white/28">创建导出任务{product.assetStatus !== 'ready' ? '（禁用：素材不完整）' : ''}</button>
+                <p className="mt-3 text-xs leading-5 text-rose-100/65">导出前必须满足：已采用 Listing + 必需素材完整 + 平台配置存在。</p>
               </div>
-            </div>
+            </section>
           </div>
 
-          <div className="h-px bg-white/5" />
-
-          <div className="space-y-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
-              {t('product.detail.statusSnapshot')}
+          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            <div className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5">
+              <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">利润计算</div>
+              {latestProfit ? <div className="grid grid-cols-2 gap-3"><DetailMetric label="净利" value={`${product.costCurrency || 'USD'} ${latestProfit.netProfit}`} /><DetailMetric label="利润率" value={`${latestProfit.netMargin}%`} /></div> : <button onClick={() => setShowProfitModal(true)} className="w-full rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2 text-sm text-white/70">Calculate with real API</button>}
+              <div className="mt-4 rounded-2xl border border-white/[0.06] bg-black/20 p-3 text-xs leading-5 text-white/42">固定模型：单平台 / 单国家，不支持自定义公式。后端可用时展示真实 profit snapshot。</div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <DetailMetric label={t('product.detail.productStatus')} value={t(PRODUCT_STATUS_LABEL_KEYS[product.status], product.status)} />
-              <DetailMetric label={t('product.detail.assetStatus')} value={product.assetStatus} />
-              <DetailMetric label={t('product.detail.listingStatus')} value={product.listingStatus} />
-              <DetailMetric label={t('product.detail.exportStatus')} value={product.exportStatus} />
+            <div className="rounded-[28px] border border-cyan-300/16 bg-cyan-300/[0.045] p-5">
+              <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-cyan-100/70">状态总览</div>
+              <div className="grid grid-cols-2 gap-2">
+                <StatusPill label="Info" ok />
+                <StatusPill label="Assets" ok={product.assetStatus === 'ready'} />
+                <StatusPill label="Listing" ok={product.listingStatus === 'ready'} />
+                <StatusPill label="Export" ok={product.exportStatus === 'done' || product.exportStatus === 'ready'} />
+              </div>
+              <div className="mt-4 rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-xs leading-5 text-rose-100/72">当前状态：{product.assetStatus !== 'ready' ? '缺素材，下一步打开视觉工作区生成主图。' : product.listingStatus !== 'ready' ? '可进入 Listing 页面创建/采用版本。' : '可进入交付中心创建导出。'}</div>
+              <div className="mt-4 space-y-2">
+                <Link to={`/products/workbench/visual-tools?productId=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl bg-cyan-200 px-3 py-2 text-center text-xs font-bold text-[#05070b]">打开视觉工作区</Link>
+                <Link to={`/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold text-white/70">去 Listing 页面</Link>
+                <Link to={`/products/workbench/downloads?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold text-white/70">去交付中心</Link>
+              </div>
             </div>
-          </div>
+          </aside>
         </div>
-
-        <div className="flex-none p-6 border-t border-white/5 bg-[#0c0c10]/90 backdrop-blur space-y-3">
-          <Link
-            data-testid="sidebar-open-ai-workspace-link"
-            to={`/products/${product.id}/ai/ai-product`}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-500/20 bg-brand-500/10 py-2.5 text-sm font-semibold text-brand-300 transition-all hover:bg-brand-500/20 focus:outline-none"
-          >
-            {t('product.detail.openAIWorkspace')}
-          </Link>
-          <Link
-            data-testid="sidebar-open-batch-listing-link"
-            to="/products/workbench/batch-listing"
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-white/80 transition-all hover:bg-white/10 focus:outline-none"
-          >
-            {t('product.detail.openBatchListing')}
-          </Link>
-          <Link
-            data-testid="sidebar-open-download-center-link"
-            to="/products/workbench/downloads"
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-sm font-semibold text-white/80 transition-all hover:bg-white/10 focus:outline-none"
-          >
-            {t('product.detail.openDownloadCenter')}
-          </Link>
-        </div>
-      </aside>
+      </section>
 
       {/* Main Content */}
-      <main className="relative order-1 flex-1 min-w-0 bg-[#09090b] lg:order-2 lg:overflow-auto custom-scrollbar">
-        <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
-          <ProductAIPipelinePanel
-            product={product}
-            assets={data.assets}
-            listingVersions={data.listingVersions}
-            exportTasks={data.exportTasks}
-            parsedInfo={parsedInfo}
-            prompts={prompts}
-            aiLoading={aiLoading}
-            aiError={aiError}
-            generatingPrompt={generatingPrompt}
-            onGeneratePrompt={() => void handleGeneratePrompt()}
-            onOpenAssets={() => setActiveTab('assets')}
-            onOpenListings={() => setActiveTab('listings')}
-            onOpenExports={() => setActiveTab('exports')}
-          />
+      <main className="relative z-10 mx-auto mt-6 flex min-h-[58vh] w-[calc(100%-2.5rem)] max-w-[1500px] flex-1 flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#080b11]/88 shadow-[0_28px_90px_rgba(0,0,0,0.36)]">
+        <header className="flex-none px-8 pt-8 border-b border-white/5 flex gap-8">
+          {TABS.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+            return (
+              <TabButton 
+                key={tab.id} 
+                active={isActive} 
+                onClick={() => setActiveTab(tab.id)} 
+                icon={<Icon className="h-4 w-4" />} 
+                label={t(`product.detail.tabs.${tab.id}` as any, tab.label)} 
+              />
+            )
+          })}
+        </header>
 
-          <section className="rounded-[24px] border border-white/10 bg-[#0d0d11] p-4 sm:p-5">
-            <header className="flex gap-6 overflow-x-auto border-b border-white/5 custom-scrollbar">
-              {TABS.map((tab) => {
-                const Icon = tab.icon
-                const isActive = activeTab === tab.id
-                return (
-                  <TabButton
-                    key={tab.id}
-                    active={isActive}
-                    onClick={() => setActiveTab(tab.id)}
-                    icon={<Icon className="h-4 w-4" />}
-                    label={t(TAB_LABEL_KEYS[tab.id], tab.label)}
-                    testId={`product-${tab.id === 'profit' ? 'profit' : tab.id}-tab-trigger`}
-                  />
-                )
-              })}
-            </header>
-
-            <div className="pt-6 animate-in fade-in duration-300">
-              {activeTab === 'assets' && (
-                <AssetsTab
-                  productId={product.id}
-                  assets={data.assets}
-                  downloads={productDownloads}
-                  selectedDownloadId={selectedDownloadId}
-                  mutatingRelationId={assetMutatingRelationId}
-                  bulkMutating={assetBulkMutating}
-                  onSelectDownload={setSelectedDownloadId}
-                  onMakePrimary={handleMakePrimaryAsset}
-                  onDelete={handleDeleteAssetRelation}
-                  onChangeRole={handleAssetRoleChange}
-                  onChangeSortOrder={handleAssetSortOrderChange}
-                  onMove={handleMoveAsset}
-                  onBulkChangeRole={handleBulkAssetRoleChange}
-                  onBulkDelete={handleBulkDeleteAssetRelations}
-                  onCreateExportFromSelection={openExportModalForSelection}
-                  onSelectionChange={setSelectedAssetRelationIds}
-                />
-              )}
-              {activeTab === 'listings' && (
-                <ListingsTab
-                  versions={data.listingVersions}
-                  onGenerate={openCreateListingModal}
-                  onAdopt={handleAdoptListing}
-                  onEdit={openEditListingModal}
-                  adoptingVersionId={adoptingVersionId}
-                />
-              )}
-              {activeTab === 'profit' && <ProfitTab snapshots={data.profitSnapshots} onCalculate={() => setShowProfitModal(true)} />}
-              {activeTab === 'exports' && (
-                <ExportsTab
-                  tasks={data.exportTasks}
-                  downloads={productDownloads}
-                  productTitle={product.title}
-                  assetCount={data.assets.length}
-                  selectedAssetCount={selectedAssetRelationIds.length}
-                  onCreate={openExportModalForAllAssets}
-                  onCreateFromSelection={() => openExportModalForSelection(selectedAssetRelationIds)}
-                  onInspectAssets={handleInspectExportAssets}
-                />
-              )}
-              {activeTab === 'history' && <HistoryTab activities={data.activities} />}
-            </div>
-          </section>
+        <div className="flex-1 overflow-auto p-8 custom-scrollbar">
+          <div className="max-w-6xl mx-auto animate-in fade-in duration-300">
+            {activeTab === 'assets' && (
+              <AssetsTab
+                productId={product.id}
+                assets={data.assets}
+                downloads={productDownloads}
+                selectedDownloadId={selectedDownloadId}
+                mutatingRelationId={assetMutatingRelationId}
+                bulkMutating={assetBulkMutating}
+                onSelectDownload={setSelectedDownloadId}
+                onMakePrimary={handleMakePrimaryAsset}
+                onDelete={handleDeleteAssetRelation}
+                onChangeRole={handleAssetRoleChange}
+                onChangeSortOrder={handleAssetSortOrderChange}
+                onMove={handleMoveAsset}
+                onBulkChangeRole={handleBulkAssetRoleChange}
+                onBulkDelete={handleBulkDeleteAssetRelations}
+                onCreateExportFromSelection={openExportModalForSelection}
+                onSelectionChange={setSelectedAssetRelationIds}
+              />
+            )}
+            {activeTab === 'listings' && (
+              <ListingsTab
+                versions={data.listingVersions}
+                onGenerate={openCreateListingModal}
+                onAdopt={handleAdoptListing}
+                onEdit={openEditListingModal}
+                adoptingVersionId={adoptingVersionId}
+              />
+            )}
+            {activeTab === 'profit' && <ProfitTab snapshots={data.profitSnapshots} onCalculate={() => setShowProfitModal(true)} />}
+            {activeTab === 'exports' && (
+              <ExportsTab
+                tasks={data.exportTasks}
+                downloads={productDownloads}
+                productTitle={product.title}
+                assetCount={data.assets.length}
+                selectedAssetCount={selectedAssetRelationIds.length}
+                onCreate={openExportModalForAllAssets}
+                onCreateFromSelection={() => openExportModalForSelection(selectedAssetRelationIds)}
+                onInspectAssets={handleInspectExportAssets}
+              />
+            )}
+            {activeTab === 'history' && <HistoryTab activities={data.activities} />}
+          </div>
         </div>
       </main>
 
       {/* Modals */}
       {showProfitModal && (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4">
-          <div className="max-h-[90dvh] w-full overflow-hidden rounded-t-2xl border border-white/10 bg-[#0c0c10] shadow-2xl sm:max-w-md sm:rounded-2xl">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl overflow-hidden">
             <div className="px-6 py-5 border-b border-white/5">
               <h2 className="text-lg font-semibold text-white/90">{t('product.detail.profitModal.title')}</h2>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <SelectField label={t('product.detail.profitModal.platform')} value={profitForm.platform} onChange={v => setProfitForm({...profitForm, platform: v})} options={[{label: t('product.detail.platforms.amazon'), value: 'amazon'}, {label: t('product.detail.platforms.shopify'), value: 'shopify'}]} />
+                <SelectField label={t('product.detail.profitModal.platform')} value={profitForm.platform} onChange={v => setProfitForm({...profitForm, platform: v})} options={[{label: t('product.detail.platforms.amazon'), value: 'amazon'}, {label: t('product.detail.platforms.shopee'), value: 'shopee'}, {label: t('product.detail.platforms.lazada'), value: 'lazada'}]} />
                 <SelectField label={t('product.detail.profitModal.site')} value={profitForm.site} onChange={v => setProfitForm({...profitForm, site: v})} options={[{label: t('product.detail.sites.US'), value: 'US'}, {label: t('product.detail.sites.CA'), value: 'CA'}, {label: t('product.detail.sites.UK'), value: 'UK'}]} />
               </div>
               <InputField label={t('product.detail.profitModal.costPrice')} value={String(profitForm.costPrice)} onChange={v => setProfitForm({...profitForm, costPrice: parseFloat(v) || 0})} />
@@ -975,8 +902,8 @@ export function ProductDetailPage() {
       )}
 
       {showExportModal && (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4">
-          <div className="max-h-[90dvh] w-full overflow-hidden rounded-t-2xl border border-white/10 bg-[#0c0c10] shadow-2xl sm:max-w-md sm:rounded-2xl">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl overflow-hidden">
             <div className="px-6 py-5 border-b border-white/5">
               <h2 className="text-lg font-semibold text-white/90">{t('product.detail.exportModal.title')}</h2>
             </div>
@@ -986,7 +913,7 @@ export function ProductDetailPage() {
                   ? t('product.detail.exportModal.scopeSelected', { count: exportScopedRelationIds.length })
                   : t('product.detail.exportModal.scopeAll', { count: data.assets.length })}
               </div>
-              <SelectField label={t('product.detail.exportModal.platform')} value={exportForm.platform} onChange={v => setExportForm({...exportForm, platform: v})} options={[{label: t('product.detail.platforms.amazon'), value: 'amazon'}, {label: t('product.detail.platforms.shopify'), value: 'shopify'}]} />
+              <SelectField label={t('product.detail.exportModal.platform')} value={exportForm.platform} onChange={v => setExportForm({...exportForm, platform: v})} options={[{label: t('product.detail.platforms.amazon'), value: 'amazon'}, {label: t('product.detail.platforms.shopee'), value: 'shopee'}, {label: t('product.detail.platforms.lazada'), value: 'lazada'}]} />
               <SelectField label={t('product.detail.exportModal.site')} value={exportForm.site} onChange={v => setExportForm({...exportForm, site: v})} options={[{label: t('product.detail.sites.US'), value: 'US'}, {label: t('product.detail.sites.CA'), value: 'CA'}, {label: t('product.detail.sites.UK'), value: 'UK'}]} />
               <SelectField label={t('product.detail.exportModal.locale')} value={exportForm.locale} onChange={v => setExportForm({...exportForm, locale: v})} options={[{label: t('product.detail.locales.en_US'), value: 'en_US'}, {label: t('product.detail.locales.en_CA'), value: 'en_CA'}, {label: t('product.detail.locales.en_GB'), value: 'en_GB'}]} />
               <SelectField label={t('product.detail.exportModal.format')} value={exportForm.format} onChange={v => setExportForm({...exportForm, format: v})} options={[{label: t('product.detail.formats.CSV'), value: 'csv'}, {label: t('product.detail.formats.XLSX'), value: 'xlsx'}]} />
@@ -1010,14 +937,14 @@ export function ProductDetailPage() {
       )}
 
       {showListingModal && (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/80 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4">
-          <div className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-[#0c0c10] shadow-2xl sm:max-w-lg sm:rounded-2xl">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-lg border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-5 border-b border-white/5 shrink-0">
               <h2 className="text-lg font-semibold text-white/90">{editingVersion ? t('product.detail.listingModal.titleEdit') : t('product.detail.listingModal.titleCreate')}</h2>
             </div>
             <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-3 gap-4">
-                <SelectField label={t('product.detail.listingModal.platform')} value={listingForm.platform} onChange={v => setListingForm({...listingForm, platform: v})} options={[{label: t('product.detail.platforms.amazon'), value: 'amazon'}, {label: t('product.detail.platforms.shopify'), value: 'shopify'}]} />
+                <SelectField label={t('product.detail.listingModal.platform')} value={listingForm.platform} onChange={v => setListingForm({...listingForm, platform: v})} options={[{label: t('product.detail.platforms.amazon'), value: 'amazon'}, {label: t('product.detail.platforms.shopee'), value: 'shopee'}, {label: t('product.detail.platforms.lazada'), value: 'lazada'}]} />
                 <SelectField label={t('product.detail.listingModal.site')} value={listingForm.site} onChange={v => setListingForm({...listingForm, site: v})} options={[{label: t('product.detail.sites.US'), value: 'US'}, {label: t('product.detail.sites.CA'), value: 'CA'}, {label: t('product.detail.sites.UK'), value: 'UK'}]} />
                 <SelectField label={t('product.detail.listingModal.locale')} value={listingForm.locale} onChange={v => setListingForm({...listingForm, locale: v})} options={[{label: t('product.detail.locales.en_US'), value: 'en_US'}, {label: t('product.detail.locales.en_CA'), value: 'en_CA'}, {label: t('product.detail.locales.en_GB'), value: 'en_GB'}]} />
               </div>
@@ -1098,6 +1025,15 @@ export function ProductDetailPage() {
       )}
     </div>
   )
+}
+
+
+function StatusPill({ label, ok }: { label: string; ok: boolean }) {
+  return <span className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${ok ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-200' : 'border-rose-300/25 bg-rose-300/10 text-rose-200'}`}>{label} {ok ? '✓' : '✕'}</span>
+}
+
+function PrecheckLine({ label, ok, value }: { label: string; ok: boolean; value: string }) {
+  return <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-3 py-2"><span className="text-white/45">{label}</span><span className={ok ? 'text-emerald-200' : 'text-rose-200'}>{ok ? '✓' : '✕'} {value}</span></div>
 }
 
 function DetailMetric({ label, value }: { label: string; value: string }) {

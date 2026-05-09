@@ -161,9 +161,9 @@ export function deriveMissionWorkUnit(product: ProductListItem): MissionWorkUnit
     nextBestAction = {
       label: 'Route to Listing Station',
       station: 'listing',
-      href: '/products/workbench/batch-listing',
+      href: `/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=mission-control`,
       state: 'available',
-      helper: 'Open Batch Listing as route handoff only; station context is not wired to selected SKU yet.',
+      helper: 'Open Batch Listing with selected SKU context; the station still owns real version/adopt execution.',
     }
   } else if (product.exportStatus === 'pending') {
     blocker = 'Export package is not confirmed ready from list data.'
@@ -179,7 +179,7 @@ export function deriveMissionWorkUnit(product: ProductListItem): MissionWorkUnit
     nextBestAction = {
       label: 'Route to Delivery Station',
       station: 'delivery',
-      href: '/products/workbench/downloads',
+      href: `/products/workbench/downloads?productIds=${encodeURIComponent(product.id)}&source=mission-control`,
       state: 'contract-needed',
       helper: 'Delivery Station owns real DownloadRecord.downloadable checks.',
     }

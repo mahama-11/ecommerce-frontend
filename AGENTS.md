@@ -1,35 +1,33 @@
-# Agent Ecommerce Frontend - Agent Context
+# Agent Ecommerce Frontend - Mission Control Landing Worktree Guard
 
-> This file is the stable index for `v-ecommerce-frontend`. Put volatile progress into guides, not here.
+This is the isolated implementation worktree for Product Center Mission Control landing.
 
-## 1. Scope
+## Critical path rule
 
-`v-ecommerce-frontend` is the Agent Ecommerce frontend application. It currently covers:
+Work ONLY inside this directory:
 
-- Portal pages: home, pricing, solutions, help, blog, API docs, legal pages
-- Console pages: AI chat, template market, data libraries, design workbench, orders/download center
-- Management pages: profile settings, personal center, organization management
-- Mock workflow linking: template save-back, design asset sync, delivery queue, workflow feed
+`/root/work/v-worktrees/ecommerce-mission-control-landing`
 
-## 2. Key Documents
+Do NOT modify or commit inside:
 
-- [Developer Guide](docs/DEVELOPER_GUIDE.md)
-- [Project Skeleton](docs/architecture/PROJECT_SKELETON.md)
-- [Template Center Design](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_DESIGN.md)
-- [Template Center Evolution Plan](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_EVOLUTION_PLAN.md)
+`/root/work/v/ecommerce-frontend`
 
-## 3. Commands
+That is the main worktree.
 
-```bash
-cd /root/work/v/ecommerce-frontend
-npm install --legacy-peer-deps
-npm run dev
-npx tsc --noEmit
-npm run build
-```
+## Required workflow references
 
-## 4. Documentation Rules
+Read before coding:
 
-- Add new frontend docs under `docs/` or `docs/architecture/`
-- Keep docs aligned with actual routes, layouts, and workflow mock state
-- Update this file or the root `AGENTS.md` whenever a new long-lived markdown file is added
+- `/root/work/v/.hermes/workflows/ecommerce-product-center-mission-control-landing/01-requirement.md`
+- `/root/work/v/.hermes/workflows/ecommerce-product-center-mission-control-landing/02-product-design-brief.md`
+- `/root/work/v/.hermes/workflows/ecommerce-product-center-mission-control-landing/03-architecture-review.md`
+- `/root/work/v/.hermes/workflows/ecommerce-product-center-design-only-shootout/05-formal-landing-plan.md`
+
+## Commands
+
+Run commands from this worktree:
+
+- `npm run typecheck`
+- `npm run build`
+
+Do not run `npm install` unless explicitly instructed.
