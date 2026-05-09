@@ -604,6 +604,30 @@ const en = {
       role: 'Role',
     },
   },
+  productCenter: {
+    shell: {
+      home: 'Home',
+      backHome: 'Back to Ecommerce home',
+      switchLanguage: 'Switch language',
+      queue: 'SKU Queue',
+      listing: 'Batch Listing',
+      visual: 'Visual Workspace',
+      delivery: 'Delivery Center',
+      commandTitle: 'Jump to a Product Center station',
+      commands: {
+        queue: 'Open SKU queue',
+        listing: 'Open Batch Listing',
+        visual: 'Open Visual Workspace',
+        delivery: 'Open Delivery Center',
+      },
+      commandHints: {
+        queue: 'Queue / SKU board',
+        listing: 'Template → validate → adopt',
+        visual: 'Bind SKU → generate → attach',
+        delivery: 'Export tasks / downloads',
+      },
+    },
+  },
   org: {
     layout: {
       title: 'Team Management',

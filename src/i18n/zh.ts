@@ -597,6 +597,30 @@ const zh = {
       role: '权限',
     },
   },
+  productCenter: {
+    shell: {
+      home: '首页',
+      backHome: '返回 Ecommerce 首页',
+      switchLanguage: '切换中英文',
+      queue: '商品队列',
+      listing: '批量 Listing',
+      visual: '视觉工作区',
+      delivery: '交付中心',
+      commandTitle: '跳转 Product Center 工作站',
+      commands: {
+        queue: '打开商品队列',
+        listing: '进入批量 Listing',
+        visual: '进入视觉工作区',
+        delivery: '打开交付中心',
+      },
+      commandHints: {
+        queue: 'Queue / SKU board',
+        listing: 'Template → validate → adopt',
+        visual: 'Bind SKU → generate → attach',
+        delivery: 'Export tasks / downloads',
+      },
+    },
+  },
   org: {
     layout: {
       title: '团队管理',
