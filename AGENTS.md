@@ -1,33 +1,53 @@
-# Agent Ecommerce Frontend - Mission Control Landing Worktree Guard
+# Agent Ecommerce Frontend - Agent Context
 
-This is the isolated implementation worktree for Product Center Mission Control landing.
+> This repository provides the frontend for Agent Ecommerce, built with React 19 + TypeScript + Vite + Tailwind CSS. It covers portal pages, console workbench, and management interfaces.
 
-## Critical path rule
+## 1. Purpose
 
-Work ONLY inside this directory:
+`v-ecommerce-frontend` is the product frontend for Agent Ecommerce.
 
-`/root/work/v-worktrees/ecommerce-mission-control-landing`
+It should host:
 
-Do NOT modify or commit inside:
+- Portal pages: Home, Pricing, Solutions, Blog, Help, API Docs, Legal pages
+- Console workbench: AI Chat, Template Market, Asset Library, Design Workbench, Order/Download Center
+- Management pages: Profile Settings, Personal Center, Organization Management
+- Mock workflow states: Template writeback, Design asset sync, Delivery queue, Unified workflow feed
 
-`/root/work/v/ecommerce-frontend`
+It should not host:
 
-That is the main worktree.
+- Backend API logic (delegate to `v-ecommerce-backend`)
+- Platform auth/org/RBAC UI (delegate to platform services)
+- Shared subscription/wallet/payment UI truth (reuse platform components)
 
-## Required workflow references
+## 2. Key Documents
 
-Read before coding:
+- [Developer Guide](docs/DEVELOPER_GUIDE.md)
+- [Git Hooks](docs/GIT_HOOKS.md)
+- [Project Skeleton](docs/architecture/PROJECT_SKELETON.md)
+- [Template Center Design](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_DESIGN.md)
+- [Template Center Evolution Plan](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_EVOLUTION_PLAN.md)
 
-- `/root/work/v/.hermes/workflows/ecommerce-product-center-mission-control-landing/01-requirement.md`
-- `/root/work/v/.hermes/workflows/ecommerce-product-center-mission-control-landing/02-product-design-brief.md`
-- `/root/work/v/.hermes/workflows/ecommerce-product-center-mission-control-landing/03-architecture-review.md`
-- `/root/work/v/.hermes/workflows/ecommerce-product-center-design-only-shootout/05-formal-landing-plan.md`
+## 3. Commands
 
-## Commands
+```bash
+cd v-ecommerce-frontend
+npm install --legacy-peer-deps
+npm run dev
+npm run typecheck
+npm run lint
+npm run build
+bash scripts/install-git-hooks.sh
+```
 
-Run commands from this worktree:
+## 4. Notes
 
-- `npm run typecheck`
-- `npm run build`
+- Project name in `package.json` is still `v-lf-frontend`, but product display and docs use "Agent Ecommerce"
+- Use `--legacy-peer-deps` due to `react-i18next` peer dependency range mismatch with TypeScript 6
+- Development follows "visual skeleton → basic capabilities → business capabilities → integration logic" rhythm
+- Mock data layer supports independent frontend development before backend is ready
 
-Do not run `npm install` unless explicitly instructed.
+## 5. Documentation Rules
+
+- Add frontend docs under `docs/` or `docs/architecture/`
+- Keep component, page, and mock docs aligned with code
+- Update this file whenever long-lived frontend docs are added

@@ -301,25 +301,25 @@ export const TOOLS: ToolDef[] = [
 export const SOLUTIONS: SolutionDef[] = [
   {
     id: 's1', slug: 'boutique', title: '精品卖家', subtitle: '单品精做, 从拍照到上架全链路AI加速',
-    audience: '注重产品品质的精品卖家', icon: '💎',
+    audience: '注重产品品质的精品卖家', icon: 'Gem',
     color: 'from-blue-500 to-cyan-500',
     features: ['手机拍 → 白底图', 'AI场景图', 'BS Listing仿写', 'AI外模试穿'],
   },
   {
     id: 's2', slug: 'multipleStores', title: '多店铺卖家', subtitle: '批量裂变, 一张图生成无限可能',
-    audience: '铺货型/多店运营卖家', icon: '🏪',
+    audience: '铺货型/多店运营卖家', icon: 'Store',
     color: 'from-purple-500 to-pink-500',
     features: ['批量生成Listing', '批量图片裂变', '侵权词检测', '批量抠图'],
   },
   {
     id: 's3', slug: 'creativeCustomized', title: '创意定制卖家', subtitle: 'POD/定制品的AI创意工厂',
-    audience: 'T-shirt/马克杯/POD卖家', icon: '🎨',
+    audience: 'T-shirt/马克杯/POD卖家', icon: 'Palette',
     color: 'from-orange-500 to-red-500',
     features: ['AI创意素材裂变', '创意文字生成', '无侵权商用', '一键多款'],
   },
   {
     id: 's4', slug: 'clothing', title: '服装卖家', subtitle: '真人换模特, AI让服装展示更高端',
-    audience: '服饰品类卖家', icon: '👗',
+    audience: '服饰品类卖家', icon: 'Shirt',
     color: 'from-pink-500 to-rose-500',
     features: ['真人换模特', '模特换场景', 'AI面具(多人种)', '海量场景库'],
   },

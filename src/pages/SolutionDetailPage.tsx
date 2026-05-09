@@ -1,9 +1,20 @@
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, ArrowRight, CheckCircle, Users } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle, Users, Gem, Store, Palette, Shirt, Sparkles } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { SOLUTIONS, TOOLS, getLocalizedSolution, getLocalizedTool } from '@/mock/data'
 import { useAuth } from '@/hooks/useAuth'
 import { getAuthAwareStartPath } from '@/utils/authNavigation'
+
+const SOLUTION_ICON_MAP: Record<string, LucideIcon> = {
+  Gem, Store, Palette, Shirt,
+}
+
+function SolutionIcon({ icon, className }: { icon: string; className?: string }) {
+  const IconComponent = SOLUTION_ICON_MAP[icon]
+  if (IconComponent) return <IconComponent className={className} />
+  return <span className={className}>{icon}</span>
+}
 
 function NotFound() {
   const { t } = useTranslation()
@@ -53,9 +64,9 @@ export default function SolutionDetailPage() {
 
           <div className="flex flex-col items-center text-center gap-6">
             <div
-              className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${localizedSolution.color} flex items-center justify-center text-5xl shadow-lg shadow-brand-500/20`}
+              className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${localizedSolution.color} flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform duration-300`}
             >
-              {localizedSolution.icon}
+              <SolutionIcon icon={localizedSolution.icon} className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-4xl font-bold gradient-text">{localizedSolution.title}</h1>
             <p className="text-xl text-white/60 max-w-xl">{localizedSolution.subtitle}</p>
