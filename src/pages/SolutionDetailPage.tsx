@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, ArrowRight, CheckCircle, Users, Gem, Store, Palette, Shirt, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle, Users, Gem, Store, Palette, Shirt } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { SOLUTIONS, TOOLS, getLocalizedSolution, getLocalizedTool } from '@/mock/data'
 import { useAuth } from '@/hooks/useAuth'
