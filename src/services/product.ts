@@ -2,7 +2,6 @@ import type {
   Product,
   ProductActivity,
   ProductAssetItem,
-  ProductAssetRelation,
   ProductListItem,
   ListingVersion,
   ProfitSnapshot,
@@ -17,8 +16,184 @@ import type {
 } from '@/types/product'
 import { ApiRequestError, downloadBinary, request } from './http'
 
-export function listProducts() {
-  return request<ProductListItem[]>('/api/v1/ecommerce/products', { method: 'GET' })
+type RawRecord = Record<string, any>
+
+function normalizeAssetManifest(items: any[] | undefined) {
+  return (items ?? []).map(item => ({
+    relationId: item.relation_id ?? item.relationId ?? '',
+    assetId: item.asset_id ?? item.assetId ?? '',
+    assetRole: item.asset_role ?? item.assetRole ?? '',
+    isPrimary: item.is_primary ?? item.isPrimary ?? false,
+    assetType: item.asset_type ?? item.assetType,
+    fileName: item.file_name ?? item.fileName,
+    mimeType: item.mime_type ?? item.mimeType,
+    contentUrl: item.content_url ?? item.contentUrl,
+  }))
+}
+
+function normalizeProduct(raw: RawRecord): Product {
+  return {
+    ...raw,
+    id: raw.id ?? '',
+    title: raw.title ?? '',
+    status: raw.status ?? 'draft',
+    organizationId: raw.organization_id ?? raw.organizationId ?? '',
+    skuCode: raw.sku_code ?? raw.skuCode ?? '',
+    spuId: raw.spu_id ?? raw.spuId,
+    categoryId: raw.category_id ?? raw.categoryId,
+    brandId: raw.brand_id ?? raw.brandId,
+    specJson: raw.spec_json ?? raw.specJson,
+    costJson: raw.cost_json ?? raw.costJson,
+    costCurrency: raw.cost_currency ?? raw.costCurrency ?? 'USD',
+    assetStatus: raw.asset_status ?? raw.assetStatus ?? 'missing',
+    listingStatus: raw.listing_status ?? raw.listingStatus ?? 'missing',
+    exportStatus: raw.export_status ?? raw.exportStatus ?? 'pending',
+    assetsCount: raw.assets_count ?? raw.assetsCount ?? 0,
+    listingVersionsCount: raw.listing_versions_count ?? raw.listingVersionsCount ?? 0,
+    hasPrimaryAsset: raw.has_primary_asset ?? raw.hasPrimaryAsset ?? false,
+    createdAt: raw.created_at ?? raw.createdAt ?? '',
+    updatedAt: raw.updated_at ?? raw.updatedAt ?? '',
+    tags: Array.isArray(raw.tags) ? raw.tags : [],
+    assets: Array.isArray(raw.assets) ? raw.assets : [],
+    listingVersions: Array.isArray(raw.listing_versions) ? raw.listing_versions.map(normalizeListingVersion) : (raw.listingVersions ?? []),
+    exportTasks: Array.isArray(raw.export_tasks) ? raw.export_tasks.map(normalizeExportTask) : (raw.exportTasks ?? []),
+    profitSnapshots: Array.isArray(raw.profit_snapshots) ? raw.profit_snapshots.map(normalizeProfitSnapshot) : (raw.profitSnapshots ?? []),
+    activities: Array.isArray(raw.activities) ? raw.activities.map(normalizeActivity) : (raw.activities ?? []),
+  } as Product
+}
+
+function normalizeListingVersion(raw: RawRecord): ListingVersion {
+  return {
+    ...raw,
+    versionNo: raw.version_no ?? raw.versionNo ?? 0,
+    versionLabel: raw.version_label ?? raw.versionLabel ?? '',
+    bulletPoints: raw.bullet_points ?? raw.bulletPoints ?? [],
+    createdAt: raw.created_at ?? raw.createdAt ?? '',
+    createdBy: raw.created_by ?? raw.createdBy ?? '',
+  } as ListingVersion
+}
+
+function normalizeProfitSnapshot(raw: RawRecord): ProfitSnapshot {
+  return {
+    ...raw,
+    costPrice: raw.cost_price ?? raw.costPrice ?? 0,
+    listingPrice: raw.listing_price ?? raw.listingPrice ?? 0,
+    logisticsCost: raw.logistics_cost ?? raw.logisticsCost ?? 0,
+    platformFee: raw.platform_fee ?? raw.platformFee ?? 0,
+    otherFee: raw.other_fee ?? raw.otherFee ?? 0,
+    grossProfit: raw.gross_profit ?? raw.grossProfit ?? 0,
+    netProfit: raw.net_profit ?? raw.netProfit ?? 0,
+    grossMargin: raw.gross_margin ?? raw.grossMargin ?? 0,
+    netMargin: raw.net_margin ?? raw.netMargin ?? 0,
+    breakevenPrice: raw.breakeven_price ?? raw.breakevenPrice ?? 0,
+    createdAt: raw.created_at ?? raw.createdAt ?? '',
+  } as ProfitSnapshot
+}
+
+function normalizeExportTask(raw: RawRecord): ExportTask {
+  return {
+    ...raw,
+    productId: raw.product_id ?? raw.productId ?? '',
+    listingVersionId: raw.listing_version_id ?? raw.listingVersionId,
+    listingVersionLabel: raw.listing_version_label ?? raw.listingVersionLabel,
+    primaryAssetRole: raw.primary_asset_role ?? raw.primaryAssetRole,
+    assetCount: raw.asset_count ?? raw.assetCount,
+    assetManifest: normalizeAssetManifest(raw.asset_manifest ?? raw.assetManifest),
+    storageKey: raw.storage_key ?? raw.storageKey,
+    packageUrl: raw.package_url ?? raw.packageUrl,
+    fileSize: raw.file_size ?? raw.fileSize,
+    createdAt: raw.created_at ?? raw.createdAt ?? '',
+    createdBy: raw.created_by ?? raw.createdBy,
+  } as ExportTask
+}
+
+function normalizeProductAsset(item: RawRecord): ProductAssetItem {
+  const relation = item.relation ?? item
+  const asset = item.asset ?? null
+  return {
+    relation: {
+      ...relation,
+      organizationId: relation.organization_id ?? relation.organizationId ?? '',
+      assetId: relation.asset_id ?? relation.assetId ?? '',
+      ownerType: relation.owner_type ?? relation.ownerType ?? '',
+      ownerId: relation.owner_id ?? relation.ownerId ?? '',
+      relationType: relation.relation_type ?? relation.relationType ?? '',
+      assetRole: relation.asset_role ?? relation.assetRole ?? '',
+      isPrimary: relation.is_primary ?? relation.isPrimary ?? false,
+      platformCode: relation.platform_code ?? relation.platformCode,
+      siteCode: relation.site_code ?? relation.siteCode,
+      localeCode: relation.locale_code ?? relation.localeCode,
+      sortOrder: relation.sort_order ?? relation.sortOrder ?? 0,
+      createdAt: relation.created_at ?? relation.createdAt ?? '',
+    },
+    asset: asset ? {
+      ...asset,
+      organizationId: asset.organization_id ?? asset.organizationId ?? '',
+      userId: asset.user_id ?? asset.userId,
+      assetType: asset.asset_type ?? asset.assetType ?? '',
+      sourceType: asset.source_type ?? asset.sourceType,
+      storageKey: asset.storage_key ?? asset.storageKey,
+      thumbnailUrl: asset.thumbnail_url ?? asset.thumbnailUrl,
+      originalUrl: asset.original_url ?? asset.originalUrl,
+      mimeType: asset.mime_type ?? asset.mimeType,
+      fileName: asset.file_name ?? asset.fileName,
+      createdAt: asset.created_at ?? asset.createdAt,
+    } : null,
+  }
+}
+
+function normalizeActivity(raw: RawRecord): ProductActivity {
+  return { ...raw, createdAt: raw.created_at ?? raw.createdAt ?? '' } as ProductActivity
+}
+
+function normalizeDownload(raw: RawRecord): DownloadRecord {
+  return {
+    ...raw,
+    sourceType: raw.source_type ?? raw.sourceType ?? 'product_export',
+    productId: raw.product_id ?? raw.productId ?? '',
+    productTitle: raw.product_title ?? raw.productTitle ?? '',
+    productSKU: raw.product_sku ?? raw.productSKU ?? raw.sku_code ?? '',
+    productStatus: raw.product_status ?? raw.productStatus ?? 'draft',
+    productPath: raw.product_path ?? raw.productPath ?? '',
+    fileSize: raw.file_size ?? raw.fileSize,
+    packageUrl: raw.package_url ?? raw.packageUrl,
+    listingVersionId: raw.listing_version_id ?? raw.listingVersionId,
+    listingVersionLabel: raw.listing_version_label ?? raw.listingVersionLabel,
+    downloadFileName: raw.download_file_name ?? raw.downloadFileName ?? '',
+    assetCount: raw.asset_count ?? raw.assetCount ?? 0,
+    primaryAssetRole: raw.primary_asset_role ?? raw.primaryAssetRole,
+    assets: normalizeAssetManifest(raw.assets),
+    createdAt: raw.created_at ?? raw.createdAt ?? '',
+  } as DownloadRecord
+}
+
+function productPayload(data: Partial<{
+  skuCode: string
+  title: string
+  spuId: string
+  categoryId: string
+  brandId: string
+  specJson: string
+  costJson: string
+  costCurrency: string
+  tags: string[]
+}>) {
+  const payload: RawRecord = {}
+  if ('skuCode' in data) payload.sku_code = data.skuCode
+  if ('title' in data) payload.title = data.title
+  if ('spuId' in data) payload.spu_id = data.spuId
+  if ('categoryId' in data) payload.category_id = data.categoryId
+  if ('brandId' in data) payload.brand_id = data.brandId
+  if ('specJson' in data) payload.spec_json = data.specJson
+  if ('costJson' in data) payload.cost_json = data.costJson
+  if ('costCurrency' in data) payload.cost_currency = data.costCurrency
+  if ('tags' in data) payload.tags = data.tags
+  return payload
+}
+
+export async function listProducts() {
+  const result = await request<RawRecord[]>('/api/v1/ecommerce/products', { method: 'GET' })
+  return result.map(normalizeProduct) as ProductListItem[]
 }
 
 export function createProduct(data: {
@@ -32,21 +207,32 @@ export function createProduct(data: {
   costCurrency?: string
   tags?: string[]
 }) {
-  return request<Product>('/api/v1/ecommerce/products', {
+  return request<RawRecord>('/api/v1/ecommerce/products', {
     method: 'POST',
-    body: JSON.stringify(data),
-  })
+    body: JSON.stringify(productPayload(data)),
+  }).then(normalizeProduct)
 }
 
-export function getProduct(productId: string) {
-  return request<{
-    product: Product
-    assets: ProductAssetItem[]
-    listingVersions: ListingVersion[]
-    profitSnapshots: ProfitSnapshot[]
-    exportTasks: ExportTask[]
-    activities: ProductActivity[]
+export async function getProduct(productId: string) {
+  const result = await request<{
+    product: RawRecord
+    assets: RawRecord[]
+    listing_versions?: RawRecord[]
+    listingVersions?: RawRecord[]
+    profit_snapshots?: RawRecord[]
+    profitSnapshots?: RawRecord[]
+    export_tasks?: RawRecord[]
+    exportTasks?: RawRecord[]
+    activities: RawRecord[]
   }>(`/api/v1/ecommerce/products/${productId}`, { method: 'GET' })
+  return {
+    product: normalizeProduct(result.product),
+    assets: (result.assets ?? []).map(normalizeProductAsset),
+    listingVersions: (result.listing_versions ?? result.listingVersions ?? []).map(normalizeListingVersion),
+    profitSnapshots: (result.profit_snapshots ?? result.profitSnapshots ?? []).map(normalizeProfitSnapshot),
+    exportTasks: (result.export_tasks ?? result.exportTasks ?? []).map(normalizeExportTask),
+    activities: (result.activities ?? []).map(normalizeActivity),
+  }
 }
 
 type JsonStringOrObject = string | JsonObject | null | undefined
@@ -224,21 +410,21 @@ export function updateProduct(
     tags: string[]
   }>,
 ) {
-  return request<Product>(`/api/v1/ecommerce/products/${productId}`, {
+  return request<RawRecord>(`/api/v1/ecommerce/products/${productId}`, {
     method: 'PATCH',
-    body: JSON.stringify(data),
-  })
+    body: JSON.stringify(productPayload(data)),
+  }).then(normalizeProduct)
 }
 
 export function updateProductStatus(productId: string, status: string) {
-  return request<Product>(`/api/v1/ecommerce/products/${productId}/status`, {
+  return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
-  })
+  }).then(normalizeProduct)
 }
 
 export function listProductAssets(productId: string) {
-  return request<ProductAssetItem[]>(`/api/v1/ecommerce/products/${productId}/assets`, { method: 'GET' })
+  return request<RawRecord[]>(`/api/v1/ecommerce/products/${productId}/assets`, { method: 'GET' }).then(items => items.map(normalizeProductAsset))
 }
 
 export function addProductAsset(productId: string, data: {
@@ -251,10 +437,19 @@ export function addProductAsset(productId: string, data: {
   localeCode?: string
   sortOrder?: number
 }) {
-  return request<ProductAssetRelation>(`/api/v1/ecommerce/products/${productId}/assets`, {
+  return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/assets`, {
     method: 'POST',
-    body: JSON.stringify(data),
-  })
+    body: JSON.stringify({
+      asset_id: data.assetId,
+      relation_type: data.relationType,
+      asset_role: data.assetRole,
+      is_primary: data.isPrimary,
+      platform_code: data.platformCode,
+      site_code: data.siteCode,
+      locale_code: data.localeCode,
+      sort_order: data.sortOrder,
+    }),
+  }).then(raw => normalizeProductAsset(raw).relation)
 }
 
 export function updateProductAssetRelation(
@@ -279,10 +474,10 @@ export function updateProductAssetRelation(
   if ('localeCode' in data) payload.locale_code = data.localeCode
   if ('sortOrder' in data) payload.sort_order = data.sortOrder
 
-  return request<ProductAssetRelation>(`/api/v1/ecommerce/products/${productId}/assets/${assetRelationId}`, {
+  return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/assets/${assetRelationId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
-  })
+  }).then(raw => normalizeProductAsset(raw).relation)
 }
 
 export function deleteProductAsset(productId: string, assetRelationId: string) {
@@ -292,7 +487,7 @@ export function deleteProductAsset(productId: string, assetRelationId: string) {
 }
 
 export function listListingVersions(productId: string) {
-  return request<ListingVersion[]>(`/api/v1/ecommerce/products/${productId}/listing-versions`, { method: 'GET' })
+  return request<RawRecord[]>(`/api/v1/ecommerce/products/${productId}/listing-versions`, { method: 'GET' }).then(items => items.map(normalizeListingVersion))
 }
 
 export function createListingVersion(productId: string, data: {
@@ -305,10 +500,19 @@ export function createListingVersion(productId: string, data: {
   site: string
   locale: string
 }) {
-  return request<ListingVersion>(`/api/v1/ecommerce/products/${productId}/listing-versions`, {
+  return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/listing-versions`, {
     method: 'POST',
-    body: JSON.stringify(data),
-  })
+    body: JSON.stringify({
+      version_label: data.versionLabel,
+      title: data.title,
+      description: data.description,
+      bullet_points: data.bulletPoints ?? [],
+      keywords: data.keywords ?? [],
+      platform: data.platform,
+      site: data.site,
+      locale: data.locale,
+    }),
+  }).then(normalizeListingVersion)
 }
 
 export async function batchCreateListingVersions(data: {
@@ -367,7 +571,7 @@ export async function batchCreateListingVersions(data: {
       versionLabel: item.version_label,
       success: item.success,
       message: item.message,
-      listing: item.listing,
+      listing: item.listing ? normalizeListingVersion(item.listing as RawRecord) : undefined,
     })),
   } satisfies BatchListingMutationResult
 }
@@ -375,7 +579,7 @@ export async function batchCreateListingVersions(data: {
 export function adoptListingVersion(productId: string, versionId: string) {
   return request<unknown>(`/api/v1/ecommerce/products/${productId}/listing-versions/adopt`, {
     method: 'POST',
-    body: JSON.stringify({ versionId }),
+    body: JSON.stringify({ version_id: versionId }),
   })
 }
 
@@ -421,7 +625,7 @@ export async function batchAdoptListingVersions(data: {
       versionLabel: item.version_label,
       success: item.success,
       message: item.message,
-      listing: item.listing,
+      listing: item.listing ? normalizeListingVersion(item.listing as RawRecord) : undefined,
     })),
   } satisfies BatchListingMutationResult
 }
@@ -456,14 +660,14 @@ export function updateListingVersion(
   if ('site' in data) payload.site = data.site
   if ('locale' in data) payload.locale = data.locale
 
-  return request<ListingVersion>(`/api/v1/ecommerce/products/${productId}/listing-versions/${versionId}`, {
+  return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/listing-versions/${versionId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
-  })
+  }).then(normalizeListingVersion)
 }
 
 export function listProfitSnapshots(productId: string) {
-  return request<ProfitSnapshot[]>(`/api/v1/ecommerce/products/${productId}/profit-snapshots`, { method: 'GET' })
+  return request<RawRecord[]>(`/api/v1/ecommerce/products/${productId}/profit-snapshots`, { method: 'GET' }).then(items => items.map(normalizeProfitSnapshot))
 }
 
 export function calculateProfit(productId: string, data: {
@@ -475,14 +679,22 @@ export function calculateProfit(productId: string, data: {
   platformFee?: number
   otherFee?: number
 }) {
-  return request<ProfitSnapshot>(`/api/v1/ecommerce/products/${productId}/profit-snapshots/calculate`, {
+  return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/profit-snapshots/calculate`, {
     method: 'POST',
-    body: JSON.stringify(data),
-  })
+    body: JSON.stringify({
+      platform: data.platform,
+      site: data.site,
+      cost_price: data.costPrice,
+      listing_price: data.listingPrice,
+      logistics_cost: data.logisticsCost,
+      platform_fee: data.platformFee,
+      other_fee: data.otherFee,
+    }),
+  }).then(normalizeProfitSnapshot)
 }
 
 export function listExportTasks(productId: string) {
-  return request<ExportTask[]>(`/api/v1/ecommerce/products/${productId}/export-tasks`, { method: 'GET' })
+  return request<RawRecord[]>(`/api/v1/ecommerce/products/${productId}/export-tasks`, { method: 'GET' }).then(items => items.map(normalizeExportTask))
 }
 
 export function createExportTask(productId: string, data: {
@@ -492,7 +704,7 @@ export function createExportTask(productId: string, data: {
   format: string
   assetRelationIds?: string[]
 }) {
-  return request<ExportTask>(`/api/v1/ecommerce/products/${productId}/export-tasks`, {
+  return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/export-tasks`, {
     method: 'POST',
     body: JSON.stringify({
       platform: data.platform,
@@ -501,6 +713,78 @@ export function createExportTask(productId: string, data: {
       format: data.format,
       asset_relation_ids: data.assetRelationIds,
     }),
+  }).then(normalizeExportTask)
+}
+
+export type ExportPackagePayload = {
+  productIds: string[]
+  platform: string
+  site: string
+  locale: string
+  format: string
+  listingVersionIds?: string[]
+  assetRelationIds?: string[]
+}
+
+export function createExportPackage(data: ExportPackagePayload) {
+  return request<RawRecord>('/api/v1/ecommerce/export-packages', {
+    method: 'POST',
+    body: JSON.stringify({
+      product_ids: data.productIds,
+      platform: data.platform,
+      site: data.site,
+      locale: data.locale,
+      format: data.format,
+      listing_version_ids: data.listingVersionIds,
+      asset_relation_ids: data.assetRelationIds,
+    }),
+  }).then(normalizeExportTask)
+}
+
+export function listExportPackages(params?: { productIds?: string[]; status?: string }) {
+  const query = new URLSearchParams()
+  if (params?.productIds?.length) query.set('product_ids', params.productIds.join(','))
+  if (params?.status) query.set('status', params.status)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return request<RawRecord[]>(`/api/v1/ecommerce/export-packages${suffix}`, { method: 'GET' }).then(items => items.map(normalizeExportTask))
+}
+
+export function getExportPackage(packageId: string) {
+  return request<RawRecord>(`/api/v1/ecommerce/export-packages/${packageId}`, { method: 'GET' }).then(normalizeExportTask)
+}
+
+export function retryExportPackage(packageId: string) {
+  return request<RawRecord>(`/api/v1/ecommerce/export-packages/${packageId}/retry`, { method: 'POST' }).then(normalizeExportTask)
+}
+
+export function listAssetLibrary(params?: { assetType?: string; sourceType?: string; search?: string }) {
+  const query = new URLSearchParams()
+  if (params?.assetType) query.set('asset_type', params.assetType)
+  if (params?.sourceType) query.set('source_type', params.sourceType)
+  if (params?.search) query.set('search', params.search)
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return request<RawRecord[]>(`/api/v1/ecommerce/asset-library${suffix}`, { method: 'GET' }).then(items => items.map(item => normalizeProductAsset({ relation: item.relation ?? item, asset: item.asset ?? item })))
+}
+
+export function getAssetLibraryItem(assetId: string) {
+  return request<RawRecord>(`/api/v1/ecommerce/asset-library/${assetId}`, { method: 'GET' }).then(item => normalizeProductAsset({ relation: item.relation ?? item, asset: item.asset ?? item }))
+}
+
+export function getPromptCenterTemplate(templateKey: string) {
+  return request<RawRecord>(`/api/v1/ecommerce/prompt-center/${encodeURIComponent(templateKey)}`, { method: 'GET' })
+}
+
+export function previewPromptCenterTemplate(data: { templateKey: string; variables: Record<string, unknown> }) {
+  return request<RawRecord>('/api/v1/ecommerce/prompt-center/preview', {
+    method: 'POST',
+    body: JSON.stringify({ template_key: data.templateKey, variables: data.variables }),
+  })
+}
+
+export function validatePromptCenterTemplate(data: { templateKey: string; content?: string; variables?: Record<string, unknown> }) {
+  return request<RawRecord>('/api/v1/ecommerce/prompt-center/validate', {
+    method: 'POST',
+    body: JSON.stringify({ template_key: data.templateKey, content: data.content, variables: data.variables }),
   })
 }
 
@@ -514,10 +798,16 @@ export function updateExportTaskStatus(
 		fileSize?: string
 	},
 ) {
-	return request<ExportTask>(`/api/v1/ecommerce/products/${productId}/export-tasks/status`, {
+	return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/export-tasks/status`, {
 		method: 'PATCH',
-		body: JSON.stringify(data),
-	})
+		body: JSON.stringify({
+      task_id: data.taskId,
+      status: data.status,
+      storage_key: data.storageKey,
+      package_url: data.packageUrl,
+      file_size: data.fileSize,
+    }),
+	}).then(normalizeExportTask)
 }
 
 export function deleteProduct(productId: string) {
@@ -527,7 +817,7 @@ export function deleteProduct(productId: string) {
 }
 
 export function listDownloads() {
-  return request<DownloadRecord[]>('/api/v1/ecommerce/downloads', { method: 'GET' })
+  return request<RawRecord[]>('/api/v1/ecommerce/downloads', { method: 'GET' }).then(items => items.map(normalizeDownload))
 }
 
 export async function downloadExport(record: Pick<DownloadRecord, 'id' | 'packageUrl' | 'downloadFileName'>) {

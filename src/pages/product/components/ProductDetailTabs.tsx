@@ -276,7 +276,7 @@ export function AssetsTab({
           </label>
           <div className="h-4 w-px bg-white/20" />
           <Link
-            to={`/products/${productId}/ai/ai-product`}
+            to={`/products/workbench/visual-tools?productId=${encodeURIComponent(productId)}&source=sku-detail-assets`}
             className="inline-flex items-center gap-2 rounded-lg bg-brand-500 hover:bg-brand-400 px-3 py-1.5 text-sm font-medium text-white transition-colors"
           >
             <Sparkles className="h-4 w-4" />

@@ -1,186 +1,95 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { Boxes, Bot, Download, LayoutDashboard, Rows3, Sparkles, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
-import UserAccountMenu from '@/components/account/UserAccountMenu'
 
-const NAV_ITEMS = [
-  {
-    labelKey: 'productWorkbench.nav.productList',
-    to: '/products',
-    icon: LayoutDashboard,
-    match: (pathname: string) =>
-      pathname === '/products' ||
-      (/^\/products\/[^/]+$/.test(pathname) && !pathname.includes('/workbench/')),
-  },
-  {
-    labelKey: 'productWorkbench.nav.batchListing',
-    to: '/products/workbench/batch-listing',
-    icon: Rows3,
-    match: (pathname: string) => pathname.startsWith('/products/workbench/batch-listing'),
-  },
-  {
-    labelKey: 'productWorkbench.nav.visualTools',
-    to: '/products/workbench/visual-tools',
-    icon: Bot,
-    match: (pathname: string) =>
-      pathname.startsWith('/products/workbench/visual-tools') || /\/products\/[^/]+\/ai\/[^/]+$/.test(pathname),
-  },
-  {
-    labelKey: 'productWorkbench.nav.downloads',
-    to: '/products/workbench/downloads',
-    icon: Download,
-    match: (pathname: string) => pathname.startsWith('/products/workbench/downloads'),
-  },
+const navItems = [
+  { label: '商品队列', to: '/products', match: (pathname: string) => pathname === '/products' || /^\/products\/[^/]+$/.test(pathname) },
+  { label: '批量 Listing', to: '/products/workbench/batch-listing', match: (pathname: string) => pathname.startsWith('/products/workbench/batch-listing') },
+  { label: '视觉工作区', to: '/products/workbench/visual-tools', match: (pathname: string) => pathname.startsWith('/products/workbench/visual-tools') || /\/products\/[^/]+\/ai\/[^/]+$/.test(pathname) },
+  { label: '交付中心', to: '/products/workbench/downloads', match: (pathname: string) => pathname.startsWith('/products/workbench/downloads') },
+]
+
+const commands = [
+  { label: '打开商品队列', hint: 'Queue / SKU board', to: '/products' },
+  { label: '进入批量 Listing', hint: 'Template → validate → adopt', to: '/products/workbench/batch-listing' },
+  { label: '进入视觉工作区', hint: 'Bind SKU → generate → attach', to: '/products/workbench/visual-tools' },
+  { label: '打开交付中心', hint: 'Export tasks / downloads', to: '/products/workbench/downloads' },
 ]
 
 export default function ProductWorkbenchLayout() {
   const { pathname } = useLocation()
-  const { t } = useTranslation()
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const current = NAV_ITEMS.find(item => item.match(pathname)) ?? NAV_ITEMS[0]
+  const [commandOpen, setCommandOpen] = useState(false)
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setCommandOpen(true)
+      }
+      if (event.key === 'Escape') setCommandOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-white">
-      <div className="flex min-h-screen">
-        <aside
-          className={`hidden shrink-0 border-r border-white/[0.06] bg-[#0b0d14] xl:flex xl:flex-col transition-all duration-300 ease-in-out ${
-            isCollapsed ? 'w-[80px]' : 'w-[200px]'
-          }`}
-        >
-          <div className={`border-b border-white/[0.06] py-5 flex items-center justify-between ${isCollapsed ? 'px-4 flex-col gap-4' : 'px-5'}`}>
-            <Link to="/products" className="flex items-center gap-3 overflow-hidden">
-              <div className="rounded-xl border border-brand-500/20 bg-brand-500/10 p-2.5 text-brand-300 shrink-0">
-                <Boxes className="h-5 w-5" />
-              </div>
-              {!isCollapsed && (
-                <div className="min-w-0">
-                  <div className="text-[10px] uppercase tracking-[0.24em] text-white/35 truncate">Product Module</div>
-                  <div className="mt-0.5 text-base font-semibold text-white truncate">{t('productWorkbench.moduleName')}</div>
-                </div>
-              )}
-            </Link>
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-1.5 rounded-lg text-white/40 hover:text-white hover:bg-white/[0.05] transition-colors"
-            >
-              {isCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            </button>
-          </div>
-
-          <nav className="flex-1 space-y-1.5 px-3 py-4 overflow-y-auto">
-            {NAV_ITEMS.map(item => {
-              const Icon = item.icon
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === '/products'}
-                  title={isCollapsed ? t(item.labelKey) : undefined}
-                  className={({ isActive }) =>
-                    `block rounded-xl border transition ${
-                      isCollapsed ? 'px-0 py-3 flex justify-center' : 'px-3 py-2.5'
-                    } ${
-                      isActive || item.match(pathname)
-                        ? 'border-brand-500/35 bg-brand-500/10'
-                        : 'border-transparent bg-transparent hover:border-white/[0.06] hover:bg-white/[0.03]'
-                    }`
-                  }
-                >
-                  <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'items-center gap-3'}`}>
-                    <div className={`rounded-lg border border-white/[0.08] bg-white/[0.04] p-2 text-brand-300 shrink-0 ${isCollapsed ? 'border-transparent bg-transparent' : ''}`}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    {!isCollapsed && (
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-sm text-white truncate">{t(item.labelKey)}</div>
-                      </div>
-                    )}
-                  </div>
-                </NavLink>
-              )
-            })}
-          </nav>
-
-          <div className="border-t border-white/[0.06] p-3">
-            <Link
-              to="/chat"
-              title={isCollapsed ? t('productWorkbench.backToConsole') : undefined}
-              className={`flex items-center rounded-xl border border-white/[0.08] bg-white/[0.03] transition hover:bg-white/[0.05] hover:text-white ${
-                isCollapsed ? 'justify-center p-3' : 'gap-2 px-3 py-2.5 text-sm text-white/65'
-              }`}
-            >
-              <Sparkles className={`h-4 w-4 text-brand-300 ${isCollapsed ? '' : 'shrink-0'}`} />
-              {!isCollapsed && <span className="truncate">{t('productWorkbench.backToConsole')}</span>}
-            </Link>
-          </div>
-        </aside>
-
-        <main className="min-w-0 flex-1 flex flex-col h-screen overflow-hidden">
-          <header className="flex-none z-30 border-b border-white/[0.06] bg-[#0a0c12]/88 backdrop-blur-xl">
-            <div className="space-y-4 px-4 py-4 sm:px-6 xl:px-8">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.22em] text-white/30">{t('productWorkbench.currentArea')}</div>
-                  <div className="mt-1 text-lg font-semibold text-white">{t(current.labelKey)}</div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Link
-                    to="/products"
-                    className="hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm text-white/65 transition hover:bg-white/[0.05] hover:text-white sm:inline-flex"
-                  >
-                    {t('productWorkbench.home')}
-                  </Link>
-                  <UserAccountMenu compact />
-                </div>
-              </div>
-
-              <div className="xl:hidden">
-                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                  {NAV_ITEMS.map(item => {
-                    const Icon = item.icon
-                    const active = item.match(pathname)
-                    return (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        end={item.to === '/products'}
-                        className={`flex shrink-0 items-center gap-2 rounded-2xl border px-3 py-2 text-sm transition ${
-                          active
-                            ? 'border-brand-500/35 bg-brand-500/10 text-white'
-                            : 'border-white/[0.08] bg-white/[0.03] text-white/65 hover:bg-white/[0.05] hover:text-white'
-                        }`}
-                      >
-                        <Icon className="h-4 w-4 text-brand-300" />
-                        <span>{t(item.labelKey)}</span>
-                      </NavLink>
-                    )
-                  })}
-                  <Link
-                    to="/chat"
-                    className="flex shrink-0 items-center gap-2 rounded-2xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/65 transition hover:bg-white/[0.05] hover:text-white"
-                  >
-                    <Sparkles className="h-4 w-4 text-brand-300" />
-                    <span>{t('productWorkbench.backToConsole')}</span>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="mx-auto max-w-[1600px] w-full flex-1 flex flex-col relative">
-              <div className="m-4 sm:m-6 xl:m-8 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm text-white/45 xl:hidden flex-none">
-                {t('productWorkbench.mobileTip')}
-              </div>
-
-              <div className="flex-1 overflow-auto relative">
-                <Outlet />
-              </div>
-            </div>
-          </div>
-        </main>
+    <div className="min-h-screen bg-[#0a0a12] text-[#e8eaf0]">
+      <div className="pointer-events-none fixed inset-0 opacity-60">
+        <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" />
       </div>
+      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#080b11]/88 backdrop-blur-xl">
+        <div className="mx-auto flex h-[52px] max-w-[1400px] items-center justify-between gap-4 px-5">
+          <div className="flex min-w-0 items-center gap-2">
+            <Link to="/products" className="whitespace-nowrap font-semibold tracking-tight text-white">Product Center</Link>
+            <nav className="ml-2 flex min-w-0 items-center gap-1 overflow-x-auto">
+              {navItems.map(item => {
+                const active = item.match(pathname)
+                return (
+                  <NavLink
+                    key={item.label}
+                    to={item.to}
+                    className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition ${active ? 'bg-white/[0.07] text-white' : 'text-white/58 hover:bg-white/[0.04] hover:text-white'}`}
+                  >
+                    {item.label}
+                  </NavLink>
+                )
+              })}
+            </nav>
+          </div>
+          <button onClick={() => setCommandOpen(true)} className="inline-flex items-center gap-1 rounded-lg border border-white/[0.08] bg-[#080b11] px-2.5 py-1 text-xs text-white/45 transition hover:border-white/15 hover:text-white/70">
+            <kbd className="rounded bg-white/[0.07] px-1">⌘</kbd><span>K</span>
+          </button>
+        </div>
+      </header>
+      <main className="relative min-h-[calc(100vh-52px)]">
+        <Outlet />
+      </main>
+      {commandOpen ? (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/55 px-4 pt-[12vh] backdrop-blur-md" onMouseDown={() => setCommandOpen(false)}>
+          <div className="w-full max-w-xl overflow-hidden rounded-[28px] border border-white/10 bg-[#0b0d14]/95 shadow-[0_32px_120px_rgba(0,0,0,0.65)]" onMouseDown={event => event.stopPropagation()}>
+            <div className="border-b border-white/[0.06] px-5 py-4">
+              <div className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-100/55">Command Palette</div>
+              <div className="mt-2 text-xl font-semibold text-white">跳转 Product Center 工作站</div>
+            </div>
+            <div className="p-3">
+              {commands.map(command => (
+                <Link
+                  key={command.to}
+                  to={command.to}
+                  onClick={() => setCommandOpen(false)}
+                  className="group flex items-center justify-between rounded-2xl px-4 py-3 transition hover:bg-white/[0.06]"
+                >
+                  <span>
+                    <span className="block text-sm font-semibold text-white/88">{command.label}</span>
+                    <span className="mt-1 block text-xs text-white/38">{command.hint}</span>
+                  </span>
+                  <span className="text-xs text-white/28 transition group-hover:translate-x-0.5 group-hover:text-cyan-100">↵</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
