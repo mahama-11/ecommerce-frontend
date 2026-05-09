@@ -14,12 +14,11 @@ import {
 } from 'lucide-react'
 import {
   SOLUTIONS,
-  PRICING_PLANS,
   getLocalizedSolution,
-  getLocalizedPricingPlan,
 } from '@/mock/data'
 import { useAuth } from '@/hooks/useAuth'
 import { getAuthAwareStartPath, getWorkbenchEntryPath } from '@/utils/authNavigation'
+import PricingPlanGrid from '@/components/pricing/PricingPlanGrid'
 
 const STATS_KEYS = [
   { valueKey: 'home.stats.sellers_value', labelKey: 'home.stats.sellers', icon: Users },
@@ -209,52 +208,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {PRICING_PLANS.map(plan => {
-              const localizedPlan = getLocalizedPricingPlan(plan, language)
-
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative glass rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 ${
-                    plan.popular
-                      ? 'border-brand-500/40 shadow-[0_0_40px_-8px_rgba(59,130,246,0.3)]'
-                      : 'hover:border-white/15'
-                  }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 btn-primary px-3 py-1 rounded-full text-xs font-semibold text-white">
-                      {t('home.pricing_preview.popular')}
-                    </div>
-                  )}
-                  <h3 className="text-lg font-bold mb-1">{localizedPlan.name}</h3>
-                  <p className="text-sm text-white/40 mb-4">{localizedPlan.desc}</p>
-                  <div className="mb-6">
-                    <span className="text-3xl font-bold">{localizedPlan.price}</span>
-                    <span className="text-sm text-white/40">{localizedPlan.period}</span>
-                  </div>
-                  <ul className="space-y-2 mb-6">
-                    {localizedPlan.features.map(f => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-white/60">
-                        <Check className="w-3.5 h-3.5 text-brand-400 shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    to="/pricing"
-                    className={`block text-center py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                      plan.popular
-                        ? 'btn-primary text-white'
-                        : 'btn-outline'
-                    }`}
-                  >
-                    {localizedPlan.cta}
-                  </Link>
-                </div>
-              )
-            })}
-          </div>
+          <PricingPlanGrid variant="preview" />
         </div>
       </section>
 
