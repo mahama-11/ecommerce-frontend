@@ -278,14 +278,14 @@ function ProductListPage() {
   const itemVariants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 260, damping: 26 } } }
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="show" className="relative min-h-full overflow-auto bg-[#05070b] pb-28 text-white">
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="relative min-h-full bg-[#05070b] text-white">
       <div className="pointer-events-none fixed inset-0 opacity-70">
         <div className="absolute left-[-14rem] top-[-10rem] h-[34rem] w-[34rem] rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="absolute right-[-10rem] top-[18rem] h-[30rem] w-[30rem] rounded-full bg-amber-500/8 blur-3xl" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(circle_at_top,black,transparent_74%)]" />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-[1760px] flex-col gap-5 px-4 py-5 lg:px-6">
+      <div className="relative mx-auto flex w-full max-w-[1760px] flex-col gap-5 px-4 py-5 pb-[calc(2rem+env(safe-area-inset-bottom))] lg:px-6">
         <motion.header variants={itemVariants} className="rounded-[30px] border border-white/10 bg-[#080b11]/90 p-5 shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
             <div className="max-w-4xl">
@@ -377,9 +377,11 @@ function ProductListPage() {
             <MissionDossier unit={focusedUnit} />
           </motion.div>
         </div>
-      </div>
 
-      <CommandStrip selectedUnits={selectedUnits} onClear={() => setSelectedIds([])} />
+        <motion.div variants={itemVariants}>
+          <CommandStrip selectedUnits={selectedUnits} onClear={() => setSelectedIds([])} />
+        </motion.div>
+      </div>
 
       {showCreateModal ? (
         <ModalShell title={t('product.list.createModal.title')} onClose={() => setShowCreateModal(false)}>

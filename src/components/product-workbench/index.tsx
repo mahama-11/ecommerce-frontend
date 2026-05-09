@@ -339,7 +339,7 @@ export function CommandStrip({
   const { t } = useTranslation()
   const hasSelection = selectedUnits.length > 0
   return (
-    <div className="fixed bottom-5 left-1/2 z-30 w-[min(1180px,calc(100vw-2rem))] -translate-x-1/2 rounded-[24px] border border-white/12 bg-[#05070b]/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+    <div className="sticky bottom-[calc(1rem+env(safe-area-inset-bottom))] z-20 mx-auto w-full max-w-[1180px] rounded-[24px] border border-white/12 bg-[#05070b]/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.65)] backdrop-blur-xl">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="text-sm font-semibold text-white">{t('product.list.missionControl.commandStripTitle', { count: selectedUnits.length })}</div>
