@@ -168,8 +168,8 @@ export default function ProductWorkbenchLayout() {
             </div>
           </header>
 
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="mx-auto max-w-[1600px] w-full flex-1 flex flex-col relative">
+          <div className="min-h-0 flex-1 overflow-hidden flex flex-col">
+            <div className="mx-auto max-w-[1600px] w-full min-h-0 flex-1 flex flex-col relative">
               <div className="m-4 sm:m-6 xl:m-8 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm text-white/45 xl:hidden flex-none">
                 {t('productWorkbench.mobileTip')}
               </div>
