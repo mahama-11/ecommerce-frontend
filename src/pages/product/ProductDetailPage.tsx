@@ -7,7 +7,6 @@ import {
   TrendingUp,
   Download,
   Wand2,
-  BrainCircuit,
   LoaderCircle,
   Trash2,
   Plus,

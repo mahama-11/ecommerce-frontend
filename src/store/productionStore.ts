@@ -12,7 +12,6 @@ import type {
   StrategySummary,
   AssetTask,
   AdvancedParams,
-  CreditBreakdown,
   VersionNode,
   WeightParams,
 } from '@/types/production'

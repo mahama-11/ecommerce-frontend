@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability, react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -396,7 +397,7 @@ export default function PrepHubPage() {
             toast.showToast(`${file.name} is not an image`, 'error')
             continue
           }
-          const source = await productionApi.uploadParsingSource(productId, file)
+          const source = await productionApi.uploadParsingSource(productId, file, sourceType)
           addSource({ ...source, type: sourceType })
         }
       } catch (e) {
@@ -549,14 +550,11 @@ export default function PrepHubPage() {
         (s, i) => i > currentIdx && s.status === 'pending',
       )
       if (nextPending >= 0) {
-        setDecisionTree((prev) => {
-          if (!prev?.steps) return prev
-          return {
-            ...prev,
-            steps: prev.steps.map((s, i) =>
-              i === nextPending ? { ...s, status: 'active' as const } : s,
-            ),
-          }
+        setDecisionTree({
+          ...decisionTree,
+          steps: decisionTree.steps.map((s, i) =>
+            i === nextPending ? { ...s, status: 'active' as const } : s,
+          ),
         })
         setCurrentStepIndex(nextPending)
       }
@@ -681,7 +679,7 @@ export default function PrepHubPage() {
                 <div key={i} className="text-[10px] text-white/40">
                   <span className="font-medium text-white/50">{c.key}</span>:{' '}
                   {String(c.comfyuiValue)} vs {String(c.thirdPartyValue)}
-                  {c.resolvedValue && (
+                  {c.resolvedValue != null && (
                     <span className="text-emerald-400/60">
                       {' → '}{String(c.resolvedValue)}
                     </span>

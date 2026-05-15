@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { BrainCircuit, Layers, FlaskConical, Paintbrush, ArrowRight, BoxSelect } from 'lucide-react'
@@ -25,7 +25,6 @@ export default function HomePage() {
   const { t } = useTranslation()
   const { isAuthenticated } = useAuth({ refreshOnMount: false })
   const loginPath = getAuthAwareLoginPath(isAuthenticated)
-  const [searchParams] = useSearchParams()
   const isDev = import.meta.env.DEV
   const devSuffix = '?dev=1'
 

@@ -13,6 +13,10 @@ export type ParsingSource = {
   thumbnailUrl?: string
   name?: string
   uploadedAt: string
+  assetId?: string
+  assetRelationId?: string
+  mimeType?: string
+  sourceRole?: 'sku' | 'reference'
 }
 
 export type ParsingStatus = 'idle' | 'parsing' | 'succeeded' | 'failed'

@@ -41,5 +41,5 @@ export function getCachedAuthSession(): AuthPayload | null {
 }
 
 export async function loadSession(): Promise<SessionPayload> {
-  return request<SessionPayload>('/api/v1/auth/session', { method: 'GET' })
+  return request<SessionPayload>('/api/v1/ecommerce/auth/session', { method: 'GET' })
 }

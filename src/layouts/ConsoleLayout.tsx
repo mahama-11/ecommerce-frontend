@@ -125,7 +125,7 @@ export default function ConsoleLayout() {
                       onClick={() => toggleSection(sectionLabel)}
                       className="sidebar-item w-full text-white/50"
                     >
-                      <span>{item.icon}</span>
+                      <span>{'icon' in item && typeof item.icon === 'string' ? item.icon : '▣'}</span>
                       {!compact && (
                         <>
                           <span className="flex-1 text-left">{sectionLabel}</span>
@@ -168,7 +168,7 @@ export default function ConsoleLayout() {
                     `sidebar-item${isActive ? ' active' : ''} text-white/50`
                   }
                 >
-                  <span>{item.icon}</span>
+                  <span>{'icon' in item && typeof item.icon === 'string' ? item.icon : '▣'}</span>
                   {!compact && <span>{t(item.labelKey)}</span>}
                 </NavLink>
               )

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Check,
@@ -15,10 +15,8 @@ import {
   ArrowUpRight,
   RotateCw,
   Save,
-  Layers,
   Plus,
   X,
-  ArrowLeft,
   Clock,
   Sparkles,
   MousePointerClick,
@@ -28,6 +26,7 @@ import { useWorkshopStore } from '@/store/productionStore'
 import * as productionApi from '@/services/production'
 import { useToastStore } from '@/store/toastStore'
 import type { AssetVariant, VersionNode } from '@/types/production'
+import { isDevMode } from '@/mocks/productionDemo'
 
 // ─── Mock Variant Images (placeholder URLs) ──────────────────
 
@@ -742,7 +741,6 @@ function AiAssistantBar({
 export default function WorkshopPage() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const toast = useToastStore()
 
   const {
@@ -777,17 +775,16 @@ export default function WorkshopPage() {
     return () => {}
   }, [id, productId, setProductId, reset])
 
-  // Load variants on mount
+  // Load backend variants. Only dev=1 may show placeholder variants.
   useEffect(() => {
     if (productId) {
       productionApi.listVariants(productId)
         .then((v) => {
-          if (v.length > 0) setVariants(v)
-          else setVariants(MOCK_VARIANTS)
+          setVariants(v.length > 0 ? v : (isDevMode() ? MOCK_VARIANTS : []))
         })
-        .catch(() => setVariants(MOCK_VARIANTS))
+        .catch(() => setVariants(isDevMode() ? MOCK_VARIANTS : []))
     } else {
-      setVariants(MOCK_VARIANTS)
+      setVariants(isDevMode() ? MOCK_VARIANTS : [])
     }
   }, [productId, setVariants])
 

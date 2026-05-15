@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -9,7 +9,6 @@ import {
   Loader2,
   AlertCircle,
   Trash2,
-  ArrowRight,
   ChevronDown,
   ChevronLeft,
   Hexagon,
@@ -27,6 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useSandboxStore } from '@/store/productionStore'
 import * as productionApi from '@/services/production'
 import { useToastStore } from '@/store/toastStore'
+import { isDevMode } from '@/mocks/productionDemo'
 import type {
   SceneTemplate,
   ModelOption,
@@ -226,7 +226,6 @@ export default function SandboxPage() {
     recognizedKeywords,
     strategySummary,
     setProductId,
-    setAssetTasks,
     addAssetTask,
     removeAssetTask,
     updateAssetTask,
@@ -253,12 +252,35 @@ export default function SandboxPage() {
     return () => {}
   }, [id, productId, setProductId, reset])
 
-  // Load mock strategy summary (in real flow, this comes from Prep Hub)
+  // Hydrate strategy summary and intents from backend stage-view. Only dev=1 may use the mock strategy.
   useEffect(() => {
-    if (productId && !strategySummary) {
+    if (!productId || strategySummary) return
+    if (isDevMode()) {
       setStrategySummary(MOCK_STRATEGY)
+      return
     }
-  }, [productId, strategySummary, setStrategySummary])
+    productionApi.listIntents(productId)
+      .then((intents) => {
+        store.setIntents(intents)
+        setStrategySummary({
+          overview: intents.length > 0
+            ? intents.map((intent) => intent.description).join('；')
+            : 'Backend stage-view has no compiled intent yet. Please complete Prep Hub parsing/selection before execution.',
+          attributes: intents.map((intent) => ({
+            key: intent.id,
+            label: intent.type,
+            value: intent.description,
+            icon: 'Sparkles',
+          })),
+        })
+      })
+      .catch((error) => {
+        setStrategySummary({
+          overview: error instanceof Error ? error.message : 'Failed to load backend strategy state.',
+          attributes: [],
+        })
+      })
+  }, [productId, strategySummary, setStrategySummary, store])
 
   // Recognize keywords when DIY prompt changes
   useEffect(() => {
@@ -314,9 +336,9 @@ export default function SandboxPage() {
     setExecuting(true)
     setIsRunning(true)
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      toast.showToast('生产任务已加入队列', 'success')
+      const selectedIntentIds = store.intents.map((intent) => intent.id)
+      const result = await productionApi.executeIntents(productId, selectedIntentIds, store.executionConfig ?? undefined)
+      toast.showToast(`生产任务已加入队列：${result.jobId}`, 'success')
       // Navigate to workshop after brief delay
       setTimeout(() => {
         navigate(`/products/${productId}/production/workshop`)
