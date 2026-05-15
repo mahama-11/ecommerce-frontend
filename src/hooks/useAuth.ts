@@ -8,6 +8,8 @@ export function useAuth(options?: { refreshOnMount?: boolean }) {
 
   useEffect(() => {
     if (options?.refreshOnMount === false) return
+    // Skip real session refresh in dev bypass mode
+    if (import.meta.env.DEV && window.location.search.includes('dev=1')) return
     void refreshAuthSession()
   }, [options?.refreshOnMount])
 

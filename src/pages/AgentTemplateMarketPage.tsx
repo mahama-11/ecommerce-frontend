@@ -127,7 +127,7 @@ function formatCount(value: number) {
 }
 
 function primaryPlatform(item: TemplateListItem) {
-  return item.platformTags[0] ?? 'official'
+  return item.platformTags?.[0] ?? 'official'
 }
 
 function formatFallbackLabel(raw: string) {
@@ -153,23 +153,24 @@ function displayFacetLabel(locale: Locale, bucket: CatalogFacetBucket) {
 }
 
 function readInputFields(detail: TemplateDetail | null) {
-  const fields = detail?.schema.inputSchema?.fields
+  const fields = detail?.schema?.inputSchema?.fields
   return Array.isArray(fields) ? fields : []
 }
 
 function readExecutionFlag(detail: TemplateDetail | null, key: 'route' | 'toolSlug') {
-  const value = detail?.schema.executionSchema?.[key]
+  const value = detail?.schema?.executionSchema?.[key]
   return typeof value === 'string' ? value : ''
 }
 
 function readBoolean(detail: TemplateDetail | null, key: 'supportsAsyncJob' | 'supportsBatch') {
-  const value = detail?.schema.executionSchema?.[key]
+  const value = detail?.schema?.executionSchema?.[key]
   return typeof value === 'boolean' ? value : false
 }
 
 function readOutputSummary(locale: Locale, detail: TemplateDetail | null) {
-  const primaryOutput = detail?.schema.outputSchema?.primaryOutput
-  const image = detail?.schema.outputSchema?.image
+  const schema = detail?.schema
+  const primaryOutput = schema?.outputSchema?.primaryOutput
+  const image = schema?.outputSchema?.image
   if (primaryOutput === 'image' && image && typeof image === 'object') {
     const imageConfig = image as Record<string, unknown>
     const count = typeof imageConfig.count === 'number' ? imageConfig.count : '-'
@@ -721,7 +722,7 @@ export default function AgentTemplateMarketPage() {
                         <p className="mb-4 text-xs text-white/50 line-clamp-2">{item.summary}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] text-white/40">
-                            {formatCount(item.useCount)} {copy(locale, '次使用', 'uses')}
+                            {formatCount(item.useCount ?? 0)} {copy(locale, '次使用', 'uses')}
                           </span>
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-brand-400 opacity-0 transition-opacity group-hover:opacity-100">
                             {copy(locale, '查看详情', 'View More')} <ArrowRight className="h-3 w-3" />
@@ -900,7 +901,7 @@ export default function AgentTemplateMarketPage() {
                     <p className="mb-4 line-clamp-3 text-sm leading-6 text-white/55">{card.summary}</p>
 
                     <div className="mb-4 flex flex-wrap gap-2">
-                      {[...card.platformTags, ...card.industryTags].slice(0, 4).map(tag => (
+                      {[...(card.platformTags ?? []), ...(card.industryTags ?? [])].slice(0, 4).map(tag => (
                         <span key={tag} className="rounded-full border border-brand-500/20 bg-brand-500/10 px-2.5 py-1 text-[11px] text-brand-300">
                           {displayTerm(locale, tag)}
                         </span>
@@ -913,7 +914,7 @@ export default function AgentTemplateMarketPage() {
 
                     <div className="flex items-center justify-between text-xs text-white/35">
                       <span>{copy(locale, '累计使用', 'Usage')}</span>
-                      <span>{formatCount(card.useCount)}</span>
+                      <span>{formatCount(card.useCount ?? 0)}</span>
                     </div>
 
                     <div className="mt-5 grid grid-cols-2 gap-2">
@@ -987,20 +988,20 @@ export default function AgentTemplateMarketPage() {
                     {copy(locale, '示例素材', 'Examples')}
                   </div>
                   <div className="grid gap-3">
-                    {selectedDetail.examples.slice(0, 3).map(example => (
-                      <div key={example.id} className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#080b12]">
-                        {example.previewAssetUrl && (
+                    {selectedDetail.examples.slice(0, 3).map((example, idx) => (
+                      <div key={(example as Record<string, unknown>).id as string ?? idx} className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#080b12]">
+                        {(example as Record<string, unknown>).previewAssetUrl ? (
                           <img
-                            src={example.previewAssetUrl}
-                            alt={example.title || selectedTemplate.name}
+                            src={(example as Record<string, unknown>).previewAssetUrl as string}
+                            alt={((example as Record<string, unknown>).title as string) || selectedTemplate.name}
                             className="max-h-[22rem] w-full object-contain p-2"
                           />
-                        )}
+                        ) : null}
                         <div className="p-3">
                           <div className="text-sm font-medium text-white/75">
-                            {example.title || copy(locale, '示例预览', 'Example Preview')}
+                            {((example as Record<string, unknown>).title as string) || copy(locale, '示例预览', 'Example Preview')}
                           </div>
-                          <div className="mt-1 text-xs text-white/40">{displayTerm(locale, example.exampleType)}</div>
+                          <div className="mt-1 text-xs text-white/40">{displayTerm(locale, (example as Record<string, unknown>).exampleType as string | null | undefined)}</div>
                         </div>
                       </div>
                     ))}
@@ -1009,7 +1010,7 @@ export default function AgentTemplateMarketPage() {
               ) : null}
 
               <div className="flex flex-wrap gap-2">
-                {[...selectedTemplate.platformTags, ...selectedTemplate.industryTags, ...selectedTemplate.scenarioTags].slice(0, 8).map(tag => (
+                {[...(selectedTemplate.platformTags ?? []), ...(selectedTemplate.industryTags ?? []), ...(selectedTemplate.scenarioTags ?? [])].slice(0, 8).map(tag => (
                   <span key={tag} className="rounded-full border border-brand-500/20 bg-brand-500/10 px-2.5 py-1 text-[11px] text-brand-300">
                     {displayTerm(locale, tag)}
                   </span>
@@ -1023,32 +1024,32 @@ export default function AgentTemplateMarketPage() {
                 <div className="text-sm leading-6 text-white/50">
                   {detailLoading
                     ? copy(locale, '正在加载详情...', 'Loading detail...')
-                    : selectedDetail?.locale.scenarioDescription || selectedDetail?.locale.description || selectedTemplate.summary}
+                    : selectedDetail?.locale?.scenarioDescription || selectedDetail?.locale?.description || selectedTemplate.summary}
                 </div>
               </div>
 
-              {selectedDetail?.locale.inputDescription && (
+              {selectedDetail?.locale?.inputDescription && (
                 <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
                   <div className="mb-2 text-sm font-medium text-white/75">
                     {copy(locale, '输入说明', 'Input Guidance')}
                   </div>
-                  <div className="text-sm leading-6 text-white/50">{selectedDetail.locale.inputDescription}</div>
+                  <div className="text-sm leading-6 text-white/50">{selectedDetail.locale?.inputDescription}</div>
                 </div>
               )}
 
-              {selectedDetail?.locale.outputDescription && (
+              {selectedDetail?.locale?.outputDescription && (
                 <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
                   <div className="mb-2 text-sm font-medium text-white/75">
                     {copy(locale, '输出说明', 'Output Guidance')}
                   </div>
-                  <div className="text-sm leading-6 text-white/50">{selectedDetail.locale.outputDescription}</div>
+                  <div className="text-sm leading-6 text-white/50">{selectedDetail.locale?.outputDescription}</div>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
                   <div className="text-white/35">{copy(locale, '累计使用', 'Usage')}</div>
-                  <div className="mt-1 font-semibold text-white">{formatCount(selectedTemplate.useCount)}</div>
+                  <div className="mt-1 font-semibold text-white">{formatCount(selectedTemplate.useCount ?? 0)}</div>
                 </div>
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-3">
                   <div className="text-white/35">{copy(locale, '模板评分', 'Rating')}</div>
@@ -1061,14 +1062,14 @@ export default function AgentTemplateMarketPage() {
                   {copy(locale, '模板状态', 'Template Status')}
                 </div>
                 <div className="space-y-2 text-sm text-white/50">
-                  <div>{copy(locale, `版本: ${selectedDetail?.version.versionLabel ?? 'v1'}`, `Version: ${selectedDetail?.version.versionLabel ?? 'v1'}`)}</div>
+                  <div>{copy(locale, `版本: ${selectedDetail?.version?.versionLabel ?? 'v1'}`, `Version: ${selectedDetail?.version?.versionLabel ?? 'v1'}`)}</div>
                   <div>{copy(locale, `执行器: ${displayTerm(locale, selectedTemplate.executorType)}`, `Executor: ${displayTerm(locale, selectedTemplate.executorType)}`)}</div>
                   <div>{copy(locale, `模态: ${displayTerm(locale, selectedTemplate.modality)}`, `Modality: ${displayTerm(locale, selectedTemplate.modality)}`)}</div>
                   <div>{copy(locale, `系列: ${displayTerm(locale, selectedTemplate.series)}`, `Series: ${displayTerm(locale, selectedTemplate.series)}`)}</div>
                   <div>{copy(locale, `能力: ${displayTerm(locale, selectedTemplate.capabilityType)}`, `Capability: ${displayTerm(locale, selectedTemplate.capabilityType)}`)}</div>
                   <div>{copy(locale, `交互方式: ${displayTerm(locale, selectedTemplate.interactionMode)}`, `Interaction Mode: ${displayTerm(locale, selectedTemplate.interactionMode)}`)}</div>
                   <div>{copy(locale, `目标路由: ${readExecutionFlag(selectedDetail, 'route') || '-'}`, `Target route: ${readExecutionFlag(selectedDetail, 'route') || '-'}`)}</div>
-                  {selectedDetail?.version.sourceAssetRef && (
+                  {selectedDetail?.version?.sourceAssetRef && (
                     <div className="break-all">
                       {copy(locale, `来源规范: ${selectedDetail.version.sourceAssetRef}`, `Spec source: ${selectedDetail.version.sourceAssetRef}`)}
                     </div>

@@ -9,6 +9,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Globe,
+  BrainCircuit,
 } from 'lucide-react'
 import { NAV_TOOL_GROUPS, getLocalizedTool } from '@/mock/data'
 import UserAccountMenu from '@/components/account/UserAccountMenu'
@@ -101,6 +102,11 @@ export default function ConsoleLayout() {
       </div>
 
       <nav className="flex-1 overflow-y-auto scrollbar-hide px-3 pb-4">
+        <NavLink to="/products" className="sidebar-item text-white/50" onClick={() => setMobileOpen(false)}>
+          <BrainCircuit className="h-4 w-4" />
+          {!compact && <span>{t('productCenter.shell.production')}</span>}
+        </NavLink>
+        <div className="my-3 border-t border-white/[0.06]" />
         {NAV_TOOL_GROUPS.map(group => (
           <div key={group.label} className="mb-4">
             {!compact && (

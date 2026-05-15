@@ -310,7 +310,7 @@ function ProductListPage() {
           </div>
           {[
             ['all', '全部'],
-            ['visual', '缺素材'],
+            ['production', '缺素材'],
             ['listing', '待 Listing'],
             ['export', '可导出'],
             ['delivery', '交付中心'],
@@ -349,7 +349,7 @@ function ProductListPage() {
                       <div className="text-xs text-white/38">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</div>
                       <div className="flex flex-wrap gap-1.5">
                         <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#05070b] transition hover:bg-cyan-100">详情</Link>
-                        <Link to={unit.nextBestAction.href} onClick={event => event.stopPropagation()} className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold transition ${unit.nextBestAction.station === 'visual' || unit.nextBestAction.station === 'listing' ? 'bg-cyan-200 text-[#05070b] hover:bg-white' : 'border border-white/[0.08] bg-white/[0.04] text-white/72 hover:bg-white/[0.08]'}`}>{unit.nextBestAction.label.replace('Route to Visual Station', '生成素材').replace('Route to Listing Station', '生成 Listing').replace('Route to Delivery Station', '查看下载').replace('Open Export Handoff', '创建导出任务')}</Link>
+                        <Link to={unit.nextBestAction.href} onClick={event => event.stopPropagation()} className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold transition ${unit.nextBestAction.station === 'visual' || unit.nextBestAction.station === 'listing' ? 'bg-cyan-200 text-[#05070b] hover:bg-white' : 'border border-white/[0.08] bg-white/[0.04] text-white/72 hover:bg-white/[0.08]'}`}>{unit.nextBestAction.label.replace('Route to Visual Station', '进入生产线').replace('Route to Listing Station', '生成 Listing').replace('Route to Delivery Station', '查看下载').replace('Open Export Handoff', '创建导出任务')}</Link>
                       </div>
                     </div>
                   )
@@ -366,7 +366,7 @@ function ProductListPage() {
             <Link to={selectedUnits.length ? `/products/workbench/batch-listing?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>批量生成 Listing</Link>
             <button disabled className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-1.5 text-xs font-semibold text-white/25">批量 Adopt</button>
             <Link to={selectedUnits.length ? `/products/workbench/downloads?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>批量导出</Link>
-            <Link to={selectedUnits[0] ? `/products/${selectedUnits[0].product.id}/ai/ai-product` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>打开视觉工作区</Link>
+            <Link to={selectedUnits[0] ? `/products/${selectedUnits[0].product.id}/production/prep` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>进入生产线</Link>
             <span className="text-xs text-white/34">真实后端未接的批量动作保持 disabled / contract-needed。</span>
           </div>
         </motion.section>
@@ -376,7 +376,7 @@ function ProductListPage() {
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <StationCard code="SKU" title="SKU 详情 / 生产中心" desc="基础信息、素材、Listing、利润、导出、状态总览" status="业务锚点页面" tone="info" href={focusedUnit ? `/products/${focusedUnit.product.id}` : '/products'} />
             <StationCard code="LST" title="批量 Listing" desc="选择 SKU → 配置模板 → 生成/预览 → 校验 → 创建版本 → Adopt/导出" status={`${products.reduce((sum, item) => sum + item.listingVersionsCount, 0)} versions live`} tone="draft" href={focusedUnit ? `/products/workbench/batch-listing?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/batch-listing'} />
-            <StationCard code="VIS" title="视觉工作区" desc="SKU 绑定生成、素材角色、任务队列、结果回流 SKU.assets" status="Video contract needed" tone="blocked" href={focusedUnit ? `/products/${focusedUnit.product.id}/ai/ai-product` : '/products/workbench/visual-tools'} />
+            <StationCard code="PROD" title="AI 生产线" desc="Prep → Sandbox → Workshop：解析、执行、迭代" status="Intent-driven pipeline" tone="info" href={focusedUnit ? `/products/${focusedUnit.product.id}/production/prep` : '/products'} />
             <StationCard code="DLV" title="交付中心" desc="导出任务队列、下载追踪、包完整性校验" status="real DownloadRecord gate" tone="ready" href={focusedUnit ? `/products/workbench/downloads?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/downloads'} />
           </div>
         </motion.section>

@@ -266,36 +266,36 @@ export function getLocalizedPricingPlan(plan: PricingPlan, language: string): Pr
 }
 
 export const TOOL_CATEGORIES = [
-  { key: 'model', label: '模特图系列', labelKey: 'toolCategories.model', icon: '👤', color: 'from-pink-500/20 to-rose-600/10' },
-  { key: 'product', label: '商品图系列', labelKey: 'toolCategories.product', icon: '📦', color: 'from-blue-500/20 to-cyan-600/10' },
-  { key: 'suite', label: '套图系列', labelKey: 'toolCategories.suite', icon: '🖼️', color: 'from-purple-500/20 to-violet-600/10' },
-  { key: 'video', label: 'AI 视频', labelKey: 'toolCategories.video', icon: '🎬', color: 'from-red-500/20 to-orange-600/10' },
-  { key: 'designer', label: '设计器', labelKey: 'toolCategories.designer', icon: '🎨', color: 'from-emerald-500/20 to-teal-600/10' },
+  { key: 'model', label: '模特图系列', labelKey: 'toolCategories.model', color: 'from-pink-500/20 to-rose-600/10' },
+  { key: 'product', label: '商品图系列', labelKey: 'toolCategories.product', color: 'from-blue-500/20 to-cyan-600/10' },
+  { key: 'suite', label: '套图系列', labelKey: 'toolCategories.suite', color: 'from-purple-500/20 to-violet-600/10' },
+  { key: 'video', label: 'AI 视频', labelKey: 'toolCategories.video', color: 'from-red-500/20 to-orange-600/10' },
+  { key: 'designer', label: '设计器', labelKey: 'toolCategories.designer', color: 'from-emerald-500/20 to-teal-600/10' },
 ] as const
 
 export const TOOLS: ToolDef[] = [
-  { id: 't1', slug: 'changing-model', name: '真人换模特', desc: '上传真人试穿图 → 换脸换肤为不同人种模特', icon: '👤', category: 'model', complexity: 5, tags: ['服装', '换脸', 'V2.0'] },
-  { id: 't2', slug: 'changing-mannequin', name: '人台换模特', desc: '上传人台假模特图 → 生成真人模特效果', icon: '🧍', category: 'model', complexity: 5, tags: ['人台', '全身', '场景'] },
-  { id: 't3', slug: 'changing-bg', name: '换背景', desc: '上传真人棚拍图 → 替换为各种场景背景', icon: '🌄', category: 'model', complexity: 4, tags: ['背景', '场景', '棚拍'] },
-  { id: 't4', slug: 'ai-dressing', name: 'AI穿衣', desc: '上传平铺服装 → 一键生成穿衣上身效果', icon: '👗', category: 'model', complexity: 5, tags: ['穿衣', '上下装', '连体衣'] },
-  { id: 't5', slug: 'ai-wearable', name: '穿戴商品', desc: '上传手表/项链/耳环 → 生成模特穿戴特写图', icon: '⌚', category: 'model', complexity: 4, tags: ['穿戴', '首饰', '特写'] },
-  { id: 't6', slug: 'ai-posture', name: '姿势裂变', desc: '1张模特图 → N种不同姿势的套图', icon: '🤸', category: 'model', complexity: 4, tags: ['姿势', '裂变', '套图'] },
+  { id: 't1', slug: 'changing-model', name: '真人换模特', desc: '上传真人试穿图 → 换脸换肤为不同人种模特', category: 'model', complexity: 5, tags: ['服装', '换脸', 'V2.0'] },
+  { id: 't2', slug: 'changing-mannequin', name: '人台换模特', desc: '上传人台假模特图 → 生成真人模特效果', category: 'model', complexity: 5, tags: ['人台', '全身', '场景'] },
+  { id: 't3', slug: 'changing-bg', name: '换背景', desc: '上传真人棚拍图 → 替换为各种场景背景', category: 'model', complexity: 4, tags: ['背景', '场景', '棚拍'] },
+  { id: 't4', slug: 'ai-dressing', name: 'AI穿衣', desc: '上传平铺服装 → 一键生成穿衣上身效果', category: 'model', complexity: 5, tags: ['穿衣', '上下装', '连体衣'] },
+  { id: 't5', slug: 'ai-wearable', name: '穿戴商品', desc: '上传手表/项链/耳环 → 生成模特穿戴特写图', category: 'model', complexity: 4, tags: ['穿戴', '首饰', '特写'] },
+  { id: 't6', slug: 'ai-posture', name: '姿势裂变', desc: '1张模特图 → N种不同姿势的套图', category: 'model', complexity: 4, tags: ['姿势', '裂变', '套图'] },
 
-  { id: 't7', slug: 'ai-product', name: '商品场景合成', desc: '上传商品图 → AI合成到海量预设场景中', icon: '🎯', category: 'product', complexity: 4, tags: ['场景', '合成', '全品类'] },
-  { id: 't8', slug: 'product-replacement', name: '商品替换', desc: '上传参考图 → 替换其中的商品为自己的产品', icon: '🔄', category: 'product', complexity: 4, tags: ['替换', '透视', '参考图'] },
-  { id: 't9', slug: 'image-fission', name: '场景裂变', desc: '上传1张场景参考图 → 裂变出N张类似场景', icon: '✨', category: 'product', complexity: 3, tags: ['裂变', '相似', '批量'] },
-  { id: 't10', slug: 'scene-image', name: '场景素材生成', desc: '文字描述 → 生成场景背景图', icon: '🖌️', category: 'product', complexity: 3, tags: ['文生图', '场景', '背景'] },
-  { id: 't11', slug: 'handheld-goods', name: '手持商品', desc: '上传商品图 → 生成模特手持商品效果', icon: '🤲', category: 'product', complexity: 4, tags: ['手持', '模特', '商品'] },
+  { id: 't7', slug: 'ai-product', name: '商品场景合成', desc: '上传商品图 → AI合成到海量预设场景中', category: 'product', complexity: 4, tags: ['场景', '合成', '全品类'] },
+  { id: 't8', slug: 'product-replacement', name: '商品替换', desc: '上传参考图 → 替换其中的商品为自己的产品', category: 'product', complexity: 4, tags: ['替换', '透视', '参考图'] },
+  { id: 't9', slug: 'image-fission', name: '场景裂变', desc: '上传1张场景参考图 → 裂变出N张类似场景', category: 'product', complexity: 3, tags: ['裂变', '相似', '批量'] },
+  { id: 't10', slug: 'scene-image', name: '场景素材生成', desc: '文字描述 → 生成场景背景图', category: 'product', complexity: 3, tags: ['文生图', '场景', '背景'] },
+  { id: 't11', slug: 'handheld-goods', name: '手持商品', desc: '上传商品图 → 生成模特手持商品效果', category: 'product', complexity: 4, tags: ['手持', '模特', '商品'] },
 
-  { id: 't12', slug: 'clothing-image-suite', name: '服装套图', desc: '上传≤6张服装图 → 一键生成模特图+种草图+卖点图+A+图', icon: '👔', category: 'suite', complexity: 5, tags: ['服装', '一站式', '品牌'] },
-  { id: 't13', slug: 'product-image-suite', name: '商品套图', desc: '上传多视角商品图 → 生成A+图+卖点图+白底图+场景图', icon: '📸', category: 'suite', complexity: 5, tags: ['商品', '多图', '品牌'] },
+  { id: 't12', slug: 'clothing-image-suite', name: '服装套图', desc: '上传≤6张服装图 → 一键生成模特图+种草图+卖点图+A+图', category: 'suite', complexity: 5, tags: ['服装', '一站式', '品牌'] },
+  { id: 't13', slug: 'product-image-suite', name: '商品套图', desc: '上传多视角商品图 → 生成A+图+卖点图+白底图+场景图', category: 'suite', complexity: 5, tags: ['商品', '多图', '品牌'] },
 
-  { id: 't14', slug: 'video', name: '图生视频', desc: '上传参考图+prompt → AI生成5秒视频', icon: '🎥', category: 'video', complexity: 5, tags: ['视频', 'AI', '5秒'] },
-  { id: 't15', slug: 'batch-generate-videos', name: '批量生成视频', desc: '批量上传视频 → 风格转换(平面/色彩/动漫)', icon: '🎞️', category: 'video', complexity: 4, tags: ['批量', '风格', '转换'] },
-  { id: 't16', slug: 'video-concat', name: '视频拼接', desc: '选择2-4个视频片段 → 一键拼接成品视频', icon: '🔗', category: 'video', complexity: 2, tags: ['拼接', '剪辑', '成品'] },
+  { id: 't14', slug: 'video', name: '图生视频', desc: '上传参考图+prompt → AI生成5秒视频', category: 'video', complexity: 5, tags: ['视频', 'AI', '5秒'] },
+  { id: 't15', slug: 'batch-generate-videos', name: '批量生成视频', desc: '批量上传视频 → 风格转换(平面/色彩/动漫)', category: 'video', complexity: 4, tags: ['批量', '风格', '转换'] },
+  { id: 't16', slug: 'video-concat', name: '视频拼接', desc: '选择2-4个视频片段 → 一键拼接成品视频', category: 'video', complexity: 2, tags: ['拼接', '剪辑', '成品'] },
 
-  { id: 't17', slug: 'designer-home', name: '设计器', desc: '图片设计器, 按类型/品类/版式筛选模板', icon: '🎨', category: 'designer', complexity: 4, tags: ['设计', '模板', '版式'] },
-  { id: 't18', slug: 'product-refine', name: '商品精修', desc: '一键提升商品图片质感', icon: '💎', category: 'product', complexity: 3, tags: ['精修', '质感', '增强'] },
+  { id: 't17', slug: 'designer-home', name: '设计器', desc: '图片设计器, 按类型/品类/版式筛选模板', category: 'designer', complexity: 4, tags: ['设计', '模板', '版式'] },
+  { id: 't18', slug: 'product-refine', name: '商品精修', desc: '一键提升商品图片质感', category: 'product', complexity: 3, tags: ['精修', '质感', '增强'] },
 ]
 
 export const SOLUTIONS: SolutionDef[] = [
@@ -357,29 +357,29 @@ export const NAV_TOOL_GROUPS = [
     label: 'AI 视觉生成',
     labelKey: 'navGroups.visual',
     items: [
-      { label: '模特图系列', labelKey: 'toolCategories.model', icon: '👤', children: TOOLS.filter(t => t.category === 'model') },
-      { label: '商品图系列', labelKey: 'toolCategories.product', icon: '📦', children: TOOLS.filter(t => t.category === 'product') },
-      { label: '套图系列', labelKey: 'toolCategories.suite', icon: '🖼️', children: TOOLS.filter(t => t.category === 'suite') },
-      { label: 'AI 视频', labelKey: 'toolCategories.video', icon: '🎬', children: TOOLS.filter(t => t.category === 'video') },
+      { label: '模特图系列', labelKey: 'toolCategories.model', children: TOOLS.filter(t => t.category === 'model') },
+      { label: '商品图系列', labelKey: 'toolCategories.product', children: TOOLS.filter(t => t.category === 'product') },
+      { label: '套图系列', labelKey: 'toolCategories.suite', children: TOOLS.filter(t => t.category === 'suite') },
+      { label: 'AI 视频', labelKey: 'toolCategories.video', children: TOOLS.filter(t => t.category === 'video') },
     ],
   },
   {
     label: 'AI 智能运营',
     labelKey: 'navGroups.ops',
     items: [
-      { label: 'AI对话', labelKey: 'pages.chat', icon: '💬', path: '/chat' },
-      { label: 'AI Agent模板', labelKey: 'pages.aiChatTemplate', icon: '🤖', path: '/aiChat/template' },
-      { label: '分析记录', labelKey: 'pages.aiChatAnalysisRecords', icon: '📊', path: '/aiChat/analysisRecords' },
+      { label: 'AI对话', labelKey: 'pages.chat', path: '/chat' },
+      { label: 'AI Agent模板', labelKey: 'pages.aiChatTemplate', path: '/aiChat/template' },
+      { label: '分析记录', labelKey: 'pages.aiChatAnalysisRecords', path: '/aiChat/analysisRecords' },
     ],
   },
   {
     label: '数据资料库',
     labelKey: 'navGroups.data',
     items: [
-      { label: '资产库', labelKey: 'pages.assetLibrary', icon: '🖼️', path: '/account/assets' },
-      { label: '商品模板', labelKey: 'pages.productTemplates', icon: '📋', path: '/account/templates' },
-      { label: '智能知识库', labelKey: 'pages.databaseKnowledge', icon: '📖', path: '/database/knowledge' },
-      { label: '品牌库', labelKey: 'pages.brandLibrary', icon: '🏷️', path: '/brandLibrary' },
+      { label: '资产库', labelKey: 'pages.assetLibrary', path: '/account/assets' },
+      { label: '商品模板', labelKey: 'pages.productTemplates', path: '/account/templates' },
+      { label: '智能知识库', labelKey: 'pages.databaseKnowledge', path: '/database/knowledge' },
+      { label: '品牌库', labelKey: 'pages.brandLibrary', path: '/brandLibrary' },
     ],
   },
 ]

@@ -9,6 +9,7 @@ const ConsoleLayout = lazy(() => import('@/layouts/ConsoleLayout'))
 const AccountLayout = lazy(() => import('@/layouts/AccountLayout'))
 const OrgLayout = lazy(() => import('@/layouts/OrgLayout'))
 const ProductWorkbenchLayout = lazy(() => import('@/layouts/ProductWorkbenchLayout'))
+const ProductionLayout = lazy(() => import('@/layouts/ProductionLayout'))
 const HomePage = lazy(() => import('@/pages/HomePage'))
 const PricingPage = lazy(() => import('@/pages/PricingPage'))
 const SolutionDetailPage = lazy(() => import('@/pages/SolutionDetailPage'))
@@ -44,6 +45,9 @@ const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'))
 const ProductListPage = lazy(() => import('@/pages/product/ProductListPage'))
 const ProductDetailPage = lazy(() => import('@/pages/product/ProductDetailPage'))
+const PrepHubPage = lazy(() => import('@/pages/production/PrepHubPage'))
+const SandboxPage = lazy(() => import('@/pages/production/SandboxPage'))
+const WorkshopPage = lazy(() => import('@/pages/production/WorkshopPage'))
 
 function Fallback() {
   return (
@@ -93,6 +97,15 @@ const productWorkbenchPage = (children: RouteObject[]): RouteObject => ({
   }],
 })
 
+const productionPage = (children: RouteObject[]): RouteObject => ({
+  element: <S><RequireAuth /></S>,
+  children: [{
+    path: '/products/:id/production',
+    element: <S><ProductionLayout /></S>,
+    children,
+  }],
+})
+
 export const router = createBrowserRouter([
   {
     element: <S><PortalLayout /></S>,
@@ -131,7 +144,7 @@ export const router = createBrowserRouter([
   { path: '/database/tagManage', ...consolePage(AssetCommercePage) },
   { path: '/draw/scene-reference', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/product-home', element: <Navigate to="/products" replace /> },
-  { path: '/draw/product-records', element: <Navigate to="/products/workbench/visual-tools" replace /> },
+  { path: '/draw/product-records', element: <Navigate to="/products" replace /> },
   { path: '/draw/designer-home', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/my-design', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/my-template', ...consolePage(DesignWorkbenchPage) },
@@ -141,14 +154,20 @@ export const router = createBrowserRouter([
     { index: true, element: <S><ProductListPage /></S> },
     { path: 'workbench', element: <Navigate to="/products" replace /> },
     { path: 'downloads', element: <Navigate to="/products/workbench/downloads" replace /> },
-    { path: 'visual-tools', element: <Navigate to="/products/workbench/visual-tools" replace /> },
+    { path: 'visual-tools', element: <Navigate to="/products" replace /> },
     { path: 'batch-listing', element: <Navigate to="/products/workbench/batch-listing" replace /> },
     { path: ':id', element: <S><ProductDetailPage /></S> },
     { path: 'workbench/batch-listing', element: <S><BatchListingPage /></S> },
-    { path: 'workbench/visual-tools', element: <S><ProductVisualToolsPage /></S> },
-    { path: 'workbench/visual-tools/:toolSlug', element: <S><ProductVisualToolsPage /></S> },
+    { path: 'workbench/visual-tools', element: <Navigate to="/products" replace /> },
+    { path: 'workbench/visual-tools/:toolSlug', element: <Navigate to="/products" replace /> },
     { path: 'workbench/downloads', element: <S><AccountDownloadsPage /></S> },
-    { path: ':productId/ai/:toolSlug', element: <S><ProductAiWorkspacePage /></S> },
+    { path: ':productId/ai/:toolSlug', element: <Navigate to="/products/:productId/production/prep" replace /> },
+  ]),
+  // V2 Production Pipeline (intent-driven)
+  productionPage([
+    { path: 'prep', element: <S><PrepHubPage /></S> },
+    { path: 'sandbox', element: <S><SandboxPage /></S> },
+    { path: 'workshop', element: <S><WorkshopPage /></S> },
   ]),
   { path: '/settings/profile', element: <Navigate to="/account/profile" replace /> },
   { path: '/settings/personal', element: <Navigate to="/account/assets" replace /> },

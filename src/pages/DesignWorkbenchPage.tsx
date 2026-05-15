@@ -433,7 +433,7 @@ export default function DesignWorkbenchPage() {
       id: `design-template-${selectedAsset.id}`,
       platform: 'amazon',
       tags: ['design', 'visual', 'bridge'],
-      usageCount: '860',
+      usageCount: 860,
       favorite: 4.7,
       savedAt: new Date().toISOString(),
       sourceType: 'design',

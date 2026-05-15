@@ -26,7 +26,7 @@ export default function UserSummaryCard({
     {
       icon: CreditCard,
       label: t('account.billing.stats.remainingCredits'),
-      value: `${credits?.balance ?? 0}`,
+      value: `${(credits as Record<string, unknown> | undefined)?.balance ?? 0}`,
     },
     {
       icon: Shield,

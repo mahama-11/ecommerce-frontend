@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Outlet, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Menu, X, ChevronDown, Layers, Zap, Globe } from 'lucide-react'
+import { Menu, X, ChevronDown, Layers, Zap, Globe, BrainCircuit } from 'lucide-react'
 import { NAV_TOOL_GROUPS, TOOL_CATEGORIES, TOOLS, getLocalizedTool } from '@/mock/data'
 import { useAuth } from '@/hooks/useAuth'
 import UserAccountMenu, { getUserDisplayName } from '@/components/account/UserAccountMenu'
@@ -111,6 +111,15 @@ export default function PortalLayout() {
               >
                 <div className="w-[680px] rounded-2xl border border-white/[0.12] bg-[#0d1018]/98 p-5 shadow-[0_24px_80px_rgba(2,6,23,0.7)] backdrop-blur-2xl flex gap-5">
                   <div className="w-48 shrink-0 space-y-1">
+                    <Link
+                      to="/products"
+                      onClick={() => setMegaOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-brand-500/15 text-brand-400"
+                    >
+                      <BrainCircuit className="w-4 h-4" />
+                      <span className="font-medium text-sm">{t('home.dashboard.hero_title')} {t('home.dashboard.hero_highlight')}</span>
+                    </Link>
+                    <div className="my-2 border-t border-white/[0.06]" />
                     {TOOL_CATEGORIES.map(cat => (
                       <button
                         key={cat.key}
@@ -121,7 +130,6 @@ export default function PortalLayout() {
                             : 'text-white/60 hover:bg-white/[0.04] hover:text-white/80'
                         }`}
                       >
-                        <span>{cat.icon}</span>
                         <span>{t(cat.labelKey)}</span>
                       </button>
                     ))}
@@ -138,7 +146,6 @@ export default function PortalLayout() {
                           onClick={() => setMegaOpen(false)}
                           className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/[0.06] hover:text-white transition-colors group"
                         >
-                          <span className="text-base">{localizedTool.icon}</span>
                           <div className="min-w-0">
                             <div className="font-medium text-white/80 group-hover:text-white truncate">{localizedTool.name}</div>
                             <div className="text-xs text-white/30 truncate">{localizedTool.desc}</div>
@@ -219,7 +226,6 @@ export default function PortalLayout() {
                           onClick={() => setMobileOpen(false)}
                           className="sidebar-item"
                         >
-                          <span>{tool.icon}</span>
                           <span>{getLocalizedTool(tool, language).name}</span>
                         </Link>
                       ))
@@ -231,7 +237,6 @@ export default function PortalLayout() {
                         onClick={() => setMobileOpen(false)}
                         className="sidebar-item"
                       >
-                        <span>{item.icon}</span>
                         <span>{t(item.labelKey)}</span>
                       </Link>
                     )

@@ -1,240 +1,168 @@
-import { useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import {
-  Sparkles,
-  Play,
-  ArrowRight,
-  Zap,
-  Users,
-  ImagePlus,
-  Wrench,
-  Clock,
-  Check,
-} from 'lucide-react'
-import {
-  SOLUTIONS,
-  getLocalizedSolution,
-} from '@/mock/data'
+import { motion } from 'framer-motion'
+import { BrainCircuit, Layers, FlaskConical, Paintbrush, ArrowRight, BoxSelect } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { getAuthAwareStartPath, getWorkbenchEntryPath } from '@/utils/authNavigation'
-import PricingPlanGrid from '@/components/pricing/PricingPlanGrid'
+import { getAuthAwareLoginPath } from '@/utils/authNavigation'
 
-const STATS_KEYS = [
-  { valueKey: 'home.stats.sellers_value', labelKey: 'home.stats.sellers', icon: Users },
-  { valueKey: 'home.stats.images_value', labelKey: 'home.stats.images', icon: ImagePlus },
-  { valueKey: 'home.stats.tools_value', labelKey: 'home.stats.tools', icon: Wrench },
-  { valueKey: 'home.stats.speed_value', labelKey: 'home.stats.speed', icon: Clock },
-] as const
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0 },
+}
 
-const MARQUEE_KEYS = [
-  'home.marquee.sellers_trust',
-  'home.marquee.ai_images',
-  'home.marquee.rating',
-  'home.marquee.speed',
-  'home.marquee.tools',
-  'home.marquee.global',
+const stagger = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.12 } },
+}
+
+const PIPELINE_STEPS = [
+  { icon: Layers, titleKey: 'home.dashboard.step_prep_title', descKey: 'home.dashboard.step_prep_desc', color: 'from-cyan-400/15 to-cyan-600/5', border: 'border-cyan-400/20', iconColor: 'text-cyan-300' },
+  { icon: FlaskConical, titleKey: 'home.dashboard.step_sandbox_title', descKey: 'home.dashboard.step_sandbox_desc', color: 'from-violet-400/15 to-violet-600/5', border: 'border-violet-400/20', iconColor: 'text-violet-300' },
+  { icon: Paintbrush, titleKey: 'home.dashboard.step_workshop_title', descKey: 'home.dashboard.step_workshop_desc', color: 'from-emerald-400/15 to-emerald-600/5', border: 'border-emerald-400/20', iconColor: 'text-emerald-300' },
 ] as const
 
 export default function HomePage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { isAuthenticated } = useAuth({ refreshOnMount: false })
-  const language = i18n.resolvedLanguage ?? i18n.language
-  const locale: 'zh' | 'en' = language.startsWith('en') ? 'en' : 'zh'
-  const startPath = getAuthAwareStartPath(isAuthenticated)
-  const workbenchPath = getWorkbenchEntryPath()
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible')
-          }
-        })
-      },
-      { threshold: 0.1 },
-    )
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el))
-    return () => observer.disconnect()
-  }, [])
+  const loginPath = getAuthAwareLoginPath(isAuthenticated)
+  const [searchParams] = useSearchParams()
+  const isDev = import.meta.env.DEV
+  const devSuffix = '?dev=1'
 
   return (
-    <div>
-      {/* ── Hero ── */}
-      <section className="relative min-h-[calc(100vh-72px)] flex items-center justify-center px-4 sm:px-6 pt-24 pb-32">
-        <div className="glow-orb w-[600px] h-[600px] bg-brand-500/20 -top-40 -left-40" />
-        <div className="glow-orb w-[500px] h-[500px] bg-accent-500/15 -bottom-32 -right-32" />
-        <div className="glow-orb w-[300px] h-[300px] bg-pink-500/10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+    <motion.div variants={stagger} initial="hidden" animate="show" className="relative min-h-screen bg-[#0a0a12] text-[#e8eaf0] overflow-hidden">
+      {/* Background glow */}
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute left-[-20rem] top-[-16rem] h-[36rem] w-[36rem] rounded-full bg-cyan-400/8 blur-3xl" />
+        <div className="absolute right-[-14rem] top-[24rem] h-[30rem] w-[30rem] rounded-full bg-violet-400/6 blur-3xl" />
+        <div className="absolute left-[40%] bottom-[-12rem] h-[24rem] w-[24rem] rounded-full bg-emerald-400/5 blur-3xl" />
+      </div>
 
-        <div className="relative z-0 max-w-6xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 glass rounded-full px-4 py-2 mb-8 animate-slide-up">
-            <Sparkles className="w-4 h-4 text-brand-400" />
-            <span className="text-sm text-white/70">
-              {isAuthenticated
-                ? (locale === 'zh' ? '已登录，可直接继续你的 AI 工作流' : 'Signed in and ready to continue your AI workflow')
-                : t('home.badge')}
-            </span>
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold leading-tight mb-6 animate-slide-up">
-            {t('home.title_line1')}
-            <br />
-            <span className="gradient-text">{t('home.title_line2')}</span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-white/60 max-w-3xl mx-auto mb-10 animate-slide-up">
-            {isAuthenticated
-              ? (
-                locale === 'zh'
-                  ? '继续从首页进入你的工作流、模板市场和用户中心；产品首页本身仍然保持统一的品牌展示。'
-                  : 'Continue into your workspace, template market, or user center while keeping the home page as a consistent product-facing landing experience.'
-              )
-              : t('home.subtitle')}
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-20 animate-slide-up">
-            <Link
-              to={isAuthenticated ? workbenchPath : startPath}
-              className="btn-primary px-8 py-3.5 rounded-xl text-base font-semibold text-white inline-flex items-center gap-2"
-            >
-              {isAuthenticated
-                ? (locale === 'zh' ? '继续工作' : 'Continue Working')
-                : t('home.cta_start')} <ArrowRight className="w-4 h-4" />
-            </Link>
+      {/* Hero */}
+      <motion.header variants={fadeUp} transition={{ duration: 0.6 }} className="relative z-10 flex flex-col items-center justify-center px-6 pt-32 pb-20 text-center">
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/[0.07] px-4 py-1.5 text-xs font-semibold tracking-wide text-cyan-200">
+          <BrainCircuit className="h-3.5 w-3.5" />
+          {t('home.dashboard.hero_badge')}
+        </div>
+        <h1 className="max-w-2xl text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl">
+          {t('home.dashboard.hero_title')}{' '}
+          <span className="bg-gradient-to-r from-cyan-200 via-cyan-300 to-violet-300 bg-clip-text text-transparent">
+            {t('home.dashboard.hero_highlight')}
+          </span>
+        </h1>
+        <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/50 sm:text-lg">
+          {t('home.dashboard.hero_subtitle')}
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          {isAuthenticated ? (
             <Link
               to="/products"
-              className="btn-outline px-8 py-3.5 rounded-xl text-base font-semibold inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 rounded-[28px] bg-cyan-200 px-7 py-3 text-sm font-bold text-[#05070b] shadow-[0_0_32px_rgba(34,211,238,0.18)] transition hover:bg-white hover:shadow-[0_0_40px_rgba(34,211,238,0.25)]"
             >
-              <ImagePlus className="w-4 h-4" /> {locale === 'zh' ? '进入商品中心' : 'Product Center'}
+              {t('home.dashboard.hero_cta')}
+              <ArrowRight className="h-4 w-4" />
             </Link>
+          ) : (
             <Link
-              to={isAuthenticated ? '/aiChat/template' : '/solutions/boutique'}
-              className="btn-outline px-8 py-3.5 rounded-xl text-base font-semibold inline-flex items-center gap-2"
+              to={loginPath}
+              className="inline-flex items-center gap-2 rounded-[28px] bg-cyan-200 px-7 py-3 text-sm font-bold text-[#05070b] shadow-[0_0_32px_rgba(34,211,238,0.18)] transition hover:bg-white hover:shadow-[0_0_40px_rgba(34,211,238,0.25)]"
             >
-              <Play className="w-4 h-4" /> {isAuthenticated ? (locale === 'zh' ? '打开模板市场' : 'Open Template Market') : t('home.cta_demo')}
+              {t('home.cta_start')}
+              <ArrowRight className="h-4 w-4" />
             </Link>
+          )}
+          <Link
+            to="/pricing"
+            className="inline-flex items-center gap-2 rounded-[28px] border border-white/[0.12] bg-white/[0.04] px-7 py-3 text-sm font-semibold text-white/72 transition hover:border-white/20 hover:bg-white/[0.07] hover:text-white"
+          >
+            {t('home.cta_demo')}
+          </Link>
+        </div>
+      </motion.header>
+
+      {/* Pipeline Steps */}
+      <motion.section variants={fadeUp} transition={{ duration: 0.6, delay: 0.15 }} className="relative z-10 mx-auto mb-24 max-w-5xl px-6">
+        <div className="mb-8 text-center">
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200/55">
+            {t('home.dashboard.pipeline_title')}
           </div>
-
         </div>
-      </section>
-
-      {/* ── Social proof marquee ── */}
-      <section className="relative overflow-hidden py-8 border-y border-white/5">
-        <div className="flex animate-marquee whitespace-nowrap">
-          {[...MARQUEE_KEYS, ...MARQUEE_KEYS].map((key, i) => (
-            <span
-              key={i}
-              className="mx-8 text-sm text-white/40 flex items-center gap-2"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-500/60" />
-              {t(key)}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Stats ── */}
-      <section className="reveal py-24 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
-          {STATS_KEYS.map(stat => (
-            <div key={stat.labelKey} className="glass rounded-2xl p-6 text-center">
-              <stat.icon className="w-8 h-8 text-brand-400 mx-auto mb-3" />
-              <p className="text-3xl md:text-4xl font-bold gradient-text">{t(stat.valueKey)}</p>
-              <p className="text-sm text-white/50 mt-1">{t(stat.labelKey)}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Solutions ── */}
-      <section className="reveal py-24 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              {t('home.solutions.title_prefix')}<span className="gradient-text">{t('home.solutions.title_highlight')}</span>
-            </h2>
-            <p className="text-white/50 max-w-xl mx-auto">
-              {t('home.solutions.subtitle')}
-            </p>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {SOLUTIONS.map(sol => {
-              const localizedSolution = getLocalizedSolution(sol, language)
-
-              return (
-                <div
-                  key={sol.id}
-                  className="glass rounded-2xl p-6 group hover:border-white/15 transition-all duration-300 hover:-translate-y-1"
-                >
-                  <div
-                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${sol.color} flex items-center justify-center mb-4 text-2xl`}
-                  >
-                    {sol.icon}
-                  </div>
-                  <h3 className="text-lg font-bold mb-1">{localizedSolution.title}</h3>
-                  <p className="text-xs text-white/40 mb-4">{localizedSolution.audience}</p>
-                  <ul className="space-y-2 mb-6">
-                    {localizedSolution.features.map(f => (
-                      <li key={f} className="flex items-center gap-2 text-sm text-white/60">
-                        <Check className="w-3.5 h-3.5 text-brand-400 shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    to={`/solutions/${sol.slug}`}
-                    className="inline-flex items-center gap-1 text-sm text-brand-400 hover:text-brand-300 transition-colors"
-                  >
-                    {t('home.solutions.learn_more')} <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+        <div className="grid gap-5 md:grid-cols-3">
+          {PIPELINE_STEPS.map((step, index) => {
+            const Icon = step.icon
+            return (
+              <motion.div
+                key={index}
+                variants={fadeUp}
+                transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
+                className={`group relative rounded-[28px] border ${step.border} bg-gradient-to-br ${step.color} p-6 backdrop-blur-sm transition hover:border-white/20 hover:shadow-[0_20px_60px_rgba(0,0,0,0.3)]`}
+              >
+                <div className={`mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.06] ${step.iconColor}`}>
+                  <Icon className="h-5 w-5" />
                 </div>
-              )
-            })}
+                <h3 className="mb-2 text-lg font-semibold text-white">{t(step.titleKey)}</h3>
+                <p className="text-sm leading-relaxed text-white/45">{t(step.descKey)}</p>
+                <div className="absolute right-4 top-4 text-[10px] font-bold text-white/15">0{index + 1}</div>
+              </motion.div>
+            )
+          })}
+        </div>
+        {/* Step connectors */}
+        <div className="pointer-events-none absolute inset-0 z-20 hidden items-center justify-center md:flex">
+          <div className="relative mx-auto max-w-5xl w-full px-6">
+            <div className="absolute left-1/3 top-1/2 h-px w-1/3 bg-gradient-to-r from-cyan-300/15 via-violet-300/15 to-emerald-300/15" style={{ transform: 'translate(-50%, -50%) translateY(-2rem)' }} />
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* ── Pricing Preview ── */}
-      <section className="reveal py-24 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              {t('home.pricing_preview.title_prefix')}<span className="gradient-text">{t('home.pricing_preview.title_highlight')}</span>
-            </h2>
-            <p className="text-white/50 max-w-xl mx-auto">
-              {t('home.pricing_preview.subtitle')}
-            </p>
+      {/* Quick Entry */}
+      <motion.section variants={fadeUp} transition={{ duration: 0.6, delay: 0.3 }} className="relative z-10 mx-auto mb-24 max-w-5xl px-6">
+        <div className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/80 p-8 backdrop-blur-sm">
+          <div className="mb-6 text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">
+            {t('home.dashboard.quick_entry_title')}
           </div>
-
-          <PricingPlanGrid variant="preview" />
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section className="reveal py-24 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto glass-strong rounded-3xl p-12 md:p-16 text-center relative overflow-hidden">
-          <div className="glow-orb w-[300px] h-[300px] bg-brand-500/15 -top-20 -right-20" />
-          <div className="glow-orb w-[200px] h-[200px] bg-accent-500/10 -bottom-10 -left-10" />
-
-          <div className="relative z-10">
-            <Zap className="w-10 h-10 text-brand-400 mx-auto mb-6" />
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              {t('home.cta.title_prefix')}<span className="gradient-text">{t('home.cta.title_highlight')}</span>
-            </h2>
-            <p className="text-white/50 max-w-lg mx-auto mb-8">
-              {t('home.cta.subtitle')}
-            </p>
-            <Link
-              to={startPath}
-              className="btn-primary inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-semibold text-white"
-            >
-              {t('home.cta.button')} <ArrowRight className="w-4 h-4" />
-            </Link>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {isDev && (
+              <Link to={`/products/demo-product-1/production/prep${devSuffix}`} className="group flex items-center gap-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] p-4 transition hover:border-cyan-300/40 hover:bg-cyan-300/[0.1]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/15 text-cyan-200">
+                  <BrainCircuit className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-cyan-100 group-hover:text-white">Demo: V2 Pipeline</div>
+                  <div className="mt-0.5 text-xs text-cyan-200/50">Prep → Sandbox → Workshop</div>
+                </div>
+                <ArrowRight className="ml-auto h-4 w-4 text-cyan-300/30 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
+              </Link>
+            )}
+            {isAuthenticated ? (
+              <Link to="/products" className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-cyan-300/25 hover:bg-white/[0.05]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/[0.08] text-cyan-200">
+                  <BoxSelect className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('home.dashboard.quick_entry_products')}</div>
+                  <div className="mt-0.5 text-xs text-white/35">{t('home.dashboard.quick_entry_queue_hint')}</div>
+                </div>
+                <ArrowRight className="ml-auto h-4 w-4 text-white/20 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
+              </Link>
+            ) : (
+              <Link to={loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-cyan-300/25 hover:bg-white/[0.05]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/[0.08] text-cyan-200">
+                  <BoxSelect className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('common.login')}</div>
+                  <div className="mt-0.5 text-xs text-white/35">{t('home.dashboard.quick_entry_queue_hint')}</div>
+                </div>
+                <ArrowRight className="ml-auto h-4 w-4 text-white/20 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
+              </Link>
+            )}
           </div>
         </div>
-      </section>
-    </div>
+      </motion.section>
+
+      {/* Footer spacer */}
+      <div className="h-16" />
+    </motion.div>
   )
 }

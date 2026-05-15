@@ -1,29 +1,20 @@
-const PREFERENCE_STORAGE_KEY = 'ecommerce_user_preferences'
-const DEFAULT_WORKBENCH_PATH = '/products/workbench/visual-tools/changing-model'
-
-function readPreferredWorkspace() {
-  if (typeof window === 'undefined') return DEFAULT_WORKBENCH_PATH
-
-  try {
-    const raw = window.localStorage.getItem(PREFERENCE_STORAGE_KEY)
-    if (!raw) return DEFAULT_WORKBENCH_PATH
-
-    const parsed = JSON.parse(raw) as { defaultWorkspace?: string } | null
-    const preferred = parsed?.defaultWorkspace?.trim()
-    return preferred || DEFAULT_WORKBENCH_PATH
-  } catch {
-    return DEFAULT_WORKBENCH_PATH
-  }
+/**
+ * Return the default entry path for an authenticated workbench user.
+ */
+export function getWorkbenchEntryPath(): string {
+  return '/products'
 }
 
-export function getWorkbenchEntryPath() {
-  return readPreferredWorkspace()
-}
-
-export function getAuthAwareStartPath(isAuthenticated: boolean) {
-  return isAuthenticated ? getWorkbenchEntryPath() : '/register'
-}
-
-export function getAuthAwareLoginPath(isAuthenticated: boolean) {
+/**
+ * Return a login-aware path; redirects authenticated users away from login.
+ */
+export function getAuthAwareLoginPath(isAuthenticated: boolean): string {
   return isAuthenticated ? getWorkbenchEntryPath() : '/login'
+}
+
+/**
+ * Return a start path that depends on auth state.
+ */
+export function getAuthAwareStartPath(isAuthenticated: boolean): string {
+  return isAuthenticated ? getWorkbenchEntryPath() : '/pricing'
 }

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { AlertTriangle, ArrowRight, CheckCircle2, CircleDashed, LockKeyhole, PackageCheck, RadioTower, Route, ShieldAlert, Sparkles, Trash2, XCircle } from 'lucide-react'
+import { AlertTriangle, ArrowRight, CheckCircle2, CircleDashed, LockKeyhole, RadioTower, Route, ShieldAlert, Sparkles, Trash2, XCircle } from 'lucide-react'
 import type { CapabilityState, MissionStage, MissionWorkUnit, ProductionStageSummary } from '@/pages/product/utils/productMission'
 
 const STATE_CLASS: Record<CapabilityState, string> = {
@@ -21,7 +21,8 @@ const STATE_ICON: Record<CapabilityState, typeof CheckCircle2> = {
   'commercial-gate': AlertTriangle,
 }
 
-function stationHref(path: string, productIds: string[]) {
+/** @deprecated — preserved for future station nav links */
+export function stationHref(path: string, productIds: string[]) {
   if (productIds.length === 0) return path
   return `${path}?productIds=${encodeURIComponent(productIds.join(','))}&source=mission-control`
 }
@@ -292,84 +293,23 @@ export function MissionDossier({ unit }: { unit: MissionWorkUnit | null }) {
       <NextBestActionPanel unit={unit} />
 
       <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.035] p-4">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-white">
-          <PackageCheck className="h-4 w-4 text-cyan-200" /> {t('product.list.missionControl.readinessBreakdown')}
-        </div>
-        <div className="space-y-3">
-          {unit.readiness.map(item => (
-            <div key={item.key} className="rounded-2xl border border-white/8 bg-black/20 p-3">
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm font-medium text-white/85">{item.label}</div>
-                <CapabilityBadge state={item.state} label={item.state} />
-              </div>
-              <div className="text-xs leading-5 text-white/48">{item.detail}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.035] p-4">
-        <div className="mb-3 text-sm font-semibold text-white">{t('product.list.missionControl.stageTimeline')}</div>
+        <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-white/45">{t('product.list.missionControl.readiness')}</div>
         <div className="space-y-2">
-          {[t('product.list.missionControl.stages.intake'), t('product.list.missionControl.stages.template'), t('product.list.missionControl.stages.visual'), t('product.list.missionControl.stages.listing'), t('product.list.missionControl.stages.export'), t('product.list.missionControl.stages.delivery'), t('product.list.missionControl.stages.commercial')].map((label, index) => (
-            <div key={label} className="flex items-center gap-3 text-xs">
-              <div className={`h-2.5 w-2.5 rounded-full ${index <= unit.stageIndex ? 'bg-cyan-200' : 'bg-white/15'}`} />
-              <div className={index <= unit.stageIndex ? 'text-white/75' : 'text-white/32'}>{label}</div>
+          {unit.readiness.map(item => (
+            <div key={item.key} className="flex items-start gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2">
+              <CapabilityBadge state={item.state} label={item.key} />
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-semibold text-white/75">{item.label}</div>
+                <div className="mt-0.5 text-[11px] leading-4 text-white/40">{item.detail}</div>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-2">
-        <Link to={`/products/${product.id}`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.fullDetail')}</Link>
-        <Link to={`/products/${product.id}/ai/ai-product`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.visualWorkspace')}</Link>
-        <Link to={stationHref('/products/workbench/batch-listing', [product.id])} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.nav.listing')}</Link>
-        <Link to={stationHref('/products/workbench/downloads', [product.id])} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-center text-xs font-semibold text-white/75 transition hover:bg-white/10">{t('product.list.missionControl.nav.delivery')}</Link>
-      </div>
-
-      <div className="mt-5">
+      {unit.contractNotes.length > 0 ? (
         <ContractNeededNotice notes={unit.contractNotes} />
-      </div>
+      ) : null}
     </aside>
-  )
-}
-
-export function CommandStrip({
-  selectedUnits,
-  onClear,
-}: {
-  selectedUnits: MissionWorkUnit[]
-  onClear: () => void
-}) {
-  const { t } = useTranslation()
-  const hasSelection = selectedUnits.length > 0
-  const selectedProductIds = selectedUnits.map(unit => unit.product.id)
-  return (
-    <div className="relative z-10 mx-auto w-full max-w-[1180px] rounded-[24px] border border-white/12 bg-[#05070b]/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.65)] backdrop-blur-xl">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <div className="text-sm font-semibold text-white">{t('product.list.missionControl.commandStripTitle', { count: selectedUnits.length })}</div>
-          <div className="mt-1 text-xs text-white/45">{hasSelection ? t('product.list.missionControl.commandStripHelper') : t('product.list.missionControl.commandStripEmpty')}</div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {hasSelection ? (
-            <Link to={stationHref('/products/workbench/batch-listing', selectedProductIds)} className="rounded-full bg-cyan-200 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:bg-white">{t('product.list.missionControl.nav.listing')}</Link>
-          ) : (
-            <button type="button" disabled className="rounded-full bg-cyan-200/35 px-4 py-2 text-xs font-semibold text-slate-950/55 disabled:cursor-not-allowed">{t('product.list.missionControl.nav.listing')}</button>
-          )}
-          {hasSelection ? (
-            <Link to={`/products/${selectedUnits[0].product.id}/ai/ai-product`} className="rounded-full border border-white/12 bg-white/7 px-4 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/12">{t('product.list.missionControl.nav.visual')}</Link>
-          ) : (
-            <button type="button" disabled className="rounded-full border border-white/12 bg-white/5 px-4 py-2 text-xs font-semibold text-white/35 disabled:cursor-not-allowed">{t('product.list.missionControl.nav.visual')}</button>
-          )}
-          {hasSelection ? (
-            <Link to={stationHref('/products/workbench/downloads', selectedProductIds)} className="rounded-full border border-amber-300/25 bg-amber-300/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-300/15">{t('product.list.missionControl.deliveryHandoff')}</Link>
-          ) : (
-            <button type="button" disabled className="rounded-full border border-amber-300/15 bg-amber-300/5 px-4 py-2 text-xs font-semibold text-amber-100/35 disabled:cursor-not-allowed">{t('product.list.missionControl.deliveryHandoff')}</button>
-          )}
-          <button type="button" onClick={onClear} disabled={!hasSelection} className="rounded-full border border-white/12 px-4 py-2 text-xs font-semibold text-white/45 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-40">{t('product.list.missionControl.clear')}</button>
-        </div>
-      </div>
-    </div>
   )
 }

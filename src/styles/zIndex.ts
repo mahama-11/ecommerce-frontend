@@ -1,13 +1,14 @@
+// ─── Z-index scale for layered UI ──────────────────────────
+// Centralized so that overlays, drawers, and toasts never clash.
+
 export const Z_INDEX = {
-  base: 'z-0',
-  stickyHeader: 'z-50',
-  sidebar: 'z-50',
+  sidebar: 'z-30',
+  stickyHeader: 'z-40',
   pageOverlay: 'z-40',
-  portalNav: 'z-[120]',
-  floatingToolControl: 'z-[130]',
-  dropdown: 'z-[140]',
-  popover: 'z-[150]',
-  drawer: 'z-[160]',
-  modal: 'z-[170]',
-  toast: 'z-[9999]',
+  floatingToolControl: 'z-40',
+  dropdown: 'z-50',
+  popover: 'z-50',
+  drawer: 'z-50',
+  portalNav: 'z-50',
+  toast: 'z-[60]',
 } as const

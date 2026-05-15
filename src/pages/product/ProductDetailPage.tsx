@@ -7,6 +7,7 @@ import {
   TrendingUp,
   Download,
   Wand2,
+  BrainCircuit,
   LoaderCircle,
   Trash2,
   Plus,
@@ -695,7 +696,7 @@ export function ProductDetailPage() {
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setShowListingModal(true)} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/72 transition hover:bg-white/[0.08]">新建 Listing 版本</button>
             <button onClick={() => setShowProfitModal(true)} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/72 transition hover:bg-white/[0.08]">利润计算</button>
-            <Link to={`/products/workbench/visual-tools?productId=${encodeURIComponent(product.id)}&source=sku-detail`} className="rounded-xl bg-cyan-200 px-4 py-2 text-xs font-bold text-[#05070b] transition hover:bg-white">打开视觉工作区</Link>
+            <Link to={`/products/${product.id}/production/prep`} className="rounded-xl bg-cyan-200 px-4 py-2 text-xs font-bold text-[#05070b] transition hover:bg-white">进入生产线</Link>
           </div>
         </div>
 
@@ -787,9 +788,9 @@ export function ProductDetailPage() {
                 <StatusPill label="Listing" ok={product.listingStatus === 'ready'} />
                 <StatusPill label="Export" ok={product.exportStatus === 'done' || product.exportStatus === 'ready'} />
               </div>
-              <div className="mt-4 rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-xs leading-5 text-rose-100/72">当前状态：{product.assetStatus !== 'ready' ? '缺素材，下一步打开视觉工作区生成主图。' : product.listingStatus !== 'ready' ? '可进入 Listing 页面创建/采用版本。' : '可进入交付中心创建导出。'}</div>
+              <div className="mt-4 rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-xs leading-5 text-rose-100/72">当前状态：{product.assetStatus !== 'ready' ? '缺素材，下一步进入 AI 生产线生成主图。' : product.listingStatus !== 'ready' ? '可进入 Listing 页面创建/采用版本。' : '可进入交付中心创建导出。'}</div>
               <div className="mt-4 space-y-2">
-                <Link to={`/products/workbench/visual-tools?productId=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl bg-cyan-200 px-3 py-2 text-center text-xs font-bold text-[#05070b]">打开视觉工作区</Link>
+                <Link to={`/products/${product.id}/production/prep`} className="block rounded-xl bg-cyan-200 px-3 py-2 text-center text-xs font-bold text-[#05070b]">进入生产线</Link>
                 <Link to={`/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold text-white/70">去 Listing 页面</Link>
                 <Link to={`/products/workbench/downloads?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold text-white/70">去交付中心</Link>
               </div>
