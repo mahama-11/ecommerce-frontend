@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { BrainCircuit, Layers, FlaskConical, Paintbrush, ArrowRight, BoxSelect } from 'lucide-react'
+import { BrainCircuit, Layers, FlaskConical, Paintbrush, ArrowRight, BoxSelect, LayoutTemplate } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { getAuthAwareLoginPath } from '@/utils/authNavigation'
 
@@ -133,29 +133,26 @@ export default function HomePage() {
                 <ArrowRight className="ml-auto h-4 w-4 text-cyan-300/30 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
               </Link>
             )}
-            {isAuthenticated ? (
-              <Link to="/products" className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-cyan-300/25 hover:bg-white/[0.05]">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/[0.08] text-cyan-200">
-                  <BoxSelect className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('home.dashboard.quick_entry_products')}</div>
-                  <div className="mt-0.5 text-xs text-white/35">{t('home.dashboard.quick_entry_queue_hint')}</div>
-                </div>
-                <ArrowRight className="ml-auto h-4 w-4 text-white/20 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
-              </Link>
-            ) : (
-              <Link to={loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-cyan-300/25 hover:bg-white/[0.05]">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/[0.08] text-cyan-200">
-                  <BoxSelect className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('common.login')}</div>
-                  <div className="mt-0.5 text-xs text-white/35">{t('home.dashboard.quick_entry_queue_hint')}</div>
-                </div>
-                <ArrowRight className="ml-auto h-4 w-4 text-white/20 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
-              </Link>
-            )}
+            <Link to={isAuthenticated ? '/products' : loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-cyan-300/25 hover:bg-white/[0.05]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/[0.08] text-cyan-200">
+                <BoxSelect className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('home.dashboard.quick_entry_product_center')}</div>
+                <div className="mt-0.5 text-xs text-white/35">{t('home.dashboard.quick_entry_product_center_hint')}</div>
+              </div>
+              <ArrowRight className="ml-auto h-4 w-4 text-white/20 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
+            </Link>
+            <Link to={isAuthenticated ? '/aiChat/template' : loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-violet-300/25 hover:bg-white/[0.05]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-300/[0.08] text-violet-200">
+                <LayoutTemplate className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('home.dashboard.quick_entry_template_market')}</div>
+                <div className="mt-0.5 text-xs text-white/35">{t('home.dashboard.quick_entry_template_market_hint')}</div>
+              </div>
+              <ArrowRight className="ml-auto h-4 w-4 text-white/20 transition group-hover:translate-x-0.5 group-hover:text-violet-200" />
+            </Link>
           </div>
         </div>
       </motion.section>
