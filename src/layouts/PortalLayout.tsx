@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Outlet, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Menu, X, ChevronDown, Layers, Zap, Globe, BrainCircuit } from 'lucide-react'
-import { NAV_TOOL_GROUPS, TOOL_CATEGORIES, TOOLS, getLocalizedTool } from '@/mock/data'
+import { Menu, X, Layers, Zap, Globe, BriefcaseBusiness } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import UserAccountMenu, { getUserDisplayName } from '@/components/account/UserAccountMenu'
 import { logoutAuth } from '@/state/auth'
@@ -13,75 +12,55 @@ export default function PortalLayout() {
   const { t, i18n } = useTranslation()
   const { isAuthenticated, user } = useAuth({ refreshOnMount: false })
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [megaOpen, setMegaOpen] = useState(false)
-  const [activeCat, setActiveCat] = useState<string>(TOOL_CATEGORIES[0].key)
-  const megaRef = useRef<HTMLDivElement>(null)
-  const megaTimer = useRef<ReturnType<typeof setTimeout>>(null)
-
-  const toggleLang = () => {
-    i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh')
-  }
-
-  const SOLUTIONS_LINKS = [
-    { label: t('solutions.boutique'), to: '/solutions/boutique' },
-    { label: t('solutions.multipleStores'), to: '/solutions/multipleStores' },
-    { label: t('solutions.creativeCustomized'), to: '/solutions/creativeCustomized' },
-    { label: t('solutions.clothing'), to: '/solutions/clothing' },
-  ]
 
   const language = i18n.resolvedLanguage ?? i18n.language
   const locale = language.startsWith('en') ? 'en' : 'zh'
   const loginPath = getAuthAwareLoginPath(isAuthenticated)
   const startPath = getAuthAwareStartPath(isAuthenticated)
+  const workbenchPath = getAuthAwareStartPath(isAuthenticated)
 
-  const FOOTER_COLUMNS = [
+  const topLinks = useMemo(() => ([
+    { label: t('nav.workbench'), to: workbenchPath },
+    { label: t('nav.solutions'), to: '/solutions' },
+  ]), [t, workbenchPath])
+
+  const footerColumns = useMemo(() => ([
     {
       title: t('footer.products'),
-      links: TOOL_CATEGORIES.map(c => ({ label: t(c.labelKey), to: `/products/workbench/visual-tools/${TOOLS.find(tool => tool.category === c.key)?.slug ?? ''}` })),
+      links: [
+        { label: t('nav.workbench'), to: workbenchPath },
+        { label: locale === 'zh' ? '任务中心' : 'Task Center', to: '/products' },
+        { label: locale === 'zh' ? '模板中心' : 'Template Center', to: '/products/workbench/batch-listing' },
+        { label: locale === 'zh' ? '交付中心' : 'Delivery Center', to: '/products/workbench/downloads' },
+      ],
     },
     {
       title: t('footer.solutions'),
-      links: SOLUTIONS_LINKS,
+      links: [
+        { label: locale === 'zh' ? '电商大促单量预测 Agent' : 'Campaign Demand Forecast Agent', to: '/solutions#campaign-forecast' },
+        { label: locale === 'zh' ? '电商动态定价 Agent' : 'Dynamic Pricing Agent', to: '/solutions#dynamic-pricing' },
+        { label: locale === 'zh' ? '电商竞品分析 Agent' : 'Competitor Analysis Agent', to: '/solutions#competitor-analysis' },
+      ],
     },
     {
       title: t('footer.resources'),
       links: [
         { label: t('footer.helpCenter'), to: '/help' },
-        { label: t('footer.apiDocs'), to: '/api-docs' },
-        { label: t('footer.blog'), to: '/blog' },
-        { label: t('footer.changelog'), to: '/changelog' },
-      ],
-    },
-    {
-      title: t('footer.about'),
-      links: [
-        { label: t('footer.aboutUs'), to: '/aboutus' },
         { label: t('footer.contactUs'), to: '/contact' },
-        { label: t('footer.joinUs'), to: '/careers' },
         { label: t('footer.privacy'), to: '/privacy' },
+        { label: locale === 'zh' ? '服务条款' : 'Terms', to: '/terms' },
       ],
     },
-  ]
+  ]), [locale, t, workbenchPath])
+
+  const toggleLang = () => {
+    void i18n.changeLanguage(i18n.language === 'zh' ? 'en' : 'zh')
+  }
 
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    document.body.style.overflow = mobileOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [mobileOpen])
-
-  const handleMegaEnter = () => {
-    if (megaTimer.current) clearTimeout(megaTimer.current)
-    setMegaOpen(true)
-  }
-
-  const handleMegaLeave = () => {
-    megaTimer.current = setTimeout(() => setMegaOpen(false), 150)
-  }
-
-  const filteredTools = TOOLS.filter(tool => tool.category === activeCat)
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0a12]">
@@ -92,90 +71,17 @@ export default function PortalLayout() {
             <span className="text-xl font-bold gradient-text">{t('common.brand')}</span>
           </Link>
 
-          <div className="hidden lg:flex items-center justify-center gap-1 flex-1 px-8">
-            <div
-              ref={megaRef}
-              className="relative"
-              onMouseEnter={handleMegaEnter}
-              onMouseLeave={handleMegaLeave}
-            >
-              <button className="flex items-center gap-1 px-4 py-2 text-sm text-white/70 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]">
-                {t('nav.products')}
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${megaOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              <div
-                className={`absolute top-full left-1/2 ${Z_INDEX.dropdown} -translate-x-1/2 pt-3 transition-all duration-200 ${
-                  megaOpen ? 'visible translate-y-0 opacity-100 pointer-events-auto' : 'invisible -translate-y-2 opacity-0 pointer-events-none'
-                }`}
+          <div className="hidden lg:flex items-center justify-center gap-2 flex-1 px-8">
+            {topLinks.map(link => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/[0.05] hover:text-white"
               >
-                <div className="w-[680px] rounded-2xl border border-white/[0.12] bg-[#0d1018]/98 p-5 shadow-[0_24px_80px_rgba(2,6,23,0.7)] backdrop-blur-2xl flex gap-5">
-                  <div className="w-48 shrink-0 space-y-1">
-                    <Link
-                      to="/products"
-                      onClick={() => setMegaOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-brand-500/15 text-brand-400"
-                    >
-                      <BrainCircuit className="w-4 h-4" />
-                      <span className="font-medium text-sm">{t('home.dashboard.hero_title')} {t('home.dashboard.hero_highlight')}</span>
-                    </Link>
-                    <div className="my-2 border-t border-white/[0.06]" />
-                    {TOOL_CATEGORIES.map(cat => (
-                      <button
-                        key={cat.key}
-                        onMouseEnter={() => setActiveCat(cat.key)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left ${
-                          activeCat === cat.key
-                            ? 'bg-brand-500/15 text-brand-400'
-                            : 'text-white/60 hover:bg-white/[0.04] hover:text-white/80'
-                        }`}
-                      >
-                        <span>{t(cat.labelKey)}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex-1 grid grid-cols-2 gap-1.5 content-start max-h-80 overflow-y-auto scrollbar-hide">
-                    {filteredTools.map(tool => {
-                      const localizedTool = getLocalizedTool(tool, language)
-
-                      return (
-                        <Link
-                          key={tool.id}
-                          to={`/products/workbench/visual-tools/${tool.slug}`}
-                          onClick={() => setMegaOpen(false)}
-                          className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:bg-white/[0.06] hover:text-white transition-colors group"
-                        >
-                          <div className="min-w-0">
-                            <div className="font-medium text-white/80 group-hover:text-white truncate">{localizedTool.name}</div>
-                            <div className="text-xs text-white/30 truncate">{localizedTool.desc}</div>
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <Link
-              to="/solutions/boutique"
-              className="px-4 py-2 text-sm text-white/70 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]"
-            >
-              {t('nav.solutions')}
-            </Link>
-            <Link
-              to="/pricing"
-              className="px-4 py-2 text-sm text-white/70 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]"
-            >
-              {t('nav.pricing')}
-            </Link>
-            <Link
-              to="/aboutus"
-              className="px-4 py-2 text-sm text-white/70 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]"
-            >
-              {t('nav.aboutUs')}
-            </Link>
+                {link.to === workbenchPath ? <BriefcaseBusiness className="h-4 w-4 text-cyan-200/75" /> : null}
+                {link.label}
+              </Link>
+            ))}
           </div>
 
           <div className="hidden lg:flex items-center justify-end gap-2 min-w-[250px]">
@@ -184,7 +90,7 @@ export default function PortalLayout() {
               className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-white/50 hover:text-white/80 transition-colors rounded-lg hover:bg-white/[0.06]"
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>{i18n.language === 'zh' ? '\u4e2d' : 'EN'}</span>
+              <span>{i18n.language === 'zh' ? '中' : 'EN'}</span>
             </button>
             {isAuthenticated ? (
               <UserAccountMenu compact />
@@ -213,48 +119,11 @@ export default function PortalLayout() {
         <div className={`fixed inset-0 ${Z_INDEX.pageOverlay} bg-[#0a0a12]/95 backdrop-blur-xl transition-all duration-300 lg:hidden`}>
           <div className="h-full overflow-y-auto px-6 pb-8 pt-20 safe-area-inset">
             <div className="space-y-1">
-              <p className="mb-2 px-3 text-xs uppercase tracking-wider text-white/30">{t('nav.products')}</p>
-              {NAV_TOOL_GROUPS.map(group => (
-                <div key={group.label} className="mb-4">
-                  <p className="mb-1 px-3 text-xs text-white/40">{t(group.labelKey)}</p>
-                  {group.items.map((item: (typeof group.items)[number]) => {
-                    if ('children' in item && item.children) {
-                      return item.children.map((tool: (typeof item.children)[number]) => (
-                        <Link
-                          key={tool.id}
-                          to={`/products/workbench/visual-tools/${tool.slug}`}
-                          onClick={() => setMobileOpen(false)}
-                          className="sidebar-item"
-                        >
-                          <span>{getLocalizedTool(tool, language).name}</span>
-                        </Link>
-                      ))
-                    }
-                    return (
-                      <Link
-                        key={item.label}
-                        to={'path' in item ? item.path : '#'}
-                        onClick={() => setMobileOpen(false)}
-                        className="sidebar-item"
-                      >
-                        <span>{t(item.labelKey)}</span>
-                      </Link>
-                    )
-                  })}
-                </div>
+              {topLinks.map(link => (
+                <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)} className="sidebar-item">
+                  {link.label}
+                </Link>
               ))}
-
-              <div className="my-4 h-px bg-white/10" />
-
-              <Link to="/solutions/boutique" onClick={() => setMobileOpen(false)} className="sidebar-item">
-                {t('nav.solutions')}
-              </Link>
-              <Link to="/pricing" onClick={() => setMobileOpen(false)} className="sidebar-item">
-                {t('nav.pricing')}
-              </Link>
-              <Link to="/aboutus" onClick={() => setMobileOpen(false)} className="sidebar-item">
-                {t('nav.aboutUs')}
-              </Link>
 
               <div className="my-4 h-px bg-white/10" />
 
@@ -264,7 +133,7 @@ export default function PortalLayout() {
                   className="flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white/80"
                 >
                   <Globe className="h-4 w-4" />
-                  <span>{i18n.language === 'zh' ? '\u4e2d' : 'EN'}</span>
+                  <span>{i18n.language === 'zh' ? '中' : 'EN'}</span>
                 </button>
                 {isAuthenticated ? (
                   <>
@@ -272,9 +141,6 @@ export default function PortalLayout() {
                       <div className="text-sm font-semibold text-white">{getUserDisplayName(user, locale)}</div>
                       <div className="mt-1 text-xs text-white/45">{user?.email}</div>
                     </div>
-                    <Link to="/aiChat/template" onClick={() => setMobileOpen(false)} className="py-2.5 text-center text-sm text-white/70 hover:text-white">
-                      {locale === 'zh' ? '模板市场' : 'Template Market'}
-                    </Link>
                     <Link to="/account/profile" onClick={() => setMobileOpen(false)} className="py-2.5 text-center text-sm text-white/70 hover:text-white">
                       {locale === 'zh' ? '账户资料' : 'Account Profile'}
                     </Link>
@@ -310,13 +176,13 @@ export default function PortalLayout() {
 
       <footer className="border-t border-white/[0.06] bg-[#070710]">
         <div className="max-w-7xl mx-auto px-6 py-16 safe-area-inset">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-            {FOOTER_COLUMNS.map(col => (
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
+            {footerColumns.map(col => (
               <div key={col.title}>
                 <h4 className="text-sm font-semibold text-white mb-4">{col.title}</h4>
                 <ul className="space-y-2.5">
                   {col.links.map(link => (
-                    <li key={link.to}>
+                    <li key={`${col.title}-${link.to}-${link.label}`}>
                       <Link to={link.to} className="text-sm text-white/40 hover:text-white/70 transition-colors">
                         {link.label}
                       </Link>

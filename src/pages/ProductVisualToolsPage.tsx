@@ -5,7 +5,6 @@ import { ArrowRight, Bot, CheckCircle2, Image as ImageIcon, LoaderCircle, LockKe
 import { useTranslation } from 'react-i18next'
 import { TOOLS, getLocalizedTool } from '@/mock/data'
 import { listProducts } from '@/services/product'
-import { ProductWorkflowNav } from '@/components/product-workbench/ProductWorkflowNav'
 import type { ProductListItem } from '@/types/product'
 
 export default function ProductVisualToolsPage() {
@@ -156,10 +155,6 @@ export default function ProductVisualToolsPage() {
             </div>
           ))}
         </div>
-      </motion.div>
-
-      <motion.div variants={itemVariants} className="relative z-10 mx-auto mt-4 w-[calc(100%-2.5rem)] max-w-[1600px]">
-        <ProductWorkflowNav active="production" productId={selectedProductID || presetProductID} source="visual" />
       </motion.div>
 
       <div className="flex-1 flex overflow-hidden max-w-[1600px] w-full mx-auto relative p-6">

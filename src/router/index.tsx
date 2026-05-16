@@ -119,6 +119,7 @@ export const router = createBrowserRouter([
       { index: true, element: <S><HomePage /></S> },
       { path: 'home', element: <S><HomePage /></S> },
       { path: 'pricing', element: <S><PricingPage /></S> },
+      { path: 'solutions', element: <S><SolutionDetailPage /></S> },
       { path: 'solutions/:slug', element: <S><SolutionDetailPage /></S> },
       { path: 'aboutus', element: <S><AboutUsPage /></S> },
       { path: 'help', element: <S><HelpCenterPage /></S> },

@@ -349,7 +349,7 @@ function ProductListPage() {
                       <div className="text-xs text-white/38">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</div>
                       <div className="flex flex-wrap gap-1.5">
                         <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#05070b] transition hover:bg-cyan-100">详情</Link>
-                        <Link to={unit.nextBestAction.href} onClick={event => event.stopPropagation()} className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold transition ${unit.nextBestAction.station === 'visual' || unit.nextBestAction.station === 'listing' ? 'bg-cyan-200 text-[#05070b] hover:bg-white' : 'border border-white/[0.08] bg-white/[0.04] text-white/72 hover:bg-white/[0.08]'}`}>{unit.nextBestAction.label.replace('Route to Visual Station', '进入生产线').replace('Route to Listing Station', '生成 Listing').replace('Route to Delivery Station', '查看下载').replace('Open Export Handoff', '创建导出任务')}</Link>
+                        <Link to={unit.nextBestAction.href} onClick={event => event.stopPropagation()} className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold transition ${unit.nextBestAction.station === 'visual' || unit.nextBestAction.station === 'listing' ? 'bg-cyan-200 text-[#05070b] hover:bg-white' : 'border border-white/[0.08] bg-white/[0.04] text-white/72 hover:bg-white/[0.08]'}`}>{unit.nextBestAction.label.replace('Route to Visual Station', '进入任务中心').replace('Route to Listing Station', '进入模板中心').replace('Route to Delivery Station', '查看交付历史').replace('Open Export Handoff', '创建导出任务')}</Link>
                       </div>
                     </div>
                   )
@@ -363,21 +363,19 @@ function ProductListPage() {
           <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">批量操作栏（选中后激活）</div>
           <div className="flex flex-wrap items-center gap-2 rounded-[28px] border border-white/[0.06] bg-[#0b0d14] p-4 shadow-[0_16px_48px_rgba(0,0,0,0.42)]">
             <span className="text-sm text-white/50">已选 {selectedUnits.length} 个 SKU</span>
-            <Link to={selectedUnits.length ? `/products/workbench/batch-listing?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>批量生成 Listing</Link>
+            <Link to={selectedUnits.length ? `/products/workbench/batch-listing?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>进入模板中心</Link>
             <button disabled className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-1.5 text-xs font-semibold text-white/25">批量 Adopt</button>
-            <Link to={selectedUnits.length ? `/products/workbench/downloads?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>批量导出</Link>
-            <Link to={selectedUnits[0] ? `/products/${selectedUnits[0].product.id}/production/prep` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>进入生产线</Link>
+            <Link to={selectedUnits.length ? `/products/workbench/downloads?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>查看交付历史</Link>
             <span className="text-xs text-white/34">真实后端未接的批量动作保持 disabled / contract-needed。</span>
           </div>
         </motion.section>
 
         <motion.section variants={itemVariants}>
           <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">工作站点</div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <StationCard code="SKU" title="SKU 详情 / 生产中心" desc="基础信息、素材、Listing、利润、导出、状态总览" status="业务锚点页面" tone="info" href={focusedUnit ? `/products/${focusedUnit.product.id}` : '/products'} />
-            <StationCard code="LST" title="批量 Listing" desc="选择 SKU → 配置模板 → 生成/预览 → 校验 → 创建版本 → Adopt/导出" status={`${products.reduce((sum, item) => sum + item.listingVersionsCount, 0)} versions live`} tone="draft" href={focusedUnit ? `/products/workbench/batch-listing?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/batch-listing'} />
-            <StationCard code="PROD" title="AI 生产线" desc="Prep → Sandbox → Workshop：解析、执行、迭代" status="Intent-driven pipeline" tone="info" href={focusedUnit ? `/products/${focusedUnit.product.id}/production/prep` : '/products'} />
-            <StationCard code="DLV" title="交付中心" desc="导出任务队列、下载追踪、包完整性校验" status="real DownloadRecord gate" tone="ready" href={focusedUnit ? `/products/workbench/downloads?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/downloads'} />
+          <div className="grid gap-3 md:grid-cols-3">
+            <StationCard code="TASK" title="任务中心" desc="查看当前处理中的任务生成情况、SKU 状态与下一步动作" status="in-progress tasks" tone="info" href="/products" />
+            <StationCard code="TPL" title="模板中心" desc="查看用户 DIY 模板、Listing 版本与可复用内容结构" status={`${products.reduce((sum, item) => sum + item.listingVersionsCount, 0)} versions live`} tone="draft" href={focusedUnit ? `/products/workbench/batch-listing?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/batch-listing'} />
+            <StationCard code="DONE" title="交付中心" desc="历史已完成生成的任务、导出记录与下载追踪" status="completed history" tone="ready" href={focusedUnit ? `/products/workbench/downloads?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/downloads'} />
           </div>
         </motion.section>
       </div>
@@ -386,7 +384,7 @@ function ProductListPage() {
         <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-md" onClick={() => setShowCommandPalette(false)}>
           <div className="mx-auto mt-[12vh] w-full max-w-xl overflow-hidden rounded-2xl border border-white/12 bg-[#0b0d14] shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()}>
             <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3"><Search className="h-4 w-4 text-white/35" /><input autoFocus placeholder="搜索命令、SKU、站点..." className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/32" /><span className="text-xs text-white/28">ESC</span></div>
-            <div className="p-2 text-sm">{['商品队列 ⌘1', '批量 Listing ⌘2', '视觉工作区 ⌘3', '交付中心 ⌘4'].map(item => <div key={item} className="rounded-xl px-3 py-2 text-white/70 hover:bg-white/[0.05]">{item}</div>)}</div>
+            <div className="p-2 text-sm">{['任务中心 ⌘1', '模板中心 ⌘2', '交付中心 ⌘3'].map(item => <div key={item} className="rounded-xl px-3 py-2 text-white/70 hover:bg-white/[0.05]">{item}</div>)}</div>
           </div>
         </div>
       ) : null}
