@@ -159,7 +159,7 @@ export default function ProductVisualToolsPage() {
       </motion.div>
 
       <motion.div variants={itemVariants} className="relative z-10 mx-auto mt-4 w-[calc(100%-2.5rem)] max-w-[1600px]">
-        <ProductWorkflowNav active="visual" productId={selectedProductID || presetProductID} source="visual" />
+        <ProductWorkflowNav active="production" productId={selectedProductID || presetProductID} source="visual" />
       </motion.div>
 
       <div className="flex-1 flex overflow-hidden max-w-[1600px] w-full mx-auto relative p-6">

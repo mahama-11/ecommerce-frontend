@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
-type WorkflowStation = 'queue' | 'detail' | 'visual' | 'listing' | 'delivery'
+type WorkflowStation = 'queue' | 'detail' | 'production' | 'listing' | 'delivery'
 
 type ProductWorkflowNavProps = {
   active: WorkflowStation
@@ -14,7 +14,7 @@ type ProductWorkflowNavProps = {
 const STATIONS: Array<{ id: WorkflowStation; labelKey: string; fallback: string; hintKey: string; hintFallback: string }> = [
   { id: 'queue', labelKey: 'productWorkbench.workflow.queue', fallback: 'Queue', hintKey: 'productWorkbench.workflow.queueHint', hintFallback: 'Intake / triage board' },
   { id: 'detail', labelKey: 'productWorkbench.workflow.detail', fallback: 'SKU Detail', hintKey: 'productWorkbench.workflow.detailHint', hintFallback: 'One-SKU production dossier' },
-  { id: 'visual', labelKey: 'productWorkbench.workflow.visual', fallback: 'Visual', hintKey: 'productWorkbench.workflow.visualHint', hintFallback: 'Assets generation station' },
+  { id: 'production', labelKey: 'productWorkbench.workflow.production', fallback: 'Production', hintKey: 'productWorkbench.workflow.productionHint', hintFallback: 'Prep → Sandbox → Workshop' },
   { id: 'listing', labelKey: 'productWorkbench.workflow.listing', fallback: 'Listing', hintKey: 'productWorkbench.workflow.listingHint', hintFallback: 'Template → validate → version' },
   { id: 'delivery', labelKey: 'productWorkbench.workflow.delivery', fallback: 'Export', hintKey: 'productWorkbench.workflow.deliveryHint', hintFallback: 'Delivery / downloads gate' },
 ]
@@ -34,8 +34,8 @@ function buildStationHref(station: WorkflowStation, productId?: string, productI
       return '/products'
     case 'detail':
       return primaryId ? `/products/${primaryId}` : '/products'
-    case 'visual':
-      return primaryId ? `/products/workbench/visual-tools?productId=${encodeURIComponent(primaryId)}&source=${encodeURIComponent(source)}` : `/products/workbench/visual-tools?source=${encodeURIComponent(source)}`
+    case 'production':
+      return primaryId ? `/products/${encodeURIComponent(primaryId)}/production/prep` : '/products'
     case 'listing':
       return encodedIds ? `/products/workbench/batch-listing?productIds=${encodedIds}&source=${encodeURIComponent(source)}` : '/products/workbench/batch-listing'
     case 'delivery':
