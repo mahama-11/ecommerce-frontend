@@ -152,9 +152,9 @@ export function deriveMissionWorkUnit(product: ProductListItem): MissionWorkUnit
     nextBestAction = {
       label: 'Route to Visual Station',
       station: 'visual',
-      href: `/products/${product.id}/ai/ai-product`,
+      href: `/products/${encodeURIComponent(product.id)}/production/prep`,
       state: 'available',
-      helper: 'Open the existing real visual workspace; no generation success is claimed from Mission Control.',
+      helper: 'Open the real V2 production prep workflow; no generation success is claimed from Mission Control.',
     }
   } else if (product.listingStatus !== 'ready') {
     blocker = product.listingStatus === 'partial' ? 'Listing exists but still needs validation/adoption.' : 'Listing copy/version is missing.'

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, useParams } from 'react-router-dom'
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react'
 import type { RouteObject } from 'react-router-dom'
 
@@ -60,6 +60,14 @@ function Fallback() {
 
 function S({ children }: { children: ReactNode }) {
   return <Suspense fallback={<Fallback />}>{children}</Suspense>
+}
+
+function LegacyProductAIRedirect() {
+  const { productId } = useParams()
+  if (!productId || productId === ':productId') {
+    return <Navigate to="/products" replace />
+  }
+  return <Navigate to={`/products/${encodeURIComponent(productId)}/production/prep`} replace />
 }
 
 const consolePage = (Element: LazyExoticComponent<ComponentType<any>>) => ({
@@ -159,7 +167,7 @@ export const router = createBrowserRouter([
     { path: 'workbench/visual-tools', element: <Navigate to="/products" replace /> },
     { path: 'workbench/visual-tools/:toolSlug', element: <Navigate to="/products" replace /> },
     { path: 'workbench/downloads', element: <S><AccountDownloadsPage /></S> },
-    { path: ':productId/ai/:toolSlug', element: <Navigate to="/products/:productId/production/prep" replace /> },
+    { path: ':productId/ai/:toolSlug', element: <LegacyProductAIRedirect /> },
   ]),
   // V2 Production Pipeline (intent-driven)
   productionPage([

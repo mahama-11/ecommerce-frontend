@@ -79,10 +79,14 @@ function VersionLineage({
   nodes,
   activeId,
   onSelect,
+  onCompare,
+  onBranch,
 }: {
   nodes: VersionNode[]
   activeId: string | null
   onSelect: (id: string) => void
+  onCompare: () => void
+  onBranch: () => void
 }) {
   return (
     <div className="space-y-0">
@@ -94,7 +98,10 @@ function VersionLineage({
         </div>
         <button
           type="button"
-          className="inline-flex items-center gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1 text-[10px] text-white/40 hover:text-white/60"
+          disabled={nodes.length === 0}
+          onClick={onCompare}
+          title="对比已有生成版本。"
+          className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/10 bg-cyan-400/[0.03] px-2 py-1 text-[10px] text-cyan-200/65 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ArrowUpRight className="h-3 w-3" />
           对比模式
@@ -104,7 +111,13 @@ function VersionLineage({
       {/* Timeline */}
       <div className="relative space-y-1 pl-4">
         {/* Vertical line */}
-        <div className="absolute left-[11px] top-2 bottom-2 w-px bg-white/[0.06]" />
+        {nodes.length > 0 && <div className="absolute left-[11px] top-2 bottom-2 w-px bg-white/[0.06]" />}
+
+        {nodes.length === 0 && (
+          <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-3 py-4 text-[11px] leading-relaxed text-amber-200/70">
+            还没有可查看的生成版本。请先在策略配置页提交生产任务，等真实图片结果返回后再进入工坊。
+          </div>
+        )}
 
         {nodes.map((node, idx) => {
           const isActive = node.id === activeId
@@ -166,7 +179,10 @@ function VersionLineage({
       {/* New branch button */}
       <button
         type="button"
-        className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-white/[0.06] bg-white/[0.01] py-2 text-[11px] text-white/25 transition hover:border-white/10 hover:text-white/40"
+        disabled={nodes.length === 0}
+        onClick={onBranch}
+        title="基于当前版本继续生成一个新分支。"
+        className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-cyan-400/20 bg-cyan-400/[0.04] py-2 text-[11px] text-cyan-200/70 transition hover:border-cyan-400/35 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Plus className="h-3.5 w-3.5" />
         新建分支
@@ -285,15 +301,19 @@ function VariantCard({
 function VariantGrid({
   variants,
   selectedIds,
+  busy,
   onToggle,
   onZoom,
   onDownload,
+  onFinalize,
 }: {
   variants: AssetVariant[]
   selectedIds: string[]
+  busy: boolean
   onToggle: (id: string) => void
   onZoom: (variant: AssetVariant) => void
   onDownload: (variant: AssetVariant) => void
+  onFinalize: () => void
 }) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [filter, setFilter] = useState('全部版本')
@@ -333,12 +353,10 @@ function VariantGrid({
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
+              disabled={variants.length === 0}
               className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none"
             >
               <option>全部版本</option>
-              <option>V1.2</option>
-              <option>V1.1</option>
-              <option>V1.0</option>
             </select>
             <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-white/20" />
           </div>
@@ -348,6 +366,7 @@ function VariantGrid({
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
+              disabled={variants.length === 0}
               className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none"
             >
               <option>最新优先</option>
@@ -359,7 +378,15 @@ function VariantGrid({
       </div>
 
       {/* Grid */}
-      {viewMode === 'grid' ? (
+      {variants.length === 0 ? (
+        <div className="flex min-h-[360px] flex-col items-center justify-center rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-6 text-center">
+          <Info className="mb-2 h-8 w-8 text-amber-400/70" />
+          <p className="text-xs font-semibold text-amber-300/90">暂时没有可迭代的图片</p>
+          <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-white/45">
+            还没有真实生成结果。系统不会用占位图冒充结果；请回到策略配置页提交生产，等待图片返回后再进入。
+          </p>
+        </div>
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
           {variants.map((variant, idx) => (
             <VariantCard
@@ -386,7 +413,7 @@ function VariantGrid({
                 className="h-12 w-12 rounded-lg object-cover"
               />
               <div className="min-w-0 flex-1">
-                <span className="text-[11px] text-white/60">1.2-{String(idx + 1).padStart(2, '0')}</span>
+                <span className="text-[11px] text-white/60">{String(variant.metadata?.version_id ?? variant.id).slice(0, 18)} · {String(idx + 1).padStart(2, '0')}</span>
               </div>
               <button
                 type="button"
@@ -409,15 +436,35 @@ function VariantGrid({
         <span className="text-[11px] text-white/30">
           已选择 {selectedIds.length} / {variants.length} 张图片
         </span>
-        {selectedIds.length > 0 && (
+        <div className="flex items-center gap-3">
+          {selectedIds.length === 0 && variants.length > 0 && (
+            <button
+              type="button"
+              onClick={() => variants.forEach((variant) => onToggle(variant.id))}
+              className="text-[11px] text-cyan-400/60 hover:text-cyan-400"
+            >
+              全选真实资产
+            </button>
+          )}
+          {selectedIds.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onToggle('__clear_all__')}
+              className="text-[11px] text-cyan-400/60 hover:text-cyan-400"
+            >
+              清空选择
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => onToggle('__clear_all__')}
-            className="text-[11px] text-cyan-400/60 hover:text-cyan-400"
+            disabled={selectedIds.length === 0 || busy}
+            onClick={onFinalize}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:bg-white/[0.05] disabled:text-white/30"
           >
-            清空选择
+            {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+            定稿回流
           </button>
-        )}
+        </div>
       </div>
     </div>
   )
@@ -427,14 +474,26 @@ function VariantGrid({
 
 function WeightControl({
   weightParams,
+  hasVersions,
+  activeVersionLabel,
+  busy,
   advancedExpanded,
   onWeightChange,
   onToggleAdvanced,
+  onBatchDownload,
+  onRegenerate,
+  onSaveTemplate,
 }: {
   weightParams: { skuBias: number; styleStrength: number; identityConsistency: number; creativeFreedom: number }
+  hasVersions: boolean
+  activeVersionLabel: string | null
+  busy: boolean
   advancedExpanded: boolean
   onWeightChange: (params: Partial<typeof weightParams>) => void
   onToggleAdvanced: () => void
+  onBatchDownload: () => void
+  onRegenerate: () => void
+  onSaveTemplate: () => void
 }) {
   const refPercent = 100 - weightParams.skuBias
 
@@ -446,8 +505,14 @@ function WeightControl({
           <h3 className="text-sm font-semibold text-white">版本控制台</h3>
           <p className="text-[10px] text-white/25">Version Control</p>
         </div>
-        <span className="text-[10px] text-white/20">当前版本 V1.2</span>
+        <span className="text-[10px] text-white/20">{hasVersions && activeVersionLabel ? `当前版本 ${activeVersionLabel}` : 'No active version'}</span>
       </div>
+
+      {!hasVersions && (
+        <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-3 py-3 text-[11px] leading-relaxed text-amber-200/70">
+          Controls are disabled until real generation versions are available.
+        </div>
+      )}
 
       {/* Weight Re-iteration */}
       <div className="space-y-3">
@@ -484,6 +549,7 @@ function WeightControl({
             min={0}
             max={100}
             value={weightParams.skuBias}
+            disabled={!hasVersions}
             onChange={(e) => onWeightChange({ skuBias: Number(e.target.value) })}
             className="absolute inset-0 h-2 w-full cursor-pointer opacity-0"
           />
@@ -505,6 +571,7 @@ function WeightControl({
       <div className="rounded-xl border border-white/[0.04] bg-white/[0.01]">
         <button
           type="button"
+          disabled={!hasVersions}
           onClick={onToggleAdvanced}
           className="flex w-full items-center justify-between px-3 py-2.5"
         >
@@ -541,6 +608,7 @@ function WeightControl({
                     max={1}
                     step={0.01}
                     value={weightParams.styleStrength}
+                    disabled={!hasVersions}
                     onChange={(e) => onWeightChange({ styleStrength: Number(e.target.value) })}
                     className="h-1 w-full cursor-pointer appearance-none rounded-full bg-white/[0.06] accent-cyan-400"
                   />
@@ -558,6 +626,7 @@ function WeightControl({
                     max={1}
                     step={0.01}
                     value={weightParams.identityConsistency}
+                    disabled={!hasVersions}
                     onChange={(e) => onWeightChange({ identityConsistency: Number(e.target.value) })}
                     className="h-1 w-full cursor-pointer appearance-none rounded-full bg-white/[0.06] accent-cyan-400"
                   />
@@ -575,6 +644,7 @@ function WeightControl({
                     max={1}
                     step={0.01}
                     value={weightParams.creativeFreedom}
+                    disabled={!hasVersions}
                     onChange={(e) => onWeightChange({ creativeFreedom: Number(e.target.value) })}
                     className="h-1 w-full cursor-pointer appearance-none rounded-full bg-white/[0.06] accent-cyan-400"
                   />
@@ -591,28 +661,76 @@ function WeightControl({
       <div className="grid grid-cols-3 gap-2">
         <button
           type="button"
-          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3 transition hover:bg-white/[0.04]"
+          disabled={!hasVersions || busy}
+          onClick={onBatchDownload}
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3 transition hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Download className="h-4 w-4 text-white/40" />
           <span className="text-[10px] text-white/40">批量下载</span>
-          <span className="text-[8px] text-white/20">Batch Download</span>
+          <span className="text-[8px] text-white/20">Selected or all real assets</span>
         </button>
         <button
           type="button"
-          className="flex flex-col items-center justify-center gap-1 rounded-xl bg-cyan-500/80 px-2 py-3 text-white transition hover:bg-cyan-500"
+          disabled={!hasVersions || busy}
+          onClick={onRegenerate}
+          className="flex flex-col items-center justify-center gap-1 rounded-xl bg-cyan-500/80 px-2 py-3 text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <RotateCw className="h-4 w-4" />
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
           <span className="text-[10px] font-medium">重新生成</span>
           <span className="text-[8px] text-white/70">Re-generate</span>
         </button>
         <button
           type="button"
-          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3 transition hover:bg-white/[0.04]"
+          disabled={!hasVersions || busy}
+          onClick={onSaveTemplate}
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-amber-400/10 bg-amber-400/[0.03] px-2 py-3 transition hover:bg-amber-400/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <Save className="h-4 w-4 text-white/40" />
+          <Save className="h-4 w-4 text-amber-200/50" />
           <span className="text-[10px] text-white/40">保存为模板</span>
-          <span className="text-[8px] text-white/20">Save as Template</span>
+          <span className="text-[8px] text-white/20">真实结果保存</span>
         </button>
+      </div>
+    </div>
+  )
+}
+
+
+// ─── Compare Panel ─────────────────────────────────────────────
+
+function ComparePanel({
+  nodes,
+  onClose,
+}: {
+  nodes: VersionNode[]
+  onClose: () => void
+}) {
+  if (nodes.length === 0) return null
+  return (
+    <div className="mt-4 rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.03] p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-white">版本对比</h3>
+          <p className="text-[10px] text-white/30">对比已有生成版本</p>
+        </div>
+        <button type="button" onClick={onClose} className="rounded-lg bg-white/[0.06] px-2 py-1 text-[10px] text-white/50 hover:text-white">关闭</button>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        {nodes.map((node) => (
+          <div key={node.id} className="rounded-xl border border-white/[0.06] bg-black/10 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-semibold text-cyan-200">{node.label}</span>
+              <span className="text-[9px] text-white/25">{fmtDate(node.timestamp)}</span>
+            </div>
+            <p className="text-[10px] leading-relaxed text-white/45">{node.description}</p>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
+              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">SKU Bias <b className="text-cyan-300">{node.skuBias}%</b></div>
+              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">REF Bias <b className="text-violet-300">{node.refBias}%</b></div>
+              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">Style <b className="text-white/70">{node.weightParams.styleStrength.toFixed(2)}</b></div>
+              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">Creative <b className="text-white/70">{node.weightParams.creativeFreedom.toFixed(2)}</b></div>
+            </div>
+            <p className="mt-3 break-all text-[9px] text-white/20">{node.id}</p>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -665,11 +783,13 @@ function ZoomModal({
 
 function AiAssistantBar({
   input,
+  enabled,
   onInputChange,
   onSend,
   sending,
 }: {
   input: string
+  enabled: boolean
   onInputChange: (v: string) => void
   onSend: () => void
   sending: boolean
@@ -695,6 +815,7 @@ function AiAssistantBar({
         <input
           type="text"
           value={input}
+          disabled={!enabled}
           onChange={(e) => onInputChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -702,11 +823,11 @@ function AiAssistantBar({
               onSend()
             }
           }}
-          placeholder={'输入指令进行优化（例如："让阴影更深一些"）'}
+          placeholder={enabled ? '输入指令进行优化（例如："让阴影更深一些"）' : '还没有可优化的生成版本'}
           className="w-full bg-transparent text-sm text-white placeholder:text-white/20 outline-none"
         />
         <p className="text-[10px] text-white/15">
-          Type instructions to refine (e.g., "Make the shadows deeper").
+          {enabled ? 'Type instructions to refine (e.g., "Make the shadows deeper").' : 'Refinement is disabled until real generation versions exist.'}
         </p>
       </div>
 
@@ -715,7 +836,7 @@ function AiAssistantBar({
         <button
           type="button"
           onClick={onSend}
-          disabled={!input.trim() || sending}
+          disabled={!enabled || !input.trim() || sending}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
         >
           {sending ? (
@@ -727,7 +848,8 @@ function AiAssistantBar({
         </button>
         <button
           type="button"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/30 transition hover:bg-white/10 hover:text-white/50"
+          disabled={!enabled}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/30 transition hover:bg-white/10 hover:text-white/50 disabled:cursor-not-allowed disabled:opacity-30"
         >
           <MousePointerClick className="h-4 w-4" />
         </button>
@@ -759,12 +881,29 @@ export default function WorkshopPage() {
     setWeightParams,
     setAdvancedTuningExpanded,
     setAiAssistantInput,
+    isComparing,
+    compareVersionIds,
+    setIsComparing,
+    setCompareVersionIds,
+    setVersionNodes,
     setActiveVersionId,
     reset,
   } = useWorkshopStore()
 
   const [zoomVariant, setZoomVariant] = useState<AssetVariant | null>(null)
   const [sendingAi, setSendingAi] = useState(false)
+  const [actionBusy, setActionBusy] = useState(false)
+  const hasGenerationVersions = versionNodes.length > 0
+  const activeVersionLabel = versionNodes.find((node) => node.id === activeVersionId)?.version ?? versionNodes.at(-1)?.version ?? null
+  const selectedVariants = variants.filter((variant) => selectedVariantIds.includes(variant.id))
+  const compareNodes = compareVersionIds
+    .map((versionId) => versionNodes.find((node) => node.id === versionId))
+    .filter((node): node is VersionNode => Boolean(node))
+
+  const handleContractNeeded = useCallback((feature: string) => {
+    toast.showToast(`${feature} 暂不可用；系统不会创建假生产结果。`, 'error')
+  }, [toast])
+
 
   // Sync URL param → store
   useEffect(() => {
@@ -779,14 +918,30 @@ export default function WorkshopPage() {
   useEffect(() => {
     if (productId) {
       productionApi.listVariants(productId)
-        .then((v) => {
+        .then(async (v) => {
           setVariants(v.length > 0 ? v : (isDevMode() ? MOCK_VARIANTS : []))
+          const nodes = isDevMode() ? [] : await productionApi.listGenerationVersions(productId)
+          setVersionNodes(nodes)
+          setActiveVersionId(nodes.find((node) => node.isCurrent)?.id ?? nodes.at(-1)?.id ?? null)
+          if (nodes.length > 0) {
+            setWeightParams(nodes.find((node) => node.isCurrent)?.weightParams ?? nodes[nodes.length - 1].weightParams)
+          }
         })
-        .catch(() => setVariants(isDevMode() ? MOCK_VARIANTS : []))
+        .catch(() => {
+          setVariants(isDevMode() ? MOCK_VARIANTS : [])
+          if (!isDevMode()) {
+            setVersionNodes([])
+            setActiveVersionId(null)
+          }
+        })
     } else {
       setVariants(isDevMode() ? MOCK_VARIANTS : [])
+      if (!isDevMode()) {
+        setVersionNodes([])
+        setActiveVersionId(null)
+      }
     }
-  }, [productId, setVariants])
+  }, [productId, setVariants, setVersionNodes, setActiveVersionId, setWeightParams])
 
   // Clear all selection
   const handleToggle = useCallback(
@@ -812,27 +967,131 @@ export default function WorkshopPage() {
     [versionNodes, setActiveVersionId, setWeightParams],
   )
 
+
+  const handleCompare = useCallback(() => {
+    if (versionNodes.length === 0) return
+    const active = versionNodes.find((node) => node.id === activeVersionId) ?? versionNodes.at(-1)
+    const parent = active?.parentId ? versionNodes.find((node) => node.id === active.parentId) : undefined
+    const previous = versionNodes.slice().reverse().find((node) => node.id !== active?.id)
+    const ids = [parent?.id, active?.id, previous?.id].filter((id, index, arr): id is string => Boolean(id) && arr.indexOf(id) === index).slice(0, 2)
+    setCompareVersionIds(ids.length > 0 ? ids : versionNodes.slice(-2).map((node) => node.id))
+    setIsComparing(true)
+  }, [versionNodes, activeVersionId, setCompareVersionIds, setIsComparing])
+
+  const handleBranch = useCallback(async () => {
+    if (!productId || !activeVersionId) return
+    setActionBusy(true)
+    try {
+      const result = await productionApi.createBranchGenerationVersion(
+        productId,
+        activeVersionId,
+        weightParams,
+        aiAssistantInput.trim() || 'Workshop branch regeneration',
+      )
+      toast.showToast(`已创建真实分支 generation version：${result.versionId}`, 'success')
+      const [nextVariants, nextNodes] = await Promise.all([
+        productionApi.listVariants(productId),
+        productionApi.listGenerationVersions(productId),
+      ])
+      setVariants(nextVariants)
+      setVersionNodes(nextNodes)
+      setActiveVersionId(nextNodes.find((node) => node.isCurrent)?.id ?? nextNodes.at(-1)?.id ?? null)
+    } catch (e) {
+      toast.showToast(e instanceof Error ? e.message : 'Branch generation failed', 'error')
+    } finally {
+      setActionBusy(false)
+    }
+  }, [productId, activeVersionId, weightParams, aiAssistantInput, setVariants, setVersionNodes, setActiveVersionId, toast])
+
   // AI Assistant send
   const handleAiSend = useCallback(async () => {
+    if (!hasGenerationVersions) {
+      toast.showToast('还没有可优化的生成版本.', 'error')
+      return
+    }
     if (!aiAssistantInput.trim()) return
-    const content = aiAssistantInput.trim()
     setAiAssistantInput('')
     setSendingAi(true)
-
-    // Simulate AI processing
-    await new Promise((resolve) => setTimeout(resolve, 1200))
-    setSendingAi(false)
-    toast.showToast(`已收到指令："${content}"，正在生成新版本...`, 'success')
-  }, [aiAssistantInput, setAiAssistantInput, toast])
+    try {
+      handleContractNeeded('Refinement assistant')
+    } finally {
+      setSendingAi(false)
+    }
+  }, [hasGenerationVersions, aiAssistantInput, setAiAssistantInput, handleContractNeeded, toast])
 
   // Download handler
   const handleDownload = useCallback((variant: AssetVariant) => {
     toast.showToast('开始下载...', 'info')
     const a = document.createElement('a')
     a.href = variant.assetUrl
-    a.download = `variant-${variant.id}.jpg`
+    a.download = `variant-${variant.id.replace(/[^a-zA-Z0-9_-]/g, '-')}.jpg`
+    a.rel = 'noopener'
     a.click()
   }, [toast])
+
+  const handleBatchDownload = useCallback(() => {
+    const targets = selectedVariants.length > 0 ? selectedVariants : variants
+    if (targets.length === 0) {
+      toast.showToast('还没有可下载的真实图片结果。', 'error')
+      return
+    }
+    targets.forEach((variant) => handleDownload(variant))
+    toast.showToast(`已开始下载 ${targets.length} 个真实结果资产`, 'success')
+  }, [selectedVariants, variants, handleDownload, toast])
+
+  const handleSaveTemplate = useCallback(async () => {
+    if (!productId) return
+    const target = selectedVariants[0] ?? variants.find((variant) => variant.status === 'selected') ?? variants[0]
+    if (!target) {
+      toast.showToast('还没有可保存为模板的真实图片结果。', 'error')
+      return
+    }
+    setActionBusy(true)
+    try {
+      const result = await productionApi.saveVariantAsTemplate(productId, target.id, `Workshop template ${target.id.split(':').at(-1) ?? ''}`)
+      toast.showToast(`已保存真实模板：${result.templateId}`, 'success')
+    } catch (e) {
+      toast.showToast(e instanceof Error ? e.message : 'Save as template failed', 'error')
+    } finally {
+      setActionBusy(false)
+    }
+  }, [productId, selectedVariants, variants, toast])
+
+  const handleFinalize = useCallback(async () => {
+    if (!productId || selectedVariantIds.length === 0) return
+    setActionBusy(true)
+    try {
+      const result = await productionApi.finalizeAssets({ productId, variantIds: selectedVariantIds, assetRoles: {} })
+      toast.showToast(`已回流 Product Center：${result.assetIds.length} 个资产`, 'success')
+    } catch (e) {
+      toast.showToast(e instanceof Error ? e.message : 'Final asset adoption failed', 'error')
+    } finally {
+      setActionBusy(false)
+    }
+  }, [productId, selectedVariantIds, toast])
+
+  const handleRegenerate = useCallback(async () => {
+    if (!productId || !activeVersionId) return
+    setActionBusy(true)
+    try {
+      const result = await productionApi.executeIntents(productId, [activeVersionId], {
+        weights: weightParams,
+        source: 'workshop_regenerate',
+      } as never)
+      toast.showToast(`已创建真实 generation version：${result.versionId}`, 'success')
+      const [nextVariants, nextNodes] = await Promise.all([
+        productionApi.listVariants(productId),
+        productionApi.listGenerationVersions(productId),
+      ])
+      setVariants(nextVariants)
+      setVersionNodes(nextNodes)
+      setActiveVersionId(nextNodes.find((node) => node.isCurrent)?.id ?? nextNodes.at(-1)?.id ?? null)
+    } catch (e) {
+      toast.showToast(e instanceof Error ? e.message : 'Regenerate failed', 'error')
+    } finally {
+      setActionBusy(false)
+    }
+  }, [productId, activeVersionId, weightParams, setVariants, setVersionNodes, setActiveVersionId, toast])
 
   return (
     <div className="mx-auto max-w-[1440px] px-5 py-6">
@@ -868,6 +1127,8 @@ export default function WorkshopPage() {
               nodes={versionNodes}
               activeId={activeVersionId}
               onSelect={handleVersionSelect}
+              onCompare={handleCompare}
+              onBranch={handleBranch}
             />
           </motion.div>
         </div>
@@ -883,9 +1144,11 @@ export default function WorkshopPage() {
             <VariantGrid
               variants={variants}
               selectedIds={selectedVariantIds}
+              busy={actionBusy}
               onToggle={handleToggle}
               onZoom={(v) => setZoomVariant(v)}
               onDownload={handleDownload}
+              onFinalize={handleFinalize}
             />
           </motion.div>
         </div>
@@ -900,17 +1163,28 @@ export default function WorkshopPage() {
           >
             <WeightControl
               weightParams={weightParams}
+              hasVersions={hasGenerationVersions}
+              activeVersionLabel={activeVersionLabel}
+              busy={actionBusy}
               advancedExpanded={advancedTuningExpanded}
               onWeightChange={setWeightParams}
               onToggleAdvanced={() => setAdvancedTuningExpanded(!advancedTuningExpanded)}
+              onBatchDownload={handleBatchDownload}
+              onRegenerate={handleRegenerate}
+              onSaveTemplate={handleSaveTemplate}
             />
           </motion.div>
         </div>
       </div>
 
+      {isComparing && (
+        <ComparePanel nodes={compareNodes} onClose={() => setIsComparing(false)} />
+      )}
+
       {/* ─── AI Assistant Bar ──────────────────────────────── */}
       <AiAssistantBar
         input={aiAssistantInput}
+        enabled={hasGenerationVersions}
         onInputChange={setAiAssistantInput}
         onSend={handleAiSend}
         sending={sendingAi}

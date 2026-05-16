@@ -34,6 +34,7 @@ import type {
   AssetTask,
   StrategySummary,
 } from '@/types/production'
+import type { PromptPlanSummary } from '@/services/production'
 
 // ─── Static Data ─────────────────────────────────────────────
 
@@ -61,6 +62,23 @@ const TEMPLATES: SceneTemplate[] = [
 const SAMPLING_OPTIONS = ['DPM++ 2M Karras', 'Euler a', 'DPM++ SDE Karras', 'Euler', 'DDIM', 'UniPC']
 
 const KEYWORD_PATTERNS = ['水珠效果', '背景更暗', '金属质感', '增加光影', '暖色调', '冷色调', '景深效果', '虚化背景', '高对比度', '柔和光线']
+
+
+function userSummaryText(value: unknown): string {
+  return String(value ?? '')
+    .replace(/Product Geometry/gi, '商品形态')
+    .replace(/Reference Composition/gi, '参考图构图')
+    .replace(/Analysis Limitation/gi, '识别提醒')
+    .replace(/Scene Reference/gi, '参考图场景')
+    .replace(/Unverified Visual Claim/gi, '待确认视觉点')
+    .replace(/Brand Constraints/gi, '品牌约束')
+    .replace(/Image Bytes Unavailable/gi, '图片细节待确认')
+    .replace(/Material/gi, '材质质感')
+    .replace(/Style/gi, '视觉风格')
+    .replace(/scene_generation/gi, '场景生成')
+    .replace(/background_replace/gi, '背景替换')
+    .replace(/image_enhancement/gi, '图片增强')
+}
 
 // ─── Mock Strategy Summary (will come from Prep Hub in real flow) ───
 
@@ -237,11 +255,17 @@ export default function SandboxPage() {
     setDiyPrompt,
     setRecognizedKeywords,
     setStrategySummary,
+    setIntents,
     setIsRunning,
     reset,
   } = store
 
   const [executing, setExecuting] = useState(false)
+  const [promptPlanning, setPromptPlanning] = useState(false)
+  const [promptPlan, setPromptPlan] = useState<PromptPlanSummary | null>(null)
+  const [executionNotice, setExecutionNotice] = useState<string | null>(null)
+  const [executionProgress, setExecutionProgress] = useState<number | null>(null)
+  const [executionPhase, setExecutionPhase] = useState<'idle' | 'waiting' | 'ready' | 'failed'>('idle')
 
   // Sync URL param → store
   useEffect(() => {
@@ -253,34 +277,61 @@ export default function SandboxPage() {
   }, [id, productId, setProductId, reset])
 
   // Hydrate strategy summary and intents from backend stage-view. Only dev=1 may use the mock strategy.
+  // Always refetch on Sandbox entry/product change so Prep choices (keep/replace/drop) are reflected instead of reusing a stale store snapshot.
   useEffect(() => {
-    if (!productId || strategySummary) return
+    if (!productId) return
+    let cancelled = false
     if (isDevMode()) {
       setStrategySummary(MOCK_STRATEGY)
-      return
+      return () => { cancelled = true }
     }
-    productionApi.listIntents(productId)
-      .then((intents) => {
-        store.setIntents(intents)
+    Promise.all([productionApi.listIntents(productId), productionApi.getPromptPlanSummary(productId)])
+      .then(([intents, plan]) => {
+        if (cancelled) return
+        setIntents(intents)
+        setPromptPlan(plan)
         setStrategySummary({
           overview: intents.length > 0
-            ? intents.map((intent) => intent.description).join('；')
-            : 'Backend stage-view has no compiled intent yet. Please complete Prep Hub parsing/selection before execution.',
+            ? intents.map((intent) => userSummaryText(intent.description)).join('；')
+            : '还没有可用于生成的 LLM 策略。请先回到生产准备，完成解析属性确认和 LLM 决策树选择。',
           attributes: intents.map((intent) => ({
             key: intent.id,
-            label: intent.type,
-            value: intent.description,
+            label: userSummaryText(intent.type),
+            value: userSummaryText(intent.description),
             icon: 'Sparkles',
           })),
         })
       })
-      .catch((error) => {
+      .catch(() => {
+        if (cancelled) return
+        setIntents([])
         setStrategySummary({
-          overview: error instanceof Error ? error.message : 'Failed to load backend strategy state.',
+          overview: '暂时没有读取到 LLM 策略内容。请先回到生产准备，完成解析属性确认和 LLM 决策树选择。',
           attributes: [],
         })
       })
-  }, [productId, strategySummary, setStrategySummary, store])
+    return () => { cancelled = true }
+  }, [productId, setStrategySummary, setIntents])
+
+  const runPromptPlanner = async () => {
+    if (!productId) return
+    setPromptPlanning(true)
+    try {
+      const job = await productionApi.requestPromptPlanner(productId, { marketplace: 'amazon', locale: 'zh-CN', promptVariables: { source: 'sandbox-prompt-diff' } })
+      toast.showToast(job.runtimeJobId ? '已开始整理本次出图方案。' : '已刷新出图方案。', 'success')
+      let latest: PromptPlanSummary | null = null
+      for (let i = 0; i < 24; i += 1) {
+        await new Promise(resolve => setTimeout(resolve, 2500))
+        latest = await productionApi.getPromptPlanSummary(productId)
+        setPromptPlan(latest)
+        if (latest.source === 'llm_prompt_planner' || latest.status === 'blocked') break
+      }
+    } catch (e) {
+      toast.showToast(e instanceof Error ? e.message : '生成出图方案失败，请稍后重试。', 'error')
+    } finally {
+      setPromptPlanning(false)
+    }
+  }
 
   // Recognize keywords when DIY prompt changes
   useEffect(() => {
@@ -296,14 +347,22 @@ export default function SandboxPage() {
     const resolution = RESOLUTION_OPTIONS.find((r) => r.id === selectedResolution)
     const modelCost = (model?.costPerImage ?? 10)
     const resCost = (resolution?.costMultiplier ?? 1)
-    const imageCount_ = Math.min(imageCount, assetTasks.length || 1)
     return {
       modelCostPerImage: modelCost,
       resolutionCostPerImage: resCost,
-      imageCount: imageCount_,
-      total: Math.round(modelCost * resCost * imageCount_),
+      imageCount,
+      total: Math.round(modelCost * resCost * imageCount),
     }
   }, [selectedModel, selectedResolution, imageCount, assetTasks.length])
+
+  const taskSlots = useMemo(() => {
+    return Array.from({ length: imageCount }, (_, idx) => assetTasks[idx] ?? {
+      id: `planned-${idx + 1}`,
+      name: `任务 ${String(idx + 1).padStart(2, '0')}`,
+      sceneTag: idx === 0 ? '主图' : idx % 2 === 0 ? '场景图' : '细节图',
+      templateId: TEMPLATES[idx % TEMPLATES.length].id,
+    })
+  }, [assetTasks, imageCount])
 
   // Template lookup helper
   const getTemplate = useCallback(
@@ -317,34 +376,80 @@ export default function SandboxPage() {
   }
 
   const adjustImageCount = (delta: number) => {
-    setImageCount(imageCount + delta)
+    setImageCount(Math.max(1, Math.min(10, imageCount + delta)))
+  }
+
+  const ensureTaskForSlot = (asset: AssetTask, patch: Partial<AssetTask>) => {
+    if (asset.id.startsWith('planned-')) {
+      addAssetTask({ ...asset, ...patch, id: `asset-${Date.now()}-${asset.id}` })
+      return
+    }
+    updateAssetTask(asset.id, patch)
   }
 
   const addNewAsset = () => {
     const idx = assetTasks.length + 1
     const newAsset: AssetTask = {
       id: `asset-${Date.now()}`,
-      name: `Asset ${String(idx).padStart(2, '0')}（新任务）`,
-      sceneTag: '主图',
-      templateId: TEMPLATES[0].id,
+      name: `任务 ${String(idx).padStart(2, '0')}（新增）`,
+      sceneTag: idx === 1 ? '主图' : idx % 2 === 0 ? '细节图' : '场景图',
+      templateId: TEMPLATES[(idx - 1) % TEMPLATES.length].id,
     }
     addAssetTask(newAsset)
+    setImageCount(Math.max(imageCount, idx))
   }
 
   const executeProduction = async () => {
     if (!productId) return
+    if (store.intents.length === 0) {
+      toast.showToast('还没有可用于生成的策略。请先完成生产准备里的图片解析和选择。', 'error')
+      return
+    }
+    if (!promptPlan || promptPlan.status !== 'ready' || !promptPlan.promptId) {
+      const message = '请先点击左侧「生成/刷新出图方案」，等方案状态变为“可用于生产”后再开始生产。'
+      toast.showToast(message, 'error')
+      setExecutionNotice(message)
+      setExecutionProgress(null)
+      setExecutionPhase('failed')
+      return
+    }
+    setExecutionNotice('正在提交生产任务，请稍候...')
+    setExecutionProgress(0)
+    setExecutionPhase('waiting')
     setExecuting(true)
     setIsRunning(true)
     try {
       const selectedIntentIds = store.intents.map((intent) => intent.id)
       const result = await productionApi.executeIntents(productId, selectedIntentIds, store.executionConfig ?? undefined)
-      toast.showToast(`生产任务已加入队列：${result.jobId}`, 'success')
-      // Navigate to workshop after brief delay
-      setTimeout(() => {
-        navigate(`/products/${productId}/production/workshop`)
-      }, 800)
+      toast.showToast('生产任务已提交，正在等待真实结果返回。', 'success')
+      setExecutionNotice('生产任务已提交，正在排队出图。结果返回前不会跳转到工坊，也不会展示占位图。')
+      for (let attempt = 0; attempt < 80; attempt += 1) {
+        await new Promise(resolve => setTimeout(resolve, attempt === 0 ? 1200 : 3000))
+        const latest = await productionApi.getGenerationExecutionStatus(productId, result.versionId)
+        setExecutionProgress(latest.progress)
+        setExecutionNotice(latest.message)
+        if (latest.terminal) {
+          if (latest.successful) {
+            setExecutionPhase('ready')
+            setIsRunning(false)
+            toast.showToast('真实结果已返回，正在进入工坊。', 'success')
+            navigate(`/products/${productId}/production/workshop`)
+          } else {
+            setExecutionPhase('failed')
+            setIsRunning(false)
+            toast.showToast(latest.message, 'error')
+          }
+          return
+        }
+      }
+      setExecutionPhase('waiting')
+      setExecutionNotice('生产仍在进行中，暂时还没有真实结果返回。系统会停留在本页，不展示占位图；你可以稍后刷新或进入工坊查看是否已返回。')
     } catch (e) {
-      toast.showToast(e instanceof Error ? e.message : '执行失败', 'error')
+      const message = e instanceof Error ? e.message : '提交失败，请稍后重试。'
+      toast.showToast(message, 'error')
+      setExecutionNotice(message)
+      setExecutionProgress(null)
+      setExecutionPhase('failed')
       setIsRunning(false)
     } finally {
       setExecuting(false)
@@ -357,6 +462,26 @@ export default function SandboxPage() {
 
   const currentModel = MODEL_OPTIONS.find((m) => m.id === selectedModel)
   const currentResolution = RESOLUTION_OPTIONS.find((r) => r.id === selectedResolution)
+  const hasRunnableIntents = store.intents.length > 0
+  const promptPlanReady = promptPlan?.status === 'ready' && Boolean(promptPlan.promptId)
+  const canStartProduction = hasRunnableIntents && promptPlanReady && !executing
+  const startProductionBlocker = !hasRunnableIntents
+    ? '先回到生产准备，完成解析属性确认和 LLM 决策树选择。'
+    : !promptPlanReady
+      ? '先点击左侧「生成/刷新出图方案」，等方案状态变为“可用于生产”。'
+      : '可以开始生产。'
+  const promptPlanSourceLabel = promptPlan?.source === 'llm_prompt_planner'
+    ? '已按你的选择整理'
+    : promptPlan?.source
+      ? '基础方案'
+      : '准备中'
+  const promptPlanStatusLabel = promptPlan?.status === 'ready'
+    ? '可用于生产'
+    : promptPlan?.status === 'blocked'
+      ? '需要先完成准备'
+      : promptPlan?.status
+        ? '整理中'
+        : '未知'
 
   return (
     <div className="mx-auto max-w-[1440px] px-5 py-6">
@@ -383,14 +508,14 @@ export default function SandboxPage() {
         {/* ─── Left Column (3 cols) ────────────────────────── */}
         <div className="space-y-5 lg:col-span-3">
           {/* 1. Strategy Summary */}
-          <SectionCard title="策略摘要（Strategy Summary）" subtitle="只读">
+          <SectionCard title="LLM 策略摘要" subtitle="来自生产准备的动态选择">
             {strategySummary ? (
               <div className="space-y-4">
                 {/* Overview */}
                 <div className="rounded-xl border border-white/[0.04] bg-white/[0.015] p-3">
                   <div className="mb-1.5 flex items-center gap-1.5">
                     <Sparkles className="h-3 w-3 text-amber-400/60" />
-                    <span className="text-[10px] font-medium text-white/40">意图概览</span>
+                    <span className="text-[10px] font-medium text-white/40">Prompt 输入概览</span>
                   </div>
                   <p className="text-[11px] leading-relaxed text-white/50">
                     {strategySummary.overview}
@@ -433,8 +558,59 @@ export default function SandboxPage() {
             )}
           </SectionCard>
 
+          <SectionCard title="出图方案 / 变化说明" subtitle="把你的选择整理成后续出图要求">
+            <div className="space-y-3">
+              <div className="rounded-lg border border-white/[0.04] bg-white/[0.015] p-3 text-[10px] text-white/45">
+                <p className="mb-2 leading-relaxed text-white/35">点击后，系统会把生产准备里的图片识别结果和你的选择整理成一份出图方案；下方只展示这次方案新增、移除或调整了什么。</p>
+                <div className="flex items-center justify-between gap-2">
+                  <span>方案来源</span>
+                  <span className={promptPlan?.source === 'llm_prompt_planner' ? 'text-emerald-300/80' : 'text-amber-300/80'}>
+                    {promptPlanSourceLabel}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <span>准备状态</span>
+                  <span>{promptPlanStatusLabel}</span>
+                </div>
+                {promptPlan?.promptId && (
+                  <div className="mt-1 truncate text-white/30">方案已保存，可用于本次生产</div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={runPromptPlanner}
+                disabled={promptPlanning || !hasRunnableIntents}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-[11px] font-medium text-cyan-200 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {promptPlanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                {promptPlanning ? '正在整理出图方案...' : '生成/刷新出图方案'}
+              </button>
+              {!promptPlanReady && (
+                <div className="rounded-lg border border-amber-300/15 bg-amber-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-amber-100/75">
+                  这是开始生产前的必做步骤：先生成出图方案，系统会把生产准备里的选择整理成可执行要求。完成后右下角“开始生产”才会变为可用。
+                </div>
+              )}
+              <div className="space-y-2 rounded-lg border border-white/[0.04] bg-black/20 p-3">
+                <p className="text-[10px] font-medium text-white/45">变化说明</p>
+                {promptPlan && (promptPlan.diff.added.length || promptPlan.diff.removed.length || promptPlan.diff.changed.length) ? (
+                  <div className="space-y-1 text-[10px] leading-relaxed">
+                    {promptPlan.diff.added.map((item, idx) => <p key={`add-${idx}`} className="text-emerald-300/70">+ {item}</p>)}
+                    {promptPlan.diff.removed.map((item, idx) => <p key={`remove-${idx}`} className="text-rose-300/70">- {item}</p>)}
+                    {promptPlan.diff.changed.map((item, idx) => <p key={`change-${idx}`} className="text-amber-300/70">~ {item}</p>)}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-white/25">
+                    {promptPlan?.diff.status === 'not_returned'
+                      ? '方案已准备好，本次没有明显变化。'
+                      : '完成生产准备里的选择后，点击上方按钮，系统会整理本次出图要求并展示变化。'}
+                  </p>
+                )}
+              </div>
+            </div>
+          </SectionCard>
+
           {/* 2. DIY Extra Requirements */}
-          <SectionCard title="DIY 额外要求（DIY Prompt）">
+          <SectionCard title="额外生成要求">
             <div className="space-y-3">
               <p className="text-[10px] leading-relaxed text-white/25">
                 可输入对本次生成的额外要求，例如：增加水珠效果、背景更暗、突出产品重量感等...
@@ -488,7 +664,7 @@ export default function SandboxPage() {
         {/* ─── Center Column (6 cols) ──────────────────────── */}
         <div className="space-y-5 lg:col-span-6">
           {/* 3. Task Allocation */}
-          <SectionCard title="任务配额管理（Task Allocation）">
+          <SectionCard title="任务配额与生成队列">
             <div className="space-y-4">
               {/* Image Count */}
               <div className="flex items-center gap-4">
@@ -519,7 +695,7 @@ export default function SandboxPage() {
 
               {/* Asset Rows */}
               <div className="space-y-2">
-                {assetTasks.map((asset, idx) => (
+                {taskSlots.map((asset, idx) => (
                   <motion.div
                     key={asset.id}
                     initial={{ opacity: 0, x: -8 }}
@@ -543,7 +719,7 @@ export default function SandboxPage() {
                       <select
                         value={asset.templateId}
                         onChange={(e) =>
-                          updateAssetTask(asset.id, { templateId: e.target.value })
+                          ensureTaskForSlot(asset, { templateId: e.target.value })
                         }
                         className="min-w-[160px] rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus:border-cyan-400/30"
                       >
@@ -554,13 +730,15 @@ export default function SandboxPage() {
                         ))}
                       </select>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeAssetTask(asset.id)}
-                      className="shrink-0 text-white/15 hover:text-red-400/80"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    {!asset.id.startsWith('planned-') && (
+                      <button
+                        type="button"
+                        onClick={() => removeAssetTask(asset.id)}
+                        className="shrink-0 text-white/15 hover:text-red-400/80"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -580,16 +758,16 @@ export default function SandboxPage() {
           </SectionCard>
 
           {/* 4. Template Preview */}
-          <SectionCard title="模板预览（Template Preview）">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {assetTasks.slice(0, imageCount).map((asset, idx) => {
+          <SectionCard title={`模板预览（${imageCount} 个任务）`}>
+            <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${imageCount >= 5 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+              {taskSlots.map((asset, idx) => {
                 const tpl = getTemplate(asset.templateId)
                 return <WireframePreview key={asset.id} template={tpl} index={idx} />
               })}
             </div>
             <p className="mt-3 flex items-center gap-1 text-[9px] text-white/15">
               <Info className="h-3 w-3" />
-              预览为构图示意，非最终效果。生成结果将根据您的策略与模型输出。
+              上方生成数量就是这里的预览数量；每个任务会对应一个模板和一次生成槽位。
             </p>
           </SectionCard>
         </div>
@@ -597,7 +775,7 @@ export default function SandboxPage() {
         {/* ─── Right Column (3 cols) ───────────────────────── */}
         <div className="space-y-5 lg:col-span-3">
           {/* 5. Execution Settings */}
-          <SectionCard title="场景执行设置（Execution Settings）">
+          <SectionCard title="生产设置">
             <div className="space-y-4">
               {/* Model Selection */}
               <div>
@@ -647,7 +825,7 @@ export default function SandboxPage() {
                   onClick={() => setAdvancedExpanded(!advancedExpanded)}
                   className="flex w-full items-center justify-between px-3 py-2.5"
                 >
-                  <span className="text-[11px] text-white/40">高级设置（Advanced）</span>
+                  <span className="text-[11px] text-white/40">高级设置</span>
                   {advancedExpanded ? (
                     <ChevronUp className="h-3.5 w-3.5 text-white/20" />
                   ) : (
@@ -688,9 +866,9 @@ export default function SandboxPage() {
                           </div>
                         </div>
 
-                        {/* Negative Prompt */}
+                        {/* 不希望出现的内容 */}
                         <div>
-                          <label className="mb-1 block text-[10px] text-white/30">Negative Prompt</label>
+                          <label className="mb-1 block text-[10px] text-white/30">不希望出现的内容</label>
                           <input
                             type="text"
                             value={advancedParams.negativePrompt}
@@ -702,9 +880,9 @@ export default function SandboxPage() {
                           />
                         </div>
 
-                        {/* Sampling */}
+                        {/* 采样方式 */}
                         <div>
-                          <label className="mb-1 block text-[10px] text-white/30">Sampling</label>
+                          <label className="mb-1 block text-[10px] text-white/30">采样方式</label>
                           <div className="relative">
                             <select
                               value={advancedParams.sampling}
@@ -721,10 +899,10 @@ export default function SandboxPage() {
                           </div>
                         </div>
 
-                        {/* CFG Scale */}
+                        {/* 画面贴合强度 */}
                         <div>
                           <div className="mb-1 flex items-center justify-between">
-                            <label className="text-[10px] text-white/30">CFG Scale</label>
+                            <label className="text-[10px] text-white/30">画面贴合强度</label>
                             <span className="text-[10px] tabular-nums text-white/40">{advancedParams.cfgScale}</span>
                           </div>
                           <input
@@ -740,10 +918,10 @@ export default function SandboxPage() {
                           />
                         </div>
 
-                        {/* Steps */}
+                        {/* 生成精细度 */}
                         <div>
                           <div className="mb-1 flex items-center justify-between">
-                            <label className="text-[10px] text-white/30">Steps</label>
+                            <label className="text-[10px] text-white/30">生成精细度</label>
                             <span className="text-[10px] tabular-nums text-white/40">{advancedParams.steps}</span>
                           </div>
                           <input
@@ -785,7 +963,7 @@ export default function SandboxPage() {
           </SectionCard>
 
           {/* 6. Credits Estimation */}
-          <SectionCard title="消耗预估（Credits Estimation）">
+          <SectionCard title="消耗预估">
             <div className="space-y-3">
               <div className="space-y-2 rounded-xl border border-white/[0.03] bg-white/[0.01] p-3">
                 <div className="flex items-center justify-between">
@@ -828,6 +1006,16 @@ export default function SandboxPage() {
         </div>
       </div>
 
+      <div className={`mx-auto mt-6 max-w-2xl rounded-xl border px-4 py-3 text-center text-[11px] leading-relaxed ${
+        canStartProduction
+          ? 'border-emerald-300/15 bg-emerald-300/[0.05] text-emerald-100/75'
+          : 'border-amber-300/15 bg-amber-300/[0.055] text-amber-100/75'
+      }`}>
+        {canStartProduction
+          ? '出图方案已准备好，可以开始生产。提交后会停留在本页显示进度，真实结果返回后再进入工坊。'
+          : `开始生产前还需要：${startProductionBlocker}`}
+      </div>
+
       {/* ─── Bottom Action Bar ─────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -841,13 +1029,14 @@ export default function SandboxPage() {
           className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3 text-xs text-white/50 transition hover:border-white/10 hover:text-white/70"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
-          返回上一步（调整策略）
+          返回上一步
         </button>
 
         <button
           type="button"
           onClick={() => void executeProduction()}
-          disabled={executing || assetTasks.length === 0}
+          disabled={!canStartProduction}
+          title={startProductionBlocker}
           className="group inline-flex flex-1 max-w-xl items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/10 transition hover:shadow-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {executing ? (
@@ -856,10 +1045,33 @@ export default function SandboxPage() {
             <Play className="h-4 w-4" />
           )}
           <span>
-            {executing ? '正在加入队列...' : '开始策略化生产（INITIATE STRATEGIC GENERATION）'}
+            {executing ? '正在出图...' : promptPlanReady ? '开始生产' : '先生成出图方案'}
           </span>
         </button>
       </motion.div>
+
+      {executionNotice && (
+        <div className={`mx-auto mt-3 max-w-2xl rounded-xl border px-4 py-3 text-center text-[11px] leading-relaxed ${
+          executionPhase === 'ready'
+            ? 'border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-100/80'
+            : executionPhase === 'failed'
+              ? 'border-rose-400/20 bg-rose-400/[0.06] text-rose-100/80'
+              : 'border-cyan-400/20 bg-cyan-400/[0.06] text-cyan-100/80'
+        }`} aria-live="polite">
+          <div className="flex items-center justify-center gap-2">
+            {executionPhase === 'waiting' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            <span>{executionNotice}</span>
+          </div>
+          {executionProgress != null && executionPhase === 'waiting' && (
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+              <div
+                className="h-full rounded-full bg-cyan-300/70 transition-all duration-500"
+                style={{ width: `${Math.max(8, executionProgress)}%` }}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Summary Info Bar */}
       <motion.div
@@ -878,7 +1090,11 @@ export default function SandboxPage() {
       </motion.div>
 
       <p className="mt-1 text-center text-[9px] text-white/15">
-        温馨提示：生成任务将加入队列，您可在「历史记录」中查看进度与结果。
+        {hasRunnableIntents
+          ? promptPlanReady
+            ? '温馨提示：提交后会在本页显示出图进度；真实结果返回后再进入工坊。'
+            : '开始生产前必须先生成出图方案；这是必做步骤，不是可选操作。'
+          : '还没有可用于生成的策略，请先完成生产准备里的图片解析和选择。'}
       </p>
     </div>
   )
