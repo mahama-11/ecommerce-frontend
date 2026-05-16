@@ -22,6 +22,8 @@ export default function PortalLayout() {
   const topLinks = useMemo(() => ([
     { label: t('nav.workbench'), to: workbenchPath },
     { label: t('nav.solutions'), to: '/solutions' },
+    { label: t('nav.pricing'), to: '/pricing' },
+    { label: t('nav.aboutUs'), to: '/aboutus' },
   ]), [t, workbenchPath])
 
   const footerColumns = useMemo(() => ([
