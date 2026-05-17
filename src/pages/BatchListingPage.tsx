@@ -532,8 +532,8 @@ export default function BatchListingPage() {
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <Link to="/products" className="mb-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-white/40 transition hover:text-white/90"><ChevronLeft className="h-4 w-4" />{t('batchListing.contextLinks.backToProducts')}</Link>
-            <div className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200/65">Listing Station · Template → validate → adopt</div>
-            <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">批量 Listing</h1>
+            <div className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200/65">Template Center · DIY templates</div>
+            <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">模板中心</h1>
             <p className="mt-1.5 text-sm text-white/48">选择 SKU → 配置模板/Prompt → 生成/预览 → 校验 → 创建版本 → Adopt/导出交接</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -551,6 +551,32 @@ export default function BatchListingPage() {
             <div key={step} className={`rounded-full border px-4 py-2 text-xs font-semibold ${index === 0 ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-200' : index === 1 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/8 bg-white/[0.035] text-white/45'}`}>{step}</div>
           ))}
         </div>
+
+        <section className="mb-5 rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.36)]">
+          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/38">SKU 选择池</div>
+              <p className="mt-1 text-sm text-white/45">先选择要套用 DIY 模板的 SKU，再在下方配置模板并预览生成版本。</p>
+            </div>
+            <div className="flex min-w-0 flex-1 gap-2 lg:max-w-xl">
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索 SKU / 标题" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs text-white outline-none" />
+              <button onClick={toggleAllFiltered} className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2 text-xs text-white/65">{isAllFilteredSelected ? '取消全选' : '全选'}</button>
+              <button onClick={clearSelection} className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-white/45 hover:text-white">清空</button>
+            </div>
+          </div>
+          <div className="mb-3 text-xs text-white/38">已选 {selectedProducts.length} / 可见 {filteredProducts.length}</div>
+          <div className="grid max-h-[260px] gap-2 overflow-y-auto pr-1 custom-scrollbar md:grid-cols-2 xl:grid-cols-4">
+            {filteredProducts.map(product => (
+              <label key={product.id} className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition ${selectedProductIDs.includes(product.id) ? 'border-cyan-300/35 bg-cyan-300/[0.08]' : 'border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045]'}`}>
+                <CustomCheckbox checked={selectedProductIDs.includes(product.id)} onChange={() => toggleProduct(product.id)} />
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-white/78">{product.title}</div>
+                  <div className="font-mono text-[11px] text-white/38">{product.skuCode}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+        </section>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
           <div className="space-y-5">
@@ -589,11 +615,6 @@ export default function BatchListingPage() {
               <div className="space-y-3 text-xs leading-5"><div className="rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-rose-100/72">BLOCKER: 素材不完整的 SKU 不能创建可导出版本。</div><div className="rounded-2xl border border-amber-300/18 bg-amber-300/[0.06] p-3 text-amber-100/72">WARNING: 标题长度、平台字段映射需要在创建前校验。</div><div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3 text-white/50">INFO: batch create/adopt 已接真实后端 API；marketplace publish 仍 contract-needed。</div></div>
             </div>
 
-            <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5">
-              <div className="mb-4 flex items-center justify-between"><div className="text-xs font-bold uppercase tracking-[0.22em] text-white/38">SKU 选择池</div><span className="text-xs text-white/35">{filteredProducts.length}</span></div>
-              <div className="mb-3 flex gap-2"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索 SKU / 标题" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs text-white outline-none" /><button onClick={toggleAllFiltered} className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2 text-xs text-white/65">全选</button></div>
-              <div className="max-h-[420px] space-y-2 overflow-y-auto custom-scrollbar">{filteredProducts.map(product => <label key={product.id} className="flex cursor-pointer items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3"><CustomCheckbox checked={selectedProductIDs.includes(product.id)} onChange={() => toggleProduct(product.id)} /><div className="min-w-0"><div className="truncate text-sm font-semibold text-white/78">{product.title}</div><div className="font-mono text-[11px] text-white/38">{product.skuCode}</div></div></label>)}</div>
-            </section>
           </aside>
         </div>
       </section>

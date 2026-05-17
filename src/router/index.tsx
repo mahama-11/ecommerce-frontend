@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, useParams } from 'react-router-dom'
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react'
 import type { RouteObject } from 'react-router-dom'
 
@@ -14,9 +14,7 @@ const HomePage = lazy(() => import('@/pages/HomePage'))
 const PricingPage = lazy(() => import('@/pages/PricingPage'))
 const SolutionDetailPage = lazy(() => import('@/pages/SolutionDetailPage'))
 const ToolPage = lazy(() => import('@/pages/ToolPage'))
-const ProductAiWorkspacePage = lazy(() => import('@/pages/ToolPage').then(module => ({ default: module.ProductScopedToolPage })))
 const BatchListingPage = lazy(() => import('@/pages/BatchListingPage'))
-const ProductVisualToolsPage = lazy(() => import('@/pages/ProductVisualToolsPage'))
 const AboutUsPage = lazy(() => import('@/pages/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('@/pages/HelpCenterPage'))
 const ContactPage = lazy(() => import('@/pages/ContactPage'))
@@ -62,6 +60,14 @@ function Fallback() {
 
 function S({ children }: { children: ReactNode }) {
   return <Suspense fallback={<Fallback />}>{children}</Suspense>
+}
+
+function LegacyProductAIRedirect() {
+  const { productId } = useParams()
+  if (!productId || productId === ':productId') {
+    return <Navigate to="/products" replace />
+  }
+  return <Navigate to={`/products/${encodeURIComponent(productId)}/production/prep`} replace />
 }
 
 const consolePage = (Element: LazyExoticComponent<ComponentType<any>>) => ({
@@ -113,6 +119,7 @@ export const router = createBrowserRouter([
       { index: true, element: <S><HomePage /></S> },
       { path: 'home', element: <S><HomePage /></S> },
       { path: 'pricing', element: <S><PricingPage /></S> },
+      { path: 'solutions', element: <S><SolutionDetailPage /></S> },
       { path: 'solutions/:slug', element: <S><SolutionDetailPage /></S> },
       { path: 'aboutus', element: <S><AboutUsPage /></S> },
       { path: 'help', element: <S><HelpCenterPage /></S> },
@@ -161,7 +168,7 @@ export const router = createBrowserRouter([
     { path: 'workbench/visual-tools', element: <Navigate to="/products" replace /> },
     { path: 'workbench/visual-tools/:toolSlug', element: <Navigate to="/products" replace /> },
     { path: 'workbench/downloads', element: <S><AccountDownloadsPage /></S> },
-    { path: ':productId/ai/:toolSlug', element: <Navigate to="/products/:productId/production/prep" replace /> },
+    { path: ':productId/ai/:toolSlug', element: <LegacyProductAIRedirect /> },
   ]),
   // V2 Production Pipeline (intent-driven)
   productionPage([

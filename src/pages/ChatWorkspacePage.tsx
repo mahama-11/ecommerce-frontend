@@ -289,7 +289,7 @@ export default function ChatWorkspacePage() {
         id: `chat-template-${Date.now()}`,
         platform: 'amazon',
         tags: ['chat', 'ops', pathname === '/chat/doc' ? 'knowledge' : 'listing'],
-        usageCount: 1200,
+        usageCount: '1.2k',
         favorite: 4.8,
         savedAt: now,
         sourceType: 'chat',

@@ -2,12 +2,6 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
-  Image as ImageIcon,
-  FileText,
-  TrendingUp,
-  Download,
-  Wand2,
-  BrainCircuit,
   LoaderCircle,
   Trash2,
   Plus,
@@ -38,17 +32,8 @@ import type {
   ProductAssetItem,
   DownloadRecord
 } from '@/types/product'
-import { AssetsTab, ExportsTab, HistoryTab, ListingsTab, ProfitTab } from './components/ProductDetailTabs'
 
 void Trash2
-
-const TABS = [
-  { id: 'assets', label: 'Assets', icon: ImageIcon },
-  { id: 'listings', label: 'Listings', icon: FileText },
-  { id: 'profit', label: 'Profit', icon: TrendingUp },
-  { id: 'exports', label: 'Exports', icon: Download },
-  { id: 'history', label: 'History', icon: Wand2 },
-] as const
 
 type ProductDetailResponse = {
   product: Product
@@ -118,24 +103,6 @@ function TextareaField({ label, value, onChange, placeholder, rows, hint }: { la
   )
 }
 
-function TabButton({ active, onClick, icon, label, hasDot }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string, hasDot?: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`relative flex items-center gap-2 pb-4 text-sm font-medium transition-colors ${
-        active ? 'text-white' : 'text-white/40 hover:text-white/70'
-      }`}
-    >
-      {icon}
-      {label}
-      {hasDot && <span className="absolute top-0 -right-1.5 h-1.5 w-1.5 rounded-full bg-brand-500" />}
-      {active && (
-        <span className="absolute bottom-0 left-0 w-full h-[2px] bg-brand-500 shadow-[0_0_8px_rgba(var(--brand-500),0.6)]" />
-      )}
-    </button>
-  )
-}
-
 function parseReadonlyProductInfo(specJson?: string) {
   if (!specJson) return [] as Array<{ key: string; value: string }>
   try {
@@ -199,7 +166,6 @@ export function ProductDetailPage() {
   const [assetMutatingRelationId, setAssetMutatingRelationId] = useState<string | null>(null)
   const [assetBulkMutating, setAssetBulkMutating] = useState(false)
   const [selectedAssetRelationIds, setSelectedAssetRelationIds] = useState<string[]>([])
-  const [activeTab, setActiveTab] = useState<typeof TABS[number]['id']>('assets')
   const [showProfitModal, setShowProfitModal] = useState(false)
   const [profitForm, setProfitForm] = useState({
     platform: 'amazon',
@@ -629,7 +595,6 @@ export function ProductDetailPage() {
 
   function handleInspectExportAssets(downloadId: string) {
     setSelectedDownloadId(downloadId)
-    setActiveTab('assets')
   }
 
   void copy
@@ -666,6 +631,27 @@ export function ProductDetailPage() {
   const parsedInfo = parseReadonlyProductInfo(product.specJson)
   const latestProfit = data.profitSnapshots[0]
 
+  void adoptingVersionId
+  void productDownloads
+  void selectedDownloadId
+  void assetMutatingRelationId
+  void assetBulkMutating
+  void selectedAssetRelationIds
+  void setSelectedAssetRelationIds
+  void openExportModalForAllAssets
+  void openExportModalForSelection
+  void openCreateListingModal
+  void openEditListingModal
+  void handleAdoptListing
+  void handleMakePrimaryAsset
+  void handleAssetRoleChange
+  void handleDeleteAssetRelation
+  void handleBulkAssetRoleChange
+  void handleBulkDeleteAssetRelations
+  void handleAssetSortOrderChange
+  void handleMoveAsset
+  void handleInspectExportAssets
+
   return (
     <div className="relative flex min-h-[calc(100vh-52px)] w-full flex-col overflow-hidden bg-[#0a0a12] text-[#e8eaf0] font-sans">
       <div className="pointer-events-none fixed inset-0 opacity-60">
@@ -696,7 +682,6 @@ export function ProductDetailPage() {
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setShowListingModal(true)} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/72 transition hover:bg-white/[0.08]">新建 Listing 版本</button>
             <button onClick={() => setShowProfitModal(true)} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/72 transition hover:bg-white/[0.08]">利润计算</button>
-            <Link to={`/products/${product.id}/production/prep`} className="rounded-xl bg-cyan-200 px-4 py-2 text-xs font-bold text-[#05070b] transition hover:bg-white">进入生产线</Link>
           </div>
         </div>
 
@@ -777,8 +762,8 @@ export function ProductDetailPage() {
           <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             <div className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5">
               <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">利润计算</div>
-              {latestProfit ? <div className="grid grid-cols-2 gap-3"><DetailMetric label="净利" value={`${product.costCurrency || 'USD'} ${latestProfit.netProfit}`} /><DetailMetric label="利润率" value={`${latestProfit.netMargin}%`} /></div> : <button onClick={() => setShowProfitModal(true)} className="w-full rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2 text-sm text-white/70">Calculate with real API</button>}
-              <div className="mt-4 rounded-2xl border border-white/[0.06] bg-black/20 p-3 text-xs leading-5 text-white/42">固定模型：单平台 / 单国家，不支持自定义公式。后端可用时展示真实 profit snapshot。</div>
+              {latestProfit ? <div className="grid grid-cols-2 gap-3"><DetailMetric label="净利" value={`${product.costCurrency || 'USD'} ${latestProfit.netProfit}`} /><DetailMetric label="利润率" value={`${latestProfit.netMargin}%`} /></div> : <button onClick={() => setShowProfitModal(true)} className="w-full rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2 text-sm text-white/70">计算利润</button>}
+              <div className="mt-4 rounded-2xl border border-white/[0.06] bg-black/20 p-3 text-xs leading-5 text-white/42">按真实后端利润快照计算：净利 = 售价 - 成本 - 物流 - 平台费 - 其他费用；利润率 = 净利 / 售价。</div>
             </div>
             <div className="rounded-[28px] border border-cyan-300/16 bg-cyan-300/[0.045] p-5">
               <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-cyan-100/70">状态总览</div>
@@ -788,10 +773,9 @@ export function ProductDetailPage() {
                 <StatusPill label="Listing" ok={product.listingStatus === 'ready'} />
                 <StatusPill label="Export" ok={product.exportStatus === 'done' || product.exportStatus === 'ready'} />
               </div>
-              <div className="mt-4 rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-xs leading-5 text-rose-100/72">当前状态：{product.assetStatus !== 'ready' ? '缺素材，下一步进入 AI 生产线生成主图。' : product.listingStatus !== 'ready' ? '可进入 Listing 页面创建/采用版本。' : '可进入交付中心创建导出。'}</div>
+              <div className="mt-4 rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-xs leading-5 text-rose-100/72">当前状态：{product.assetStatus !== 'ready' ? '缺素材，请在任务中心查看生成任务状态。' : product.listingStatus !== 'ready' ? '可进入 Listing 页面创建/采用版本。' : '可进入交付中心创建导出。'}</div>
               <div className="mt-4 space-y-2">
-                <Link to={`/products/${product.id}/production/prep`} className="block rounded-xl bg-cyan-200 px-3 py-2 text-center text-xs font-bold text-[#05070b]">进入生产线</Link>
-                <Link to={`/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold text-white/70">去 Listing 页面</Link>
+                <Link to={`/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold text-white/70">去模板中心</Link>
                 <Link to={`/products/workbench/downloads?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold text-white/70">去交付中心</Link>
               </div>
             </div>
@@ -800,72 +784,6 @@ export function ProductDetailPage() {
       </section>
 
       {/* Main Content */}
-      <main className="relative z-10 mx-auto mt-6 flex min-h-[58vh] w-[calc(100%-2.5rem)] max-w-[1500px] flex-1 flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[#080b11]/88 shadow-[0_28px_90px_rgba(0,0,0,0.36)]">
-        <header className="flex-none px-8 pt-8 border-b border-white/5 flex gap-8">
-          {TABS.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
-            return (
-              <TabButton 
-                key={tab.id} 
-                active={isActive} 
-                onClick={() => setActiveTab(tab.id)} 
-                icon={<Icon className="h-4 w-4" />} 
-                label={t(`product.detail.tabs.${tab.id}` as any, tab.label)} 
-              />
-            )
-          })}
-        </header>
-
-        <div className="flex-1 overflow-auto p-8 custom-scrollbar">
-          <div className="max-w-6xl mx-auto animate-in fade-in duration-300">
-            {activeTab === 'assets' && (
-              <AssetsTab
-                productId={product.id}
-                assets={data.assets}
-                downloads={productDownloads}
-                selectedDownloadId={selectedDownloadId}
-                mutatingRelationId={assetMutatingRelationId}
-                bulkMutating={assetBulkMutating}
-                onSelectDownload={setSelectedDownloadId}
-                onMakePrimary={handleMakePrimaryAsset}
-                onDelete={handleDeleteAssetRelation}
-                onChangeRole={handleAssetRoleChange}
-                onChangeSortOrder={handleAssetSortOrderChange}
-                onMove={handleMoveAsset}
-                onBulkChangeRole={handleBulkAssetRoleChange}
-                onBulkDelete={handleBulkDeleteAssetRelations}
-                onCreateExportFromSelection={openExportModalForSelection}
-                onSelectionChange={setSelectedAssetRelationIds}
-              />
-            )}
-            {activeTab === 'listings' && (
-              <ListingsTab
-                versions={data.listingVersions}
-                onGenerate={openCreateListingModal}
-                onAdopt={handleAdoptListing}
-                onEdit={openEditListingModal}
-                adoptingVersionId={adoptingVersionId}
-              />
-            )}
-            {activeTab === 'profit' && <ProfitTab snapshots={data.profitSnapshots} onCalculate={() => setShowProfitModal(true)} />}
-            {activeTab === 'exports' && (
-              <ExportsTab
-                tasks={data.exportTasks}
-                downloads={productDownloads}
-                productTitle={product.title}
-                assetCount={data.assets.length}
-                selectedAssetCount={selectedAssetRelationIds.length}
-                onCreate={openExportModalForAllAssets}
-                onCreateFromSelection={() => openExportModalForSelection(selectedAssetRelationIds)}
-                onInspectAssets={handleInspectExportAssets}
-              />
-            )}
-            {activeTab === 'history' && <HistoryTab activities={data.activities} />}
-          </div>
-        </div>
-      </main>
-
       {/* Modals */}
       {showProfitModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -884,6 +802,16 @@ export function ProductDetailPage() {
                 <InputField label={t('product.detail.profitModal.logisticsCost')} value={String(profitForm.logisticsCost)} onChange={v => setProfitForm({...profitForm, logisticsCost: parseFloat(v) || 0})} />
                 <InputField label={t('product.detail.profitModal.platformFee')} value={String(profitForm.platformFee)} onChange={v => setProfitForm({...profitForm, platformFee: parseFloat(v) || 0})} />
                 <InputField label={t('product.detail.profitModal.otherFee')} value={String(profitForm.otherFee)} onChange={v => setProfitForm({...profitForm, otherFee: parseFloat(v) || 0})} />
+              </div>
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 text-xs text-white/58">
+                <div className="mb-2 font-semibold text-white/72">{t('product.detail.profitModal.previewTitle')}</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <span>{t('product.detail.profitModal.estimatedNetProfit')}</span>
+                  <span className="text-right text-cyan-100">{(profitForm.listingPrice - profitForm.costPrice - profitForm.logisticsCost - profitForm.platformFee - profitForm.otherFee).toFixed(2)}</span>
+                  <span>{t('product.detail.profitModal.estimatedNetMargin')}</span>
+                  <span className="text-right text-cyan-100">{profitForm.listingPrice > 0 ? (((profitForm.listingPrice - profitForm.costPrice - profitForm.logisticsCost - profitForm.platformFee - profitForm.otherFee) / profitForm.listingPrice) * 100).toFixed(1) : '0.0'}%</span>
+                </div>
+                <p className="mt-2 leading-5 text-white/38">{t('product.detail.profitModal.formulaHint')}</p>
               </div>
             </div>
             <div className="px-6 py-5 bg-white/[0.02] border-t border-white/5 flex gap-3">

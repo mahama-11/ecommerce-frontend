@@ -1,7 +1,7 @@
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { BrainCircuit, Layers, FlaskConical, Paintbrush, ArrowRight, BoxSelect } from 'lucide-react'
+import { BrainCircuit, Layers, FlaskConical, Paintbrush, ArrowRight, BoxSelect, LayoutTemplate } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { getAuthAwareLoginPath } from '@/utils/authNavigation'
 
@@ -25,9 +25,6 @@ export default function HomePage() {
   const { t } = useTranslation()
   const { isAuthenticated } = useAuth({ refreshOnMount: false })
   const loginPath = getAuthAwareLoginPath(isAuthenticated)
-  const [searchParams] = useSearchParams()
-  const isDev = import.meta.env.DEV
-  const devSuffix = '?dev=1'
 
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="relative min-h-screen bg-[#0a0a12] text-[#e8eaf0] overflow-hidden">
@@ -107,12 +104,6 @@ export default function HomePage() {
             )
           })}
         </div>
-        {/* Step connectors */}
-        <div className="pointer-events-none absolute inset-0 z-20 hidden items-center justify-center md:flex">
-          <div className="relative mx-auto max-w-5xl w-full px-6">
-            <div className="absolute left-1/3 top-1/2 h-px w-1/3 bg-gradient-to-r from-cyan-300/15 via-violet-300/15 to-emerald-300/15" style={{ transform: 'translate(-50%, -50%) translateY(-2rem)' }} />
-          </div>
-        </div>
       </motion.section>
 
       {/* Quick Entry */}
@@ -121,42 +112,27 @@ export default function HomePage() {
           <div className="mb-6 text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">
             {t('home.dashboard.quick_entry_title')}
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {isDev && (
-              <Link to={`/products/demo-product-1/production/prep${devSuffix}`} className="group flex items-center gap-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] p-4 transition hover:border-cyan-300/40 hover:bg-cyan-300/[0.1]">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/15 text-cyan-200">
-                  <BrainCircuit className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-cyan-100 group-hover:text-white">Demo: V2 Pipeline</div>
-                  <div className="mt-0.5 text-xs text-cyan-200/50">Prep → Sandbox → Workshop</div>
-                </div>
-                <ArrowRight className="ml-auto h-4 w-4 text-cyan-300/30 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
-              </Link>
-            )}
-            {isAuthenticated ? (
-              <Link to="/products" className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-cyan-300/25 hover:bg-white/[0.05]">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/[0.08] text-cyan-200">
-                  <BoxSelect className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('home.dashboard.quick_entry_products')}</div>
-                  <div className="mt-0.5 text-xs text-white/35">{t('home.dashboard.quick_entry_queue_hint')}</div>
-                </div>
-                <ArrowRight className="ml-auto h-4 w-4 text-white/20 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
-              </Link>
-            ) : (
-              <Link to={loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-cyan-300/25 hover:bg-white/[0.05]">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/[0.08] text-cyan-200">
-                  <BoxSelect className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('common.login')}</div>
-                  <div className="mt-0.5 text-xs text-white/35">{t('home.dashboard.quick_entry_queue_hint')}</div>
-                </div>
-                <ArrowRight className="ml-auto h-4 w-4 text-white/20 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
-              </Link>
-            )}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Link to={isAuthenticated ? '/products' : loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-cyan-300/25 hover:bg-white/[0.05]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/[0.08] text-cyan-200">
+                <BoxSelect className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('home.dashboard.quick_entry_product_center')}</div>
+                <div className="mt-0.5 text-xs text-white/35">{t('home.dashboard.quick_entry_product_center_hint')}</div>
+              </div>
+              <ArrowRight className="ml-auto h-4 w-4 text-white/20 transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
+            </Link>
+            <Link to={isAuthenticated ? '/aiChat/template' : loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-violet-300/25 hover:bg-white/[0.05]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-300/[0.08] text-violet-200">
+                <LayoutTemplate className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('home.dashboard.quick_entry_template_market')}</div>
+                <div className="mt-0.5 text-xs text-white/35">{t('home.dashboard.quick_entry_template_market_hint')}</div>
+              </div>
+              <ArrowRight className="ml-auto h-4 w-4 text-white/20 transition group-hover:translate-x-0.5 group-hover:text-violet-200" />
+            </Link>
           </div>
         </div>
       </motion.section>

@@ -15,14 +15,12 @@ type ProductNavItem = {
 const navItems: ProductNavItem[] = [
   { labelKey: 'productCenter.shell.queue', to: '/products', match: (pathname: string) => pathname === '/products' || /^\/products\/[^/]+$/.test(pathname) },
   { labelKey: 'productCenter.shell.listing', to: '/products/workbench/batch-listing', match: (pathname: string) => pathname.startsWith('/products/workbench/batch-listing') },
-  { labelKey: 'productCenter.shell.production', to: '/products', match: (pathname: string) => pathname.includes('/production') },
   { labelKey: 'productCenter.shell.delivery', to: '/products/workbench/downloads', match: (pathname: string) => pathname.startsWith('/products/workbench/downloads') },
 ]
 
 const commandItems = [
   { labelKey: 'productCenter.shell.commands.queue', hintKey: 'productCenter.shell.commandHints.queue', to: '/products' },
   { labelKey: 'productCenter.shell.commands.listing', hintKey: 'productCenter.shell.commandHints.listing', to: '/products/workbench/batch-listing' },
-  { labelKey: 'productCenter.shell.commands.production', hintKey: 'productCenter.shell.commandHints.production', to: '/products' },
   { labelKey: 'productCenter.shell.commands.delivery', hintKey: 'productCenter.shell.commandHints.delivery', to: '/products/workbench/downloads' },
 ]
 

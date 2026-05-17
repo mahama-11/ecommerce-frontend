@@ -10,6 +10,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "ci:quick": "npm run typecheck && npm run build",
+    "smoke:auth": "node scripts/ecommerce-auth-smoke.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

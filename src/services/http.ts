@@ -121,3 +121,32 @@ export async function downloadBinary(path: string, fileName?: string): Promise<v
   link.remove()
   window.URL.revokeObjectURL(objectUrl)
 }
+
+
+const objectUrlCache = new Map<string, string>()
+
+export async function fetchAuthenticatedObjectUrl(path: string): Promise<string> {
+  if (!path) return ''
+  if (path.startsWith('blob:') || path.startsWith('data:') || path.startsWith('http://') || path.startsWith('https://')) {
+    return path
+  }
+  const cached = objectUrlCache.get(path)
+  if (cached) return cached
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'GET',
+    headers: buildHeaders(),
+  })
+  if (!response.ok) {
+    try {
+      const payload = (await response.json()) as Envelope<unknown>
+      handleUnauthorized(response.status, payload.code, payload.error_code)
+    } catch {
+      handleUnauthorized(response.status)
+    }
+    throw new ApiRequestError('Asset content request failed', response.status)
+  }
+  const blob = await response.blob()
+  const objectUrl = window.URL.createObjectURL(blob)
+  objectUrlCache.set(path, objectUrl)
+  return objectUrl
+}

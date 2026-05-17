@@ -104,7 +104,7 @@ export default function ConsoleLayout() {
       <nav className="flex-1 overflow-y-auto scrollbar-hide px-3 pb-4">
         <NavLink to="/products" className="sidebar-item text-white/50" onClick={() => setMobileOpen(false)}>
           <BrainCircuit className="h-4 w-4" />
-          {!compact && <span>{t('productCenter.shell.production')}</span>}
+          {!compact && <span>{t('productCenter.shell.queue')}</span>}
         </NavLink>
         <div className="my-3 border-t border-white/[0.06]" />
         {NAV_TOOL_GROUPS.map(group => (
@@ -125,7 +125,7 @@ export default function ConsoleLayout() {
                       onClick={() => toggleSection(sectionLabel)}
                       className="sidebar-item w-full text-white/50"
                     >
-                      <span>{item.icon}</span>
+                      <span>{'icon' in item && typeof item.icon === 'string' ? item.icon : '▣'}</span>
                       {!compact && (
                         <>
                           <span className="flex-1 text-left">{sectionLabel}</span>
@@ -168,7 +168,7 @@ export default function ConsoleLayout() {
                     `sidebar-item${isActive ? ' active' : ''} text-white/50`
                   }
                 >
-                  <span>{item.icon}</span>
+                  <span>{'icon' in item && typeof item.icon === 'string' ? item.icon : '▣'}</span>
                   {!compact && <span>{t(item.labelKey)}</span>}
                 </NavLink>
               )

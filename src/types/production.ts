@@ -13,7 +13,13 @@ export type ParsingSource = {
   thumbnailUrl?: string
   name?: string
   uploadedAt: string
+  assetId?: string
+  assetRelationId?: string
+  sourceReferenceId?: string
+  mimeType?: string
+  sourceRole?: 'sku' | 'reference'
 }
+
 
 export type ParsingStatus = 'idle' | 'parsing' | 'succeeded' | 'failed'
 
@@ -24,6 +30,8 @@ export type ParsedAttribute = {
   confidence: number
   editable: boolean
   source: ParsingTrack
+  sourceRole?: 'sku' | 'reference'
+  sourceReferenceId?: string
   driftFromOriginal?: number // 0~1, 0 = no drift
   driftBias?: number // 0~100, 0 = Focus on SKU, 100 = Focus on Reference, default 50
 }

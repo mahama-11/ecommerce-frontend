@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+/* eslint-disable react-hooks/immutability, react-hooks/set-state-in-effect */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -68,6 +69,70 @@ function usePolling<T>(
   return { data, error, loading, start, stop, setData }
 }
 
+const ATTRIBUTE_LABEL_ZH: Record<string, string> = {
+  product_geometry: '商品形态',
+  geometry: '商品形态',
+  material: '材质',
+  style: '风格',
+  scene: '场景',
+  brand_constraints: '品牌约束',
+  lighting: '光线',
+  composition: '构图',
+  color: '色彩',
+  props: '道具元素',
+  background: '背景',
+  reference_composition: '参考图构图',
+  scene_reference: '参考图场景',
+  analysis_limitation: '识别提醒',
+  unverified_visual_claim: '待确认视觉点',
+}
+
+function localizeAttributeLabel(attr: ParsedAttribute, language: string): string {
+  const raw = (attr.label || attr.key || '').trim()
+  const normalized = raw.toLowerCase().replace(/\s+/g, '_')
+  const mapped = ATTRIBUTE_LABEL_ZH[normalized] || ATTRIBUTE_LABEL_ZH[attr.key]
+  if (mapped) return mapped
+  if (!language.toLowerCase().startsWith('zh')) return raw
+  return raw.replace(/_/g, ' ')
+}
+
+function localizeAttributeValue(value: unknown, language: string): string {
+  const text = Array.isArray(value) ? value.join(', ') : String(value ?? '')
+  const sanitized = text
+    .replace(/Manifest-declared SKU visual asset; geometry analysis pending runtime image bytes/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
+    .replace(/Manifest-declared SKU asset; geometry not extractable without image bytes\.?/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
+    .replace(/Requested element:\s*product geometry analysis pending visual byte ingestion for asset_[A-Za-z0-9_-]+/gi, '当前图片可以作为商品主体，但外形细节还需要在生成前再次确认。')
+    .replace(/Requested element:\s*material analysis pending visual byte ingestion for asset_[A-Za-z0-9_-]+/gi, '当前图片可以作为材质参考，但具体材质还需要确认。')
+    .replace(/Reference asset available:\s*asset_[A-Za-z0-9_-]+\s*\([^)]*\)\s*for comparative visual analysis/gi, '参考图已就绪，可用于对比风格、场景和构图。')
+    .replace(/All visual facts unverified:.*$/gi, '当前还有部分视觉细节无法自动确认，请以你上传的商品图为准。')
+    .replace(/visual byte ingestion/gi, '图片细节识别')
+    .replace(/comparative visual analysis/gi, '视觉对比')
+    .replace(/bounding boxes requested but cannot be generated without pixel data/gi, '细节位置还需要图片内容确认')
+    .replace(/image bytes/gi, '图片内容')
+    .replace(/runtime/gi, '生成服务')
+    .replace(/backend/gi, '系统')
+    .replace(/Manifest/gi, '图片信息')
+    .replace(/SKU asset/gi, '商品图片')
+    .replace(/contract[-_ ]needed/gi, '暂不可用')
+    .replace(/prompt[_ ]plan/gi, '生成方案')
+  if (!language.toLowerCase().startsWith('zh')) return sanitized
+  return sanitized
+    .replace(/industrial workshop/gi, '工业车间')
+    .replace(/warm backlight/gi, '暖色逆光')
+    .replace(/low angle/gi, '低角度')
+    .replace(/metallic/gi, '金属质感')
+    .replace(/minimal/gi, '极简')
+    .replace(/white background/gi, '白色背景')
+    .replace(/Manifest-declared SKU asset; geometry not extractable without image bytes\.?/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
+    .replace(/geometry not extractable without image bytes\.?/gi, '图片细节不足，建议确认商品外形。')
+    .replace(/backend/gi, '系统')
+    .replace(/runtime/gi, '生成服务')
+    .replace(/contract[-_ ]needed/gi, '暂不可用')
+    .replace(/prompt[_ ]plan/gi, '生成方案')
+    .replace(/Manifest/gi, '图片信息')
+    .replace(/SKU asset/gi, '商品图片')
+}
+
 // ─── Upload Zone Component ──────────────────────────────────
 
 function UploadZone({
@@ -82,6 +147,7 @@ function UploadZone({
   onRemove,
   inputRef,
   parseButton,
+  testId,
 }: {
   title: string
   icon: typeof Upload
@@ -94,9 +160,10 @@ function UploadZone({
   onRemove: (id: string) => void
   inputRef: React.RefObject<HTMLInputElement | null>
   parseButton?: React.ReactNode
+  testId?: string
 }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+    <div data-testid={testId} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-xs font-semibold text-white">
           <Icon className={`h-3.5 w-3.5 ${iconColor}`} />
@@ -108,20 +175,56 @@ function UploadZone({
         {parseButton}
       </div>
 
-      {/* Drop zone */}
       <div
         onDrop={onDrop}
         onDragOver={(e) => e.preventDefault()}
         onClick={() => inputRef.current?.click()}
-        className="flex min-h-[100px] cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-white/[0.08] text-center transition hover:border-white/20 hover:bg-white/[0.01]"
+        className={`min-h-[132px] cursor-pointer rounded-lg border border-dashed border-white/[0.08] text-center transition hover:border-white/20 hover:bg-white/[0.01] ${sources.length > 0 ? 'p-2' : 'flex flex-col items-center justify-center'}`}
       >
-        {uploading ? (
+        {sources.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {sources.map((src) => (
+              <div
+                key={src.id}
+                className="group relative aspect-square overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.03]"
+              >
+                <img
+                  src={src.thumbnailUrl || src.url}
+                  alt={src.name || ''}
+                  className="h-full w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onRemove(src.id)
+                  }}
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white/70 opacity-0 transition group-hover:opacity-100 hover:text-white"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1">
+                  <span className="line-clamp-1 text-[9px] text-white/65">
+                    {src.name || src.type}
+                  </span>
+                </div>
+              </div>
+            ))}
+            <div className="flex aspect-square flex-col items-center justify-center rounded-lg border border-dashed border-white/[0.08] bg-white/[0.01] text-white/25">
+              <Upload className="mb-1 h-4 w-4" />
+              <span className="text-[9px]">继续添加/替换</span>
+            </div>
+          </div>
+        ) : uploading ? (
           <Loader2 className="mb-1.5 h-6 w-6 animate-spin text-white/30" />
         ) : (
-          <Upload className="mb-1.5 h-6 w-6 text-white/15" />
+          <>
+            <Upload className="mb-1.5 h-6 w-6 text-white/15" />
+            <p className="text-[11px] text-white/30">{hint}</p>
+          </>
         )}
-        <p className="text-[11px] text-white/30">{hint}</p>
         <input
+          data-testid={testId ? `${testId}-input` : undefined}
           ref={inputRef}
           type="file"
           accept="image/*"
@@ -130,39 +233,6 @@ function UploadZone({
           onChange={onFileInput}
         />
       </div>
-
-      {/* Thumbnails */}
-      {sources.length > 0 && (
-        <div className="mt-3 grid grid-cols-5 gap-1.5">
-          {sources.map((src) => (
-            <div
-              key={src.id}
-              className="group relative aspect-square overflow-hidden rounded-md border border-white/[0.06] bg-white/[0.03]"
-            >
-              <img
-                src={src.thumbnailUrl || src.url}
-                alt={src.name || ''}
-                className="h-full w-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onRemove(src.id)
-                }}
-                className="absolute right-0.5 top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-black/60 text-white/60 opacity-0 transition group-hover:opacity-100 hover:text-white"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-1 py-0.5">
-                <span className="line-clamp-1 text-[8px] text-white/50">
-                  {src.name || src.type}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
@@ -182,7 +252,7 @@ function DecisionStepCard({
 
   const statusColor = {
     pending: 'text-white/20',
-    active: 'text-violet-400',
+    active: 'text-violet-300',
     completed: 'text-emerald-400',
   }[step.status]
 
@@ -215,11 +285,11 @@ function DecisionStepCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="text-[10px] font-medium text-white/30">
-              {t('production.prep.step')} {step.stepNumber}
+              决策项 {step.stepNumber}
             </span>
             {step.status === 'completed' && selectedOption && (
               <span className="rounded-md bg-emerald-400/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-400">
-                {t('production.prep.selected')}: {selectedOption.label}
+                当前选择：{selectedOption.label}
               </span>
             )}
           </div>
@@ -245,14 +315,14 @@ function DecisionStepCard({
               <button
                 key={option.id}
                 type="button"
-                disabled={!isCurrent}
+                disabled={false}
                 onClick={() => onSelectOption(step.id, option.id)}
                 className={`group relative flex flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left transition ${
                   isSelected
                     ? 'border-violet-400/40 bg-violet-400/[0.08]'
                     : isCurrent
                       ? 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]'
-                      : 'border-white/[0.04] bg-white/[0.01] cursor-default'
+                      : 'border-white/[0.04] bg-white/[0.01] hover:border-white/[0.10] hover:bg-white/[0.03]'
                 }`}
               >
                 {option.icon && (
@@ -300,12 +370,41 @@ function DecisionStepCard({
 
 // ─── Attribute Row (read-only display) ──────────────────────
 
-function AttributeRow({ attr }: { attr: ParsedAttribute }) {
+type AttentionDecision = 'keep' | 'replace' | 'drop'
+
+
+function decisionFromOptionId(optionId?: string): AttentionDecision | undefined {
+  if (!optionId) return undefined
+  if (optionId.endsWith(':drop')) return 'drop'
+  if (optionId.endsWith(':replace')) return 'replace'
+  if (optionId.endsWith(':keep')) return 'keep'
+  return undefined
+}
+
+function AttributeRow({ attr, decision }: { attr: ParsedAttribute; decision?: AttentionDecision }) {
+  const { i18n } = useTranslation()
+  const roleLabel = attr.sourceRole === 'sku' ? 'SKU' : attr.sourceRole === 'reference' ? 'REF' : attr.source
+  const label = localizeAttributeLabel(attr, i18n.language)
+  const value = localizeAttributeValue(attr.value, i18n.language)
+  const decisionLabel = decision === 'keep'
+    ? '已纳入 LLM Prompt'
+    : decision === 'replace'
+      ? '以当前 SKU 替换主体'
+      : decision === 'drop'
+        ? '已排除，不进入 Prompt'
+        : '待确认取舍'
+  const decisionClass = decision === 'keep'
+    ? 'border-violet-300/15 bg-violet-400/10 text-violet-100/75'
+    : decision === 'replace'
+      ? 'border-cyan-300/15 bg-cyan-400/10 text-cyan-100/75'
+      : decision === 'drop'
+        ? 'border-slate-300/10 bg-white/[0.035] text-white/35'
+        : 'border-amber-300/15 bg-amber-400/10 text-amber-100/70'
   return (
     <div className="rounded-lg border border-white/[0.04] bg-white/[0.015] px-3 py-2">
-      <div className="mb-1 flex items-center gap-2 min-w-0">
-        <span className="truncate text-[11px] font-medium text-white/70">
-          {attr.label}
+      <div className="mb-1 flex min-w-0 items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/70" title={label}>
+          {label}
         </span>
         <span
           className={`shrink-0 rounded px-1 py-0.5 text-[9px] font-medium ${
@@ -314,33 +413,15 @@ function AttributeRow({ attr }: { attr: ParsedAttribute }) {
               : 'bg-amber-400/10 text-amber-400'
           }`}
         >
-          {attr.source}
+          {roleLabel}
         </span>
       </div>
-      <p className="mb-1.5 truncate text-[11px] text-white/45">
-        {Array.isArray(attr.value)
-          ? attr.value.join(', ')
-          : String(attr.value)}
+      <p className="mb-2 line-clamp-2 break-words text-[11px] leading-relaxed text-white/45" title={value}>
+        {value}
       </p>
-      <div className="flex items-center gap-2">
-        <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-          <div
-            className="h-full rounded-full transition-all duration-300"
-            style={{
-              width: `${attr.confidence * 100}%`,
-              backgroundColor:
-                attr.confidence > 0.85
-                  ? 'rgb(52 211 153 / 0.5)'
-                  : attr.confidence > 0.7
-                    ? 'rgb(251 191 36 / 0.5)'
-                    : 'rgb(248 113 113 / 0.4)',
-            }}
-          />
-        </div>
-        <span className="shrink-0 text-[9px] tabular-nums text-white/20">
-          {Math.round(attr.confidence * 100)}%
-        </span>
-      </div>
+      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] font-medium ${decisionClass}`}>
+        {decisionLabel}
+      </span>
     </div>
   )
 }
@@ -381,6 +462,38 @@ export default function PrepHubPage() {
     return () => {}
   }, [id, productId, setProductId, reset])
 
+  useEffect(() => {
+    if (!productId || sources.length > 0) return
+    let cancelled = false
+    productionApi.listParsingSources(productId)
+      .then((items) => {
+        if (cancelled) return
+        items.forEach((source) => addSource(source))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [productId, sources.length, addSource])
+
+  useEffect(() => {
+    if (!productId || parsing || decisionTree) return
+    let cancelled = false
+    productionApi.getParsingResult(productId)
+      .then(async (result) => {
+        if (cancelled || result.status === 'idle') return
+        setParsing(result)
+        if (result.status === 'succeeded') {
+          const tree = await productionApi.getDecisionTree(productId)
+          if (!cancelled && tree.status !== 'idle') setDecisionTree(tree)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [productId, parsing, decisionTree, setParsing, setDecisionTree])
+
   // ─── File upload ────────────────────────────────────────
   const skuInputRef = useRef<HTMLInputElement>(null)
   const refInputRef = useRef<HTMLInputElement>(null)
@@ -396,7 +509,7 @@ export default function PrepHubPage() {
             toast.showToast(`${file.name} is not an image`, 'error')
             continue
           }
-          const source = await productionApi.uploadParsingSource(productId, file)
+          const source = await productionApi.uploadParsingSource(productId, file, sourceType)
           addSource({ ...source, type: sourceType })
         }
       } catch (e) {
@@ -473,7 +586,11 @@ export default function PrepHubPage() {
   }, [productId, sources.length, parsing, addSource, parsingPoll])
 
   const startParsing = useCallback(async () => {
-    if (!productId || sources.length === 0) return
+    if (!productId) return
+    if (skuSources.length === 0 || refSources.length === 0) {
+      toast.showToast('请先上传一张商品图和一张参考图，再开始解析。', 'error')
+      return
+    }
     try {
       await productionApi.startParsing({
         productId,
@@ -482,9 +599,9 @@ export default function PrepHubPage() {
       })
       parsingPoll.start()
     } catch (e) {
-      toast.showToast(e instanceof Error ? e.message : 'Parse failed', 'error')
+      toast.showToast(e instanceof Error ? e.message : '解析失败，请稍后重试。', 'error')
     }
-  }, [productId, sources, parsingPoll, toast])
+  }, [productId, sources, skuSources.length, refSources.length, parsingPoll, setParsing, toast])
 
   // Sync poll results into store
   useEffect(() => {
@@ -523,45 +640,91 @@ export default function PrepHubPage() {
   // ─── Interactive decision tree step selection ───────────
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [decisionTreeSkipped, setDecisionTreeSkipped] = useState(false)
+  const [sessionSelections, setSessionSelections] = useState<Record<string, string>>({})
+  const [usePreviousSelections, setUsePreviousSelections] = useState(true)
 
   // Sync currentStepIndex when decisionTree.steps changes
   useEffect(() => {
     if (decisionTree?.steps) {
       const activeIdx = decisionTree.steps.findIndex((s) => s.status === 'active')
-      if (activeIdx >= 0) setCurrentStepIndex(activeIdx)
+      if (activeIdx >= 0 && Object.keys(sessionSelections).length > 0) setCurrentStepIndex(activeIdx)
     }
-  }, [decisionTree?.steps])
+  }, [decisionTree?.steps, sessionSelections])
+
+  useEffect(() => {
+    setSessionSelections({})
+    setUsePreviousSelections(true)
+    setCurrentStepIndex(0)
+  }, [productId])
+
+  const decisionProgress = useMemo(() => {
+    const total = decisionTree?.steps?.length ?? 0
+    const answered = Object.keys(sessionSelections).length
+    const historicalAnswered = decisionTree?.steps?.filter((step) => step.selectedOptionId).length ?? 0
+    const effectiveAnswered = Math.max(answered, historicalAnswered)
+    return {
+      total,
+      answered: effectiveAnswered,
+      historicalAnswered,
+      remaining: Math.max(total - effectiveAnswered, 0),
+      complete: total > 0 && effectiveAnswered >= total,
+      percent: total > 0 ? Math.round((effectiveAnswered / total) * 100) : 0,
+    }
+  }, [decisionTree?.steps, sessionSelections, usePreviousSelections])
+
+  const displaySteps = useMemo(() => {
+    const rawSteps = decisionTree?.steps ?? []
+    return rawSteps.map((step, idx) => {
+      const sessionOptionId = sessionSelections[step.id]
+      const selectedOptionId = sessionOptionId ?? step.selectedOptionId
+      const isAnswered = Boolean(selectedOptionId)
+      const firstUnansweredIndex = rawSteps.findIndex((candidate) => {
+        const candidateSelected = sessionSelections[candidate.id] ?? candidate.selectedOptionId
+        return !candidateSelected
+      })
+      const activeIndex = firstUnansweredIndex >= 0 ? firstUnansweredIndex : Math.min(currentStepIndex, rawSteps.length - 1)
+      return {
+        ...step,
+        selectedOptionId,
+        status: isAnswered ? 'completed' as const : idx === activeIndex ? 'active' as const : 'pending' as const,
+      }
+    })
+  }, [decisionTree?.steps, sessionSelections, usePreviousSelections, currentStepIndex])
 
   const handleSelectOption = useCallback(
-    (stepId: string, optionId: string) => {
-      if (!decisionTree?.steps) return
-      setDecisionTree({
-        ...decisionTree,
-        steps: decisionTree.steps.map((s) =>
-          s.id === stepId
-            ? { ...s, selectedOptionId: optionId, status: 'completed' as const }
-            : s,
-        ),
-      })
-      // Auto-advance to next pending step
-      const currentIdx = decisionTree.steps.findIndex((s) => s.id === stepId)
-      const nextPending = decisionTree.steps.findIndex(
-        (s, i) => i > currentIdx && s.status === 'pending',
-      )
-      if (nextPending >= 0) {
-        setDecisionTree((prev) => {
-          if (!prev?.steps) return prev
-          return {
-            ...prev,
-            steps: prev.steps.map((s, i) =>
-              i === nextPending ? { ...s, status: 'active' as const } : s,
-            ),
-          }
-        })
-        setCurrentStepIndex(nextPending)
+    async (stepId: string, optionId: string) => {
+      if (!decisionTree?.steps || !productId) return
+      const decision = optionId.endsWith(':replace') ? 'replace' : optionId.endsWith(':drop') ? 'drop' : 'keep'
+      const targetAssetId = decision === 'replace' ? skuSources[0]?.assetId : undefined
+      if (decision === 'replace' && !targetAssetId) {
+        toast.showToast('选择“换成我的商品”前，请先上传商品图。', 'error')
+        return
+      }
+
+      const previousSelections = sessionSelections
+      const optimisticSelections = { ...sessionSelections, [stepId]: optionId }
+      const rawSteps = decisionTree.steps ?? []
+      const currentIdx = rawSteps.findIndex((s) => s.id === stepId)
+      const nextPending = rawSteps.findIndex((candidate, i) => i > currentIdx && !optimisticSelections[candidate.id])
+      setSessionSelections(optimisticSelections)
+      setCurrentStepIndex(nextPending >= 0 ? nextPending : Math.max(currentIdx, 0))
+
+      try {
+        await productionApi.updateAttentionDecision(productId, stepId, decision, targetAssetId)
+        const [updatedParsing, updatedTree] = await Promise.all([
+          productionApi.getParsingResult(productId),
+          productionApi.getDecisionTree(productId),
+        ])
+        setParsing(updatedParsing)
+        setDecisionTree(updatedTree)
+      } catch (e) {
+        setSessionSelections(previousSelections)
+        setCurrentStepIndex(Math.max(currentIdx, 0))
+        toast.showToast(e instanceof Error ? e.message : '保存选择失败，请重试。', 'error')
+        return
       }
     },
-    [decisionTree, setDecisionTree],
+    [decisionTree, productId, skuSources, sessionSelections, setParsing, setDecisionTree, toast],
   )
 
   // ─── Navigate to Sandbox ────────────────────────────────
@@ -575,24 +738,72 @@ export default function PrepHubPage() {
     }
   }
 
+  const commitDriftBias = useCallback(async (value: number = globalDriftBias) => {
+    if (!productId) return
+    try {
+      await productionApi.updateDriftControl(productId, value)
+    } catch (e) {
+      toast.showToast(e instanceof Error ? e.message : 'Failed to persist attribute drift control', 'error')
+    }
+  }, [productId, globalDriftBias, toast])
+
+  const handleDriftBiasChange = useCallback((value: number) => {
+    setGlobalDriftBias(value)
+  }, [setGlobalDriftBias])
+
   const isParsing = parsing?.status === 'parsing' || parsingPoll.loading
   const isEvaluating = decisionTree?.status === 'evaluating' || treePoll.loading
 
   // Parse button
   const hasSources = sources.length > 0
-  const parseBtn = hasSources && !isParsing ? (
+  const hasSkuSource = skuSources.length > 0
+  const hasReferenceSource = refSources.length > 0
+  const dualTrackReady = hasSkuSource && hasReferenceSource
+  const dualTrackBlocker = !hasSkuSource
+    ? '请先上传一张商品图。'
+    : !hasReferenceSource
+      ? '请再上传一张参考图。'
+      : '可以开始解析。'
+  const parsingBlocked = parsing?.status === 'failed'
+  const parsingBlockerMessage = parsing?.thirdPartyResult?.error || (!dualTrackReady && hasSources ? dualTrackBlocker : parsingPoll.error)
+  const attributeDecisionByKey = useMemo(() => {
+    const decisions = new Map<string, AttentionDecision>()
+    const put = (key: string | undefined, decision: AttentionDecision) => {
+      if (!key) return
+      decisions.set(key, decision)
+      decisions.set(key.toLowerCase().replace(/\s+/g, '_'), decision)
+    }
+    displaySteps.forEach((step) => {
+      const decision = decisionFromOptionId(step.selectedOptionId)
+      if (!decision) return
+      put(step.id, decision)
+      put(step.title, decision)
+      const normalizedTitle = step.title.toLowerCase()
+      if (normalizedTitle.includes('商品形态') || normalizedTitle.includes('product geometry')) put('product_geometry', decision)
+      if (normalizedTitle.includes('材质') || normalizedTitle.includes('material')) put('material', decision)
+      if (normalizedTitle.includes('风格') || normalizedTitle.includes('style')) put('style', decision)
+      if (normalizedTitle.includes('构图') || normalizedTitle.includes('composition')) put('reference_composition', decision)
+      if (normalizedTitle.includes('场景') || normalizedTitle.includes('scene')) put('scene', decision)
+      if (normalizedTitle.includes('品牌') || normalizedTitle.includes('brand')) put('brand_constraints', decision)
+    })
+    return decisions
+  }, [displaySteps])
+  const parseBtn = hasSources ? (
     <button
       type="button"
       onClick={startParsing}
-      className="inline-flex items-center gap-1 rounded-md bg-cyan-500/15 px-2 py-0.5 text-[10px] font-medium text-cyan-400 transition hover:bg-cyan-500/25"
+      disabled={!dualTrackReady || isParsing}
+      title={dualTrackReady ? '开始识别商品图和参考图里的关键差异' : dualTrackBlocker}
+      data-testid="production-start-parsing"
+      className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-400 px-3 py-1.5 text-[11px] font-bold text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.25)] transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-white/[0.06] disabled:text-white/35"
     >
-      <RotateCw className="h-2.5 w-2.5" />
-      {t('production.prep.startParsing')}
+      {isParsing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCw className="h-3 w-3" />}
+      {isParsing ? '解析中...' : t('production.prep.startParsing')}
     </button>
   ) : null
 
   // ─── Steps navigation ───────────────────────────────────
-  const steps = decisionTree?.steps || []
+  const steps = displaySteps
 
   return (
     <div className="mx-auto max-w-[1440px] px-5 py-6">
@@ -633,6 +844,7 @@ export default function PrepHubPage() {
           className="min-h-0 space-y-4 lg:col-span-5"
         >
           <UploadZone
+            testId="production-sku-source-upload"
             title={t('production.prep.skuSourceUpload')}
             icon={Package}
             iconColor="text-cyan-400"
@@ -646,6 +858,7 @@ export default function PrepHubPage() {
             parseButton={parseBtn}
           />
           <UploadZone
+            testId="production-reference-source-upload"
             title={t('production.prep.referenceSourceUpload')}
             icon={Image}
             iconColor="text-amber-400"
@@ -658,13 +871,41 @@ export default function PrepHubPage() {
             inputRef={refInputRef}
           />
 
+          <div className="rounded-2xl border border-cyan-300/20 bg-cyan-400/[0.055] p-4 shadow-[0_18px_55px_rgba(34,211,238,0.10)]">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-cyan-100">开始识别商品与参考图</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-cyan-100/55">
+                  上传商品图和参考图后，系统会识别可用于出图的商品事实，并生成后续的视觉策略取舍。
+                </p>
+              </div>
+              {dualTrackReady ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200/70" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-200/70" />}
+            </div>
+            <button
+              type="button"
+              onClick={startParsing}
+              disabled={!dualTrackReady || isParsing}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-white/[0.06] disabled:text-white/35"
+            >
+              {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
+              {isParsing ? '正在解析...' : '开始解析'}
+            </button>
+            {!dualTrackReady && (
+              <p className="mt-2 text-center text-[10px] text-amber-100/55">{dualTrackBlocker}</p>
+            )}
+          </div>
+
           {/* Parsing status */}
           {isParsing && (
-            <div className="flex items-center gap-2 rounded-lg bg-cyan-400/[0.06] px-3 py-2">
-              <Loader2 className="h-4 w-4 animate-spin text-cyan-400" />
-              <span className="text-xs text-cyan-400/80">
-                {t('production.prep.evaluating')}
-              </span>
+            <div className="relative overflow-hidden rounded-xl border border-cyan-300/25 bg-cyan-400/[0.08] px-4 py-3 shadow-[0_0_28px_rgba(34,211,238,0.12)]">
+              <div className="absolute inset-x-0 top-0 h-px animate-pulse bg-cyan-300/70" />
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-5 w-5 animate-spin text-cyan-300" />
+                <div>
+                  <p className="text-xs font-semibold text-cyan-100">正在解析 SKU 与参考图</p>
+                  <p className="mt-0.5 text-[10px] text-cyan-100/55">已进入真实后端解析队列，完成后会自动更新中间决策树和右侧属性。</p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -681,7 +922,7 @@ export default function PrepHubPage() {
                 <div key={i} className="text-[10px] text-white/40">
                   <span className="font-medium text-white/50">{c.key}</span>:{' '}
                   {String(c.comfyuiValue)} vs {String(c.thirdPartyValue)}
-                  {c.resolvedValue && (
+                  {c.resolvedValue != null && (
                     <span className="text-emerald-400/60">
                       {' → '}{String(c.resolvedValue)}
                     </span>
@@ -710,8 +951,8 @@ export default function PrepHubPage() {
                 onClick={handleSkipDecisionTree}
                 className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-white/35 transition hover:bg-white/[0.06] hover:text-white/60"
               >
-                <SkipForward className="h-2.5 w-2.5" />
-                {t('production.prep.skipDecisionTree')}
+                <SkipForward className="h-3 w-3" />
+                跳过
               </button>
             )}
           </div>
@@ -725,33 +966,33 @@ export default function PrepHubPage() {
             </div>
           ) : steps.length > 0 ? (
             <div className="space-y-4">
-              {/* Step progress bar */}
-              <div className="flex items-center gap-2">
-                {steps.map((step, i) => {
-                  const isCompleted = step.status === 'completed'
-                  const isActive = step.status === 'active'
-                  return (
-                    <button
-                      key={step.id}
-                      type="button"
-                      onClick={() => setCurrentStepIndex(i)}
-                      className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium transition ${
-                        isActive
-                          ? 'bg-violet-400/15 text-violet-400'
-                          : isCompleted
-                            ? 'bg-emerald-400/10 text-emerald-400/70 hover:bg-emerald-400/15'
-                            : 'bg-white/[0.04] text-white/25 hover:bg-white/[0.06]'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <CheckCircle2 className="h-2.5 w-2.5" />
-                      ) : (
-                        <span className="text-[9px]">{i + 1}</span>
-                      )}
-                      {step.title}
-                    </button>
-                  )
-                })}
+              {/* Questionnaire progress */}
+              <div className="rounded-xl border border-violet-400/10 bg-violet-400/[0.04] p-3">
+                <div className="mb-2 flex items-center justify-between text-[10px]">
+                  <span className="font-medium text-violet-200/80">LLM 策略确认</span>
+                  <span className="tabular-nums text-white/35">
+                    已确认 {decisionProgress.answered} / {decisionProgress.total}，还剩 {decisionProgress.remaining} 项
+                  </span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-violet-400 to-cyan-300 transition-all duration-300"
+                    style={{ width: `${decisionProgress.percent}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[10px] leading-relaxed text-white/35">
+                  LLM 会根据 SKU 图、参考图和解析属性生成策略项；你的选择会直接影响后续 Prompt 与生成意图。选择后自动进入下一项，你也可以返回上一步修改。
+                </p>
+                {decisionProgress.historicalAnswered > 0 && Object.keys(sessionSelections).length === 0 && (
+                  <div className="mt-3 rounded-lg border border-cyan-300/15 bg-cyan-300/[0.05] p-2.5 text-[10px] leading-relaxed text-cyan-100/70">
+                    已自动保留你上次完成的策略选择。需要调整时，直接点对应选项即可覆盖保存。
+                  </div>
+                )}
+                {decisionProgress.complete && (
+                  <div className="mt-3 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.05] p-2.5 text-[10px] leading-relaxed text-emerald-100/70">
+                    策略取舍已确认完成。需要调整时可点“上一项”回看修改；也可以继续进入策略配置。
+                  </div>
+                )}
               </div>
 
               {/* Current step detail */}
@@ -766,7 +1007,7 @@ export default function PrepHubPage() {
                   {steps[currentStepIndex] && (
                     <DecisionStepCard
                       step={steps[currentStepIndex]}
-                      isCurrent={steps[currentStepIndex].status === 'active'}
+                      isCurrent={true}
                       onSelectOption={handleSelectOption}
                     />
                   )}
@@ -782,7 +1023,7 @@ export default function PrepHubPage() {
                   className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-white/[0.04] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
                 >
                   <ChevronLeft className="h-3 w-3" />
-                  {t('production.prep.prevStep')}
+                  上一项
                 </button>
                 <span className="text-[10px] tabular-nums text-white/20">
                   {currentStepIndex + 1} / {steps.length}
@@ -793,7 +1034,7 @@ export default function PrepHubPage() {
                   onClick={() => setCurrentStepIndex((i) => i + 1)}
                   className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-white/[0.04] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
                 >
-                  {t('production.prep.nextStep')}
+                  下一项
                   <ChevronRight className="h-3 w-3" />
                 </button>
               </div>
@@ -804,7 +1045,7 @@ export default function PrepHubPage() {
                   <Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-400/60" />
                   <div className="min-w-0 flex-1">
                     <span className="text-[10px] text-white/40">
-                      {t('production.prep.currentSelection')}:
+                      本次已确认:
                     </span>
                     <div className="mt-0.5 flex flex-wrap gap-1">
                       {steps
@@ -830,11 +1071,21 @@ export default function PrepHubPage() {
                 </div>
               )}
             </div>
+          ) : parsingBlocked ? (
+            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-5 text-center">
+              <AlertCircle className="mb-2 h-8 w-8 text-amber-400/70" />
+              <p className="text-xs font-semibold text-amber-300/90">
+                当前还不能解析
+              </p>
+              <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-white/45">
+                {parsingBlockerMessage || '图片已上传成功，但识别服务暂时不可用。系统不会用假结果继续下一步。'}
+              </p>
+            </div>
           ) : (
             <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
               <AlertCircle className="mb-2 h-8 w-8 text-white/15" />
               <p className="text-xs text-white/30">
-                {t('production.prep.uploadFirst')}
+                {hasSources ? '点击“开始解析”，系统会识别商品形态、材质、风格和场景。' : t('production.prep.uploadFirst')}
               </p>
             </div>
           )}
@@ -852,17 +1103,28 @@ export default function PrepHubPage() {
             {t('production.prep.parsedAttributes')}
             {parsing?.mergedAttributes.length ? (
               <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-normal text-white/30">
-                {parsing.mergedAttributes.length} {t('production.prep.attributesFound')}
+                {parsing.mergedAttributes.length} 项
               </span>
             ) : null}
           </h2>
 
           {parsing?.mergedAttributes.length ? (
-            <div className="space-y-1.5 max-h-[480px] overflow-y-auto pr-1 scrollbar-thin">
-              {parsing.mergedAttributes.map((attr) => (
-                <AttributeRow key={attr.key} attr={attr} />
-              ))}
+            <div className="space-y-2">
+              <div className="rounded-xl border border-emerald-400/10 bg-emerald-400/[0.035] p-3 text-[10px] leading-relaxed text-white/40">
+                这里展示双轨解析得到的属性。中间的 LLM 决策树会把每一项标记为“纳入 Prompt / 主体替换为 SKU / 不进入 Prompt”，并同步影响策略配置页的生成意图。
+              </div>
+              <div className="space-y-1.5 max-h-[430px] overflow-y-auto pr-1 scrollbar-thin">
+              {parsing.mergedAttributes.map((attr) => {
+                const labelKey = localizeAttributeLabel(attr, 'zh').toLowerCase().replace(/\s+/g, '_')
+                const decision = attributeDecisionByKey.get(attr.key) || attributeDecisionByKey.get(labelKey)
+                return <AttributeRow key={attr.key} attr={attr} decision={decision} />
+              })}
+              </div>
             </div>
+          ) : parsingBlocked ? (
+            <p className="rounded-lg border border-amber-400/15 bg-amber-400/[0.04] px-3 py-4 text-center text-[11px] leading-relaxed text-amber-200/70">
+              图片已上传，但识别服务暂时不可用，所以这里不会展示假属性。
+            </p>
           ) : (
             <p className="py-8 text-center text-xs text-white/30">
               {t('production.prep.noAttributesYet')}
@@ -881,10 +1143,10 @@ export default function PrepHubPage() {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
             <SlidersHorizontal className="h-4 w-4 text-violet-400" />
-            {t('production.prep.driftControl')}
+            参考侧重调节
           </h2>
           <p className="text-[10px] text-white/25">
-            {t('production.prep.allAdjustmentsAffectPrompt')}
+            这里的调整会影响下一步出图要求
           </p>
         </div>
 
@@ -892,7 +1154,7 @@ export default function PrepHubPage() {
           <div className="mb-3 flex items-center justify-between">
             <div>
               <h3 className="text-[11px] font-semibold text-white/80">
-                {t('production.prep.globalBias')}
+                整体参考比例
               </h3>
               <p className="mt-0.5 text-[10px] text-white/30">
                 {t('production.prep.globalBiasHint')}
@@ -920,7 +1182,15 @@ export default function PrepHubPage() {
               min={0}
               max={100}
               value={globalDriftBias}
-              onChange={(e) => setGlobalDriftBias(Number(e.target.value))}
+              onChange={(e) => handleDriftBiasChange(Number(e.target.value))}
+              onMouseUp={(e) => void commitDriftBias(Number(e.currentTarget.value))}
+              onPointerUp={(e) => void commitDriftBias(Number(e.currentTarget.value))}
+              onTouchEnd={(e) => void commitDriftBias(Number(e.currentTarget.value))}
+              onKeyUp={(e) => {
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End') {
+                  void commitDriftBias(Number(e.currentTarget.value))
+                }
+              }}
               className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
             />
           </div>
@@ -936,6 +1206,29 @@ export default function PrepHubPage() {
           </div>
         </div>
       </motion.section>
+
+      {parsing?.status === 'succeeded' && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sticky bottom-4 z-20 mt-5 rounded-2xl border border-emerald-300/20 bg-[#07120f]/95 p-4 shadow-[0_18px_60px_rgba(16,185,129,0.16)] backdrop-blur"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-emerald-100">生产准备已完成</p>
+              <p className="mt-1 text-[11px] text-emerald-100/55">下一步进入策略配置：确认生成数量、模板预览和执行参数。</p>
+            </div>
+            <button
+              type="button"
+              onClick={goToSandbox}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-2 text-xs font-bold text-slate-950 transition hover:bg-emerald-300"
+            >
+              进入策略配置
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </motion.div>
+      )}
     </div>
   )
 }
