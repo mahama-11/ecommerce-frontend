@@ -26,7 +26,6 @@ import { useWorkshopStore } from '@/store/productionStore'
 import * as productionApi from '@/services/production'
 import { useToastStore } from '@/store/toastStore'
 import type { AssetVariant, VersionNode } from '@/types/production'
-import type { ProductionArchitectureState } from '@/services/production'
 import { isDevMode } from '@/mocks/productionDemo'
 
 // ─── Mock Variant Images (placeholder URLs) ──────────────────
@@ -859,64 +858,6 @@ function AiAssistantBar({
   )
 }
 
-// ─── Architecture Readiness Panel ─────────────────────────────
-function architectureStatusClass(status?: string) {
-  const normalized = String(status ?? '').toLowerCase()
-  if (['ready', 'pass', 'completed', 'succeeded'].includes(normalized)) return 'border-emerald-400/20 bg-emerald-400/[0.05] text-emerald-200/80'
-  if (['blocked', 'fail', 'failed', 'contract_needed', 'invalid'].includes(normalized)) return 'border-amber-400/20 bg-amber-400/[0.05] text-amber-200/80'
-  return 'border-white/[0.06] bg-white/[0.02] text-white/45'
-}
-
-function ArchitectureReadinessPanel({ state }: { state: ProductionArchitectureState | null }) {
-  const nodes = state?.businessFlow?.nodes ?? []
-  const verdict = state?.integrationVerdict
-  const release = state?.releaseReadiness
-  const rollback = state?.rollbackSnapshot
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.03 }}
-      className="mb-5 rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.025] p-4"
-      data-testid="production-architecture-readiness"
-    >
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold text-white">业务架构闭环</h2>
-          <p className="mt-1 text-[11px] text-white/35">Business DAG · Integration verdict · Rollback · Release readiness</p>
-        </div>
-        <div className="flex flex-wrap gap-2 text-[10px]">
-          <span className={`rounded-full border px-2 py-1 ${architectureStatusClass(verdict?.status)}`}>Verdict {verdict?.status ?? 'missing'}</span>
-          <span className={`rounded-full border px-2 py-1 ${architectureStatusClass(release?.status)}`}>Release {release?.status ?? 'missing'}</span>
-          <span className={`rounded-full border px-2 py-1 ${architectureStatusClass(rollback?.status)}`}>Rollback {rollback?.scopes?.length ?? 0} scopes</span>
-        </div>
-      </div>
-      <div className="grid gap-2 md:grid-cols-4">
-        {nodes.length === 0 && (
-          <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-3 py-3 text-[11px] text-amber-100/70 md:col-span-4">
-            StageView 还没有返回业务 DAG；当前页面只展示 Workshop 结果，不会把架构闭环标记为完成。
-          </div>
-        )}
-        {nodes.map((node) => (
-          <div key={node.node_id} className={`rounded-xl border px-3 py-2 ${architectureStatusClass(node.status)}`}>
-            <div className="text-[10px] uppercase tracking-[0.18em] opacity-60">{node.node_id}</div>
-            <div className="mt-1 text-xs font-semibold text-white/85">{node.label}</div>
-            <div className="mt-1 text-[10px] opacity-70">{node.status}</div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 grid gap-2 md:grid-cols-3">
-        {(release?.gates ?? []).slice(0, 6).map((gate) => (
-          <div key={gate.gate_id} className="rounded-xl border border-white/[0.05] bg-black/10 px-3 py-2">
-            <div className="text-[10px] text-white/35">{gate.label}</div>
-            <div className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] ${architectureStatusClass(gate.status)}`}>{gate.status}</div>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  )
-}
-
 // ─── Main Component ──────────────────────────────────────────
 
 export default function WorkshopPage() {
@@ -952,7 +893,6 @@ export default function WorkshopPage() {
   const [zoomVariant, setZoomVariant] = useState<AssetVariant | null>(null)
   const [sendingAi, setSendingAi] = useState(false)
   const [actionBusy, setActionBusy] = useState(false)
-  const [architectureState, setArchitectureState] = useState<ProductionArchitectureState | null>(null)
   const hasGenerationVersions = versionNodes.length > 0
   const activeVersionLabel = versionNodes.find((node) => node.id === activeVersionId)?.version ?? versionNodes.at(-1)?.version ?? null
   const selectedVariants = variants.filter((variant) => selectedVariantIds.includes(variant.id))
@@ -986,16 +926,9 @@ export default function WorkshopPage() {
           if (nodes.length > 0) {
             setWeightParams(nodes.find((node) => node.isCurrent)?.weightParams ?? nodes[nodes.length - 1].weightParams)
           }
-          try {
-            const architecture = await productionApi.getProductionArchitectureState(productId)
-            setArchitectureState(architecture)
-          } catch {
-            setArchitectureState(null)
-          }
         })
         .catch(() => {
           setVariants(isDevMode() ? MOCK_VARIANTS : [])
-          setArchitectureState(null)
           if (!isDevMode()) {
             setVersionNodes([])
             setActiveVersionId(null)
@@ -1003,7 +936,6 @@ export default function WorkshopPage() {
         })
     } else {
       setVariants(isDevMode() ? MOCK_VARIANTS : [])
-      setArchitectureState(null)
       if (!isDevMode()) {
         setVersionNodes([])
         setActiveVersionId(null)
@@ -1059,14 +991,12 @@ export default function WorkshopPage() {
       toast.showToast(`已提交真实分支出图任务：${result.versionId}，等待 result asset 回调...`, 'info')
       await productionApi.waitForGenerationResult(productId, result.versionId)
       toast.showToast(`真实分支出图完成：${result.versionId}`, 'success')
-      const [nextVariants, nextNodes, nextArchitecture] = await Promise.all([
+      const [nextVariants, nextNodes] = await Promise.all([
         productionApi.listVariants(productId),
         productionApi.listGenerationVersions(productId),
-        productionApi.getProductionArchitectureState(productId),
       ])
       setVariants(nextVariants)
       setVersionNodes(nextNodes)
-      setArchitectureState(nextArchitecture)
       setActiveVersionId(nextNodes.find((node) => node.isCurrent)?.id ?? nextNodes.at(-1)?.id ?? null)
     } catch (e) {
       toast.showToast(e instanceof Error ? e.message : 'Branch generation failed', 'error')
@@ -1135,7 +1065,6 @@ export default function WorkshopPage() {
     try {
       const result = await productionApi.finalizeAssets({ productId, variantIds: selectedVariantIds, assetRoles: {} })
       toast.showToast(`已回流 Product Center：${result.assetIds.length} 个资产`, 'success')
-      setArchitectureState(await productionApi.getProductionArchitectureState(productId))
     } catch (e) {
       toast.showToast(e instanceof Error ? e.message : 'Final asset adoption failed', 'error')
     } finally {
@@ -1157,14 +1086,12 @@ export default function WorkshopPage() {
       toast.showToast(`已提交真实重生成任务：${result.versionId}，等待 result asset 回调...`, 'info')
       await productionApi.waitForGenerationResult(productId, result.versionId)
       toast.showToast(`真实重生成完成：${result.versionId}`, 'success')
-      const [nextVariants, nextNodes, nextArchitecture] = await Promise.all([
+      const [nextVariants, nextNodes] = await Promise.all([
         productionApi.listVariants(productId),
         productionApi.listGenerationVersions(productId),
-        productionApi.getProductionArchitectureState(productId),
       ])
       setVariants(nextVariants)
       setVersionNodes(nextNodes)
-      setArchitectureState(nextArchitecture)
       setActiveVersionId(nextNodes.find((node) => node.isCurrent)?.id ?? nextNodes.at(-1)?.id ?? null)
     } catch (e) {
       toast.showToast(e instanceof Error ? e.message : 'Regenerate failed', 'error')
@@ -1192,8 +1119,6 @@ export default function WorkshopPage() {
           </div>
         </div>
       </motion.div>
-
-      <ArchitectureReadinessPanel state={architectureState} />
 
       {/* ─── 3-Column Layout ───────────────────────────────── */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
