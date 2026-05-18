@@ -31,6 +31,7 @@ import type {
   LlmDecisionTreeResult,
   DecisionStep,
   ParsedAttribute,
+  LlmDecisionNode,
 } from '@/types/production'
 
 // ─── Polling helper ──────────────────────────────────────────
@@ -365,6 +366,54 @@ function DecisionStepCard({
         </div>
       )}
     </motion.div>
+  )
+}
+
+
+function DecisionTreeNodeView({
+  node,
+  depth = 0,
+  onSelectOption,
+}: {
+  node: LlmDecisionNode
+  depth?: number
+  onSelectOption: (stepId: string, optionId: string) => void
+}) {
+  const selected = node.options?.find(option => option.id === node.selectedOptionId)
+  return (
+    <div className={`rounded-xl border border-white/[0.05] bg-white/[0.015] p-3 ${depth > 0 ? 'ml-4 border-l-violet-300/25' : ''}`}>
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate text-[11px] font-medium text-white/65">{node.question}</div>
+          {selected && <div className="mt-0.5 text-[9px] text-violet-200/65">已选：{selected.label}</div>}
+        </div>
+        <span className="shrink-0 rounded bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/30">L{depth + 1}</span>
+      </div>
+      {node.options?.length ? (
+        <div className="mb-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+          {node.options.map((option) => {
+            const active = option.id === node.selectedOptionId
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => onSelectOption(node.id, option.id)}
+                className={`rounded-lg border px-2 py-1.5 text-left text-[10px] transition ${active ? 'border-violet-300/40 bg-violet-300/10 text-violet-100' : 'border-white/[0.05] bg-white/[0.02] text-white/40 hover:text-white/65'}`}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+      ) : null}
+      {node.children?.length ? (
+        <div className="space-y-2">
+          {node.children.map(child => (
+            <DecisionTreeNodeView key={child.id} node={child} depth={depth + 1} onSelectOption={onSelectOption} />
+          ))}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -1013,6 +1062,16 @@ export default function PrepHubPage() {
                   )}
                 </motion.div>
               </AnimatePresence>
+
+              {decisionTree?.root && (
+                <div className="rounded-xl border border-violet-300/10 bg-violet-300/[0.025] p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[10px] font-medium text-violet-100/70">多轮决策树</span>
+                    <span className="text-[9px] text-white/25">支持递归节点；选择会持久化并回流 Prompt Plan</span>
+                  </div>
+                  <DecisionTreeNodeView node={decisionTree.root} onSelectOption={handleSelectOption} />
+                </div>
+              )}
 
               {/* Step navigation */}
               <div className="flex items-center justify-between pt-1">

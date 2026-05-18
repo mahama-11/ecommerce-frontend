@@ -288,9 +288,12 @@ function VariantCard({
 
       {/* Label */}
       <div className="px-2 py-1.5">
-        <span className="text-[10px] text-white/30">
-          1.2-{String(index + 1).padStart(2, '0')}
-        </span>
+        <div className="truncate text-[10px] text-white/40">
+          {String(variant.metadata?.template_name ?? variant.metadata?.template_id ?? variant.metadata?.version_id ?? `结果 ${index + 1}`)}
+        </div>
+        <div className="truncate text-[9px] text-white/20">
+          {String(variant.metadata?.source_name ?? variant.metadata?.source_id ?? variant.metadata?.fanout_task_id ?? '')}
+        </div>
       </div>
     </motion.div>
   )
@@ -318,6 +321,13 @@ function VariantGrid({
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [filter, setFilter] = useState('全部版本')
   const [sort, setSort] = useState('最新优先')
+  const templateOptions = Array.from(new Set(variants.map(v => String(v.metadata?.template_name ?? v.metadata?.template_id ?? '')).filter(Boolean)))
+  const sourceOptions = Array.from(new Set(variants.map(v => String(v.metadata?.source_name ?? v.metadata?.source_id ?? '')).filter(Boolean)))
+  const filteredVariants = variants.filter((variant) => {
+    if (filter === '全部版本') return true
+    return filter === String(variant.metadata?.template_name ?? variant.metadata?.template_id ?? '')
+      || filter === String(variant.metadata?.source_name ?? variant.metadata?.source_id ?? '')
+  })
 
   return (
     <div className="space-y-4">
@@ -357,6 +367,8 @@ function VariantGrid({
               className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none"
             >
               <option>全部版本</option>
+              {templateOptions.map((option) => <option key={`tpl-${option}`}>{option}</option>)}
+              {sourceOptions.map((option) => <option key={`src-${option}`}>{option}</option>)}
             </select>
             <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-white/20" />
           </div>
@@ -388,7 +400,7 @@ function VariantGrid({
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
-          {variants.map((variant, idx) => (
+          {filteredVariants.map((variant, idx) => (
             <VariantCard
               key={variant.id}
               variant={variant}
@@ -402,7 +414,7 @@ function VariantGrid({
         </div>
       ) : (
         <div className="space-y-2">
-          {variants.map((variant, idx) => (
+          {filteredVariants.map((variant, idx) => (
             <div
               key={variant.id}
               className="flex items-center gap-3 rounded-xl border border-white/[0.04] bg-white/[0.01] p-2"
@@ -434,13 +446,13 @@ function VariantGrid({
       {/* Selection counter */}
       <div className="flex items-center justify-between">
         <span className="text-[11px] text-white/30">
-          已选择 {selectedIds.length} / {variants.length} 张图片
+          已选择 {selectedIds.length} / {filteredVariants.length} 张图片
         </span>
         <div className="flex items-center gap-3">
           {selectedIds.length === 0 && variants.length > 0 && (
             <button
               type="button"
-              onClick={() => variants.forEach((variant) => onToggle(variant.id))}
+              onClick={() => filteredVariants.forEach((variant) => onToggle(variant.id))}
               className="text-[11px] text-cyan-400/60 hover:text-cyan-400"
             >
               全选真实资产

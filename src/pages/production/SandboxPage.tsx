@@ -33,6 +33,8 @@ import type {
   ResolutionOption,
   AssetTask,
   StrategySummary,
+  ParsingSource,
+  ProductionFanoutTask,
 } from '@/types/production'
 import type { PromptPlanSummary } from '@/services/production'
 
@@ -264,6 +266,9 @@ export default function SandboxPage() {
   const [executionNotice, setExecutionNotice] = useState<string | null>(null)
   const [executionProgress, setExecutionProgress] = useState<number | null>(null)
   const [executionPhase, setExecutionPhase] = useState<'idle' | 'waiting' | 'ready' | 'failed'>('idle')
+  const [sourceOptions, setSourceOptions] = useState<ParsingSource[]>([])
+  const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([])
+  const [fanoutTasksState, setFanoutTasksState] = useState<ProductionFanoutTask[]>([])
 
   // Sync URL param → store
   useEffect(() => {
@@ -318,6 +323,29 @@ export default function SandboxPage() {
     return () => { cancelled = true }
   }, [productId, setStrategySummary, setIntents])
 
+  useEffect(() => {
+    if (!productId) return
+    let cancelled = false
+    productionApi.listParsingSources(productId)
+      .then((sources) => {
+        if (cancelled) return
+        const usable = sources.filter((source) => source.type === 'sku_image' || source.sourceRole === 'sku')
+        const fallback = usable.length > 0 ? usable : sources
+        setSourceOptions(sources)
+        setSelectedSourceIds((current) => {
+          const next = current.filter(id => sources.some(source => source.id === id))
+          return next.length > 0 ? next : fallback.map(source => source.id)
+        })
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSourceOptions([])
+          setSelectedSourceIds([])
+        }
+      })
+    return () => { cancelled = true }
+  }, [productId])
+
   const runPromptPlanner = async () => {
     if (!productId) return
     setPromptPlanning(true)
@@ -355,10 +383,10 @@ export default function SandboxPage() {
     return {
       modelCostPerImage: modelCost,
       resolutionCostPerImage: resCost,
-      imageCount,
-      total: Math.round(modelCost * resCost * imageCount),
+      imageCount: Math.max(0, selectedSourceIds.length * imageCount),
+      total: Math.round(modelCost * resCost * Math.max(0, selectedSourceIds.length * imageCount)),
     }
-  }, [selectedModel, selectedResolution, imageCount, assetTasks.length])
+  }, [selectedModel, selectedResolution, imageCount, selectedSourceIds.length])
 
   const taskSlots = useMemo(() => {
     return Array.from({ length: imageCount }, (_, idx) => assetTasks[idx] ?? {
@@ -368,6 +396,27 @@ export default function SandboxPage() {
       templateId: TEMPLATES[idx % TEMPLATES.length].id,
     })
   }, [assetTasks, imageCount])
+
+  const selectedSources = useMemo(() => sourceOptions.filter(source => selectedSourceIds.includes(source.id)), [sourceOptions, selectedSourceIds])
+
+  const fanoutTasks = useMemo<ProductionFanoutTask[]>(() => {
+    const sources = selectedSources.length > 0 ? selectedSources : sourceOptions.slice(0, 1)
+    return sources.flatMap((source) => taskSlots.map((slot, slotIndex) => {
+      const template = TEMPLATES.find((item) => item.id === slot.templateId) ?? TEMPLATES[0]
+      return {
+        id: `${source.id}:${slot.templateId}:${slotIndex}`,
+        sourceId: source.id,
+        sourceName: source.name,
+        sourceUrl: source.thumbnailUrl || source.url,
+        templateId: slot.templateId,
+        templateName: template.name,
+        slotIndex,
+        status: 'pending',
+        progress: 0,
+        resultAssetCount: 0,
+      }
+    }))
+  }, [selectedSources, sourceOptions, taskSlots])
 
   // Template lookup helper
   const getTemplate = useCallback(
@@ -425,7 +474,13 @@ export default function SandboxPage() {
     setIsRunning(true)
     try {
       const selectedIntentIds = store.intents.map((intent) => intent.id)
-      const result = await productionApi.executeIntents(productId, selectedIntentIds, {
+      if (fanoutTasks.length === 0) {
+        toast.showToast('没有可提交的输入图片 × 模板任务。请先在 Prep 上传 SKU 图片并选择模板槽位。', 'error')
+        setExecutionPhase('failed')
+        setIsRunning(false)
+        return
+      }
+      const batch = await productionApi.executeFanoutIntents(productId, selectedIntentIds, fanoutTasks, {
         ...(store.executionConfig ?? {
           provider: 'comfyui' as const,
           maxConcurrency: 1,
@@ -438,7 +493,7 @@ export default function SandboxPage() {
           model_id: selectedModel,
           resolution_id: currentResolution?.id,
           dimensions: currentResolution?.dimensions,
-          image_count: imageCount,
+          fanout_total: fanoutTasks.length,
           task_slots: taskSlots.map((asset, index) => ({
             index,
             asset_task_id: asset.id,
@@ -447,23 +502,25 @@ export default function SandboxPage() {
           })),
         },
       })
-      toast.showToast('生产任务已提交，正在等待真实结果返回。', 'success')
-      setExecutionNotice('生产任务已提交，正在排队出图。结果返回前不会跳转到工坊，也不会展示占位图。')
+      setFanoutTasksState(batch.tasks)
+      toast.showToast(`已提交 ${batch.totalTasks} 个真实生产任务，正在等待结果返回。`, 'success')
+      setExecutionNotice(`已按「${selectedSources.length || 1} 张输入图 × ${taskSlots.length} 个模板槽位」提交 ${batch.totalTasks} 个真实任务。结果返回前不会展示占位图。`)
       for (let attempt = 0; attempt < 80; attempt += 1) {
         await new Promise(resolve => setTimeout(resolve, attempt === 0 ? 1200 : 3000))
-        const latest = await productionApi.getGenerationExecutionStatus(productId, result.versionId)
-        setExecutionProgress(latest.progress)
-        setExecutionNotice(latest.message)
-        if (latest.terminal) {
-          if (latest.successful) {
+        const latest = await productionApi.getFanoutBatchStatus(productId, batch)
+        setFanoutTasksState(latest.tasks)
+        setExecutionProgress(latest.totalTasks > 0 ? Math.round(((latest.completedTasks + latest.failedTasks) / latest.totalTasks) * 100) : 0)
+        setExecutionNotice(`已完成 ${latest.completedTasks}/${latest.totalTasks}，失败 ${latest.failedTasks}。真实结果返回后进入工坊。`)
+        if (latest.completedTasks + latest.failedTasks >= latest.totalTasks) {
+          if (latest.completedTasks > 0) {
             setExecutionPhase('ready')
             setIsRunning(false)
-            toast.showToast('真实结果已返回，正在进入工坊。', 'success')
+            toast.showToast(`已有 ${latest.completedTasks} 个真实结果返回，正在进入工坊。`, 'success')
             navigate(`/products/${productId}/production/workshop`)
           } else {
             setExecutionPhase('failed')
             setIsRunning(false)
-            toast.showToast(latest.message, 'error')
+            toast.showToast('本次 fan-out 任务没有成功结果，系统未展示占位图。', 'error')
           }
           return
         }
@@ -490,12 +547,14 @@ export default function SandboxPage() {
   const currentResolution = RESOLUTION_OPTIONS.find((r) => r.id === selectedResolution)
   const hasRunnableIntents = store.intents.length > 0
   const promptPlanReady = promptPlan?.status === 'ready' && Boolean(promptPlan.promptId)
-  const canStartProduction = hasRunnableIntents && promptPlanReady && !executing
+  const canStartProduction = hasRunnableIntents && promptPlanReady && fanoutTasks.length > 0 && !executing
   const startProductionBlocker = !hasRunnableIntents
     ? '先回到生产准备，完成解析属性确认和 LLM 决策树选择。'
     : !promptPlanReady
       ? '先点击左侧「生成/刷新出图方案」，等方案状态变为“可用于生产”。'
-      : '可以开始生产。'
+      : fanoutTasks.length === 0
+        ? '请选择至少一张输入图片和一个模板槽位。'
+        : '可以开始生产。'
   const promptPlanSourceLabel = promptPlan?.source === 'llm_prompt_planner'
     ? '已按你的选择整理'
     : promptPlan?.source
@@ -719,6 +778,33 @@ export default function SandboxPage() {
                 <span className="text-[9px] text-white/20">最多支持 10 张</span>
               </div>
 
+              {/* Source image selection */}
+              <div className="rounded-xl border border-cyan-400/10 bg-cyan-400/[0.03] p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-[10px] font-medium text-cyan-100/70">输入图片（{selectedSourceIds.length || 0}）</span>
+                  <span className="text-[9px] text-white/25">真实 fan-out：输入图 × 模板槽位 = {fanoutTasks.length}</span>
+                </div>
+                {sourceOptions.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {sourceOptions.map((source) => {
+                      const active = selectedSourceIds.includes(source.id)
+                      return (
+                        <button
+                          key={source.id}
+                          type="button"
+                          onClick={() => setSelectedSourceIds(current => active ? current.filter(id => id !== source.id) : [...current, source.id])}
+                          className={`rounded-lg border px-2.5 py-1.5 text-[10px] transition ${active ? 'border-cyan-300/40 bg-cyan-300/10 text-cyan-100' : 'border-white/[0.06] bg-white/[0.02] text-white/35 hover:text-white/60'}`}
+                        >
+                          {source.name || source.id}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-white/30">还没有读取到 SKU 输入图；请先回 Prep 上传/解析图片。</p>
+                )}
+              </div>
+
               {/* Asset Rows */}
               <div className="space-y-2">
                 {taskSlots.map((asset, idx) => (
@@ -793,7 +879,7 @@ export default function SandboxPage() {
             </div>
             <p className="mt-3 flex items-center gap-1 text-[9px] text-white/15">
               <Info className="h-3 w-3" />
-              当前后端一次提交只会生成一张正式结果；这里仅作为本轮 Prompt 的模板参考槽位，批量多模板生成会拆成独立任务后再开放。
+              本次会按「选中输入图 × 模板槽位」拆分为独立真实生产任务；每个任务都必须返回真实 result asset，系统不会用占位图冒充。
             </p>
           </SectionCard>
         </div>
@@ -1013,9 +1099,9 @@ export default function SandboxPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-white/30">图片数量</span>
-                  <span className="text-[10px] tabular-nums text-white/50">
-                    {creditBreakdown.imageCount} 张
+              <span className="text-[10px] text-white/30">真实任务数</span>
+              <span className="text-[10px] tabular-nums text-white/50">
+                {creditBreakdown.imageCount} 个 runtime 任务
                   </span>
                 </div>
                 <div className="border-t border-white/[0.03] pt-2">
@@ -1094,6 +1180,11 @@ export default function SandboxPage() {
                 className="h-full rounded-full bg-cyan-300/70 transition-all duration-500"
                 style={{ width: `${Math.max(8, executionProgress)}%` }}
               />
+            </div>
+          )}
+          {fanoutTasksState.length > 0 && (
+            <div className="mt-2 text-[10px] text-white/35">
+              fan-out：{fanoutTasksState.filter(task => task.status === 'succeeded').length}/{fanoutTasksState.length} 已返回真实结果
             </div>
           )}
         </div>

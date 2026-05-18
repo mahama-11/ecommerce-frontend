@@ -66,6 +66,9 @@ export type LlmDecisionNode = {
   question: string
   answer?: string
   confidence: number
+  selectedOptionId?: string
+  options?: DecisionOption[]
+  status?: 'pending' | 'active' | 'completed'
   children?: LlmDecisionNode[]
 }
 
@@ -170,6 +173,38 @@ export type AssetTask = {
   name: string
   sceneTag: string
   templateId: string
+  templateName?: string
+}
+
+export type FanoutTaskStatus = 'pending' | 'queued' | 'executing' | 'succeeded' | 'failed'
+
+export type ProductionFanoutTask = {
+  id: string
+  sourceId: string
+  sourceName?: string
+  sourceUrl?: string
+  templateId: string
+  templateName?: string
+  slotIndex: number
+  promptId?: string
+  versionId?: string
+  runtimeJobId?: string
+  status: FanoutTaskStatus
+  progress: number
+  resultAssetCount: number
+  error?: string
+}
+
+export type ProductionFanoutBatch = {
+  batchId: string
+  productId: string
+  intentIds: string[]
+  tasks: ProductionFanoutTask[]
+  status: FanoutTaskStatus
+  totalTasks: number
+  completedTasks: number
+  failedTasks: number
+  createdAt: string
 }
 
 export type ModelOption = {
