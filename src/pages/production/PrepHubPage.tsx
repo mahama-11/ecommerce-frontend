@@ -38,7 +38,7 @@ function usePolling<T>(
   fetcher: () => Promise<T>,
   shouldPoll: (data: T) => boolean,
   intervalMs = 2000,
-  maxDurationMs = 45000,
+  maxDurationMs = 180000,
 ) {
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -55,7 +55,7 @@ function usePolling<T>(
       setData(result)
       if (shouldPoll(result)) {
         if (Date.now() - startedAtRef.current > maxDurationMs) {
-          throw new Error('解析等待超时：后端任务未在 45 秒内完成，请稍后重试或重新开始解析。')
+          throw new Error(`解析等待超时：后端任务未在 ${Math.round(maxDurationMs / 1000)} 秒内完成，请稍后重试或重新开始解析。`)
         }
         timerRef.current = setTimeout(() => void start(), intervalMs)
       } else {

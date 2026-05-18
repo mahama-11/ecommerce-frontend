@@ -64,7 +64,7 @@ const en = {
       speed: 'Fast Output',
     },
     dashboard: {
-      hero_badge: 'AI Production · V2',
+      hero_badge: 'AI Production',
       hero_title: 'Intent-Driven',
       hero_highlight: 'AI Visual Pipeline',
       hero_subtitle: 'From asset prep to strategy execution to iterative refinement — produce e-commerce visuals in three steps.',
@@ -637,12 +637,12 @@ const en = {
       commandTitle: 'Jump to a Product Center station',
       commands: {
         queue: 'Open Task Center',
-        listing: 'Open Template Center',
+        listing: 'Open Listing Config',
         delivery: 'View completed generation history',
       },
       commandHints: {
         queue: 'View in-progress generation tasks',
-        listing: 'View user DIY templates',
+        listing: 'Create/adopt listing versions',
         delivery: 'Completed generation task history',
       },
     },

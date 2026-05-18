@@ -78,6 +78,7 @@ type SourceReferenceDTO = {
 
 type DeconstructionJobDTO = {
   job_id: string
+  source_reference_id?: string
   runtime_job_id?: string
   status: string
   stage?: string
@@ -827,22 +828,27 @@ export async function startParsing(req: StartParsingRequest): Promise<StartParsi
   saveLocalSources(req.productId, updatedSources)
 
   const sourceRefIds = sourceRefs.map(item => item.id).sort()
-  const primarySource = sourceRefs.find(item => item.metadata?.source_role === 'sku') ?? sourceRefs[0]
-  const job = await request<DeconstructionJobDTO>(`${VWF}/${session.id}/deconstruction-jobs`, {
-    method: 'POST',
-    body: JSON.stringify({
-      source_reference_id: primarySource?.id,
-      idempotency_key: `deconstruct:${session.id}:${sourceRefIds.join('+')}`,
-      requested_elements: ['product_geometry', 'material', 'style', 'scene', 'brand_constraints'],
-      metadata: {
-        frontend_entrypoint: 'production-prep',
-        frontend_source_ids: req.sourceIds,
-        frontend_tracks: req.tracks,
-        source_reference_ids: sourceRefIds,
-      },
-    }),
-  })
-  return { parsingJobId: job.job_id, status: normalizeStatus(job.status) }
+  const jobs: DeconstructionJobDTO[] = []
+  for (const sourceRef of sourceRefs) {
+    const job = await request<DeconstructionJobDTO>(`${VWF}/${session.id}/deconstruction-jobs`, {
+      method: 'POST',
+      body: JSON.stringify({
+        source_reference_id: sourceRef.id,
+        idempotency_key: `deconstruct:${session.id}:${sourceRef.id}:${sourceRefIds.join('+')}`,
+        requested_elements: ['product_geometry', 'material', 'style', 'scene', 'brand_constraints'],
+        metadata: {
+          frontend_entrypoint: 'production-prep',
+          frontend_source_ids: req.sourceIds,
+          frontend_tracks: req.tracks,
+          source_reference_ids: sourceRefIds,
+          image_understanding_policy: 'single_image_per_runtime_job',
+        },
+      }),
+    })
+    jobs.push(job)
+  }
+  const primaryJob = jobs.find(item => item.source_reference_id === sourceRefs.find(ref => ref.metadata?.source_role === 'sku')?.id) ?? jobs[0]
+  return { parsingJobId: primaryJob.job_id, status: normalizeStatus(primaryJob.status) }
 }
 
 export async function getParsingResult(productId: string): Promise<DualTrackParsing> {
@@ -1222,6 +1228,10 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
     method: 'POST',
     body: JSON.stringify({
       idempotency_key: `fanout:${session.id}:${promptPlan.prompt_id}:${intentIds.join(',')}:${tasks.map(t => t.id).join('|')}`,
+      template_slots: tasks.map(task => ({
+        source_asset_id: task.sourceId,
+        template_id: task.templateId,
+      })),
       source_asset_ids: Array.from(new Set(tasks.map(task => task.sourceId).filter(Boolean))),
       template_ids: Array.from(new Set(tasks.map(task => task.templateId).filter(Boolean))),
       requested_variants: 1,
@@ -1229,9 +1239,9 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
       metadata: buildSafeGenerationMetadata(intentIds, config, 'sandbox_generation_fanout'),
     }),
   })
-  const byTaskKey = new Map(tasks.map(task => [`${task.sourceId}:${task.templateId}`, task]))
-  const nextTasks = response.items.map((item) => {
-    const original = byTaskKey.get(`${item.source_asset_id}:${item.template_id}`)
+  const byTaskKey = new Map(tasks.map(task => [`${task.sourceId}:${task.templateId}:${task.slotIndex}`, task]))
+  const nextTasks = response.items.map((item, index) => {
+    const original = tasks[index] ?? byTaskKey.get(`${item.source_asset_id}:${item.template_id}:${item.slot_index}`)
     const version = item.generation_version
     return {
       ...(original ?? {

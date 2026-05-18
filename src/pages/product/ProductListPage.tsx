@@ -306,9 +306,9 @@ function ProductListPage() {
           </div>
           {[
             ['all', '全部'],
-            ['production', '缺素材'],
+            ['visual', '待素材/生产准备'],
             ['listing', '待 Listing'],
-            ['export', '可导出'],
+            ['export', '待导出'],
             ['delivery', '交付中心'],
           ].map(([stage, label]) => (
             <button key={stage} onClick={() => setActiveStage(stage as MissionStage | 'all')} className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${activeStage === stage ? 'border-cyan-300/40 bg-cyan-300/12 text-cyan-100' : 'border-white/[0.08] bg-white/[0.035] text-white/50 hover:text-white/75'}`}>{label}</button>
@@ -319,7 +319,7 @@ function ProductListPage() {
           <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">SKU 工作队列 — {filteredUnits.length} 个活跃</div>
           <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-[#0b0d14] shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
             <div className="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(72px,0.5fr)_minmax(80px,0.55fr)_minmax(72px,0.5fr)_minmax(72px,0.5fr)_minmax(150px,0.9fr)] border-b border-white/[0.06] bg-[#0b0d14] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/34 max-xl:hidden">
-              <div>SKU</div><div>标题 / 类目</div><div>Readiness</div><div>素材</div><div>Listing</div><div>导出</div><div>更新时间</div><div>操作</div>
+              <div>SKU</div><div>标题 / 类目</div><div>真实就绪项</div><div>素材</div><div>Listing</div><div>导出</div><div>更新时间</div><div>操作</div>
             </div>
             {loading ? (
               <div className="flex min-h-[300px] items-center justify-center"><LoaderCircle className="h-7 w-7 animate-spin text-cyan-200" /></div>
@@ -338,14 +338,14 @@ function ProductListPage() {
                         <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} title={product.skuCode} className="min-w-0 truncate font-mono text-xs text-cyan-100/82 underline-offset-4 transition hover:text-white hover:underline">{product.skuCode}</Link>
                       </div>
                       <div className="min-w-0 overflow-hidden"><Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} title={product.title} className="block truncate font-semibold text-white/90 underline-offset-4 transition hover:text-cyan-100 hover:underline">{product.title}</Link><div className="mt-0.5 truncate text-xs text-white/40">{product.categoryId || 'Uncategorized'} / {product.brandId || 'No brand'}</div></div>
-                      <div className="min-w-0 overflow-hidden"><div className="flex flex-wrap gap-1.5">{unit.readiness.slice(0, 4).map(item => <QueueTag key={item.key} label={item.label.replace('Template/Prompt Lineage', 'Info').replace('SKU.assets', 'Assets').replace('Listing Station', 'Listing').replace('Delivery Downloadability', 'Export')} tone={item.state === 'available' ? 'green' : item.state === 'partial' ? 'orange' : item.state === 'contract-needed' ? 'orange' : item.state === 'blocked' ? 'red' : 'muted'} />)}</div></div>
-                      <QueueTag label={`${product.assetsCount}/5`} tone={product.assetStatus === 'ready' ? 'green' : product.assetsCount > 0 ? 'orange' : 'red'} />
-                      <QueueTag label={product.listingStatus === 'ready' ? 'Adopted' : product.listingStatus === 'partial' ? 'Draft' : 'Missing'} tone={product.listingStatus === 'ready' ? 'green' : product.listingStatus === 'partial' ? 'orange' : 'red'} />
-                      <QueueTag label={product.exportStatus === 'done' ? 'Done' : product.exportStatus === 'ready' ? 'Ready' : 'Pending'} tone={product.exportStatus === 'done' || product.exportStatus === 'ready' ? 'green' : 'red'} />
+                      <div className="min-w-0 overflow-hidden"><div className="flex flex-wrap gap-1.5">{unit.readiness.slice(0, 4).map(item => <QueueTag key={item.key} label={item.label.replace('SKU.assets', '素材').replace('Listing Station', 'Listing').replace('Export package', '导出包')} tone={item.state === 'available' ? 'green' : item.state === 'partial' ? 'orange' : item.state === 'contract-needed' ? 'orange' : item.state === 'blocked' ? 'red' : 'muted'} />)}</div></div>
+                      <QueueTag label={product.assetStatus === 'ready' ? `完整(${product.assetsCount})` : product.assetsCount > 0 ? `部分(${product.assetsCount})` : '缺失'} tone={product.assetStatus === 'ready' ? 'green' : product.assetsCount > 0 ? 'orange' : 'red'} />
+                      <QueueTag label={product.listingStatus === 'ready' ? '已采用' : product.listingStatus === 'partial' ? '草稿' : '缺失'} tone={product.listingStatus === 'ready' ? 'green' : product.listingStatus === 'partial' ? 'orange' : 'red'} />
+                      <QueueTag label={product.exportStatus === 'done' ? '已完成' : product.exportStatus === 'ready' ? '可交付' : '待导出'} tone={product.exportStatus === 'done' || product.exportStatus === 'ready' ? 'green' : 'red'} />
                       <div className="text-xs text-white/38">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</div>
                       <div className="flex flex-wrap gap-1.5">
                         <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#05070b] transition hover:bg-cyan-100">详情</Link>
-                        <Link to={unit.nextBestAction.href} onClick={event => event.stopPropagation()} className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold transition ${unit.nextBestAction.station === 'visual' || unit.nextBestAction.station === 'listing' ? 'bg-cyan-200 text-[#05070b] hover:bg-white' : 'border border-white/[0.08] bg-white/[0.04] text-white/72 hover:bg-white/[0.08]'}`}>{unit.nextBestAction.label.replace('Route to Visual Station', '进入任务中心').replace('Route to Listing Station', '进入模板中心').replace('Route to Delivery Station', '查看交付历史').replace('Open Export Handoff', '创建导出任务')}</Link>
+                        <Link to={unit.nextBestAction.href} onClick={event => event.stopPropagation()} className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold transition ${unit.nextBestAction.station === 'visual' || unit.nextBestAction.station === 'listing' ? 'bg-cyan-200 text-[#05070b] hover:bg-white' : 'border border-white/[0.08] bg-white/[0.04] text-white/72 hover:bg-white/[0.08]'}`}>{unit.nextBestAction.label.replace('Route to Visual Station', '进入生产准备').replace('Route to Delivery Station', '查看交付历史').replace('Open Export Handoff', '创建导出任务')}</Link>
                       </div>
                     </div>
                   )
@@ -378,7 +378,7 @@ function ProductListPage() {
         <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-md" onClick={() => setShowCommandPalette(false)}>
           <div className="mx-auto mt-[12vh] w-full max-w-xl overflow-hidden rounded-2xl border border-white/12 bg-[#0b0d14] shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()}>
             <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3"><Search className="h-4 w-4 text-white/35" /><input autoFocus placeholder="搜索命令、SKU、站点..." className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/32" /><span className="text-xs text-white/28">ESC</span></div>
-            <div className="p-2 text-sm">{['任务中心 ⌘1', '模板中心 ⌘2', '交付中心 ⌘3'].map(item => <div key={item} className="rounded-xl px-3 py-2 text-white/70 hover:bg-white/[0.05]">{item}</div>)}</div>
+            <div className="p-2 text-sm">{['任务中心 ⌘1', 'Listing 配置 ⌘2', '交付中心 ⌘3'].map(item => <div key={item} className="rounded-xl px-3 py-2 text-white/70 hover:bg-white/[0.05]">{item}</div>)}</div>
           </div>
         </div>
       ) : null}

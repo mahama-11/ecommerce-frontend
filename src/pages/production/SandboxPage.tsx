@@ -383,8 +383,8 @@ export default function SandboxPage() {
     return {
       modelCostPerImage: modelCost,
       resolutionCostPerImage: resCost,
-      imageCount: Math.max(0, selectedSourceIds.length * imageCount),
-      total: Math.round(modelCost * resCost * Math.max(0, selectedSourceIds.length * imageCount)),
+      imageCount: selectedSourceIds.length > 0 ? imageCount : 0,
+      total: Math.round(modelCost * resCost * (selectedSourceIds.length > 0 ? imageCount : 0)),
     }
   }, [selectedModel, selectedResolution, imageCount, selectedSourceIds.length])
 
@@ -400,8 +400,10 @@ export default function SandboxPage() {
   const selectedSources = useMemo(() => sourceOptions.filter(source => selectedSourceIds.includes(source.id)), [sourceOptions, selectedSourceIds])
 
   const fanoutTasks = useMemo<ProductionFanoutTask[]>(() => {
-    const sources = selectedSources.length > 0 ? selectedSources : sourceOptions.slice(0, 1)
-    return sources.flatMap((source) => taskSlots.map((slot, slotIndex) => {
+    const sources = selectedSources.length > 0 ? selectedSources : []
+    if (sources.length === 0) return []
+    return taskSlots.map((slot, slotIndex) => {
+      const source = sources[slotIndex % sources.length]
       const template = TEMPLATES.find((item) => item.id === slot.templateId) ?? TEMPLATES[0]
       return {
         id: `${source.id}:${slot.templateId}:${slotIndex}`,
@@ -415,7 +417,7 @@ export default function SandboxPage() {
         progress: 0,
         resultAssetCount: 0,
       }
-    }))
+    })
   }, [selectedSources, sourceOptions, taskSlots])
 
   // Template lookup helper
@@ -504,7 +506,7 @@ export default function SandboxPage() {
       })
       setFanoutTasksState(batch.tasks)
       toast.showToast(`已提交 ${batch.totalTasks} 个真实生产任务，正在等待结果返回。`, 'success')
-      setExecutionNotice(`已按「${selectedSources.length || 1} 张输入图 × ${taskSlots.length} 个模板槽位」提交 ${batch.totalTasks} 个真实任务。结果返回前不会展示占位图。`)
+      setExecutionNotice(`已按任务配额提交 ${batch.totalTasks} 个真实任务；多张输入图会按槽位轮转分配。结果返回前不会展示占位图。`)
       for (let attempt = 0; attempt < 80; attempt += 1) {
         await new Promise(resolve => setTimeout(resolve, attempt === 0 ? 1200 : 3000))
         const latest = await productionApi.getFanoutBatchStatus(productId, batch)
@@ -782,7 +784,7 @@ export default function SandboxPage() {
               <div className="rounded-xl border border-cyan-400/10 bg-cyan-400/[0.03] p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-[10px] font-medium text-cyan-100/70">输入图片（{selectedSourceIds.length || 0}）</span>
-                  <span className="text-[9px] text-white/25">真实 fan-out：输入图 × 模板槽位 = {fanoutTasks.length}</span>
+                  <span className="text-[9px] text-white/25">真实 fan-out：任务配额 = {fanoutTasks.length} 个 runtime 任务</span>
                 </div>
                 {sourceOptions.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
