@@ -48,9 +48,18 @@ type VisualSession = {
   sku_code: string
   current_stage: string
   status: string
+  template_id?: string
+  template_version_id?: string
   intent_spec?: IntentSpecDTO
   prompt_plan?: PromptPlanDTO
   generation_versions?: GenerationVersionDTO[]
+}
+
+type ProductionTemplateListItem = {
+  id: string
+  modality?: string
+  capabilityType?: string
+  recommendScore?: number
 }
 
 type SourceReferenceDTO = {
@@ -146,6 +155,50 @@ type GenerationVersionDTO = {
   created_at?: string
 }
 
+export type BusinessWorkflowNode = {
+  node_id: string
+  label: string
+  owner: string
+  status: string
+  readiness?: string
+  evidence?: Record<string, unknown>
+  blockers?: Array<{ code: string; message: string; target?: string }>
+}
+
+export type BusinessWorkflowDAG = {
+  schema_version: string
+  flow_id: string
+  status: string
+  persistence?: string
+  nodes: BusinessWorkflowNode[]
+  edges: Array<{ from: string; to: string; dependency?: string }>
+}
+
+export type IntegrationVerdict = {
+  schema_version: string
+  status: 'pass' | 'partial_pass' | 'blocked' | 'fail' | string
+  ready_count: number
+  total_count: number
+  gates: Array<{ gate_id: string; label: string; status: string; evidence?: Record<string, unknown> }>
+  blockers?: Array<{ code: string; message: string; target?: string }>
+}
+
+export type RollbackSnapshot = {
+  schema_version: string
+  session_id: string
+  status: string
+  scopes: Array<{ scope_id: string; resource_type: string; resource_id?: string; action: string; safe: boolean; evidence?: Record<string, unknown> }>
+  instructions?: string[]
+  metadata?: Record<string, unknown>
+}
+
+export type ReleaseReadiness = {
+  schema_version: string
+  status: string
+  gates: Array<{ gate_id: string; label: string; status: string; evidence?: Record<string, unknown> }>
+  blockers?: Array<{ code: string; message: string; target?: string }>
+}
+
 type StageViewDTO = VisualSession & {
   session_id?: string
   source_reference?: SourceReferenceDTO
@@ -154,11 +207,16 @@ type StageViewDTO = VisualSession & {
   deconstruction_elements: DeconstructionElementDTO[]
   readiness?: {
     overall?: string
+    source?: string
     deconstruction?: string
     prompt?: string
     generation?: string
     blockers?: Array<{ code: string; message: string; target?: string }>
   }
+  business_flow?: BusinessWorkflowDAG
+  integration_verdict?: IntegrationVerdict
+  rollback_snapshot?: RollbackSnapshot
+  release_readiness?: ReleaseReadiness
   runtime_capabilities?: Array<{ task_type: string; status: string; available: boolean; unavailable_reason?: string }>
   runtime_capability_error?: { code: string; message: string }
   updated_at?: string
@@ -244,9 +302,75 @@ async function ensureVisualSession(productId: string): Promise<VisualSession> {
   return created
 }
 
+async function resolveProductionPromptTemplateId(locale = 'zh-CN'): Promise<string> {
+  const candidates = await request<ProductionTemplateListItem[]>(
+    `/api/v1/ecommerce/template-center/catalog?locale=${encodeURIComponent(locale)}&modality=image&sortBy=recommended`,
+    { method: 'GET' },
+  )
+  const selected = [...(candidates ?? [])]
+    .filter(item => item.id)
+    .sort((a, b) => Number(b.recommendScore ?? 0) - Number(a.recommendScore ?? 0))[0]
+  if (!selected?.id) {
+    contractNeeded('Template Center 没有可用的 image 模板，不能创建真实 Prompt Center 快照。')
+  }
+  return selected.id
+}
+
+async function ensureSessionPromptTemplate(session: VisualSession, locale = 'zh-CN'): Promise<string> {
+  if (session.template_id) return session.template_id
+  const templateId = await resolveProductionPromptTemplateId(locale)
+  const updated = await request<VisualSession>(`${VWF}/${session.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ template_id: templateId }),
+  })
+  setStored(sessionKey(session.product_id), updated)
+  return updated.template_id || templateId
+}
+
 async function getStageView(productId: string): Promise<StageViewDTO> {
   const session = await ensureVisualSession(productId)
   return request<StageViewDTO>(`${VWF}/${session.id}/stage-view`, { method: 'GET' })
+}
+
+export type ProductionArchitectureState = {
+  businessFlow?: BusinessWorkflowDAG
+  integrationVerdict?: IntegrationVerdict
+  rollbackSnapshot?: RollbackSnapshot
+  releaseReadiness?: ReleaseReadiness
+  updatedAt?: string
+}
+
+export async function getProductionArchitectureState(productId: string): Promise<ProductionArchitectureState> {
+  if (isDevMode()) {
+    await delay(200)
+    return {
+      businessFlow: {
+        schema_version: 'ecommerce_business_flow.v1',
+        flow_id: productId,
+        status: 'partial',
+        persistence: 'demo',
+        nodes: ['source', 'deconstruction', 'prompt_plan', 'generation', 'workshop', 'product_center_writeback', 'delivery_download', 'charge_metering'].map((node, idx) => ({
+          node_id: node,
+          label: node.replaceAll('_', ' '),
+          owner: idx < 4 ? 'backend/runtime' : 'frontend/backend',
+          status: idx < 4 ? 'ready' : 'missing',
+        })),
+        edges: [],
+      },
+      integrationVerdict: { schema_version: 'ecommerce_integration_verdict.v1', status: 'partial_pass', ready_count: 4, total_count: 8, gates: [] },
+      rollbackSnapshot: { schema_version: 'ecommerce_rollback_snapshot.v1', session_id: productId, status: 'available', scopes: [] },
+      releaseReadiness: { schema_version: 'ecommerce_release_readiness.v1', status: 'blocked', gates: [] },
+      updatedAt: new Date().toISOString(),
+    }
+  }
+  const stage = await getStageView(productId)
+  return {
+    businessFlow: stage.business_flow,
+    integrationVerdict: stage.integration_verdict,
+    rollbackSnapshot: stage.rollback_snapshot,
+    releaseReadiness: stage.release_readiness,
+    updatedAt: stage.updated_at,
+  }
 }
 
 export type PromptDiffSummary = {
@@ -333,18 +457,37 @@ export async function getPromptPlanSummary(productId: string): Promise<PromptPla
   return promptPlanSummary(await getStageView(productId))
 }
 
-export async function requestPromptPlanner(productId: string, opts?: { marketplace?: string; locale?: string; promptVariables?: Record<string, unknown> }): Promise<{ runtimeJobId?: string; status: string }> {
+export async function requestPromptPlanner(productId: string, opts?: { marketplace?: string; locale?: string; templateId?: string; promptVariables?: Record<string, unknown> }): Promise<{ runtimeJobId?: string; status: string }> {
   const session = await ensureVisualSession(productId)
+  const locale = opts?.locale ?? 'zh-CN'
+  const templateId = opts?.templateId ?? await ensureSessionPromptTemplate(session, locale)
   const response = await request<{ runtime_job_id?: string; status: string }>(`${VWF}/${session.id}/prompt-planner-jobs`, {
     method: 'POST',
     body: JSON.stringify({
       marketplace: opts?.marketplace ?? 'amazon',
-      locale: opts?.locale ?? 'zh-CN',
-      prompt_variables: { ...(opts?.promptVariables ?? {}), prompt_diff: true },
+      locale,
+      template_id: templateId,
+      prompt_variables: { ...(opts?.promptVariables ?? {}), template_id: templateId, prompt_diff: true },
       idempotency_key: `prompt-plan:${session.id}:${Date.now()}`,
     }),
   })
   return { runtimeJobId: response.runtime_job_id, status: response.status }
+}
+
+export async function ensurePromptPlanReady(productId: string, opts?: { marketplace?: string; locale?: string; templateId?: string; promptVariables?: Record<string, unknown>; timeoutMs?: number }): Promise<PromptPlanSummary> {
+  await requestPromptPlanner(productId, opts)
+  const startedAt = Date.now()
+  const timeoutMs = opts?.timeoutMs ?? 90_000
+  let latest = await getPromptPlanSummary(productId)
+  while (Date.now() - startedAt < timeoutMs) {
+    latest = await getPromptPlanSummary(productId)
+    if (latest.status === 'ready' && latest.promptId) return latest
+    if (['blocked', 'failed', 'contract_needed'].includes(latest.status)) {
+      contractNeeded('生成方案没有拿到真实 Prompt Center 快照，不能继续出图。')
+    }
+    await delay(1500)
+  }
+  contractNeeded('生成方案等待超时，尚未拿到真实 Prompt Center 快照。')
 }
 
 function normalizeStatus(status?: string): 'idle' | 'parsing' | 'succeeded' | 'failed' {
@@ -962,6 +1105,21 @@ export async function getGenerationExecutionStatus(productId: string, versionId:
   return generationExecutionStatus(version)
 }
 
+export async function waitForGenerationResult(productId: string, versionId: string, opts?: { timeoutMs?: number }): Promise<GenerationExecutionStatus> {
+  const timeoutMs = opts?.timeoutMs ?? 180_000
+  const startedAt = Date.now()
+  let latest = await getGenerationExecutionStatus(productId, versionId)
+  while (Date.now() - startedAt < timeoutMs) {
+    latest = await getGenerationExecutionStatus(productId, versionId)
+    if (latest.successful && latest.resultAssetCount > 0) return latest
+    if (latest.terminal) {
+      contractNeeded(latest.message || '真实出图任务已结束，但没有返回可展示的结果资产。')
+    }
+    await delay(2500)
+  }
+  contractNeeded('真实出图等待超时，尚未收到 result asset 回调。')
+}
+
 export async function executeIntents(productId: string, intentIds: string[], config?: ExecutionConfig): Promise<{ jobId: string; versionId: string; status: string; runtimeJobId?: string }> {
   if (isDevMode()) {
     await delay(2000)
@@ -997,46 +1155,56 @@ export async function executeIntents(productId: string, intentIds: string[], con
 
 
 
-export async function createBranchGenerationVersion(
+export async function createWorkshopGenerationVersion(
   productId: string,
   parentVersionId: string,
   weights: Record<string, unknown>,
-  refinementInstruction?: string,
+  refinementInstruction: string,
+  source: 'workshop_regenerate' | 'workshop_branch_generation' = 'workshop_branch_generation',
 ): Promise<{ jobId: string; versionId: string; status: string; runtimeJobId?: string }> {
   if (isDevMode()) {
     await delay(1200)
-    return { jobId: `branch-${uid()}`, versionId: `gv-${uid()}`, status: 'queued' }
+    return { jobId: `workshop-${uid()}`, versionId: `gv-${uid()}`, status: 'queued' }
   }
   const session = await ensureVisualSession(productId)
-  const stage = await getStageView(productId)
-  const promptPlan = stage.prompt_plan
-  if (!promptPlan || promptPlan.status !== 'ready' || !promptPlan.prompt_id) {
-    contractNeeded('Prompt plan is not ready; branch generation cannot start without a backend prompt snapshot.')
+  const promptPlan = await ensurePromptPlanReady(productId, {
+    promptVariables: {
+      source,
+      parent_version_id: parentVersionId,
+      source_version_id: parentVersionId,
+      refinement_instruction: refinementInstruction || 'Workshop regeneration',
+      ui_refinement_weights: weights,
+      prompt_diff: true,
+    },
+  })
+  if (!promptPlan.promptId) {
+    contractNeeded('Workshop 生成没有拿到真实 prompt_id，不能创建出图 runtime job。')
   }
   const response = await request<GenerationVersionDTO>(`${VWF}/${session.id}/generation-versions`, {
     method: 'POST',
     body: JSON.stringify({
-      prompt_id: promptPlan.prompt_id,
+      prompt_id: promptPlan.promptId,
       parent_version_id: parentVersionId,
       source_version_id: parentVersionId,
-      refinement_instruction: refinementInstruction || 'Workshop branch regeneration',
+      refinement_instruction: refinementInstruction || 'Workshop regeneration',
       status: 'queued',
       stage: 'queued',
       progress: 0,
-      idempotency_key: `branch:${session.id}:${parentVersionId}:${Date.now()}`,
+      idempotency_key: `${source}:${session.id}:${parentVersionId}:${promptPlan.promptId}:${Date.now()}`,
       metadata: {
-        source: 'workshop_branch_generation',
+        source,
         parent_version_id: parentVersionId,
         source_version_id: parentVersionId,
         ui_refinement_weights: weights,
+        prompt_id: promptPlan.promptId,
       },
     }),
   })
   if (response.status === 'contract_needed') {
-    contractNeeded('Branch generation is not available yet; no production runtime job was created.')
+    contractNeeded('Workshop generation 没有创建真实 runtime job；系统不会用占位图冒充结果。')
   }
   if (!response.runtime_job_id) {
-    contractNeeded(`Branch generation version was created but no runtime job was returned; status=${response.status}.`)
+    contractNeeded(`Workshop generation version 已创建但没有 runtime job；status=${response.status}。`)
   }
   return {
     jobId: response.runtime_job_id || response.version_id,
@@ -1044,6 +1212,15 @@ export async function createBranchGenerationVersion(
     status: response.status,
     runtimeJobId: response.runtime_job_id,
   }
+}
+
+export async function createBranchGenerationVersion(
+  productId: string,
+  parentVersionId: string,
+  weights: Record<string, unknown>,
+  refinementInstruction?: string,
+): Promise<{ jobId: string; versionId: string; status: string; runtimeJobId?: string }> {
+  return createWorkshopGenerationVersion(productId, parentVersionId, weights, refinementInstruction || 'Workshop branch regeneration', 'workshop_branch_generation')
 }
 
 export async function getTaskQuota(productId: string): Promise<TaskQuota> {
@@ -1129,8 +1306,9 @@ export async function listVariants(productId: string): Promise<AssetVariant[]> {
     asset,
   })))
   return Promise.all(variants.map(async ({ version, asset }) => {
-    const assetContentPath = asset.asset_content_url || ''
+    const assetContentPath = asset.asset_content_url || (asset.asset_id ? `/api/v1/ecommerce/assets/${asset.asset_id}/content` : '')
     const authenticatedUrl = assetContentPath ? await fetchAuthenticatedObjectUrl(assetContentPath) : ''
+    const done = ['completed', 'succeeded'].includes(String(version.status ?? '').toLowerCase()) || String(version.stage ?? '').toLowerCase() === 'completed'
     return {
       id: `${version.version_id}:${asset.asset_id}`,
       intentId: version.prompt_id || version.version_id,
@@ -1138,7 +1316,7 @@ export async function listVariants(productId: string): Promise<AssetVariant[]> {
       thumbnailUrl: authenticatedUrl,
       width: Number(asset.metadata?.width ?? 1024),
       height: Number(asset.metadata?.height ?? 1024),
-      status: asset.selected || asset.asset_id === version.selected_result_asset_id ? 'selected' : (version.status === 'completed' ? 'ready' : 'generating'),
+      status: asset.selected || asset.asset_id === version.selected_result_asset_id ? 'selected' : (done ? 'ready' : 'generating'),
       metadata: { ...asset.metadata, version_id: version.version_id, asset_id: asset.asset_id, asset_content_url: assetContentPath, stage: version.stage, progress: version.progress, status: version.status },
       createdAt: version.created_at || new Date().toISOString(),
     }
