@@ -21,6 +21,8 @@ import type {
   ParsedAttribute,
   IntentType,
   VersionNode,
+  ProductionFanoutTask,
+  ProductionFanoutBatch,
 } from '@/types/production'
 import {
   isDevMode,
@@ -153,6 +155,21 @@ type GenerationVersionDTO = {
   prompt_plan_status?: string
   metadata?: Record<string, unknown>
   created_at?: string
+}
+
+type GenerationFanoutResponseDTO = {
+  session_id: string
+  product_id: string
+  sku_code: string
+  fanout_id: string
+  items: Array<{
+    fanout_task_id: string
+    source_asset_id: string
+    template_id: string
+    template_version_id?: string
+    slot_index: number
+    generation_version: GenerationVersionDTO
+  }>
 }
 
 export type BusinessWorkflowNode = {
@@ -620,6 +637,22 @@ function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
   }))
   return {
     status: blockers.length > 0 ? 'failed' : (selections.length > 0 || elements.length > 0 ? 'succeeded' : 'idle'),
+    root: {
+      id: 'root',
+      question: '本轮视觉策略取舍',
+      confidence: elements.length ? elements.reduce((sum, e) => sum + normalizeConfidence(e.confidence), 0) / elements.length : 0,
+      status: steps.every(step => step.status === 'completed') ? 'completed' : 'active',
+      children: steps.map((step) => ({
+        id: step.id,
+        question: step.title,
+        answer: step.selectedOptionId,
+        confidence: step.options[0]?.confidence ?? 0,
+        selectedOptionId: step.selectedOptionId,
+        options: step.options,
+        status: step.status,
+        children: [],
+      })),
+    },
     steps,
     recommendedActions: blockers.length > 0 ? blockers.map(b => userFacingText(b.message)) : ['确认要保留哪些参考效果', '补充生成要求', '进入策略配置'],
     overallConfidence: elements.length ? elements.reduce((sum, e) => sum + normalizeConfidence(e.confidence), 0) / elements.length : 0,
@@ -1156,6 +1189,98 @@ export async function executeIntents(productId: string, intentIds: string[], con
 
 
 
+export async function executeFanoutIntents(productId: string, intentIds: string[], tasks: ProductionFanoutTask[], config?: ExecutionConfig): Promise<ProductionFanoutBatch> {
+  if (isDevMode()) {
+    await delay(1200)
+    const batchId = `fanout-${uid()}`
+    return {
+      batchId,
+      productId,
+      intentIds,
+      tasks: tasks.map((task) => ({ ...task, versionId: `gv-${uid()}`, runtimeJobId: `runtime-${uid()}`, status: 'queued', progress: 5 })),
+      status: 'queued',
+      totalTasks: tasks.length,
+      completedTasks: 0,
+      failedTasks: 0,
+      createdAt: new Date().toISOString(),
+    }
+  }
+  if (tasks.length === 0) {
+    contractNeeded('没有可提交的 fan-out 任务；请选择至少一张输入图片和一个模板槽位。')
+  }
+  const session = await ensureVisualSession(productId)
+  const stage = await getStageView(productId)
+  const promptPlan = stage.prompt_plan
+  if (!promptPlan || promptPlan.status !== 'ready' || !promptPlan.prompt_id) {
+    contractNeeded('生成方案还没准备好。请先点击左侧「生成出图方案」，确认后再开始生产。')
+  }
+  const response = await request<GenerationFanoutResponseDTO>(`${VWF}/${session.id}/generation-version-fanouts`, {
+    method: 'POST',
+    body: JSON.stringify({
+      idempotency_key: `fanout:${session.id}:${promptPlan.prompt_id}:${intentIds.join(',')}:${tasks.map(t => t.id).join('|')}`,
+      source_asset_ids: Array.from(new Set(tasks.map(task => task.sourceId).filter(Boolean))),
+      template_ids: Array.from(new Set(tasks.map(task => task.templateId).filter(Boolean))),
+      requested_variants: 1,
+      provider_config: config?.providerConfig,
+      metadata: buildSafeGenerationMetadata(intentIds, config, 'sandbox_generation_fanout'),
+    }),
+  })
+  const byTaskKey = new Map(tasks.map(task => [`${task.sourceId}:${task.templateId}`, task]))
+  const nextTasks = response.items.map((item) => {
+    const original = byTaskKey.get(`${item.source_asset_id}:${item.template_id}`)
+    const version = item.generation_version
+    return {
+      ...(original ?? {
+        id: item.fanout_task_id,
+        sourceId: item.source_asset_id,
+        templateId: item.template_id,
+        slotIndex: item.slot_index,
+      }),
+      id: original?.id ?? item.fanout_task_id,
+      versionId: version.version_id,
+      runtimeJobId: version.runtime_job_id,
+      status: ['queued', 'processing'].includes(String(version.status).toLowerCase()) ? 'queued' : String(version.status).toLowerCase() === 'completed' ? 'succeeded' : 'failed',
+      progress: Number(version.progress ?? 5),
+      resultAssetCount: version.result_assets?.length ?? 0,
+      error: version.status === 'contract_needed' ? '生成服务未创建真实 runtime job' : undefined,
+    } as ProductionFanoutTask
+  })
+  return summarizeFanoutBatch(response.fanout_id, productId, intentIds, nextTasks)
+}
+
+function summarizeFanoutBatch(batchId: string, productId: string, intentIds: string[], tasks: ProductionFanoutTask[]): ProductionFanoutBatch {
+  const completedTasks = tasks.filter(task => task.status === 'succeeded').length
+  const failedTasks = tasks.filter(task => task.status === 'failed').length
+  const status: ProductionFanoutBatch['status'] = failedTasks > 0 && completedTasks + failedTasks === tasks.length
+    ? 'failed'
+    : completedTasks === tasks.length
+      ? 'succeeded'
+      : tasks.some(task => task.status === 'executing' || task.status === 'queued')
+        ? 'executing'
+        : 'pending'
+  return { batchId, productId, intentIds, tasks, status, totalTasks: tasks.length, completedTasks, failedTasks, createdAt: new Date().toISOString() }
+}
+
+export async function getFanoutBatchStatus(productId: string, batch: ProductionFanoutBatch): Promise<ProductionFanoutBatch> {
+  if (isDevMode()) {
+    await delay(900)
+    return summarizeFanoutBatch(batch.batchId, productId, batch.intentIds, batch.tasks.map(task => ({ ...task, status: 'succeeded', progress: 100, resultAssetCount: Math.max(1, task.resultAssetCount) })))
+  }
+  const nextTasks = await Promise.all(batch.tasks.map(async (task) => {
+    if (!task.versionId) return task
+    const latest = await getGenerationExecutionStatus(productId, task.versionId)
+    return {
+      ...task,
+      runtimeJobId: latest.runtimeJobId ?? task.runtimeJobId,
+      status: latest.successful ? 'succeeded' : latest.terminal ? 'failed' : latest.progress > 5 ? 'executing' : 'queued',
+      progress: latest.progress,
+      resultAssetCount: latest.resultAssetCount,
+      error: latest.terminal && !latest.successful ? latest.message : task.error,
+    } as ProductionFanoutTask
+  }))
+  return summarizeFanoutBatch(batch.batchId, productId, batch.intentIds, nextTasks)
+}
+
 export async function createWorkshopGenerationVersion(
   productId: string,
   parentVersionId: string,
@@ -1318,7 +1443,7 @@ export async function listVariants(productId: string): Promise<AssetVariant[]> {
       width: Number(asset.metadata?.width ?? 1024),
       height: Number(asset.metadata?.height ?? 1024),
       status: asset.selected || asset.asset_id === version.selected_result_asset_id ? 'selected' : (done ? 'ready' : 'generating'),
-      metadata: { ...asset.metadata, version_id: version.version_id, asset_id: asset.asset_id, asset_content_url: assetContentPath, stage: version.stage, progress: version.progress, status: version.status },
+      metadata: { ...version.metadata, ...asset.metadata, version_id: version.version_id, asset_id: asset.asset_id, asset_content_url: assetContentPath, stage: version.stage, progress: version.progress, status: version.status },
       createdAt: version.created_at || new Date().toISOString(),
     }
   }))
