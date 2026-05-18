@@ -22,6 +22,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useWorkshopStore } from '@/store/productionStore'
 import * as productionApi from '@/services/production'
+import { createExportPackage } from '@/services/product'
 import { useToastStore } from '@/store/toastStore'
 import type { AssetVariant, VersionNode } from '@/types/production'
 import { isDevMode } from '@/mocks/productionDemo'
@@ -974,7 +975,19 @@ export default function WorkshopPage() {
     setActionBusy(true)
     try {
       const result = await productionApi.finalizeAssets({ productId, variantIds: selectedVariantIds, assetRoles: {} })
-      toast.showToast(`已回流 Product Center：${result.assetIds.length} 个资产`, 'success')
+      if (result.assetRelationIds.length > 0) {
+        const pkg = await createExportPackage({
+          productIds: [productId],
+          platform: 'ecommerce',
+          site: 'download-center',
+          locale: 'zh-CN',
+          format: 'zip',
+          assetRelationIds: result.assetRelationIds,
+        })
+        toast.showToast(`已回流 Product Center：${result.assetIds.length} 个资产，并创建下载包 ${pkg.id}`, 'success')
+      } else {
+        toast.showToast(`已回流 Product Center：${result.assetIds.length} 个资产；下载包等待资产关系返回后创建`, 'success')
+      }
     } catch (e) {
       toast.showToast(e instanceof Error ? e.message : 'Final asset adoption failed', 'error')
     } finally {
