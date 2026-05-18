@@ -31,7 +31,6 @@ import type {
   LlmDecisionTreeResult,
   DecisionStep,
   ParsedAttribute,
-  LlmDecisionNode,
 } from '@/types/production'
 
 // ─── Polling helper ──────────────────────────────────────────
@@ -39,30 +38,39 @@ function usePolling<T>(
   fetcher: () => Promise<T>,
   shouldPoll: (data: T) => boolean,
   intervalMs = 2000,
+  maxDurationMs = 45000,
 ) {
   const [data, setData] = useState<T | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const startedAtRef = useRef<number | null>(null)
 
   const start = useCallback(async () => {
+    if (!startedAtRef.current) startedAtRef.current = Date.now()
     setLoading(true)
     setError(null)
     try {
       const result = await fetcher()
       setData(result)
       if (shouldPoll(result)) {
+        if (Date.now() - startedAtRef.current > maxDurationMs) {
+          throw new Error('解析等待超时：后端任务未在 45 秒内完成，请稍后重试或重新开始解析。')
+        }
         timerRef.current = setTimeout(() => void start(), intervalMs)
+      } else {
+        startedAtRef.current = null
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Polling error')
     } finally {
       setLoading(false)
     }
-  }, [fetcher, shouldPoll, intervalMs])
+  }, [fetcher, shouldPoll, intervalMs, maxDurationMs])
 
   const stop = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
+    startedAtRef.current = null
   }, [])
 
   useEffect(() => stop, [stop])
@@ -147,7 +155,6 @@ function UploadZone({
   onFileInput,
   onRemove,
   inputRef,
-  parseButton,
   testId,
 }: {
   title: string
@@ -160,7 +167,6 @@ function UploadZone({
   onFileInput: (e: React.ChangeEvent<HTMLInputElement>) => void
   onRemove: (id: string) => void
   inputRef: React.RefObject<HTMLInputElement | null>
-  parseButton?: React.ReactNode
   testId?: string
 }) {
   return (
@@ -173,7 +179,6 @@ function UploadZone({
             {sources.length}
           </span>
         </h3>
-        {parseButton}
       </div>
 
       <div
@@ -370,53 +375,6 @@ function DecisionStepCard({
 }
 
 
-function DecisionTreeNodeView({
-  node,
-  depth = 0,
-  onSelectOption,
-}: {
-  node: LlmDecisionNode
-  depth?: number
-  onSelectOption: (stepId: string, optionId: string) => void
-}) {
-  const selected = node.options?.find(option => option.id === node.selectedOptionId)
-  return (
-    <div className={`rounded-xl border border-white/[0.05] bg-white/[0.015] p-3 ${depth > 0 ? 'ml-4 border-l-violet-300/25' : ''}`}>
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="truncate text-[11px] font-medium text-white/65">{node.question}</div>
-          {selected && <div className="mt-0.5 text-[9px] text-violet-200/65">已选：{selected.label}</div>}
-        </div>
-        <span className="shrink-0 rounded bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/30">L{depth + 1}</span>
-      </div>
-      {node.options?.length ? (
-        <div className="mb-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
-          {node.options.map((option) => {
-            const active = option.id === node.selectedOptionId
-            return (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => onSelectOption(node.id, option.id)}
-                className={`rounded-lg border px-2 py-1.5 text-left text-[10px] transition ${active ? 'border-violet-300/40 bg-violet-300/10 text-violet-100' : 'border-white/[0.05] bg-white/[0.02] text-white/40 hover:text-white/65'}`}
-              >
-                {option.label}
-              </button>
-            )
-          })}
-        </div>
-      ) : null}
-      {node.children?.length ? (
-        <div className="space-y-2">
-          {node.children.map(child => (
-            <DecisionTreeNodeView key={child.id} node={child} depth={depth + 1} onSelectOption={onSelectOption} />
-          ))}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
 // ─── Attribute Row (read-only display) ──────────────────────
 
 type AttentionDecision = 'keep' | 'replace' | 'drop'
@@ -608,6 +566,17 @@ export default function PrepHubPage() {
     (d) => d.status === 'parsing',
   )
 
+  const autoPollingProductRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!productId || parsing?.status !== 'parsing' || parsingPoll.error) {
+      if (parsing?.status !== 'parsing') autoPollingProductRef.current = null
+      return
+    }
+    if (autoPollingProductRef.current === productId) return
+    autoPollingProductRef.current = productId
+    parsingPoll.start()
+  }, [productId, parsing?.status, parsingPoll])
+
   // ─── Dev mode: auto-fill mock sources & trigger parsing ──
   const devAutoFilled = useRef(false)
   useEffect(() => {
@@ -641,6 +610,13 @@ export default function PrepHubPage() {
       return
     }
     try {
+      setParsing({
+        status: 'parsing',
+        primaryTrack: 'third_party',
+        mergedAttributes: [],
+        conflicts: [],
+        thirdPartyResult: { track: 'third_party', status: 'parsing', attributes: [] },
+      })
       await productionApi.startParsing({
         productId,
         sourceIds: sources.map((s) => s.id),
@@ -648,7 +624,15 @@ export default function PrepHubPage() {
       })
       parsingPoll.start()
     } catch (e) {
-      toast.showToast(e instanceof Error ? e.message : '解析失败，请稍后重试。', 'error')
+      const message = e instanceof Error ? e.message : '解析失败，请稍后重试。'
+      setParsing({
+        status: 'failed',
+        primaryTrack: 'third_party',
+        mergedAttributes: [],
+        conflicts: [],
+        thirdPartyResult: { track: 'third_party', status: 'failed', attributes: [], error: message },
+      })
+      toast.showToast(message, 'error')
     }
   }, [productId, sources, skuSources.length, refSources.length, parsingPoll, setParsing, toast])
 
@@ -800,7 +784,7 @@ export default function PrepHubPage() {
     setGlobalDriftBias(value)
   }, [setGlobalDriftBias])
 
-  const isParsing = parsing?.status === 'parsing' || parsingPoll.loading
+  const isParsing = !parsingPoll.error && (parsing?.status === 'parsing' || parsingPoll.loading)
   const isEvaluating = decisionTree?.status === 'evaluating' || treePoll.loading
 
   // Parse button
@@ -813,8 +797,8 @@ export default function PrepHubPage() {
     : !hasReferenceSource
       ? '请再上传一张参考图。'
       : '可以开始解析。'
-  const parsingBlocked = parsing?.status === 'failed'
-  const parsingBlockerMessage = parsing?.thirdPartyResult?.error || (!dualTrackReady && hasSources ? dualTrackBlocker : parsingPoll.error)
+  const parsingBlocked = parsing?.status === 'failed' || Boolean(parsingPoll.error)
+  const parsingBlockerMessage = parsingPoll.error || parsing?.thirdPartyResult?.error || (!dualTrackReady && hasSources ? dualTrackBlocker : undefined)
   const attributeDecisionByKey = useMemo(() => {
     const decisions = new Map<string, AttentionDecision>()
     const put = (key: string | undefined, decision: AttentionDecision) => {
@@ -837,19 +821,7 @@ export default function PrepHubPage() {
     })
     return decisions
   }, [displaySteps])
-  const parseBtn = hasSources ? (
-    <button
-      type="button"
-      onClick={startParsing}
-      disabled={!dualTrackReady || isParsing}
-      title={dualTrackReady ? '开始识别商品图和参考图里的关键差异' : dualTrackBlocker}
-      data-testid="production-start-parsing"
-      className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-400 px-3 py-1.5 text-[11px] font-bold text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.25)] transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-white/[0.06] disabled:text-white/35"
-    >
-      {isParsing ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCw className="h-3 w-3" />}
-      {isParsing ? '解析中...' : t('production.prep.startParsing')}
-    </button>
-  ) : null
+
 
   // ─── Steps navigation ───────────────────────────────────
   const steps = displaySteps
@@ -904,7 +876,6 @@ export default function PrepHubPage() {
             onFileInput={onFileInputSku}
             onRemove={removeSource}
             inputRef={skuInputRef}
-            parseButton={parseBtn}
           />
           <UploadZone
             testId="production-reference-source-upload"
@@ -1063,15 +1034,6 @@ export default function PrepHubPage() {
                 </motion.div>
               </AnimatePresence>
 
-              {decisionTree?.root && (
-                <div className="rounded-xl border border-violet-300/10 bg-violet-300/[0.025] p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[10px] font-medium text-violet-100/70">多轮决策树</span>
-                    <span className="text-[9px] text-white/25">支持递归节点；选择会持久化并回流 Prompt Plan</span>
-                  </div>
-                  <DecisionTreeNodeView node={decisionTree.root} onSelectOption={handleSelectOption} />
-                </div>
-              )}
 
               {/* Step navigation */}
               <div className="flex items-center justify-between pt-1">

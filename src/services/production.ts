@@ -536,7 +536,11 @@ function normalizeConfidence(value?: number): number {
 
 
 function userFacingText(input: unknown): string {
-  const raw = Array.isArray(input) ? input.join('，') : String(input ?? '')
+  const raw = Array.isArray(input)
+    ? input.map(item => (typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item))).join('，')
+    : typeof input === 'object' && input !== null
+      ? JSON.stringify(input)
+      : String(input ?? '')
   return raw
     .replace(/Manifest-declared SKU visual asset; geometry analysis pending runtime image bytes/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
     .replace(/Manifest-declared SKU asset; geometry not extractable without image bytes\.?/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
@@ -626,7 +630,7 @@ function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
     id: element.id,
     stepNumber: idx + 1,
     title: elementLabel(element),
-    description: element.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.value ?? element.value) : undefined,
+    description: element.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.description ?? element.value.value ?? element.value) : undefined,
     options: [
       { id: `${element.id}:keep`, label: '保留参考图效果', description: '沿用参考图里的场景、光线或氛围', confidence: normalizeConfidence(element.confidence) },
       { id: `${element.id}:replace`, label: '换成我的商品', description: '以当前商品图为主体，参考图只作风格参考' },

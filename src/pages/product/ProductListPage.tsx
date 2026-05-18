@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
 import type { ProductListItem } from '@/types/product'
 import { createProduct, listProducts } from '@/services/product'
-import { ProductWorkflowNav } from '@/components/product-workbench/ProductWorkflowNav'
 import type { MissionStage } from './utils/productMission'
 import { deriveMissionWorkUnit } from './utils/productMission'
 
@@ -299,9 +298,6 @@ function ProductListPage() {
           </div>
         </motion.header>
 
-        <motion.div variants={itemVariants} className="mb-4">
-          <ProductWorkflowNav active="queue" productId={focusedUnit?.product.id} productIds={selectedIds} source="queue" />
-        </motion.div>
 
         <motion.div variants={itemVariants} className="mb-4 flex flex-wrap items-center gap-3">
           <div className="relative min-w-[260px] flex-1 max-w-md">
@@ -363,7 +359,6 @@ function ProductListPage() {
           <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">批量操作栏（选中后激活）</div>
           <div className="flex flex-wrap items-center gap-2 rounded-[28px] border border-white/[0.06] bg-[#0b0d14] p-4 shadow-[0_16px_48px_rgba(0,0,0,0.42)]">
             <span className="text-sm text-white/50">已选 {selectedUnits.length} 个 SKU</span>
-            <Link to={selectedUnits.length ? `/products/workbench/batch-listing?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>进入模板中心</Link>
             <button disabled className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-1.5 text-xs font-semibold text-white/25">批量 Adopt</button>
             <Link to={selectedUnits.length ? `/products/workbench/downloads?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>查看交付历史</Link>
             <span className="text-xs text-white/34">真实后端未接的批量动作保持 disabled / contract-needed。</span>
@@ -374,7 +369,6 @@ function ProductListPage() {
           <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">工作站点</div>
           <div className="grid gap-3 md:grid-cols-3">
             <StationCard code="TASK" title="任务中心" desc="查看当前处理中的任务生成情况、SKU 状态与下一步动作" status="in-progress tasks" tone="info" href="/products" />
-            <StationCard code="TPL" title="模板中心" desc="查看用户 DIY 模板、Listing 版本与可复用内容结构" status={`${products.reduce((sum, item) => sum + item.listingVersionsCount, 0)} versions live`} tone="draft" href={focusedUnit ? `/products/workbench/batch-listing?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/batch-listing'} />
             <StationCard code="DONE" title="交付中心" desc="历史已完成生成的任务、导出记录与下载追踪" status="completed history" tone="ready" href={focusedUnit ? `/products/workbench/downloads?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/downloads'} />
           </div>
         </motion.section>

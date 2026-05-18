@@ -686,7 +686,7 @@ export function ProductDetailPage() {
         </div>
 
         <div className="mb-5">
-          <ProductWorkflowNav active="detail" productId={product.id} source="sku-detail" />
+          <ProductWorkflowNav active="detail" productId={product.id} contextLabel={product.title} source="sku-detail" />
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">

@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, BarChart3, LineChart, Search, Mail, ClipboardList, ShieldCheck } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -108,10 +107,6 @@ function AgentCard({ agent, locale }: { agent: AgentSolution; locale: string }) 
             <p className="mt-3 text-base leading-7 text-white/66">{pick(locale, agent.zhSubtitle, agent.enSubtitle)}</p>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-white/48">{pick(locale, agent.zhDesc, agent.enDesc)}</p>
           </div>
-          <Link to="/contact" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-cyan-200/25 bg-cyan-200/10 px-5 py-2.5 text-sm font-semibold text-cyan-50 transition hover:border-cyan-100/40 hover:bg-cyan-200/16">
-            {pick(locale, 'Contact us', 'Contact us')}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
         </div>
       </div>
 
@@ -174,9 +169,6 @@ export default function SolutionDetailPage() {
                 {pick(locale, agent.zhTitle, agent.enTitle)}
               </a>
             ))}
-            <Link to="/contact" className="rounded-full border border-cyan-200/25 bg-cyan-200/10 px-4 py-2 text-sm font-semibold text-cyan-50 transition hover:bg-cyan-200/16">
-              Contact us
-            </Link>
           </div>
         </div>
       </section>

@@ -5,7 +5,6 @@ import {
   Check,
   Download,
   Loader2,
-  Send,
   Search,
   Grid3X3,
   List,
@@ -19,7 +18,6 @@ import {
   X,
   Clock,
   Sparkles,
-  MousePointerClick,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useWorkshopStore } from '@/store/productionStore'
@@ -791,85 +789,6 @@ function ZoomModal({
   )
 }
 
-// ─── AI Assistant Bar ────────────────────────────────────────
-
-function AiAssistantBar({
-  input,
-  enabled,
-  onInputChange,
-  onSend,
-  sending,
-}: {
-  input: string
-  enabled: boolean
-  onInputChange: (v: string) => void
-  onSend: () => void
-  sending: boolean
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="mt-5 flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
-    >
-      {/* Avatar */}
-      <div className="flex shrink-0 flex-col items-center gap-0.5">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400/20 to-violet-400/20">
-          <Sparkles className="h-4 w-4 text-cyan-400/60" />
-        </div>
-        <span className="text-[8px] text-white/30">AI 助手</span>
-        <span className="text-[7px] text-white/15">AI Assistant</span>
-      </div>
-
-      {/* Input */}
-      <div className="min-w-0 flex-1">
-        <input
-          type="text"
-          value={input}
-          disabled={!enabled}
-          onChange={(e) => onInputChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              onSend()
-            }
-          }}
-          placeholder={enabled ? '输入指令进行优化（例如："让阴影更深一些"）' : '还没有可优化的生成版本'}
-          className="w-full bg-transparent text-sm text-white placeholder:text-white/20 outline-none"
-        />
-        <p className="text-[10px] text-white/15">
-          {enabled ? 'Type instructions to refine (e.g., "Make the shadows deeper").' : 'Refinement is disabled until real generation versions exist.'}
-        </p>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onSend}
-          disabled={!enabled || !input.trim() || sending}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-30"
-        >
-          {sending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )
-          }
-        </button>
-        <button
-          type="button"
-          disabled={!enabled}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.06] text-white/30 transition hover:bg-white/10 hover:text-white/50 disabled:cursor-not-allowed disabled:opacity-30"
-        >
-          <MousePointerClick className="h-4 w-4" />
-        </button>
-      </div>
-    </motion.div>
-  )
-}
-
 // ─── Main Component ──────────────────────────────────────────
 
 export default function WorkshopPage() {
@@ -885,14 +804,12 @@ export default function WorkshopPage() {
     activeVersionId,
     weightParams,
     advancedTuningExpanded,
-    aiAssistantInput,
     setProductId,
     setVariants,
     toggleVariantSelection,
     setSelectedVariantIds,
     setWeightParams,
     setAdvancedTuningExpanded,
-    setAiAssistantInput,
     isComparing,
     compareVersionIds,
     setIsComparing,
@@ -903,7 +820,6 @@ export default function WorkshopPage() {
   } = useWorkshopStore()
 
   const [zoomVariant, setZoomVariant] = useState<AssetVariant | null>(null)
-  const [sendingAi, setSendingAi] = useState(false)
   const [actionBusy, setActionBusy] = useState(false)
   const hasGenerationVersions = versionNodes.length > 0
   const activeVersionLabel = versionNodes.find((node) => node.id === activeVersionId)?.version ?? versionNodes.at(-1)?.version ?? null
@@ -912,9 +828,6 @@ export default function WorkshopPage() {
     .map((versionId) => versionNodes.find((node) => node.id === versionId))
     .filter((node): node is VersionNode => Boolean(node))
 
-  const handleContractNeeded = useCallback((feature: string) => {
-    toast.showToast(`${feature} 暂不可用；系统不会创建假生产结果。`, 'error')
-  }, [toast])
 
 
   // Sync URL param → store
@@ -998,7 +911,7 @@ export default function WorkshopPage() {
         productId,
         activeVersionId,
         weightParams,
-        aiAssistantInput.trim() || 'Workshop branch regeneration',
+        'Workshop branch regeneration',
       )
       toast.showToast(`已提交真实分支出图任务：${result.versionId}，等待 result asset 回调...`, 'info')
       await productionApi.waitForGenerationResult(productId, result.versionId)
@@ -1015,23 +928,8 @@ export default function WorkshopPage() {
     } finally {
       setActionBusy(false)
     }
-  }, [productId, activeVersionId, weightParams, aiAssistantInput, setVariants, setVersionNodes, setActiveVersionId, toast])
+  }, [productId, activeVersionId, weightParams, setVariants, setVersionNodes, setActiveVersionId, toast])
 
-  // AI Assistant send
-  const handleAiSend = useCallback(async () => {
-    if (!hasGenerationVersions) {
-      toast.showToast('还没有可优化的生成版本.', 'error')
-      return
-    }
-    if (!aiAssistantInput.trim()) return
-    setAiAssistantInput('')
-    setSendingAi(true)
-    try {
-      handleContractNeeded('Refinement assistant')
-    } finally {
-      setSendingAi(false)
-    }
-  }, [hasGenerationVersions, aiAssistantInput, setAiAssistantInput, handleContractNeeded, toast])
 
   // Download handler
   const handleDownload = useCallback((variant: AssetVariant) => {
@@ -1092,7 +990,7 @@ export default function WorkshopPage() {
         productId,
         activeVersionId,
         weightParams,
-        aiAssistantInput.trim() || 'Workshop regeneration',
+        'Workshop regeneration',
         'workshop_regenerate',
       )
       toast.showToast(`已提交真实重生成任务：${result.versionId}，等待 result asset 回调...`, 'info')
@@ -1110,7 +1008,7 @@ export default function WorkshopPage() {
     } finally {
       setActionBusy(false)
     }
-  }, [productId, activeVersionId, weightParams, aiAssistantInput, setVariants, setVersionNodes, setActiveVersionId, toast])
+  }, [productId, activeVersionId, weightParams, setVariants, setVersionNodes, setActiveVersionId, toast])
 
   return (
     <div className="mx-auto max-w-[1440px] px-5 py-6">
@@ -1199,15 +1097,6 @@ export default function WorkshopPage() {
       {isComparing && (
         <ComparePanel nodes={compareNodes} onClose={() => setIsComparing(false)} />
       )}
-
-      {/* ─── AI Assistant Bar ──────────────────────────────── */}
-      <AiAssistantBar
-        input={aiAssistantInput}
-        enabled={hasGenerationVersions}
-        onInputChange={setAiAssistantInput}
-        onSend={handleAiSend}
-        sending={sendingAi}
-      />
 
       {/* Zoom Modal */}
       <AnimatePresence>
