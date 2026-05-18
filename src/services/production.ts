@@ -1048,6 +1048,7 @@ function buildSafeGenerationMetadata(intentIds: string[], config?: ExecutionConf
       retry_on_failure: config.retryOnFailure,
       max_retries: config.maxRetries,
       timeout_seconds: config.timeoutSeconds,
+      provider_config: config.providerConfig,
     } : undefined,
   }
 }
