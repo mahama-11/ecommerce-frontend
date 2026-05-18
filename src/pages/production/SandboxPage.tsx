@@ -45,10 +45,8 @@ const MODEL_OPTIONS: ModelOption[] = [
 ]
 
 const RESOLUTION_OPTIONS: ResolutionOption[] = [
-  { id: '2k-ultra', label: '2K Ultra', dimensions: '2048×2048', costMultiplier: 1 },
-  { id: '1080-hd', label: '1080 HD', dimensions: '1920×1080', costMultiplier: 0.5 },
-  { id: '4k-ultra', label: '4K Ultra', dimensions: '4096×4096', costMultiplier: 2.5 },
-  { id: '720-hd', label: '720 HD', dimensions: '1280×720', costMultiplier: 0.25 },
+  { id: '1024-square', label: '标准方图', dimensions: '1024×1024', costMultiplier: 1 },
+  { id: '720-wide', label: '横版预览', dimensions: '1280×720', costMultiplier: 0.75 },
 ]
 
 const TEMPLATES: SceneTemplate[] = [
@@ -276,6 +274,13 @@ export default function SandboxPage() {
     return () => {}
   }, [id, productId, setProductId, reset])
 
+  // Normalize stale persisted resolution selections after removing unverified 1080/2K/4K options.
+  useEffect(() => {
+    if (!RESOLUTION_OPTIONS.some((option) => option.id === selectedResolution)) {
+      setSelectedResolution('1024-square')
+    }
+  }, [selectedResolution, setSelectedResolution])
+
   // Hydrate strategy summary and intents from backend stage-view. Only dev=1 may use the mock strategy.
   // Always refetch on Sandbox entry/product change so Prep choices (keep/replace/drop) are reflected instead of reusing a stale store snapshot.
   useEffect(() => {
@@ -420,7 +425,28 @@ export default function SandboxPage() {
     setIsRunning(true)
     try {
       const selectedIntentIds = store.intents.map((intent) => intent.id)
-      const result = await productionApi.executeIntents(productId, selectedIntentIds, store.executionConfig ?? undefined)
+      const result = await productionApi.executeIntents(productId, selectedIntentIds, {
+        ...(store.executionConfig ?? {
+          provider: 'comfyui' as const,
+          maxConcurrency: 1,
+          retryOnFailure: true,
+          maxRetries: 2,
+          timeoutSeconds: 300,
+        }),
+        providerConfig: {
+          ...(store.executionConfig?.providerConfig ?? {}),
+          model_id: selectedModel,
+          resolution_id: currentResolution?.id,
+          dimensions: currentResolution?.dimensions,
+          image_count: imageCount,
+          task_slots: taskSlots.map((asset, index) => ({
+            index,
+            asset_task_id: asset.id,
+            scene_tag: asset.sceneTag,
+            template_id: asset.templateId,
+          })),
+        },
+      })
       toast.showToast('生产任务已提交，正在等待真实结果返回。', 'success')
       setExecutionNotice('生产任务已提交，正在排队出图。结果返回前不会跳转到工坊，也不会展示占位图。')
       for (let attempt = 0; attempt < 80; attempt += 1) {
@@ -758,7 +784,7 @@ export default function SandboxPage() {
           </SectionCard>
 
           {/* 4. Template Preview */}
-          <SectionCard title={`模板预览（${imageCount} 个任务）`}>
+          <SectionCard title={`模板参考（${imageCount} 个槽位）`}>
             <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${imageCount >= 5 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
               {taskSlots.map((asset, idx) => {
                 const tpl = getTemplate(asset.templateId)
@@ -767,7 +793,7 @@ export default function SandboxPage() {
             </div>
             <p className="mt-3 flex items-center gap-1 text-[9px] text-white/15">
               <Info className="h-3 w-3" />
-              上方生成数量就是这里的预览数量；每个任务会对应一个模板和一次生成槽位。
+              当前后端一次提交只会生成一张正式结果；这里仅作为本轮 Prompt 的模板参考槽位，批量多模板生成会拆成独立任务后再开放。
             </p>
           </SectionCard>
         </div>

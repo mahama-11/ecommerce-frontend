@@ -166,7 +166,7 @@ export const useSandboxStore = create<SandboxState>((set) => ({
   ],
   imageCount: 3,
   selectedModel: 'pro-v6',
-  selectedResolution: '2k-ultra',
+  selectedResolution: '1024-square',
   advancedParams: defaultAdvancedParams,
   advancedExpanded: false,
 
@@ -228,7 +228,7 @@ export const useSandboxStore = create<SandboxState>((set) => ({
       ],
       imageCount: 3,
       selectedModel: 'pro-v6',
-      selectedResolution: '2k-ultra',
+      selectedResolution: '1024-square',
       advancedParams: defaultAdvancedParams,
       advancedExpanded: false,
     }),
