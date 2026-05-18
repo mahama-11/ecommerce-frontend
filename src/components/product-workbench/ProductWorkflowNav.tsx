@@ -7,6 +7,7 @@ type ProductWorkflowNavProps = {
   active: WorkflowStation
   productId?: string
   productIds?: string[]
+  contextLabel?: string
   source?: string
   className?: string
 }
@@ -40,7 +41,7 @@ function buildStationHref(station: WorkflowStation, productId?: string, productI
   }
 }
 
-export function ProductWorkflowNav({ active, productId, productIds, source = 'product-center', className = '' }: ProductWorkflowNavProps) {
+export function ProductWorkflowNav({ active, productId, productIds, contextLabel, source = 'product-center', className = '' }: ProductWorkflowNavProps) {
   const { t } = useTranslation()
   const ids = compactIds(productId, productIds)
   const hasSingleSku = Boolean(productId || ids.length === 1)
@@ -49,7 +50,7 @@ export function ProductWorkflowNav({ active, productId, productIds, source = 'pr
     <nav className={`rounded-[28px] border border-white/[0.08] bg-[#080b11]/88 p-3 shadow-[0_18px_54px_rgba(0,0,0,0.28)] ring-1 ring-cyan-300/5 ${className}`} aria-label={t('productWorkbench.workflow.aria')}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
         <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200/65">{t('productWorkbench.workflow.title')}</div>
-        <div className="text-[11px] text-white/35">{ids.length ? t('productWorkbench.workflow.contextCount', { count: ids.length }) : t('productWorkbench.workflow.noContext')}</div>
+        <div className="max-w-[360px] truncate text-[11px] text-white/35" title={contextLabel || undefined}>{contextLabel || (ids.length ? t('productWorkbench.workflow.contextCount', { count: ids.length }) : t('productWorkbench.workflow.noContext'))}</div>
       </div>
       <div className="flex items-stretch overflow-x-auto pb-1">
         {STATIONS.map((station, index) => {

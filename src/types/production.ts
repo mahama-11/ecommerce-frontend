@@ -174,6 +174,9 @@ export type AssetTask = {
   sceneTag: string
   templateId: string
   templateName?: string
+  sourceId?: string
+  detailRequirement?: string
+  negativeRequirement?: string
 }
 
 export type FanoutTaskStatus = 'pending' | 'queued' | 'executing' | 'succeeded' | 'failed'
@@ -186,6 +189,9 @@ export type ProductionFanoutTask = {
   templateId: string
   templateName?: string
   slotIndex: number
+  sceneTag?: string
+  detailRequirement?: string
+  negativeRequirement?: string
   promptId?: string
   versionId?: string
   runtimeJobId?: string
@@ -193,6 +199,7 @@ export type ProductionFanoutTask = {
   progress: number
   resultAssetCount: number
   error?: string
+  retryCount?: number
 }
 
 export type ProductionFanoutBatch = {
@@ -205,6 +212,10 @@ export type ProductionFanoutBatch = {
   completedTasks: number
   failedTasks: number
   createdAt: string
+  maxConcurrency?: number
+  retryOnFailure?: boolean
+  maxRetries?: number
+  waves?: number
 }
 
 export type ModelOption = {

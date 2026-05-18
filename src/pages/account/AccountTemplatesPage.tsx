@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { ArrowRight,Star, WandSparkles } from 'lucide-react'
+import { ArrowRight, Check, Edit3, Play, Star, Trash2, WandSparkles, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { productWorkspaceRepository } from '@/repositories/productWorkspace'
 import type { SavedTemplateRecord } from '@/mock/templateLibrary'
 import type { LinkedTemplateBridge } from '@/mock/workflowBridge'
+import { useToastStore } from '@/store/toastStore'
 
 type Locale = 'zh' | 'en'
 
@@ -30,13 +31,46 @@ const itemVariants = {
 export default function AccountTemplatesPage() {
   const { i18n } = useTranslation()
   const locale: Locale = (i18n.resolvedLanguage ?? i18n.language).startsWith('en') ? 'en' : 'zh'
+  const { showToast } = useToastStore()
   const [templates, setTemplates] = useState<SavedTemplateRecord[]>([])
   const [bridges, setBridges] = useState<LinkedTemplateBridge[]>([])
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draftTitle, setDraftTitle] = useState('')
+  const [draftSummary, setDraftSummary] = useState('')
 
   useEffect(() => {
     void productWorkspaceRepository.listSavedTemplates().then(setTemplates)
     void productWorkspaceRepository.listTemplateBridges().then(setBridges)
   }, [])
+
+  const startEdit = (item: SavedTemplateRecord) => {
+    setEditingId(item.id)
+    setDraftTitle(locale === 'zh' ? item.zh.title : item.en.title)
+    setDraftSummary(locale === 'zh' ? item.zh.summary : item.en.summary)
+  }
+
+  const saveEdit = async (item: SavedTemplateRecord) => {
+    const next: SavedTemplateRecord = {
+      ...item,
+      zh: locale === 'zh' ? { ...item.zh, title: draftTitle, summary: draftSummary } : item.zh,
+      en: locale === 'en' ? { ...item.en, title: draftTitle, summary: draftSummary } : item.en,
+    }
+    const updated = await productWorkspaceRepository.updateSavedTemplate(next)
+    setTemplates(updated)
+    setEditingId(null)
+    showToast(copy(locale, '模板已修改', 'Template updated'), 'success')
+  }
+
+  const deleteTemplate = async (item: SavedTemplateRecord) => {
+    const updated = await productWorkspaceRepository.deleteSavedTemplate(item.id)
+    setTemplates(updated)
+    showToast(copy(locale, '模板已删除', 'Template deleted'), 'success')
+  }
+
+  const useTemplate = async (item: SavedTemplateRecord) => {
+    await productWorkspaceRepository.useSavedTemplate(item.id)
+    showToast(copy(locale, '已记录使用。请选择 SKU 后进入生产沙盒套用该模板。', 'Usage recorded. Select a SKU, then apply this template in the production sandbox.'), 'success')
+  }
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-10 ">
@@ -65,12 +99,21 @@ export default function AccountTemplatesPage() {
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <h3 className="text-lg font-semibold text-slate-100 transition-colors group-hover:text-white truncate">
-                    {locale === 'zh' ? item.zh.title : item.en.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-400 line-clamp-2">
-                    {locale === 'zh' ? item.zh.summary : item.en.summary}
-                  </p>
+                  {editingId === item.id ? (
+                    <div className="space-y-2">
+                      <input value={draftTitle} onChange={(event) => setDraftTitle(event.target.value)} className="w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-violet-400" />
+                      <textarea value={draftSummary} onChange={(event) => setDraftSummary(event.target.value)} className="min-h-20 w-full rounded-md border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-violet-400" />
+                    </div>
+                  ) : (
+                    <>
+                      <h3 className="text-lg font-semibold text-slate-100 transition-colors group-hover:text-white truncate">
+                        {locale === 'zh' ? item.zh.title : item.en.title}
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-400 line-clamp-2">
+                        {locale === 'zh' ? item.zh.summary : item.en.summary}
+                      </p>
+                    </>
+                  )}
         </div>
                 <div className="shrink-0 rounded-md bg-amber-500/10 p-2 text-amber-500 transition-colors group-hover:bg-amber-500/20 group-hover:text-amber-400">
                   <Star className="h-4 w-4" />
@@ -95,6 +138,20 @@ export default function AccountTemplatesPage() {
               <span className="flex items-center gap-1 text-slate-400">
                 {copy(locale, '收藏', 'Favorites')} {item.favorite}
               </span>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+              {editingId === item.id ? (
+                <>
+                  <button onClick={() => void saveEdit(item)} className="inline-flex items-center justify-center gap-1 rounded-md bg-emerald-500/15 px-2 py-2 text-emerald-200 hover:bg-emerald-500/25"><Check className="h-3.5 w-3.5" />{copy(locale, '保存', 'Save')}</button>
+                  <button onClick={() => setEditingId(null)} className="inline-flex items-center justify-center gap-1 rounded-md bg-white/5 px-2 py-2 text-slate-300 hover:bg-white/10"><X className="h-3.5 w-3.5" />{copy(locale, '取消', 'Cancel')}</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => void useTemplate(item)} className="inline-flex items-center justify-center gap-1 rounded-md bg-violet-500/15 px-2 py-2 text-violet-200 hover:bg-violet-500/25"><Play className="h-3.5 w-3.5" />{copy(locale, '使用', 'Use')}</button>
+                  <button onClick={() => startEdit(item)} className="inline-flex items-center justify-center gap-1 rounded-md bg-white/5 px-2 py-2 text-slate-300 hover:bg-white/10"><Edit3 className="h-3.5 w-3.5" />{copy(locale, '修改', 'Edit')}</button>
+                  <button onClick={() => void deleteTemplate(item)} className="inline-flex items-center justify-center gap-1 rounded-md bg-rose-500/10 px-2 py-2 text-rose-200 hover:bg-rose-500/20"><Trash2 className="h-3.5 w-3.5" />{copy(locale, '删除', 'Delete')}</button>
+                </>
+              )}
             </div>
           </article>
         )) : (

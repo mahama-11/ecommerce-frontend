@@ -63,6 +63,16 @@ const SAMPLING_OPTIONS = ['DPM++ 2M Karras', 'Euler a', 'DPM++ SDE Karras', 'Eul
 
 const KEYWORD_PATTERNS = ['水珠效果', '背景更暗', '金属质感', '增加光影', '暖色调', '冷色调', '景深效果', '虚化背景', '高对比度', '柔和光线']
 
+const SCENE_TAG_OPTIONS = ['主图', '海报', '使用图', '细节图', '对比图']
+
+function defaultDetailRequirement(sceneTag: string): string {
+  if (sceneTag.includes('主图') || sceneTag === 'hero') return '主体完整、边缘清晰、背景干净，符合电商主图规范'
+  if (sceneTag.includes('海报') || sceneTag === 'poster') return '突出卖点与质感，允许氛围光、层次背景和营销构图'
+  if (sceneTag.includes('使用') || sceneTag === 'lifestyle') return '展示真实使用场景，产品主体必须清晰可识别'
+  if (sceneTag.includes('细节') || sceneTag === 'detail') return '突出材质、纹理、接口或关键工艺，避免主体变形'
+  if (sceneTag.includes('对比') || sceneTag === 'comparison') return '左右/前后对比清晰，差异点明确，信息层级干净'
+  return '围绕当前槽位目标生成，保持 SKU 一致性和可商用画面质量'
+}
 
 function userSummaryText(value: unknown): string {
   return String(value ?? '')
@@ -383,8 +393,8 @@ export default function SandboxPage() {
     return {
       modelCostPerImage: modelCost,
       resolutionCostPerImage: resCost,
-      imageCount: Math.max(0, selectedSourceIds.length * imageCount),
-      total: Math.round(modelCost * resCost * Math.max(0, selectedSourceIds.length * imageCount)),
+      imageCount: selectedSourceIds.length > 0 ? imageCount : 0,
+      total: Math.round(modelCost * resCost * (selectedSourceIds.length > 0 ? imageCount : 0)),
     }
   }, [selectedModel, selectedResolution, imageCount, selectedSourceIds.length])
 
@@ -394,14 +404,17 @@ export default function SandboxPage() {
       name: `任务 ${String(idx + 1).padStart(2, '0')}`,
       sceneTag: idx === 0 ? '主图' : idx % 2 === 0 ? '场景图' : '细节图',
       templateId: TEMPLATES[idx % TEMPLATES.length].id,
+      detailRequirement: defaultDetailRequirement(idx === 0 ? '主图' : idx % 2 === 0 ? '场景图' : '细节图'),
     })
   }, [assetTasks, imageCount])
 
   const selectedSources = useMemo(() => sourceOptions.filter(source => selectedSourceIds.includes(source.id)), [sourceOptions, selectedSourceIds])
 
   const fanoutTasks = useMemo<ProductionFanoutTask[]>(() => {
-    const sources = selectedSources.length > 0 ? selectedSources : sourceOptions.slice(0, 1)
-    return sources.flatMap((source) => taskSlots.map((slot, slotIndex) => {
+    const sources = selectedSources.length > 0 ? selectedSources : []
+    if (sources.length === 0) return []
+    return taskSlots.map((slot, slotIndex) => {
+      const source = sources.find(item => item.id === slot.sourceId) ?? sources[slotIndex % sources.length]
       const template = TEMPLATES.find((item) => item.id === slot.templateId) ?? TEMPLATES[0]
       return {
         id: `${source.id}:${slot.templateId}:${slotIndex}`,
@@ -411,12 +424,15 @@ export default function SandboxPage() {
         templateId: slot.templateId,
         templateName: template.name,
         slotIndex,
+        sceneTag: slot.sceneTag,
+        detailRequirement: slot.detailRequirement || defaultDetailRequirement(slot.sceneTag || template.category),
+        negativeRequirement: slot.negativeRequirement || advancedParams.negativePrompt,
         status: 'pending',
         progress: 0,
         resultAssetCount: 0,
       }
-    }))
-  }, [selectedSources, sourceOptions, taskSlots])
+    })
+  }, [advancedParams.negativePrompt, selectedSources, taskSlots])
 
   // Template lookup helper
   const getTemplate = useCallback(
@@ -448,6 +464,7 @@ export default function SandboxPage() {
       name: `任务 ${String(idx).padStart(2, '0')}（新增）`,
       sceneTag: idx === 1 ? '主图' : idx % 2 === 0 ? '细节图' : '场景图',
       templateId: TEMPLATES[(idx - 1) % TEMPLATES.length].id,
+      detailRequirement: defaultDetailRequirement(idx === 1 ? '主图' : idx % 2 === 0 ? '细节图' : '场景图'),
     }
     addAssetTask(newAsset)
     setImageCount(Math.max(imageCount, idx))
@@ -498,13 +515,16 @@ export default function SandboxPage() {
             index,
             asset_task_id: asset.id,
             scene_tag: asset.sceneTag,
+            source_id: asset.sourceId,
             template_id: asset.templateId,
+            detail_requirement: asset.detailRequirement,
+            negative_requirement: asset.negativeRequirement || advancedParams.negativePrompt,
           })),
         },
       })
       setFanoutTasksState(batch.tasks)
       toast.showToast(`已提交 ${batch.totalTasks} 个真实生产任务，正在等待结果返回。`, 'success')
-      setExecutionNotice(`已按「${selectedSources.length || 1} 张输入图 × ${taskSlots.length} 个模板槽位」提交 ${batch.totalTasks} 个真实任务。结果返回前不会展示占位图。`)
+      setExecutionNotice(`已按任务配额提交 ${batch.totalTasks} 个真实任务；多张输入图会按槽位轮转分配。结果返回前不会展示占位图。`)
       for (let attempt = 0; attempt < 80; attempt += 1) {
         await new Promise(resolve => setTimeout(resolve, attempt === 0 ? 1200 : 3000))
         const latest = await productionApi.getFanoutBatchStatus(productId, batch)
@@ -749,7 +769,7 @@ export default function SandboxPage() {
         {/* ─── Center Column (6 cols) ──────────────────────── */}
         <div className="space-y-5 lg:col-span-6">
           {/* 3. Task Allocation */}
-          <SectionCard title="任务配额与生成队列">
+          <SectionCard title="任务配额与出图槽位" subtitle="任务配额=槽位数；每个槽位可指定图类型、输入图和细节要求">
             <div className="space-y-4">
               {/* Image Count */}
               <div className="flex items-center gap-4">
@@ -775,14 +795,14 @@ export default function SandboxPage() {
                     <Plus className="h-3 w-3" />
                   </button>
                 </div>
-                <span className="text-[9px] text-white/20">最多支持 10 张</span>
+                <span className="text-[9px] text-white/20">最多支持 10 个槽位；1 个槽位 = 1 个 runtime 任务</span>
               </div>
 
               {/* Source image selection */}
               <div className="rounded-xl border border-cyan-400/10 bg-cyan-400/[0.03] p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-[10px] font-medium text-cyan-100/70">输入图片（{selectedSourceIds.length || 0}）</span>
-                  <span className="text-[9px] text-white/25">真实 fan-out：输入图 × 模板槽位 = {fanoutTasks.length}</span>
+                  <span className="text-[9px] text-white/25">真实 fan-out：任务配额 = {fanoutTasks.length} 个 runtime 任务</span>
                 </div>
                 {sourceOptions.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
@@ -818,29 +838,72 @@ export default function SandboxPage() {
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
                       <Image className="h-3.5 w-3.5 text-white/30" />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="text-[11px] text-white/70">{asset.name}</span>
                         <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/30">
-                          {asset.sceneTag}
+                          槽位 {idx + 1} / {imageCount}
+                        </span>
+                        <span className="rounded bg-cyan-400/10 px-1.5 py-0.5 text-[9px] text-cyan-100/60">
+                          {fanoutTasks[idx]?.sourceName || '待选输入图'}
                         </span>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[9px] text-white/20">模板</span>
-                      <select
-                        value={asset.templateId}
-                        onChange={(e) =>
-                          ensureTaskForSlot(asset, { templateId: e.target.value })
-                        }
-                        className="min-w-[160px] rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus:border-cyan-400/30"
-                      >
-                        {TEMPLATES.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                        <label className="space-y-1">
+                          <span className="text-[9px] text-white/25">图类型</span>
+                          <select
+                            value={asset.sceneTag}
+                            onChange={(e) =>
+                              ensureTaskForSlot(asset, { sceneTag: e.target.value, detailRequirement: asset.detailRequirement || defaultDetailRequirement(e.target.value) })
+                            }
+                            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus:border-cyan-400/30"
+                          >
+                            {SCENE_TAG_OPTIONS.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
+                          </select>
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[9px] text-white/25">输入图</span>
+                          <select
+                            value={asset.sourceId || fanoutTasks[idx]?.sourceId || ''}
+                            onChange={(e) => ensureTaskForSlot(asset, { sourceId: e.target.value })}
+                            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus:border-cyan-400/30"
+                          >
+                            {selectedSources.map((source) => (
+                              <option key={source.id} value={source.id}>{source.name || source.id}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[9px] text-white/25">模板</span>
+                          <select
+                            value={asset.templateId}
+                            onChange={(e) => ensureTaskForSlot(asset, { templateId: e.target.value })}
+                            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus:border-cyan-400/30"
+                          >
+                            {TEMPLATES.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                        <input
+                          type="text"
+                          value={asset.detailRequirement || ''}
+                          onChange={(e) => ensureTaskForSlot(asset, { detailRequirement: e.target.value })}
+                          placeholder="本槽位细节要求，例如：突出材质纹理 / 主体完整 / 更强场景氛围"
+                          className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[10px] text-white placeholder:text-white/15 outline-none focus:border-cyan-400/30"
+                        />
+                        <input
+                          type="text"
+                          value={asset.negativeRequirement || ''}
+                          onChange={(e) => ensureTaskForSlot(asset, { negativeRequirement: e.target.value })}
+                          placeholder="本槽位不希望出现的内容，可选"
+                          className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[10px] text-white placeholder:text-white/15 outline-none focus:border-cyan-400/30"
+                        />
+                      </div>
                     </div>
                     {!asset.id.startsWith('planned-') && (
                       <button
@@ -879,7 +942,7 @@ export default function SandboxPage() {
             </div>
             <p className="mt-3 flex items-center gap-1 text-[9px] text-white/15">
               <Info className="h-3 w-3" />
-              本次会按「选中输入图 × 模板槽位」拆分为独立真实生产任务；每个任务都必须返回真实 result asset，系统不会用占位图冒充。
+              本次会按「任务配额槽位」创建独立真实生产任务；每个槽位都有自己的输入图、图类型、模板和细节要求，不再做输入图 × 模板的矩阵膨胀。
             </p>
           </SectionCard>
         </div>

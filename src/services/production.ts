@@ -78,6 +78,7 @@ type SourceReferenceDTO = {
 
 type DeconstructionJobDTO = {
   job_id: string
+  source_reference_id?: string
   runtime_job_id?: string
   status: string
   stage?: string
@@ -168,6 +169,8 @@ type GenerationFanoutResponseDTO = {
     template_id: string
     template_version_id?: string
     slot_index: number
+    scene_tag?: string
+    detail_requirement?: string
     generation_version: GenerationVersionDTO
   }>
 }
@@ -536,7 +539,11 @@ function normalizeConfidence(value?: number): number {
 
 
 function userFacingText(input: unknown): string {
-  const raw = Array.isArray(input) ? input.join('，') : String(input ?? '')
+  const raw = Array.isArray(input)
+    ? input.map(item => (typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item))).join('，')
+    : typeof input === 'object' && input !== null
+      ? JSON.stringify(input)
+      : String(input ?? '')
   return raw
     .replace(/Manifest-declared SKU visual asset; geometry analysis pending runtime image bytes/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
     .replace(/Manifest-declared SKU asset; geometry not extractable without image bytes\.?/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
@@ -626,7 +633,7 @@ function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
     id: element.id,
     stepNumber: idx + 1,
     title: elementLabel(element),
-    description: element.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.value ?? element.value) : undefined,
+    description: element.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.description ?? element.value.value ?? element.value) : undefined,
     options: [
       { id: `${element.id}:keep`, label: '保留参考图效果', description: '沿用参考图里的场景、光线或氛围', confidence: normalizeConfidence(element.confidence) },
       { id: `${element.id}:replace`, label: '换成我的商品', description: '以当前商品图为主体，参考图只作风格参考' },
@@ -823,22 +830,27 @@ export async function startParsing(req: StartParsingRequest): Promise<StartParsi
   saveLocalSources(req.productId, updatedSources)
 
   const sourceRefIds = sourceRefs.map(item => item.id).sort()
-  const primarySource = sourceRefs.find(item => item.metadata?.source_role === 'sku') ?? sourceRefs[0]
-  const job = await request<DeconstructionJobDTO>(`${VWF}/${session.id}/deconstruction-jobs`, {
-    method: 'POST',
-    body: JSON.stringify({
-      source_reference_id: primarySource?.id,
-      idempotency_key: `deconstruct:${session.id}:${sourceRefIds.join('+')}`,
-      requested_elements: ['product_geometry', 'material', 'style', 'scene', 'brand_constraints'],
-      metadata: {
-        frontend_entrypoint: 'production-prep',
-        frontend_source_ids: req.sourceIds,
-        frontend_tracks: req.tracks,
-        source_reference_ids: sourceRefIds,
-      },
-    }),
-  })
-  return { parsingJobId: job.job_id, status: normalizeStatus(job.status) }
+  const jobs: DeconstructionJobDTO[] = []
+  for (const sourceRef of sourceRefs) {
+    const job = await request<DeconstructionJobDTO>(`${VWF}/${session.id}/deconstruction-jobs`, {
+      method: 'POST',
+      body: JSON.stringify({
+        source_reference_id: sourceRef.id,
+        idempotency_key: `deconstruct:${session.id}:${sourceRef.id}:${sourceRefIds.join('+')}`,
+        requested_elements: ['product_geometry', 'material', 'style', 'scene', 'brand_constraints'],
+        metadata: {
+          frontend_entrypoint: 'production-prep',
+          frontend_source_ids: req.sourceIds,
+          frontend_tracks: req.tracks,
+          source_reference_ids: sourceRefIds,
+          image_understanding_policy: 'single_image_per_runtime_job',
+        },
+      }),
+    })
+    jobs.push(job)
+  }
+  const primaryJob = jobs.find(item => item.source_reference_id === sourceRefs.find(ref => ref.metadata?.source_role === 'sku')?.id) ?? jobs[0]
+  return { parsingJobId: primaryJob.job_id, status: normalizeStatus(primaryJob.status) }
 }
 
 export async function getParsingResult(productId: string): Promise<DualTrackParsing> {
@@ -1203,31 +1215,92 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
       completedTasks: 0,
       failedTasks: 0,
       createdAt: new Date().toISOString(),
+      maxConcurrency: config?.maxConcurrency,
+      retryOnFailure: config?.retryOnFailure,
+      maxRetries: config?.maxRetries,
+      waves: 1,
     }
   }
   if (tasks.length === 0) {
     contractNeeded('没有可提交的 fan-out 任务；请选择至少一张输入图片和一个模板槽位。')
   }
+
   const session = await ensureVisualSession(productId)
   const stage = await getStageView(productId)
   const promptPlan = stage.prompt_plan
   if (!promptPlan || promptPlan.status !== 'ready' || !promptPlan.prompt_id) {
     contractNeeded('生成方案还没准备好。请先点击左侧「生成出图方案」，确认后再开始生产。')
   }
-  const response = await request<GenerationFanoutResponseDTO>(`${VWF}/${session.id}/generation-version-fanouts`, {
+
+  const maxConcurrency = Math.max(1, Math.min(config?.maxConcurrency ?? tasks.length, tasks.length))
+  const maxRetries = Math.max(0, Math.min(config?.maxRetries ?? 0, 5))
+  const timeoutMs = Math.max(30, config?.timeoutSeconds ?? 300) * 1000
+  const retryOnFailure = Boolean(config?.retryOnFailure)
+  const batchId = `fanout:${session.id}:${promptPlan.prompt_id}:${intentIds.join(',')}:${tasks.map(t => t.id).join('|')}`
+  const completed = new Map<string, ProductionFanoutTask>()
+  const finalFailures = new Map<string, ProductionFanoutTask>()
+  let pending: ProductionFanoutTask[] = tasks.map(task => ({ ...task, status: 'pending' as const, progress: 0, retryCount: task.retryCount ?? 0 }))
+  let waveCount = 0
+
+  for (let attempt = 0; pending.length > 0; attempt += 1) {
+    const nextFailures: ProductionFanoutTask[] = []
+    for (let offset = 0; offset < pending.length; offset += maxConcurrency) {
+      const wave = pending.slice(offset, offset + maxConcurrency)
+      waveCount += 1
+      const submitted = await submitFanoutWave(session.id, batchId, productId, intentIds, wave, config, attempt, waveCount)
+      const settled = await waitForFanoutWave(productId, submitted.tasks, timeoutMs)
+      for (const task of settled.tasks) {
+        if (task.status === 'succeeded') {
+          completed.set(task.id, task)
+        } else if (task.status === 'failed') {
+          nextFailures.push({ ...task, retryCount: attempt + 1 })
+        } else {
+          nextFailures.push({ ...task, status: 'failed', error: task.error || '任务超时，未在本轮执行窗口内产生真实 result asset。', retryCount: attempt + 1 })
+        }
+      }
+    }
+    if (!retryOnFailure || attempt >= maxRetries || nextFailures.length === 0) {
+      nextFailures.forEach(task => finalFailures.set(task.id, task))
+      break
+    }
+    pending = nextFailures.map(task => ({ ...task, versionId: undefined, runtimeJobId: undefined, status: 'pending', progress: 0, resultAssetCount: 0 }))
+  }
+
+  const merged = tasks.map(task => completed.get(task.id) ?? finalFailures.get(task.id) ?? { ...task, status: 'failed' as const, error: '任务未被调度。' })
+  return summarizeFanoutBatch(batchId, productId, intentIds, merged, { maxConcurrency, retryOnFailure, maxRetries, waves: waveCount })
+}
+
+async function submitFanoutWave(sessionId: string, batchId: string, productId: string, intentIds: string[], tasks: ProductionFanoutTask[], config: ExecutionConfig | undefined, attempt: number, wave: number): Promise<ProductionFanoutBatch> {
+  const response = await request<GenerationFanoutResponseDTO>(`${VWF}/${sessionId}/generation-version-fanouts`, {
     method: 'POST',
     body: JSON.stringify({
-      idempotency_key: `fanout:${session.id}:${promptPlan.prompt_id}:${intentIds.join(',')}:${tasks.map(t => t.id).join('|')}`,
+      idempotency_key: `${batchId}:attempt-${attempt}:wave-${wave}`,
+      template_slots: tasks.map(task => ({
+        source_asset_id: task.sourceId,
+        template_id: task.templateId,
+        scene_tag: task.sceneTag,
+        detail_requirement: task.detailRequirement,
+        negative_requirement: task.negativeRequirement,
+      })),
       source_asset_ids: Array.from(new Set(tasks.map(task => task.sourceId).filter(Boolean))),
       template_ids: Array.from(new Set(tasks.map(task => task.templateId).filter(Boolean))),
       requested_variants: 1,
+      max_concurrency: config?.maxConcurrency,
+      retry_on_failure: config?.retryOnFailure,
+      max_retries: config?.maxRetries,
+      timeout_seconds: config?.timeoutSeconds,
       provider_config: config?.providerConfig,
-      metadata: buildSafeGenerationMetadata(intentIds, config, 'sandbox_generation_fanout'),
+      metadata: {
+        ...buildSafeGenerationMetadata(intentIds, config, 'sandbox_generation_fanout'),
+        fanout_batch_id: batchId,
+        fanout_attempt: attempt,
+        fanout_wave: wave,
+      },
     }),
   })
-  const byTaskKey = new Map(tasks.map(task => [`${task.sourceId}:${task.templateId}`, task]))
-  const nextTasks = response.items.map((item) => {
-    const original = byTaskKey.get(`${item.source_asset_id}:${item.template_id}`)
+  const byTaskKey = new Map(tasks.map(task => [`${task.sourceId}:${task.templateId}:${task.slotIndex}`, task]))
+  const nextTasks = response.items.map((item, index) => {
+    const original = tasks[index] ?? byTaskKey.get(`${item.source_asset_id}:${item.template_id}:${item.slot_index}`)
     const version = item.generation_version
     return {
       ...(original ?? {
@@ -1235,6 +1308,8 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
         sourceId: item.source_asset_id,
         templateId: item.template_id,
         slotIndex: item.slot_index,
+        sceneTag: item.scene_tag,
+        detailRequirement: item.detail_requirement,
       }),
       id: original?.id ?? item.fanout_task_id,
       versionId: version.version_id,
@@ -1243,12 +1318,34 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
       progress: Number(version.progress ?? 5),
       resultAssetCount: version.result_assets?.length ?? 0,
       error: version.status === 'contract_needed' ? '生成服务未创建真实 runtime job' : undefined,
+      retryCount: original?.retryCount ?? attempt,
     } as ProductionFanoutTask
   })
-  return summarizeFanoutBatch(response.fanout_id, productId, intentIds, nextTasks)
+  return summarizeFanoutBatch(response.fanout_id, productId, intentIds, nextTasks, {
+    maxConcurrency: config?.maxConcurrency,
+    retryOnFailure: config?.retryOnFailure,
+    maxRetries: config?.maxRetries,
+    waves: wave,
+  })
 }
 
-function summarizeFanoutBatch(batchId: string, productId: string, intentIds: string[], tasks: ProductionFanoutTask[]): ProductionFanoutBatch {
+async function waitForFanoutWave(productId: string, tasks: ProductionFanoutTask[], timeoutMs: number): Promise<ProductionFanoutBatch> {
+  let current = summarizeFanoutBatch(`wave-${Date.now()}`, productId, [], tasks)
+  const startedAt = Date.now()
+  while (Date.now() - startedAt < timeoutMs) {
+    current = await getFanoutBatchStatus(productId, current)
+    const terminal = current.tasks.every(task => task.status === 'succeeded' || task.status === 'failed')
+    if (terminal) return current
+    await delay(3000)
+  }
+  return summarizeFanoutBatch(current.batchId, productId, current.intentIds, current.tasks.map(task => (
+    task.status === 'succeeded' || task.status === 'failed'
+      ? task
+      : { ...task, status: 'failed', error: '任务超时，未在配置的 timeoutSeconds 内完成。' }
+  )))
+}
+
+function summarizeFanoutBatch(batchId: string, productId: string, intentIds: string[], tasks: ProductionFanoutTask[], options?: Partial<ProductionFanoutBatch>): ProductionFanoutBatch {
   const completedTasks = tasks.filter(task => task.status === 'succeeded').length
   const failedTasks = tasks.filter(task => task.status === 'failed').length
   const status: ProductionFanoutBatch['status'] = failedTasks > 0 && completedTasks + failedTasks === tasks.length
@@ -1258,7 +1355,7 @@ function summarizeFanoutBatch(batchId: string, productId: string, intentIds: str
       : tasks.some(task => task.status === 'executing' || task.status === 'queued')
         ? 'executing'
         : 'pending'
-  return { batchId, productId, intentIds, tasks, status, totalTasks: tasks.length, completedTasks, failedTasks, createdAt: new Date().toISOString() }
+  return { batchId, productId, intentIds, tasks, status, totalTasks: tasks.length, completedTasks, failedTasks, createdAt: new Date().toISOString(), ...options }
 }
 
 export async function getFanoutBatchStatus(productId: string, batch: ProductionFanoutBatch): Promise<ProductionFanoutBatch> {
@@ -1506,13 +1603,14 @@ export async function saveVariantAsTemplate(productId: string, variantId: string
   return { templateId: result.template.id, savedTemplates: result.saved_templates?.length ?? 0 }
 }
 
-export async function finalizeAssets(req: FinalizeAssetsRequest): Promise<{ assetIds: string[] }> {
+export async function finalizeAssets(req: FinalizeAssetsRequest): Promise<{ assetIds: string[]; assetRelationIds: string[] }> {
   if (isDevMode()) {
     await delay(800)
-    return { assetIds: req.variantIds.map((id) => `finalized-${id}`) }
+    return { assetIds: req.variantIds.map((id) => `finalized-${id}`), assetRelationIds: req.variantIds.map((id) => `relation-${id}`) }
   }
   const session = await ensureVisualSession(req.productId)
   const assetIds: string[] = []
+  const assetRelationIds: string[] = []
   for (const variantId of req.variantIds) {
     const [versionId, assetId] = variantId.split(':')
     if (!versionId || !assetId) continue
@@ -1520,11 +1618,12 @@ export async function finalizeAssets(req: FinalizeAssetsRequest): Promise<{ asse
       method: 'POST',
       body: JSON.stringify({ selected_result_asset_id: assetId, metadata: { frontend_variant_id: variantId } }),
     })
-    const result = await request<{ asset_relation: { asset_id: string } }>(`${VWF}/${session.id}/generation-versions/${versionId}/writeback-selected-asset`, {
+    const result = await request<{ asset_relation: { id?: string; asset_id: string } }>(`${VWF}/${session.id}/generation-versions/${versionId}/writeback-selected-asset`, {
       method: 'POST',
       body: JSON.stringify({ asset_id: assetId, asset_role: req.assetRoles[variantId] ?? 'hero', idempotency_key: `writeback:${session.id}:${versionId}:${assetId}` }),
     })
     assetIds.push(result.asset_relation.asset_id)
+    if (result.asset_relation.id) assetRelationIds.push(result.asset_relation.id)
   }
-  return { assetIds }
+  return { assetIds, assetRelationIds }
 }

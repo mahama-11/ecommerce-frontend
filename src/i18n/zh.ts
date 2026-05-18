@@ -63,7 +63,7 @@ const zh = {
       speed: '极速出图',
     },
     dashboard: {
-      hero_badge: 'AI 生产线 · V2',
+      hero_badge: 'AI 生产线',
       hero_title: '意图驱动的',
       hero_highlight: 'AI 视觉生产线',
       hero_subtitle: '从素材准备到策略执行，再到迭代精修——三步完成跨境电商视觉内容生产。',
@@ -630,12 +630,12 @@ const zh = {
       commandTitle: '跳转 Product Center 工作站',
       commands: {
         queue: '打开任务中心',
-        listing: '进入模板中心',
+        listing: '进入 Listing 配置',
         delivery: '查看历史已完成任务',
       },
       commandHints: {
         queue: '查看当前处理中的任务生成情况',
-        listing: '查看用户 DIY 模板',
+        listing: '创建/采用 Listing 版本',
         delivery: '历史已完成生成的任务',
       },
     },

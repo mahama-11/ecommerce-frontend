@@ -8,10 +8,11 @@ import {
   Globe,
   LogIn,
 } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import UserAccountMenu from '@/components/account/UserAccountMenu'
 import { useAuth } from '@/hooks/useAuth'
 import { getAuthAwareLoginPath } from '@/utils/authNavigation'
+import { getProduct } from '@/services/product'
 
 type ProductionNavItem = {
   labelKey: string
@@ -47,6 +48,25 @@ export default function ProductionLayout() {
   const { t, i18n } = useTranslation()
   const { isAuthenticated } = useAuth({ refreshOnMount: false })
   const loginPath = getAuthAwareLoginPath(isAuthenticated)
+  const [productTitle, setProductTitle] = useState('')
+
+  useEffect(() => {
+    if (!id) {
+      setProductTitle('')
+      return
+    }
+    let cancelled = false
+    getProduct(id)
+      .then(detail => {
+        if (!cancelled) setProductTitle(detail.product.title || detail.product.skuCode || '')
+      })
+      .catch(() => {
+        if (!cancelled) setProductTitle('')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [id])
 
   const navItems = useMemo(() => buildNavItems(id ?? ''), [id])
   const languageLabel = useMemo(
@@ -92,8 +112,8 @@ export default function ProductionLayout() {
             </Link>
 
             <span className="text-white/30">/</span>
-            <span className="max-w-[120px] truncate text-xs text-white/50">
-              #{id}
+            <span className="max-w-[180px] truncate text-xs text-white/50" title={productTitle || id}>
+              {productTitle || (id ? `#${id}` : '')}
             </span>
 
             {/* Step navigation */}

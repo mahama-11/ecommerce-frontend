@@ -19,7 +19,6 @@ import {
   ArrowRight
 } from 'lucide-react'
 import { useToastStore } from '@/store/toastStore'
-import { ProductWorkflowNav } from '@/components/product-workbench/ProductWorkflowNav'
 import {
   batchAdoptListingVersions,
   batchCreateListingVersions,
@@ -540,10 +539,6 @@ export default function BatchListingPage() {
             <button onClick={() => setActiveTab('products')} className="rounded-xl bg-cyan-200 px-4 py-2 text-xs font-bold text-[#05070b]">模板 / Prompt 配置</button>
             <button onClick={() => setActiveTab('logs')} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/72">校验结果</button>
           </div>
-        </div>
-
-        <div className="mb-5">
-          <ProductWorkflowNav active="listing" productId={selectedProductIDs[0] ?? contextProductIDs[0]} productIds={selectedProductIDs.length ? selectedProductIDs : contextProductIDs} source="listing" />
         </div>
 
         <div className="mb-5 grid gap-2 md:grid-cols-3 xl:grid-cols-6">

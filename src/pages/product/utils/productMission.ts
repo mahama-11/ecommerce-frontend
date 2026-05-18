@@ -1,6 +1,6 @@
 import type { ProductListItem } from '@/types/product'
 
-export type MissionStage = 'intake' | 'template' | 'visual' | 'listing' | 'export' | 'delivery' | 'commercial'
+export type MissionStage = 'intake' | 'visual' | 'listing' | 'export' | 'delivery' | 'commercial'
 
 export type CapabilityState =
   | 'available'
@@ -48,7 +48,6 @@ export type ProductionStageSummary = {
 
 export const MISSION_STAGES: Array<{ stage: MissionStage; label: string; description: string }> = [
   { stage: 'intake', label: 'Intake', description: 'SKU manifest and product identity' },
-  { stage: 'template', label: 'Template', description: 'Template/Prompt lineage contract' },
   { stage: 'visual', label: 'Visual', description: 'Primary SKU assets readiness' },
   { stage: 'listing', label: 'Listing', description: 'Marketplace copy/version readiness' },
   { stage: 'export', label: 'Export', description: 'Package handoff readiness' },
@@ -86,12 +85,6 @@ export function deriveMissionWorkUnit(product: ProductListItem): MissionWorkUnit
   const contractNotes: string[] = []
   const readiness: ReadinessItem[] = [
     {
-      key: 'template',
-      label: 'Template/Prompt lineage',
-      state: 'contract-needed',
-      detail: 'Product list has no real template/prompt lineage contract yet.',
-    },
-    {
       key: 'assets',
       label: 'SKU.assets',
       state: product.assetStatus === 'ready' && product.hasPrimaryAsset ? 'available' : product.assetStatus === 'partial' ? 'partial' : 'blocked',
@@ -112,10 +105,14 @@ export function deriveMissionWorkUnit(product: ProductListItem): MissionWorkUnit
           : 'No listing version ready for channel handoff.',
     },
     {
-      key: 'delivery',
-      label: 'Delivery downloadability',
-      state: 'contract-needed',
-      detail: 'Downloadability must be checked in Delivery Station from real DownloadRecord.downloadable.',
+      key: 'export',
+      label: 'Export package',
+      state: product.exportStatus === 'done' || product.exportStatus === 'ready' ? 'available' : 'blocked',
+      detail: product.exportStatus === 'done'
+        ? 'Export package has been generated.'
+        : product.exportStatus === 'ready'
+          ? 'Export task is ready for Delivery Center verification.'
+          : 'Export package has not been created yet.',
     },
     {
       key: 'commercial',
@@ -125,7 +122,7 @@ export function deriveMissionWorkUnit(product: ProductListItem): MissionWorkUnit
     },
   ]
 
-  contractNotes.push('Template/Prompt lineage is contract-needed on ProductList data.')
+  contractNotes.push('Product list status is derived only from backend asset/listing/export fields.')
   contractNotes.push('Delivery downloadability is not claimed here; verify in Delivery Station.')
   contractNotes.push('Commercial/quota state is not guessed from SKU list.')
 
@@ -154,16 +151,16 @@ export function deriveMissionWorkUnit(product: ProductListItem): MissionWorkUnit
       station: 'visual',
       href: `/products/${encodeURIComponent(product.id)}/production/prep`,
       state: 'available',
-      helper: 'Open the real V2 production prep workflow; no generation success is claimed from Mission Control.',
+      helper: '打开真实生产准备流程；列表页不承诺生成成功。'
     }
   } else if (product.listingStatus !== 'ready') {
     blocker = product.listingStatus === 'partial' ? 'Listing exists but still needs validation/adoption.' : 'Listing copy/version is missing.'
     nextBestAction = {
-      label: 'Route to Listing Station',
+      label: '进入 Listing 配置',
       station: 'listing',
-      href: `/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=mission-control`,
+      href: `/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=product-center`,
       state: 'available',
-      helper: 'Open Batch Listing with selected SKU context; the station still owns real version/adopt execution.',
+      helper: '进入 Listing 配置；版本创建/采用由真实后端接口执行。'
     }
   } else if (product.exportStatus === 'pending') {
     blocker = 'Export package is not confirmed ready from list data.'

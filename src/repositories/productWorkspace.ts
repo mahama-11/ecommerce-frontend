@@ -46,6 +46,37 @@ export const productWorkspaceRepository = {
     return saveTemplateRecordToMock(record)
   },
 
+  async updateSavedTemplate(record: SavedTemplateRecord) {
+    if (shouldUseApi()) {
+      return request<SavedTemplateRecord[]>(`/api/v1/ecommerce/templates/saved/${encodeURIComponent(record.id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(record),
+      })
+    }
+
+    return saveTemplateRecordToMock(record)
+  },
+
+  async deleteSavedTemplate(id: string) {
+    if (shouldUseApi()) {
+      return request<SavedTemplateRecord[]>(`/api/v1/ecommerce/templates/saved/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      })
+    }
+
+    return getSavedTemplatesFromMock().filter(item => item.id !== id)
+  },
+
+  async useSavedTemplate(id: string) {
+    if (shouldUseApi()) {
+      return request<SavedTemplateRecord>(`/api/v1/ecommerce/templates/saved/${encodeURIComponent(id)}/use`, {
+        method: 'POST',
+      })
+    }
+
+    return getSavedTemplatesFromMock().find(item => item.id === id) ?? null
+  },
+
   async listWorkflowEvents() {
     if (shouldUseApi()) {
       return request<WorkflowEvent[]>('/api/v1/ecommerce/workflow/events')
