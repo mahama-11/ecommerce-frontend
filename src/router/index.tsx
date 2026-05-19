@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, useParams } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react'
 import type { RouteObject } from 'react-router-dom'
 
@@ -14,7 +14,9 @@ const HomePage = lazy(() => import('@/pages/HomePage'))
 const PricingPage = lazy(() => import('@/pages/PricingPage'))
 const SolutionDetailPage = lazy(() => import('@/pages/SolutionDetailPage'))
 const ToolPage = lazy(() => import('@/pages/ToolPage'))
+const ProductAiWorkspacePage = lazy(() => import('@/pages/ToolPage').then(module => ({ default: module.ProductScopedToolPage })))
 const BatchListingPage = lazy(() => import('@/pages/BatchListingPage'))
+const ProductVisualToolsPage = lazy(() => import('@/pages/ProductVisualToolsPage'))
 const AboutUsPage = lazy(() => import('@/pages/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('@/pages/HelpCenterPage'))
 const ContactPage = lazy(() => import('@/pages/ContactPage'))
@@ -43,6 +45,14 @@ const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'))
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'))
 const ProductListPage = lazy(() => import('@/pages/product/ProductListPage'))
 const ProductDetailPage = lazy(() => import('@/pages/product/ProductDetailPage'))
+const InventoryLayout = lazy(() => import('@/layouts/InventoryLayout'))
+const InventoryDashboardPage = lazy(() => import('@/pages/inventory/InventoryDashboardPage'))
+const InventoryReplenishmentPage = lazy(() => import('@/pages/inventory/InventoryReplenishmentPage'))
+const InventoryProductManagePage = lazy(() => import('@/pages/inventory/InventoryProductManagePage'))
+const InventoryInboundPage = lazy(() => import('@/pages/inventory/InventoryInboundPage'))
+const InventoryAlertsPage = lazy(() => import('@/pages/inventory/InventoryAlertsPage'))
+const InventoryAnalysisPage = lazy(() => import('@/pages/inventory/InventoryAnalysisPage'))
+const InventorySettingsPage = lazy(() => import('@/pages/inventory/InventorySettingsPage'))
 const PrepHubPage = lazy(() => import('@/pages/production/PrepHubPage'))
 const SandboxPage = lazy(() => import('@/pages/production/SandboxPage'))
 const WorkshopPage = lazy(() => import('@/pages/production/WorkshopPage'))
@@ -60,14 +70,6 @@ function Fallback() {
 
 function S({ children }: { children: ReactNode }) {
   return <Suspense fallback={<Fallback />}>{children}</Suspense>
-}
-
-function LegacyProductAIRedirect() {
-  const { productId } = useParams()
-  if (!productId || productId === ':productId') {
-    return <Navigate to="/products" replace />
-  }
-  return <Navigate to={`/products/${encodeURIComponent(productId)}/production/prep`} replace />
 }
 
 const consolePage = (Element: LazyExoticComponent<ComponentType<any>>) => ({
@@ -119,7 +121,6 @@ export const router = createBrowserRouter([
       { index: true, element: <S><HomePage /></S> },
       { path: 'home', element: <S><HomePage /></S> },
       { path: 'pricing', element: <S><PricingPage /></S> },
-      { path: 'solutions', element: <S><SolutionDetailPage /></S> },
       { path: 'solutions/:slug', element: <S><SolutionDetailPage /></S> },
       { path: 'aboutus', element: <S><AboutUsPage /></S> },
       { path: 'help', element: <S><HelpCenterPage /></S> },
@@ -168,8 +169,22 @@ export const router = createBrowserRouter([
     { path: 'workbench/visual-tools', element: <Navigate to="/products" replace /> },
     { path: 'workbench/visual-tools/:toolSlug', element: <Navigate to="/products" replace /> },
     { path: 'workbench/downloads', element: <S><AccountDownloadsPage /></S> },
-    { path: ':productId/ai/:toolSlug', element: <LegacyProductAIRedirect /> },
+    { path: ':productId/ai/:toolSlug', element: <Navigate to="/products/:productId/production/prep" replace /> },
   ]),
+  // Inventory Module — 库存管理 (dev bypass: no RequireAuth)
+  {
+    path: '/inventory',
+    element: <S><InventoryLayout /></S>,
+    children: [
+      { index: true, element: <S><InventoryDashboardPage /></S> },
+      { path: 'replenishment', element: <S><InventoryReplenishmentPage /></S> },
+      { path: 'products', element: <S><InventoryProductManagePage /></S> },
+      { path: 'inbound', element: <S><InventoryInboundPage /></S> },
+      { path: 'alerts', element: <S><InventoryAlertsPage /></S> },
+      { path: 'analysis', element: <S><InventoryAnalysisPage /></S> },
+      { path: 'settings', element: <S><InventorySettingsPage /></S> },
+    ],
+  },
   // V2 Production Pipeline (intent-driven)
   productionPage([
     { path: 'prep', element: <S><PrepHubPage /></S> },
