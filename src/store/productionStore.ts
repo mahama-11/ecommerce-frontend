@@ -49,10 +49,16 @@ export const usePrepStore = create<PrepState>((set) => ({
 
   setProductId: (id) => set({ productId: id }),
   addSource: (source) =>
-    set((s) => ({ sources: [...s.sources, source], isDirty: true })),
+    set((s) => {
+      const same = (src: ParsingSource) =>
+        src.id === source.id ||
+        (Boolean(src.assetId) && src.assetId === source.assetId) ||
+        (Boolean(src.sourceReferenceId) && src.sourceReferenceId === source.sourceReferenceId)
+      return { sources: [...s.sources.filter((src) => !same(src)), source], isDirty: true }
+    }),
   removeSource: (id) =>
     set((s) => ({
-      sources: s.sources.filter((src) => src.id !== id),
+      sources: s.sources.filter((src) => src.id !== id && src.assetId !== id && src.sourceReferenceId !== id),
       isDirty: true,
     })),
   setSources: (sources) => set({ sources, isDirty: true }),
@@ -140,7 +146,7 @@ interface SandboxState {
 }
 
 const defaultExecutionConfig: ExecutionConfig = {
-  provider: 'comfyui',
+  provider: 'comfyui_bridge',
   maxConcurrency: 3,
   retryOnFailure: true,
   maxRetries: 2,
@@ -165,7 +171,7 @@ export const useSandboxStore = create<SandboxState>((set) => ({
     { id: 'asset-3', name: 'Asset 03（使用场景图）', sceneTag: '使用图', templateId: 'lifestyle-scene', detailRequirement: '强调真实使用场景，产品主体需清晰可识别' },
   ],
   imageCount: 3,
-  selectedModel: 'pro-v6',
+  selectedModel: 'comfyui-bridge',
   selectedResolution: '1024-square',
   advancedParams: defaultAdvancedParams,
   advancedExpanded: false,
@@ -227,7 +233,7 @@ export const useSandboxStore = create<SandboxState>((set) => ({
         { id: 'asset-3', name: 'Asset 03（使用场景图）', sceneTag: '使用图', templateId: 'lifestyle-scene', detailRequirement: '强调真实使用场景，产品主体需清晰可识别' },
       ],
       imageCount: 3,
-      selectedModel: 'pro-v6',
+      selectedModel: 'comfyui-bridge',
       selectedResolution: '1024-square',
       advancedParams: defaultAdvancedParams,
       advancedExpanded: false,

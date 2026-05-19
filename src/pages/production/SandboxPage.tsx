@@ -35,15 +35,16 @@ import type {
   StrategySummary,
   ParsingSource,
   ProductionFanoutTask,
+  ImageGenerationProviderCode,
 } from '@/types/production'
 import type { PromptPlanSummary } from '@/services/production'
 
 // ─── Static Data ─────────────────────────────────────────────
 
 const MODEL_OPTIONS: ModelOption[] = [
-  { id: 'pro-v6', name: 'Pro-v6', label: 'Pro-v6（推荐）', description: '更精细的细节，更稳定的风格还原能力', costPerImage: 10, recommended: true },
-  { id: 'basic-v4', name: 'Basic-v4', label: 'Basic-v4', description: '更快的生成速度，适合批量预览', costPerImage: 4 },
-  { id: 'sdxl-turbo', name: 'SDXL-Turbo', label: 'SDXL-Turbo', description: '极速生成，适合快速迭代', costPerImage: 2 },
+  { id: 'comfyui-bridge', name: 'ComfyUI Bridge', label: 'ComfyUI Bridge（默认稳定）', description: '正式 ComfyUI Bridge 出图链路，适合作为稳定主通道', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' },
+  { id: 'gemini-pro-image', name: 'Gemini Pro Image', label: 'Gemini Pro Image', description: 'Gemini 图片生成/图生图通道，适合 Provider 对比与图片编辑能力', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' },
+  { id: 'gemini-flash-image', name: 'Gemini Flash Image', label: 'Gemini Flash Image', description: 'Gemini Flash 图片生成通道，适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' },
 ]
 
 const RESOLUTION_OPTIONS: ResolutionOption[] = [
@@ -60,8 +61,6 @@ const TEMPLATES: SceneTemplate[] = [
 ]
 
 const SAMPLING_OPTIONS = ['DPM++ 2M Karras', 'Euler a', 'DPM++ SDE Karras', 'Euler', 'DDIM', 'UniPC']
-
-const KEYWORD_PATTERNS = ['水珠效果', '背景更暗', '金属质感', '增加光影', '暖色调', '冷色调', '景深效果', '虚化背景', '高对比度', '柔和光线']
 
 const SCENE_TAG_OPTIONS = ['主图', '海报', '使用图', '细节图', '对比图']
 
@@ -88,6 +87,38 @@ function userSummaryText(value: unknown): string {
     .replace(/scene_generation/gi, '场景生成')
     .replace(/background_replace/gi, '背景替换')
     .replace(/image_enhancement/gi, '图片增强')
+}
+
+function readString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function readObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+function promptPlanGenerationPrompt(plan: PromptPlanSummary | null): string {
+  const variables = readObject(plan?.variables)
+  return readString(variables.generation_prompt)
+}
+
+function promptPlanKeywords(plan: PromptPlanSummary | null): string[] {
+  const variables = readObject(plan?.variables)
+  const raw = variables.style_keywords
+  return Array.isArray(raw) ? raw.map((item) => readString(item)).filter(Boolean) : []
+}
+
+function promptPlanFieldSummary(plan: PromptPlanSummary | null, key: string): string {
+  const variables = readObject(plan?.variables)
+  const value = variables[key]
+  if (!value) return '未返回'
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) return value.map((item) => readString(item)).filter(Boolean).join('、') || `${value.length} 项`
+  const obj = readObject(value)
+  const parts = Object.entries(obj)
+    .map(([itemKey, itemValue]) => `${itemKey}: ${typeof itemValue === 'object' ? '已配置' : String(itemValue)}`)
+    .slice(0, 3)
+  return parts.join('；') || '已配置'
 }
 
 // ─── Mock Strategy Summary (will come from Prep Hub in real flow) ───
@@ -195,14 +226,6 @@ function WireframePreview({ template, index }: { template: SceneTemplate; index:
 
 // ─── Keyword Recognition ─────────────────────────────────────
 
-function recognizeKeywords(text: string): string[] {
-  const found: string[] = []
-  KEYWORD_PATTERNS.forEach((kw) => {
-    if (text.includes(kw)) found.push(kw)
-  })
-  return found
-}
-
 // ─── Section Card Wrapper ────────────────────────────────────
 
 function SectionCard({
@@ -250,8 +273,6 @@ export default function SandboxPage() {
     selectedResolution,
     advancedParams,
     advancedExpanded,
-    diyPrompt,
-    recognizedKeywords,
     strategySummary,
     setProductId,
     addAssetTask,
@@ -262,8 +283,6 @@ export default function SandboxPage() {
     setSelectedResolution,
     setAdvancedParams,
     setAdvancedExpanded,
-    setDiyPrompt,
-    setRecognizedKeywords,
     setStrategySummary,
     setIntents,
     setIsRunning,
@@ -273,6 +292,7 @@ export default function SandboxPage() {
   const [executing, setExecuting] = useState(false)
   const [promptPlanning, setPromptPlanning] = useState(false)
   const [promptPlan, setPromptPlan] = useState<PromptPlanSummary | null>(null)
+  const [promptPlanNotice, setPromptPlanNotice] = useState<string | null>(null)
   const [executionNotice, setExecutionNotice] = useState<string | null>(null)
   const [executionProgress, setExecutionProgress] = useState<number | null>(null)
   const [executionPhase, setExecutionPhase] = useState<'idle' | 'waiting' | 'ready' | 'failed'>('idle')
@@ -359,30 +379,36 @@ export default function SandboxPage() {
   const runPromptPlanner = async () => {
     if (!productId) return
     setPromptPlanning(true)
+    setPromptPlanNotice('正在整理出图方案，完成后会在这里展示新的 Prompt 和关键参数。')
     try {
       const job = await productionApi.requestPromptPlanner(productId, { marketplace: 'amazon', locale: 'zh-CN', promptVariables: { source: 'sandbox-prompt-diff' } })
       toast.showToast(job.runtimeJobId ? '已开始整理本次出图方案。' : '已刷新出图方案。', 'success')
       let latest: PromptPlanSummary | null = null
-      for (let i = 0; i < 24; i += 1) {
-        await new Promise(resolve => setTimeout(resolve, 2500))
+      for (let i = 0; i < 36; i += 1) {
+        await new Promise(resolve => setTimeout(resolve, i === 0 ? 1000 : 1500))
         latest = await productionApi.getPromptPlanSummary(productId)
         setPromptPlan(latest)
-        if (latest.source === 'llm_prompt_planner' || latest.status === 'blocked') break
+        if (latest.status === 'ready' && latest.promptId) {
+          setPromptPlanNotice(`出图方案已准备好：${promptPlanGenerationPrompt(latest) || '已生成可执行 Prompt'}。右侧“开始生产”会在输入图/槽位齐全后点亮。`)
+          break
+        }
+        if (['blocked', 'failed', 'contract_needed'].includes(latest.status)) {
+          setPromptPlanNotice('出图方案暂时不可用，请回到生产准备补齐图片解析或选择。')
+          break
+        }
+        setPromptPlanNotice(`正在整理出图方案… 已等待 ${Math.round(((i + 1) * 1.5))} 秒。`)
+      }
+      if (latest && !(latest.status === 'ready' && latest.promptId) && !['blocked', 'failed', 'contract_needed'].includes(latest.status)) {
+        setPromptPlanNotice('出图方案仍在整理中；你可以稍后刷新，系统不会在结果不明确时点亮生产按钮。')
       }
     } catch (e) {
-      toast.showToast(e instanceof Error ? e.message : '生成出图方案失败，请稍后重试。', 'error')
+      const message = e instanceof Error ? e.message : '生成出图方案失败，请稍后重试。'
+      setPromptPlanNotice(message)
+      toast.showToast(message, 'error')
     } finally {
       setPromptPlanning(false)
     }
   }
-
-  // Recognize keywords when DIY prompt changes
-  useEffect(() => {
-    const keywords = recognizeKeywords(diyPrompt)
-    if (JSON.stringify(keywords) !== JSON.stringify(recognizedKeywords)) {
-      setRecognizedKeywords(keywords)
-    }
-  }, [diyPrompt, recognizedKeywords, setRecognizedKeywords])
 
   // Credit calculation
   const creditBreakdown = useMemo(() => {
@@ -440,11 +466,6 @@ export default function SandboxPage() {
     [],
   )
 
-  // Handlers
-  const handleDiyChange = (value: string) => {
-    setDiyPrompt(value)
-  }
-
   const adjustImageCount = (delta: number) => {
     setImageCount(Math.max(1, Math.min(10, imageCount + delta)))
   }
@@ -499,7 +520,7 @@ export default function SandboxPage() {
       }
       const batch = await productionApi.executeFanoutIntents(productId, selectedIntentIds, fanoutTasks, {
         ...(store.executionConfig ?? {
-          provider: 'comfyui' as const,
+          provider: 'comfyui_bridge' as const,
           maxConcurrency: 1,
           retryOnFailure: true,
           maxRetries: 2,
@@ -507,7 +528,9 @@ export default function SandboxPage() {
         }),
         providerConfig: {
           ...(store.executionConfig?.providerConfig ?? {}),
-          model_id: selectedModel,
+          generation_provider_code: (currentModel?.providerCode ?? 'comfyui_bridge') satisfies ImageGenerationProviderCode,
+          model_id: currentModel?.modelId ?? selectedModel,
+          ui_model_option_id: selectedModel,
           resolution_id: currentResolution?.id,
           dimensions: currentResolution?.dimensions,
           fanout_total: fanoutTasks.length,
@@ -587,6 +610,13 @@ export default function SandboxPage() {
       : promptPlan?.status
         ? '整理中'
         : '未知'
+  const generationPromptText = promptPlanGenerationPrompt(promptPlan)
+  const promptKeywords = promptPlanKeywords(promptPlan)
+  const productionReadinessItems = [
+    { label: '策略输入', ok: hasRunnableIntents, detail: hasRunnableIntents ? `${store.intents.length} 条已确认` : '还没有可生成的选择' },
+    { label: '出图方案', ok: promptPlanReady, detail: promptPlanReady ? '已生成可执行 Prompt' : '未准备好' },
+    { label: '输入图片/槽位', ok: fanoutTasks.length > 0, detail: fanoutTasks.length > 0 ? `${fanoutTasks.length} 个任务` : '未选输入图' },
+  ]
 
   return (
     <div className="mx-auto max-w-[1440px] px-5 py-6">
@@ -681,6 +711,28 @@ export default function SandboxPage() {
                   <div className="mt-1 truncate text-white/30">方案已保存，可用于本次生产</div>
                 )}
               </div>
+              {promptPlanNotice && (
+                <div className="rounded-lg border border-cyan-300/15 bg-cyan-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-cyan-100/75" aria-live="polite">
+                  {promptPlanNotice}
+                </div>
+              )}
+              {promptPlanReady && (
+                <div className="space-y-2 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.045] p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-semibold text-emerald-100/80">本次出图 Prompt</p>
+                    <span className="rounded-full bg-emerald-300/10 px-2 py-0.5 text-[9px] text-emerald-100/55">{promptPlan.promptId}</span>
+                  </div>
+                  <p className="rounded-lg bg-black/25 p-2 text-[10px] leading-relaxed text-white/75">
+                    {generationPromptText || '后端已生成 Prompt，但没有返回可展示的生成文案。'}
+                  </p>
+                  <div className="grid grid-cols-1 gap-2 text-[9px] text-white/42">
+                    <div><span className="text-white/28">风格关键词：</span>{promptKeywords.length ? promptKeywords.join('、') : '未返回'}</div>
+                    <div><span className="text-white/28">背景：</span>{promptPlanFieldSummary(promptPlan, 'background')}</div>
+                    <div><span className="text-white/28">光线：</span>{promptPlanFieldSummary(promptPlan, 'lighting')}</div>
+                    <div><span className="text-white/28">构图：</span>{promptPlanFieldSummary(promptPlan, 'composition')}</div>
+                  </div>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={runPromptPlanner}
@@ -714,56 +766,6 @@ export default function SandboxPage() {
             </div>
           </SectionCard>
 
-          {/* 2. DIY Extra Requirements */}
-          <SectionCard title="额外生成要求">
-            <div className="space-y-3">
-              <p className="text-[10px] leading-relaxed text-white/25">
-                可输入对本次生成的额外要求，例如：增加水珠效果、背景更暗、突出产品重量感等...
-              </p>
-              <textarea
-                value={diyPrompt}
-                onChange={(e) => handleDiyChange(e.target.value)}
-                rows={4}
-                placeholder="输入额外要求..."
-                className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] text-white placeholder:text-white/15 outline-none transition focus:border-cyan-400/30"
-              />
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] text-white/20">
-                  {diyPrompt.length}/500
-                </span>
-                {recognizedKeywords.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => { setDiyPrompt(''); setRecognizedKeywords([]) }}
-                    className="text-[9px] text-white/20 hover:text-white/40"
-                  >
-                    清空
-                  </button>
-                )}
-              </div>
-
-              {/* Recognized Keywords */}
-              {recognizedKeywords.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="space-y-1.5"
-                >
-                  <span className="text-[9px] text-white/30">已识别关键词：</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {recognizedKeywords.map((kw) => (
-                      <span
-                        key={kw}
-                        className="rounded-md bg-cyan-400/8 px-2 py-0.5 text-[10px] text-cyan-400/70"
-                      >
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          </SectionCard>
         </div>
 
         {/* ─── Center Column (6 cols) ──────────────────────── */}
@@ -1176,20 +1178,70 @@ export default function SandboxPage() {
                   </div>
                 </div>
               </div>
+
+              <div className={`rounded-xl border px-3 py-2.5 text-[10px] leading-relaxed ${
+                canStartProduction
+                  ? 'border-emerald-300/15 bg-emerald-300/[0.05] text-emerald-100/75'
+                  : 'border-amber-300/15 bg-amber-300/[0.055] text-amber-100/75'
+              }`}>
+                {canStartProduction
+                  ? '出图方案已准备好。点击下方按钮提交真实 runtime 任务，结果返回后自动进入工坊。'
+                  : `开始生产前还需要：${startProductionBlocker}`}
+              </div>
+
+              <div className="space-y-1 rounded-xl border border-white/[0.04] bg-white/[0.015] p-3">
+                <p className="text-[10px] font-medium text-white/45">开始生产检查</p>
+                {productionReadinessItems.map((item) => (
+                  <div key={item.label} className="flex items-center justify-between gap-2 text-[10px]">
+                    <span className={item.ok ? 'text-emerald-200/75' : 'text-amber-100/70'}>{item.ok ? '✓' : '•'} {item.label}</span>
+                    <span className="text-white/32">{item.detail}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void executeProduction()}
+                disabled={!canStartProduction}
+                title={startProductionBlocker}
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/10 transition hover:shadow-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                <span>{executing ? '正在出图...' : promptPlanReady ? '开始生产' : '先生成出图方案'}</span>
+              </button>
+
+              {executionNotice && (
+                <div className={`rounded-xl border px-3 py-2.5 text-[10px] leading-relaxed ${
+                  executionPhase === 'ready'
+                    ? 'border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-100/80'
+                    : executionPhase === 'failed'
+                      ? 'border-rose-400/20 bg-rose-400/[0.06] text-rose-100/80'
+                      : 'border-cyan-400/20 bg-cyan-400/[0.06] text-cyan-100/80'
+                }`} aria-live="polite">
+                  <div className="flex items-center gap-2">
+                    {executionPhase === 'waiting' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    <span>{executionNotice}</span>
+                  </div>
+                  {executionProgress != null && executionPhase === 'waiting' && (
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+                      <div
+                        className="h-full rounded-full bg-cyan-300/70 transition-all duration-500"
+                        style={{ width: `${Math.max(8, executionProgress)}%` }}
+                      />
+                    </div>
+                  )}
+                  {fanoutTasksState.length > 0 && (
+                    <div className="mt-2 text-[10px] text-white/35">
+                      fan-out：{fanoutTasksState.filter(task => task.status === 'succeeded').length}/{fanoutTasksState.length} 已返回真实结果
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </SectionCard>
         </div>
       </div>
 
-      <div className={`mx-auto mt-6 max-w-2xl rounded-xl border px-4 py-3 text-center text-[11px] leading-relaxed ${
-        canStartProduction
-          ? 'border-emerald-300/15 bg-emerald-300/[0.05] text-emerald-100/75'
-          : 'border-amber-300/15 bg-amber-300/[0.055] text-amber-100/75'
-      }`}>
-        {canStartProduction
-          ? '出图方案已准备好，可以开始生产。提交后会停留在本页显示进度，真实结果返回后再进入工坊。'
-          : `开始生产前还需要：${startProductionBlocker}`}
-      </div>
 
       {/* ─── Bottom Action Bar ─────────────────────────────── */}
       <motion.div
@@ -1207,51 +1259,8 @@ export default function SandboxPage() {
           返回上一步
         </button>
 
-        <button
-          type="button"
-          onClick={() => void executeProduction()}
-          disabled={!canStartProduction}
-          title={startProductionBlocker}
-          className="group inline-flex flex-1 max-w-xl items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/10 transition hover:shadow-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {executing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Play className="h-4 w-4" />
-          )}
-          <span>
-            {executing ? '正在出图...' : promptPlanReady ? '开始生产' : '先生成出图方案'}
-          </span>
-        </button>
       </motion.div>
 
-      {executionNotice && (
-        <div className={`mx-auto mt-3 max-w-2xl rounded-xl border px-4 py-3 text-center text-[11px] leading-relaxed ${
-          executionPhase === 'ready'
-            ? 'border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-100/80'
-            : executionPhase === 'failed'
-              ? 'border-rose-400/20 bg-rose-400/[0.06] text-rose-100/80'
-              : 'border-cyan-400/20 bg-cyan-400/[0.06] text-cyan-100/80'
-        }`} aria-live="polite">
-          <div className="flex items-center justify-center gap-2">
-            {executionPhase === 'waiting' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            <span>{executionNotice}</span>
-          </div>
-          {executionProgress != null && executionPhase === 'waiting' && (
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
-              <div
-                className="h-full rounded-full bg-cyan-300/70 transition-all duration-500"
-                style={{ width: `${Math.max(8, executionProgress)}%` }}
-              />
-            </div>
-          )}
-          {fanoutTasksState.length > 0 && (
-            <div className="mt-2 text-[10px] text-white/35">
-              fan-out：{fanoutTasksState.filter(task => task.status === 'succeeded').length}/{fanoutTasksState.length} 已返回真实结果
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Summary Info Bar */}
       <motion.div

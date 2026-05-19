@@ -23,6 +23,7 @@ import type {
   VersionNode,
   ProductionFanoutTask,
   ProductionFanoutBatch,
+  DecisionOption,
 } from '@/types/production'
 import {
   isDevMode,
@@ -245,6 +246,9 @@ type StageViewDTO = VisualSession & {
 const sessionKey = (productId: string) => `ecommerce.production.visualSession.${productId}`
 const sourceKey = (productId: string) => `ecommerce.production.sources.${productId}`
 const intentKey = (productId: string) => `ecommerce.production.intents.${productId}`
+const ALLOWED_SOURCE_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+export const MAX_PARSING_SOURCE_IMAGE_BYTES = 10 * 1024 * 1024
+
 
 function getStored<T>(key: string, fallback: T): T {
   try {
@@ -270,6 +274,16 @@ function readFileAsDataURL(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error ?? new Error('Failed to read file'))
     reader.readAsDataURL(file)
   })
+}
+
+export function validateParsingSourceFile(file: File): void {
+  const type = file.type || 'application/octet-stream'
+  if (!ALLOWED_SOURCE_IMAGE_TYPES.has(type)) {
+    throw new Error(`${file.name} 格式暂不支持。请上传 JPG、PNG 或 WebP 图片。`)
+  }
+  if (file.size > MAX_PARSING_SOURCE_IMAGE_BYTES) {
+    throw new Error(`${file.name} 太大（${(file.size / 1024 / 1024).toFixed(1)}MB）。请压缩到 10MB 以内，建议长边 2000px 内。`)
+  }
 }
 
 function contractNeeded(message: string): never {
@@ -445,6 +459,8 @@ function stringifyDiffItem(item: unknown): string {
   if (typeof item === 'string') return item
   if (item && typeof item === 'object') {
     const obj = item as Record<string, unknown>
+    if (obj.field && 'value' in obj) return `${humanizeDiffPath(obj.field)}：${compactDiffValue(obj.value)}`
+    if (obj.field && ('previous_value' in obj || 'current_value' in obj)) return `${humanizeDiffPath(obj.field)}：${compactDiffValue(obj.previous_value)} → ${compactDiffValue(obj.current_value)}`
     if (obj.field || obj.from || obj.to) return `${humanizeDiffPath(obj.field)}：${compactDiffValue(obj.from)} → ${compactDiffValue(obj.to)}`
     if (obj.path && 'value' in obj) return `${humanizeDiffPath(obj.path)}：${compactDiffValue(obj.value)}`
     if (obj.path && ('previous' in obj || 'current' in obj)) return `${humanizeDiffPath(obj.path)}：${compactDiffValue(obj.previous)} → ${compactDiffValue(obj.current)}`
@@ -605,8 +621,12 @@ function elementToAttribute(element: DeconstructionElementDTO): ParsedAttribute 
 }
 
 function stageToParsing(stage: StageViewDTO): DualTrackParsing {
-  const status = normalizeStatus(stage.deconstruction_job?.status ?? stage.status)
   const attributes = (stage.deconstruction_elements ?? []).map(elementToAttribute)
+  const status = stage.deconstruction_job
+    ? normalizeStatus(stage.deconstruction_job.status)
+    : attributes.length > 0
+      ? 'succeeded'
+      : 'idle'
   const result = {
     track: 'third_party' as const,
     status,
@@ -624,24 +644,31 @@ function stageToParsing(stage: StageViewDTO): DualTrackParsing {
 }
 
 function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
-  const blockers = stage.readiness?.blockers ?? stage.prompt_plan?.blockers ?? []
   const selections = stage.intent_spec?.selections ?? []
   const elements = stage.deconstruction_elements ?? []
-  const visibleElements = elements.slice(0, 6)
+  const blockers = elements.length > 0 ? (stage.readiness?.blockers ?? stage.prompt_plan?.blockers ?? []) : []
+  const visibleElements = elements.slice(0, 8)
   const activeIndex = Math.max(0, visibleElements.findIndex((element) => !element.confirmed))
-  const steps = visibleElements.map((element, idx) => ({
-    id: element.id,
-    stepNumber: idx + 1,
-    title: elementLabel(element),
-    description: element.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.description ?? element.value.value ?? element.value) : undefined,
-    options: [
-      { id: `${element.id}:keep`, label: '保留参考图效果', description: '沿用参考图里的场景、光线或氛围', confidence: normalizeConfidence(element.confidence) },
-      { id: `${element.id}:replace`, label: '换成我的商品', description: '以当前商品图为主体，参考图只作风格参考' },
-      { id: `${element.id}:drop`, label: '不采用这一项', description: '这项不进入后续生成要求' },
-    ],
-    selectedOptionId: element.decision ? `${element.id}:${element.decision}` : (element.selected ? `${element.id}:keep` : undefined),
-    status: (element.confirmed ? 'completed' : idx === activeIndex ? 'active' : 'pending') as 'pending' | 'active' | 'completed',
-  }))
+  const steps = visibleElements.map((element, idx) => {
+    const dimension = visualDecisionDimension(element)
+    const valueText = element.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.description ?? element.value.value ?? element.value) : undefined
+    const optionLabel = valueText ? valueText.slice(0, 42) : elementLabel(element)
+    const options: DecisionOption[] = [
+      { id: `${element.id}:keep`, label: `保留${dimension.shortLabel}`, description: `把“${optionLabel}”纳入下一步出图约束`, icon: dimension.icon, confidence: normalizeConfidence(element.confidence), semanticAction: 'keep', dimension: dimension.key },
+      { id: `${element.id}:replace`, label: `调整${dimension.shortLabel}`, description: `以当前 SKU 为主体，替换或弱化该维度的参考效果`, icon: '⇄', semanticAction: 'replace', dimension: dimension.key },
+      { id: `${element.id}:crop`, label: `裁剪/局部采用${dimension.shortLabel}`, description: `只采用该属性对应的局部区域或构图线索`, icon: '✂️', semanticAction: 'crop', dimension: dimension.key, cropHint: cropHintFromElement(element) },
+      { id: `${element.id}:drop`, label: '不采用', description: '该属性不进入 PromptPlan / 生成输入', icon: '–', semanticAction: 'drop', dimension: dimension.key },
+    ]
+    return {
+      id: element.id,
+      stepNumber: idx + 1,
+      title: `${dimension.label} · ${elementLabel(element)}`,
+      description: valueText,
+      options,
+      selectedOptionId: element.decision ? `${element.id}:${element.decision}` : (element.selected ? `${element.id}:keep` : undefined),
+      status: (element.confirmed ? 'completed' : idx === activeIndex ? 'active' : 'pending') as 'pending' | 'active' | 'completed',
+    }
+  })
   return {
     status: blockers.length > 0 ? 'failed' : (selections.length > 0 || elements.length > 0 ? 'succeeded' : 'idle'),
     root: {
@@ -661,11 +688,36 @@ function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
       })),
     },
     steps,
-    recommendedActions: blockers.length > 0 ? blockers.map(b => userFacingText(b.message)) : ['确认要保留哪些参考效果', '补充生成要求', '进入策略配置'],
+    recommendedActions: blockers.length > 0 ? blockers.map(b => userFacingText(b.message)) : ['逐项确认光影/材质/背景/构图等关键属性', '需要局部保留时选择“调整/裁剪”', '已确认的选择会写入 PromptPlan 并驱动下一步生成'],
     overallConfidence: elements.length ? elements.reduce((sum, e) => sum + normalizeConfidence(e.confidence), 0) / elements.length : 0,
     provider: 'internal',
     evaluatedAt: stage.updated_at,
   }
+}
+
+function visualDecisionDimension(element: DeconstructionElementDTO): { key: NonNullable<DecisionOption['dimension']>; label: string; shortLabel: string; icon: string } {
+  const raw = `${element.element_type || ''} ${element.element_key || ''} ${element.label || ''}`.toLowerCase()
+  if (/light|lighting|shadow|highlight|光|影|明暗|高光/.test(raw)) return { key: 'lighting', label: '光影', shortLabel: '光影', icon: '💡' }
+  if (/material|texture|fabric|metal|wood|leather|材质|纹理|质感/.test(raw)) return { key: 'material', label: '材质/质感', shortLabel: '材质', icon: '🧵' }
+  if (/background|scene|backdrop|环境|背景|场景/.test(raw)) return { key: 'background', label: '背景/场景', shortLabel: '背景', icon: '🌄' }
+  if (/composition|layout|angle|pose|framing|构图|角度|姿态|画面/.test(raw)) return { key: 'composition', label: '构图/角度', shortLabel: '构图', icon: '📐' }
+  if (/color|palette|tone|颜色|色彩|色调/.test(raw)) return { key: 'color', label: '色彩', shortLabel: '色彩', icon: '🎨' }
+  if (/effect|style|atmosphere|mood|效果|风格|氛围/.test(raw)) return { key: 'effect', label: '风格/效果', shortLabel: '效果', icon: '✨' }
+  if (/crop|region|bbox|局部|裁剪/.test(raw)) return { key: 'crop', label: '局部/裁剪', shortLabel: '局部', icon: '✂️' }
+  if (element.source_role === 'reference') return { key: 'reference_strategy', label: '参考效果', shortLabel: '参考效果', icon: '🖼️' }
+  return { key: 'product_fact', label: '商品属性', shortLabel: '商品属性', icon: '🏷️' }
+}
+
+function cropHintFromElement(element: DeconstructionElementDTO): DecisionOption['cropHint'] | undefined {
+  const raw = element.value?.bbox ?? element.value?.crop ?? element.value?.region
+  if (!raw || typeof raw !== 'object') return undefined
+  const value = raw as Record<string, unknown>
+  const x = Number(value.x ?? 0)
+  const y = Number(value.y ?? 0)
+  const width = Number(value.width ?? value.w ?? 1)
+  const height = Number(value.height ?? value.h ?? 1)
+  if (![x, y, width, height].every(Number.isFinite)) return undefined
+  return { x, y, width, height }
 }
 
 function getLocalSources(productId: string): ParsingSource[] {
@@ -713,6 +765,7 @@ export async function listParsingSources(productId: string): Promise<ParsingSour
 }
 
 export async function uploadParsingSource(productId: string, file: File, sourceType: ParsingSource['type'] = 'sku_image'): Promise<ParsingSource> {
+  validateParsingSourceFile(file)
   if (isDevMode()) {
     await delay(600)
     const source: ParsingSource = {
@@ -768,6 +821,35 @@ export async function uploadParsingSource(productId: string, file: File, sourceT
   const sources = getLocalSources(productId).filter((item) => item.assetId !== asset.id && item.id !== asset.id)
   saveLocalSources(productId, [...sources, source])
   return source
+}
+
+export async function removeParsingSource(productId: string, source: ParsingSource): Promise<void> {
+  const removeLocal = () => {
+    const sources = getLocalSources(productId).filter((item) =>
+      item.id !== source.id &&
+      item.assetId !== source.assetId &&
+      item.sourceReferenceId !== source.sourceReferenceId &&
+      item.assetRelationId !== source.assetRelationId,
+    )
+    saveLocalSources(productId, sources)
+  }
+  if (isDevMode()) {
+    removeLocal()
+    return
+  }
+  const session = await ensureVisualSession(productId)
+  const sourceReferenceId = source.sourceReferenceId
+  const calls: Promise<unknown>[] = []
+  if (sourceReferenceId) {
+    calls.push(request(`${VWF}/${session.id}/source-references/${sourceReferenceId}`, { method: 'DELETE', silent: true }))
+  }
+  if (source.assetRelationId) {
+    calls.push(request(`/api/v1/ecommerce/products/${productId}/assets/${source.assetRelationId}`, { method: 'DELETE', silent: true }))
+  }
+  if (calls.length > 0) {
+    await Promise.allSettled(calls)
+  }
+  removeLocal()
 }
 
 
@@ -830,6 +912,7 @@ export async function startParsing(req: StartParsingRequest): Promise<StartParsi
   saveLocalSources(req.productId, updatedSources)
 
   const sourceRefIds = sourceRefs.map(item => item.id).sort()
+  const providerCode = req.providerCode && req.providerCode !== 'comfyui_bridge' ? req.providerCode : undefined
   const jobs: DeconstructionJobDTO[] = []
   for (const sourceRef of sourceRefs) {
     const job = await request<DeconstructionJobDTO>(`${VWF}/${session.id}/deconstruction-jobs`, {
@@ -844,6 +927,7 @@ export async function startParsing(req: StartParsingRequest): Promise<StartParsi
           frontend_tracks: req.tracks,
           source_reference_ids: sourceRefIds,
           image_understanding_policy: 'single_image_per_runtime_job',
+          provider_code: providerCode,
         },
       }),
     })
@@ -894,7 +978,7 @@ export async function updateParsedAttribute(productId: string, key: string, valu
   })
 }
 
-export async function updateAttentionDecision(productId: string, elementId: string, decision: 'keep' | 'replace' | 'drop', targetAssetId?: string): Promise<void> {
+export async function updateAttentionDecision(productId: string, elementId: string, decision: 'keep' | 'replace' | 'drop' | 'crop', targetAssetId?: string, option?: DecisionOption): Promise<void> {
   if (isDevMode()) {
     await delay(200)
     return
@@ -905,13 +989,16 @@ export async function updateAttentionDecision(productId: string, elementId: stri
     body: JSON.stringify({
       selected: decision !== 'drop',
       decision,
-      target_asset_id: decision === 'replace' ? targetAssetId : undefined,
+      target_asset_id: decision === 'replace' || decision === 'crop' ? targetAssetId : undefined,
+      group_path: option?.dimension ? ['visual_attribute', option.dimension] : undefined,
       rationale: decision === 'replace'
         ? '以当前商品图为主体，参考图只作风格参考'
         : decision === 'keep'
           ? '保留参考图中的视觉效果'
-          : '不采用这一项参考元素',
-      metadata: { updated_from: 'prep-attention-tree' },
+          : decision === 'crop'
+            ? '仅采用参考图中的局部区域或裁剪线索'
+            : '不采用这一项参考元素',
+      metadata: { updated_from: 'prep-attention-tree', dimension: option?.dimension, semantic_action: option?.semanticAction ?? decision, crop_hint: option?.cropHint, option_label: option?.label },
     }),
   })
 }
@@ -927,7 +1014,6 @@ export async function updateDriftControl(productId: string, referenceBias: numbe
   await request<VisualSession>(`${VWF}/${session.id}`, {
     method: 'PATCH',
     body: JSON.stringify({
-      current_stage: 'prompt',
       intent_spec: {
         ...(stage.intent_spec ?? {}),
         schema_version: stage.intent_spec?.schema_version ?? 'v1',
@@ -1089,6 +1175,7 @@ function buildSafeGenerationMetadata(intentIds: string[], config?: ExecutionConf
     source,
     ui_execution_config: config ? {
       requested_engine: config.provider,
+      generation_provider_code: typeof config.providerConfig?.generation_provider_code === 'string' ? config.providerConfig.generation_provider_code : config.provider,
       max_concurrency: config.maxConcurrency,
       retry_on_failure: config.retryOnFailure,
       max_retries: config.maxRetries,

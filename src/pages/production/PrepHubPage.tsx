@@ -31,6 +31,7 @@ import type {
   LlmDecisionTreeResult,
   DecisionStep,
   ParsedAttribute,
+  ImageUnderstandingProviderCode,
 } from '@/types/production'
 
 // ─── Polling helper ──────────────────────────────────────────
@@ -377,12 +378,13 @@ function DecisionStepCard({
 
 // ─── Attribute Row (read-only display) ──────────────────────
 
-type AttentionDecision = 'keep' | 'replace' | 'drop'
+type AttentionDecision = 'keep' | 'replace' | 'drop' | 'crop'
 
 
 function decisionFromOptionId(optionId?: string): AttentionDecision | undefined {
   if (!optionId) return undefined
   if (optionId.endsWith(':drop')) return 'drop'
+  if (optionId.endsWith(':crop')) return 'crop'
   if (optionId.endsWith(':replace')) return 'replace'
   if (optionId.endsWith(':keep')) return 'keep'
   return undefined
@@ -397,6 +399,8 @@ function AttributeRow({ attr, decision }: { attr: ParsedAttribute; decision?: At
     ? '已纳入 LLM Prompt'
     : decision === 'replace'
       ? '以当前 SKU 替换主体'
+      : decision === 'crop'
+        ? '局部/裁剪纳入 Prompt'
       : decision === 'drop'
         ? '已排除，不进入 Prompt'
         : '待确认取舍'
@@ -449,7 +453,7 @@ export default function PrepHubPage() {
     globalDriftBias,
     setProductId,
     addSource,
-    removeSource,
+    setSources,
     setParsing,
     setDecisionTree,
     setGlobalDriftBias,
@@ -505,6 +509,7 @@ export default function PrepHubPage() {
   const skuInputRef = useRef<HTMLInputElement>(null)
   const refInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [understandingProvider, setUnderstandingProvider] = useState<ImageUnderstandingProviderCode>('comfyui_bridge')
 
   const handleFiles = useCallback(
     async (files: FileList | File[], sourceType: 'sku_image' | 'reference_image') => {
@@ -512,8 +517,10 @@ export default function PrepHubPage() {
       setUploading(true)
       try {
         for (const file of Array.from(files)) {
-          if (!file.type.startsWith('image/')) {
-            toast.showToast(`${file.name} is not an image`, 'error')
+          try {
+            productionApi.validateParsingSourceFile(file)
+          } catch (validationError) {
+            toast.showToast(validationError instanceof Error ? validationError.message : '图片格式或大小不符合要求', 'error')
             continue
           }
           const source = await productionApi.uploadParsingSource(productId, file, sourceType)
@@ -560,6 +567,25 @@ export default function PrepHubPage() {
     [handleFiles],
   )
 
+  const handleRemoveSource = useCallback(async (sourceId: string) => {
+    if (!productId) return
+    const target = sources.find((source) => source.id === sourceId || source.assetId === sourceId || source.sourceReferenceId === sourceId)
+    if (!target) return
+    const previous = sources
+    const next = sources.filter((source) => source.id !== sourceId && source.assetId !== sourceId && source.sourceReferenceId !== sourceId)
+    setSources(next)
+    try {
+      await productionApi.removeParsingSource(productId, target)
+      if (next.length === 0) {
+        setParsing(null)
+        setDecisionTree(null)
+      }
+    } catch (e) {
+      setSources(previous)
+      toast.showToast(e instanceof Error ? e.message : '删除图片失败，请稍后重试。', 'error')
+    }
+  }, [productId, sources, setSources, setParsing, setDecisionTree, toast])
+
   // ─── Parsing ────────────────────────────────────────────
   const parsingPoll = usePolling<DualTrackParsing>(
     () => productionApi.getParsingResult(productId!),
@@ -596,12 +622,13 @@ export default function PrepHubPage() {
             productId,
             sourceIds: MOCK_SOURCES.map((s) => s.id),
             tracks: ['comfyui', 'third_party'],
+            providerCode: understandingProvider,
           })
           parsingPoll.start()
         } catch { /* ignore */ }
       }, 300)
     }
-  }, [productId, sources.length, parsing, addSource, parsingPoll])
+  }, [productId, sources.length, parsing, addSource, parsingPoll, understandingProvider])
 
   const startParsing = useCallback(async () => {
     if (!productId) return
@@ -621,6 +648,7 @@ export default function PrepHubPage() {
         productId,
         sourceIds: sources.map((s) => s.id),
         tracks: ['comfyui', 'third_party'],
+        providerCode: understandingProvider,
       })
       parsingPoll.start()
     } catch (e) {
@@ -634,7 +662,7 @@ export default function PrepHubPage() {
       })
       toast.showToast(message, 'error')
     }
-  }, [productId, sources, skuSources.length, refSources.length, parsingPoll, setParsing, toast])
+  }, [productId, sources, skuSources.length, refSources.length, parsingPoll, setParsing, toast, understandingProvider])
 
   // Sync poll results into store
   useEffect(() => {
@@ -742,8 +770,10 @@ export default function PrepHubPage() {
       setSessionSelections(optimisticSelections)
       setCurrentStepIndex(nextPending >= 0 ? nextPending : Math.max(currentIdx, 0))
 
+      const currentStep = decisionTree.steps.find((step) => step.id === stepId)
+      const currentOption = currentStep?.options.find((option) => option.id === optionId)
       try {
-        await productionApi.updateAttentionDecision(productId, stepId, decision, targetAssetId)
+        await productionApi.updateAttentionDecision(productId, stepId, decision, targetAssetId, currentOption)
         const [updatedParsing, updatedTree] = await Promise.all([
           productionApi.getParsingResult(productId),
           productionApi.getDecisionTree(productId),
@@ -874,7 +904,7 @@ export default function PrepHubPage() {
             uploading={uploading}
             onDrop={onDropSku}
             onFileInput={onFileInputSku}
-            onRemove={removeSource}
+            onRemove={handleRemoveSource}
             inputRef={skuInputRef}
           />
           <UploadZone
@@ -887,7 +917,7 @@ export default function PrepHubPage() {
             uploading={uploading}
             onDrop={onDropRef}
             onFileInput={onFileInputRef}
-            onRemove={removeSource}
+            onRemove={handleRemoveSource}
             inputRef={refInputRef}
           />
 
@@ -900,6 +930,24 @@ export default function PrepHubPage() {
                 </p>
               </div>
               {dualTrackReady ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200/70" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-200/70" />}
+            </div>
+            <div className="mb-3 rounded-xl border border-white/[0.06] bg-black/20 p-3">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-[10px] font-semibold text-cyan-100/70">图像理解 Provider</span>
+                <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/35">可切换模型效果</span>
+              </div>
+              <select
+                value={understandingProvider}
+                onChange={(event) => setUnderstandingProvider(event.target.value as ImageUnderstandingProviderCode)}
+                disabled={isParsing}
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-[11px] text-white/70 outline-none transition focus:border-cyan-300/30 disabled:opacity-40"
+              >
+                <option value="comfyui_bridge">ComfyUI Bridge（默认稳定）</option>
+                <option value="gemini_visual_understanding">Gemini Flash 视觉理解（新 Provider）</option>
+              </select>
+              <p className="mt-1.5 text-[9px] leading-relaxed text-cyan-100/45">
+                选择会写入后端 runtime provider_code；同一批图片可用不同 Provider 重新解析比较光影、材质、构图等选项。
+              </p>
             </div>
             <button
               type="button"
