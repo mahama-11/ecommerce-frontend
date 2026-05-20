@@ -1639,7 +1639,7 @@ const zh = {
       noIntents: '还没有生成意图',
       noIntentsHint: '从生产准备区获取推荐动作，或手动添加',
       execConfig: '执行配置',
-      provider: '执行引擎',
+      provider: '生成方式',
       concurrency: '并发数',
       retry: '重试次数',
       timeout: '超时时间',

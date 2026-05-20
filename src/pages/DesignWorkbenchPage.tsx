@@ -110,7 +110,7 @@ const DESIGN_CONFIG: Record<string, DesignConfig> = {
     icon: History,
     badge: { zh: '任务记录中心', en: 'Task Record Center' },
     subtitle: {
-      zh: '记录每次输入素材、参数、执行状态和输出结果，为异步任务系统预留接口。',
+      zh: '记录每次输入素材、参数、执行状态和输出结果，方便复盘与复用。',
       en: 'Track inputs, parameters, execution states, and outputs as a foundation for async job systems.',
     },
     stats: [

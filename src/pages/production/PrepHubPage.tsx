@@ -724,13 +724,6 @@ export default function PrepHubPage() {
   const [sessionSelections, setSessionSelections] = useState<Record<string, string>>({})
   const [usePreviousSelections, setUsePreviousSelections] = useState(true)
 
-  // Sync currentStepIndex when decisionTree.steps changes
-  useEffect(() => {
-    if (decisionTree?.steps) {
-      const activeIdx = decisionTree.steps.findIndex((s) => s.status === 'active')
-      if (activeIdx >= 0 && Object.keys(sessionSelections).length > 0) setCurrentStepIndex(activeIdx)
-    }
-  }, [decisionTree?.steps, sessionSelections])
 
   useEffect(() => {
     setSessionSelections({})
@@ -770,7 +763,18 @@ export default function PrepHubPage() {
         status: isAnswered ? 'completed' as const : idx === activeIndex ? 'active' as const : 'pending' as const,
       }
     })
-  }, [decisionTree?.steps, sessionSelections, usePreviousSelections, currentStepIndex])
+  }, [decisionTree?.steps, sessionSelections, currentStepIndex])
+
+  useEffect(() => {
+    if (displaySteps.length === 0) return
+    if (currentStepIndex >= displaySteps.length) {
+      setCurrentStepIndex(displaySteps.length - 1)
+      return
+    }
+    const current = displaySteps[currentStepIndex]
+    const nextUnanswered = displaySteps.findIndex((step, idx) => idx > currentStepIndex && !step.selectedOptionId)
+    if (current?.selectedOptionId && nextUnanswered >= 0) setCurrentStepIndex(nextUnanswered)
+  }, [displaySteps, currentStepIndex])
 
   const handleSelectOption = useCallback(
     async (stepId: string, optionId: string) => {
@@ -783,10 +787,16 @@ export default function PrepHubPage() {
       }
 
       const previousSelections = sessionSelections
+      const previousUsePreviousSelections = usePreviousSelections
       const optimisticSelections = { ...sessionSelections, [stepId]: optionId }
       const rawSteps = decisionTree.steps ?? []
       const currentIdx = rawSteps.findIndex((s) => s.id === stepId)
-      const nextPending = rawSteps.findIndex((candidate, i) => i > currentIdx && !optimisticSelections[candidate.id])
+      const nextPending = rawSteps.findIndex((candidate, i) => {
+        if (i <= currentIdx) return false
+        const selected = optimisticSelections[candidate.id] ?? candidate.selectedOptionId
+        return !selected
+      })
+      setUsePreviousSelections(false)
       setSessionSelections(optimisticSelections)
       setCurrentStepIndex(nextPending >= 0 ? nextPending : Math.max(currentIdx, 0))
 
@@ -801,13 +811,14 @@ export default function PrepHubPage() {
         setParsing(updatedParsing)
         setDecisionTree(updatedTree)
       } catch (e) {
+        setUsePreviousSelections(previousUsePreviousSelections)
         setSessionSelections(previousSelections)
         setCurrentStepIndex(Math.max(currentIdx, 0))
         toast.showToast(e instanceof Error ? e.message : '保存选择失败，请重试。', 'error')
         return
       }
     },
-    [decisionTree, productId, skuSources, sessionSelections, setParsing, setDecisionTree, toast],
+    [decisionTree, productId, skuSources, sessionSelections, usePreviousSelections, setParsing, setDecisionTree, toast],
   )
 
   // ─── Navigate to Sandbox ────────────────────────────────
@@ -954,7 +965,7 @@ export default function PrepHubPage() {
             <div className="mb-3 rounded-xl border border-white/[0.06] bg-black/20 p-3">
               <div className="mb-1 flex items-center justify-between gap-2">
                     <span className="text-[10px] font-semibold text-cyan-100/70">图片识别方式</span>
-                <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/35">可切换模型效果</span>
+                <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/35">可切换识别侧重</span>
               </div>
               <select
                 value={understandingProvider}
@@ -962,11 +973,11 @@ export default function PrepHubPage() {
                 disabled={isParsing}
                 className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-[11px] text-white/70 outline-none transition focus:border-cyan-300/30 disabled:opacity-40"
               >
-                <option value="comfyui_bridge">ComfyUI Bridge（默认稳定）</option>
-                <option value="gemini_visual_understanding">Gemini Flash 视觉理解（新模式）</option>
+                <option value="comfyui_bridge">稳定识别（推荐）</option>
+                <option value="gemini_visual_understanding">增强识别</option>
               </select>
               <p className="mt-1.5 text-[9px] leading-relaxed text-cyan-100/45">
-                选择不同的识别方式，可以对比图片的光影、材质和构图判断。
+                选择不同的识别侧重，可以对比图片的光影、材质和构图判断。
               </p>
             </div>
             <button

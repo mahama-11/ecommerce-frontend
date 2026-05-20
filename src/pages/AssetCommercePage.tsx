@@ -167,8 +167,8 @@ const PAGE_CONFIG: Record<string, PageConfig> = {
       },
       {
         title: { zh: '自动修复建议', en: 'Auto-fix Suggestions' },
-        desc: { zh: '预留替代表达、替换建议与失败重试提示。', en: 'Reserve alternative phrases, replacement suggestions, and retry prompts.' },
-        meta: { zh: '后续可接 AI 修复', en: 'Ready for AI-assisted repair' },
+        desc: { zh: '提供替代表达、替换建议与失败重试提示。', en: 'Reserve alternative phrases, replacement suggestions, and retry prompts.' },
+        meta: { zh: '辅助修复建议', en: 'Ready for AI-assisted repair' },
       },
     ],
     actions: [
@@ -196,9 +196,9 @@ const PAGE_CONFIG: Record<string, PageConfig> = {
         meta: { zh: '支持跨页筛选', en: 'Supports cross-page filtering' },
       },
       {
-        title: { zh: '自动打标接口位', en: 'Auto-tag Hooks' },
-        desc: { zh: '预留 AI 自动识别内容和图片打标的能力接口。', en: 'Reserve AI hooks for auto-tagging content and images.' },
-        meta: { zh: '工程化扩展位', en: 'Engineering extension point' },
+        title: { zh: '自动打标', en: 'Auto-tag Hooks' },
+        desc: { zh: '自动识别内容和图片特征，减少手工整理。', en: 'Reserve AI hooks for auto-tagging content and images.' },
+        meta: { zh: '可持续扩展', en: 'Engineering extension point' },
       },
     ],
     actions: [
@@ -545,8 +545,8 @@ export default function AssetCommercePage({ forcedPath }: { forcedPath?: AssetCo
       subtitle: `${item.amount} · ${getStatusText(item.status)}`,
       notes: [
         copyText(locale, item.meta),
-        locale === 'zh' ? '后续可接支付、发票、退款和权益开通状态。' : 'Ready for payment, invoicing, refunds, and entitlement activation states.',
-        locale === 'zh' ? '适合作为套餐、加油包、席位扩容的统一订单骨架。' : 'Fits subscriptions, credit packs, and seat-expansion orders under one model.',
+        locale === 'zh' ? '集中查看支付、发票、退款和权益开通状态。' : 'Ready for payment, invoicing, refunds, and entitlement activation states.',
+        locale === 'zh' ? '统一管理套餐、加油包和席位扩容订单。' : 'Fits subscriptions, credit packs, and seat-expansion orders under one model.',
       ],
     })
   }
@@ -952,7 +952,7 @@ export default function AssetCommercePage({ forcedPath }: { forcedPath?: AssetCo
         <section className="glass rounded-2xl p-5">
           <div className="mb-3 flex items-center gap-2 text-sm font-medium text-white/75">
             <Package2 className="h-4 w-4 text-brand-400" />
-            <span>{locale === 'zh' ? '后续联动接口位' : 'Future Integration Hooks'}</span>
+            <span>{locale === 'zh' ? '后续联动动作' : 'Future actions'}</span>
           </div>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {[

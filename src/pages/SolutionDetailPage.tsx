@@ -159,8 +159,8 @@ export default function SolutionDetailPage() {
           <p className="mt-5 max-w-3xl text-base leading-8 text-white/58 sm:text-lg">
             {pick(
               locale,
-              '围绕大促预测、动态定价和竞品分析三个高频决策场景，展示可落地的 Agent 能力、输入信息和输出结果。当前页面只做方案展示，不提供模拟工具入口。',
-              'A showcase of three decision-heavy ecommerce agents: campaign demand forecasting, dynamic pricing, and competitor analysis. This page is display-only and does not expose simulated tool entry points.',
+              '围绕大促预测、动态定价和竞品分析三个高频场景，展示从业务输入到行动建议的完整工作方式。',
+              'A showcase of three decision-heavy ecommerce scenarios, from business inputs to actionable recommendations.',
             )}
           </p>
           <div className="mt-8 flex flex-wrap gap-3">

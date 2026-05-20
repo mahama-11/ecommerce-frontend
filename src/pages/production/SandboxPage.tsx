@@ -42,9 +42,9 @@ import type { PromptPlanSummary } from '@/services/production'
 // ─── Static Data ─────────────────────────────────────────────
 
 const MODEL_OPTIONS: ModelOption[] = [
-  { id: 'comfyui-bridge', name: 'ComfyUI Bridge', label: '默认稳定模式', description: '适合正式生产，出图质量和稳定性优先', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' },
-  { id: 'gemini-pro-image', name: 'Gemini Pro Image', label: '高质量创意模式', description: '适合需要更强图片理解和编辑能力的场景', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' },
-  { id: 'gemini-flash-image', name: 'Gemini Flash Image', label: '快速预览模式', description: '适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' },
+  { id: 'comfyui-bridge', name: '稳定生产模式', label: '默认稳定模式', description: '适合正式生产，出图质量和稳定性优先', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' },
+  { id: 'gemini-pro-image', name: '高质量创意模式', label: '高质量创意模式', description: '适合需要更强图片理解和编辑能力的场景', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' },
+  { id: 'gemini-flash-image', name: '快速预览模式', label: '快速预览模式', description: '适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' },
 ]
 
 const RESOLUTION_OPTIONS: ResolutionOption[] = [

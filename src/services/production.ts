@@ -753,12 +753,35 @@ function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
 }
 
 function fixedPromptQuestionSteps(elements: DeconstructionElementDTO[]): DecisionStep[] {
-  const pick = (role: 'sku' | 'reference', kind: 'product' | 'background') => {
-    const matcher = kind === 'product'
-      ? /product|geometry|subject|main|主体|商品|产品|梳子|元素/i
-      : /background|scene|backdrop|环境|背景|场景/i
-    return elements.find((element) => element.source_role === role && matcher.test(`${element.element_type} ${element.element_key} ${element.label}`))
+  const usedElementIds = new Set<string>()
+  const productPattern = /product|geometry|subject|main|主体|商品|产品|外形|款式|材质|梳子/i
+  const backgroundPattern = /background|scene|backdrop|environment|环境|背景|场景|氛围|光影|构图/i
+
+  const scoreElement = (element: DeconstructionElementDTO, kind: 'product' | 'background') => {
+    const haystack = `${element.element_type || ''} ${element.element_key || ''} ${element.label || ''} ${JSON.stringify(element.value || {})}`
+    const productHit = productPattern.test(haystack)
+    const backgroundHit = backgroundPattern.test(haystack)
+    let score = normalizeConfidence(element.confidence)
+    if (kind === 'product') {
+      if (productHit) score += 2
+      if (backgroundHit) score -= 1
+    } else {
+      if (backgroundHit) score += 2
+      if (productHit) score -= 1
+    }
+    return score
   }
+
+  const pick = (role: 'sku' | 'reference', kind: 'product' | 'background') => {
+    const candidates = elements
+      .filter((element) => element.source_role === role && !usedElementIds.has(element.id))
+      .map((element) => ({ element, score: scoreElement(element, kind) }))
+      .sort((a, b) => b.score - a.score)
+    const best = candidates[0]?.element
+    if (best) usedElementIds.add(best.id)
+    return best
+  }
+
   const configs: Array<{ slot: NonNullable<DecisionOption['promptSlot']>; title: string; keepLabel: string; dropLabel: string; element?: DeconstructionElementDTO }> = [
     { slot: 'sku_product', title: '要不要保留 SKU 原图里的产品主体？', keepLabel: '要，保留 SKU 产品主体', dropLabel: '不要使用 SKU 产品主体', element: pick('sku', 'product') },
     { slot: 'sku_background', title: '要不要保留 SKU 原图里的背景？', keepLabel: '要，保留 SKU 背景', dropLabel: '不要，改换 SKU 背景', element: pick('sku', 'background') },
@@ -766,8 +789,7 @@ function fixedPromptQuestionSteps(elements: DeconstructionElementDTO[]): Decisio
     { slot: 'reference_background', title: '要不要采用参考素材里的背景/场景？', keepLabel: '要，采用参考背景场景', dropLabel: '不要采用参考背景', element: pick('reference', 'background') },
   ]
   if (configs.some((item) => !item.element)) return []
-  if (new Set(configs.map((item) => item.element!.id)).size !== configs.length) return []
-  const firstPending = configs.findIndex((item) => !item.element?.confirmed)
+  const firstPending = configs.findIndex((item) => !item.element?.confirmed && !item.element?.decision && !item.element?.selected)
   const activeIndex = firstPending >= 0 ? firstPending : 0
   return configs.map((item, idx) => {
     const element = item.element!
@@ -784,7 +806,7 @@ function fixedPromptQuestionSteps(elements: DeconstructionElementDTO[]): Decisio
       description: valueText,
       options,
       selectedOptionId,
-      status: (element.confirmed ? 'completed' : idx === activeIndex ? 'active' : 'pending') as 'pending' | 'active' | 'completed',
+      status: (selectedOptionId || element.confirmed ? 'completed' : idx === activeIndex ? 'active' : 'pending') as 'pending' | 'active' | 'completed',
     }
   })
 }

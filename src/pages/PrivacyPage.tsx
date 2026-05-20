@@ -97,9 +97,9 @@ export default function PrivacyPage() {
               {locale === 'zh' ? '当前状态' : 'Current State'}
             </div>
             <div className="space-y-2 text-sm text-white/45">
-              <div>{locale === 'zh' ? '已具备法务页结构' : 'Legal-page structure prepared'}</div>
-              <div>{locale === 'zh' ? '已预留版本更新时间' : 'Version/update slot reserved'}</div>
-              <div>{locale === 'zh' ? '后续可填真实协议正文' : 'Ready for real policy content later'}</div>
+              <div>{locale === 'zh' ? '条款结构清晰' : 'Clear policy structure'}</div>
+              <div>{locale === 'zh' ? '版本更新清晰可追踪' : 'Version updates are easy to track'}</div>
+              <div>{locale === 'zh' ? '协议正文会随产品持续完善' : 'Policy content will keep evolving with the product'}</div>
             </div>
           </aside>
         </section>

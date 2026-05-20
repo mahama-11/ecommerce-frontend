@@ -513,7 +513,7 @@ export default function ChatWorkspacePage() {
 
             <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3">
               <div className="mb-3 text-xs text-white/35">
-                {copy(locale, '输入区预留执行 / 保存 / 回写能力', 'Input area reserved for execute / save / write-back actions')}
+                {copy(locale, '可继续细化、保存或同步到后续任务', 'Refine, save, or sync into downstream work')}
               </div>
               <div className="flex gap-3">
                 <input
@@ -609,7 +609,7 @@ export default function ChatWorkspacePage() {
             <div className="glass rounded-2xl p-5">
               <div className="mb-3 flex items-center gap-2 text-sm font-medium text-white/75">
                 <Database className="h-4 w-4 text-brand-400" />
-                <span>{copy(locale, '后续工程化接口位', 'Future Engineering Hooks')}</span>
+                <span>{copy(locale, '可衔接的后续动作', 'Next actions')}</span>
               </div>
               <div className="space-y-2 text-sm text-white/45">
                 <div>{copy(locale, '会话历史拉取', 'Conversation history fetch')}</div>
