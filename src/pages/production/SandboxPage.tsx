@@ -92,7 +92,21 @@ function buildSlotDetailRequirement(template: SceneTemplate, sceneTag?: string, 
 }
 
 function userSummaryText(value: unknown): string {
-  return String(value ?? '')
+  const raw = (() => {
+    if (value == null) return ''
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value)
+    if (Array.isArray(value)) return value.map(userSummaryText).filter(Boolean).join('，')
+    if (typeof value === 'object') {
+      const obj = value as Record<string, unknown>
+      for (const key of ['description', 'summary', 'text', 'label', 'title', 'value']) {
+        const text = userSummaryText(obj[key])
+        if (text) return text
+      }
+      return '已配置'
+    }
+    return String(value)
+  })()
+  return raw
     .replace(/Product Geometry/gi, '商品形态')
     .replace(/Reference Composition/gi, '参考图构图')
     .replace(/Analysis Limitation/gi, '识别提醒')

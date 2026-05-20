@@ -120,6 +120,7 @@ type IntentSpecDTO = {
     element_key?: string
     label?: string
     value?: Record<string, unknown>
+    metadata?: Record<string, unknown>
   }>
   requirements?: Record<string, unknown>
   metadata?: Record<string, unknown>
@@ -592,11 +593,25 @@ function normalizeConfidence(value?: number): number {
 
 
 function userFacingText(input: unknown): string {
-  const raw = Array.isArray(input)
-    ? input.map(item => (typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item))).join('，')
-    : typeof input === 'object' && input !== null
-      ? JSON.stringify(input)
-      : String(input ?? '')
+  const readableObjectText = (value: unknown, depth = 0): string => {
+    if (value == null || depth > 2) return ''
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value)
+    if (Array.isArray(value)) return value.map(item => readableObjectText(item, depth + 1)).filter(Boolean).join('，')
+    if (typeof value === 'object') {
+      const obj = value as Record<string, unknown>
+      for (const key of ['description', 'summary', 'text', 'label', 'title', 'value', 'style', 'shape', 'material', 'color', 'scene', 'background']) {
+        const text = readableObjectText(obj[key], depth + 1)
+        if (text) return text
+      }
+      const parts = Object.entries(obj)
+        .filter(([key]) => !/^(id|asset_id|source_reference_id|source_asset_id|element_type|element_key|metadata|bbox|crop|region)$/i.test(key))
+        .map(([, item]) => readableObjectText(item, depth + 1))
+        .filter(Boolean)
+      return parts.slice(0, 3).join('，')
+    }
+    return ''
+  }
+  const raw = readableObjectText(input)
   const withoutFence = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim()
   if (/deconstruction_elements|source_reference_id|element_type|element_key/.test(withoutFence)) {
     try {
@@ -611,7 +626,17 @@ function userFacingText(input: unknown): string {
       return '图片解析结果已返回，暂不直接展示原始 JSON'
     }
   }
-  return raw
+  if (/^[\[{]/.test(withoutFence)) {
+    try {
+      const parsed = JSON.parse(withoutFence)
+      const readable = readableObjectText(parsed)
+      if (readable) return userFacingText(readable)
+      return '图片解析结果已返回，暂不直接展示原始 JSON'
+    } catch {
+      return '图片解析结果已返回，暂不直接展示原始 JSON'
+    }
+  }
+  return withoutFence
     .replace(/Manifest-declared SKU visual asset; geometry analysis pending runtime image bytes/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
     .replace(/Manifest-declared SKU asset; geometry not extractable without image bytes\.?/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
     .replace(/Requested element:\s*product geometry analysis pending visual byte ingestion for asset_[A-Za-z0-9_-]+/gi, '当前图片可以作为商品主体，但外形细节还需要在生成前再次确认。')
@@ -702,7 +727,7 @@ function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
   const selections = stage.intent_spec?.selections ?? []
   const elements = stage.deconstruction_elements ?? []
   const blockers = elements.length > 0 ? (stage.readiness?.blockers ?? stage.prompt_plan?.blockers ?? []) : []
-  const fixedSteps = fixedPromptQuestionSteps(elements)
+  const fixedSteps = fixedPromptQuestionSteps(elements, selections)
   const visibleElements = fixedSteps.length > 0 ? [] : elements.slice(0, 8)
   const activeIndex = Math.max(0, visibleElements.findIndex((element) => !element.confirmed))
   const dynamicSteps = visibleElements.map((element, idx) => {
@@ -752,7 +777,7 @@ function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
   }
 }
 
-function fixedPromptQuestionSteps(elements: DeconstructionElementDTO[]): DecisionStep[] {
+function fixedPromptQuestionSteps(elements: DeconstructionElementDTO[], selections: NonNullable<IntentSpecDTO['selections']> = []): DecisionStep[] {
   const usedElementIds = new Set<string>()
   const productPattern = /product|geometry|subject|main|主体|商品|产品|外形|款式|材质|梳子/i
   const backgroundPattern = /background|scene|backdrop|environment|环境|背景|场景|氛围|光影|构图/i
@@ -782,31 +807,42 @@ function fixedPromptQuestionSteps(elements: DeconstructionElementDTO[]): Decisio
     return best
   }
 
-  const configs: Array<{ slot: NonNullable<DecisionOption['promptSlot']>; title: string; keepLabel: string; dropLabel: string; element?: DeconstructionElementDTO }> = [
-    { slot: 'sku_product', title: '要不要保留 SKU 原图里的产品主体？', keepLabel: '要，保留 SKU 产品主体', dropLabel: '不要使用 SKU 产品主体', element: pick('sku', 'product') },
-    { slot: 'sku_background', title: '要不要保留 SKU 原图里的背景？', keepLabel: '要，保留 SKU 背景', dropLabel: '不要，改换 SKU 背景', element: pick('sku', 'background') },
-    { slot: 'reference_product', title: '要不要把参考素材里的产品元素带入画面？', keepLabel: '要，参考产品元素进入画面', dropLabel: '不要使用参考产品元素', element: pick('reference', 'product') },
-    { slot: 'reference_background', title: '要不要采用参考素材里的背景/场景？', keepLabel: '要，采用参考背景场景', dropLabel: '不要采用参考背景', element: pick('reference', 'background') },
+  const roleFallback = (role: 'sku' | 'reference') => elements.find((element) => element.source_role === role)
+  const selectedBySlot = (slot: NonNullable<DecisionOption['promptSlot']>) => selections.find((selection) => {
+    const metadata = selection.metadata ?? {}
+    return metadata.prompt_slot === slot || selection.element_id === `fixed:${slot}` || selection.element_key === slot
+  })
+
+  const configs: Array<{ slot: NonNullable<DecisionOption['promptSlot']>; title: string; keepLabel: string; dropLabel: string; fallbackLabel: string; element?: DeconstructionElementDTO; fallback?: DeconstructionElementDTO }> = [
+    { slot: 'sku_product', title: '要不要保留 SKU 原图里的产品主体？', keepLabel: '要，保留 SKU 产品主体', dropLabel: '不要使用 SKU 产品主体', fallbackLabel: '以 SKU 原图整体识别结果为准', element: pick('sku', 'product'), fallback: roleFallback('sku') },
+    { slot: 'sku_background', title: '要不要保留 SKU 原图里的背景？', keepLabel: '要，保留 SKU 背景', dropLabel: '不要，改换 SKU 背景', fallbackLabel: '以 SKU 原图整体识别结果为准', element: pick('sku', 'background'), fallback: roleFallback('sku') },
+    { slot: 'reference_product', title: '要不要把参考素材里的产品元素带入画面？', keepLabel: '要，参考产品元素进入画面', dropLabel: '不要使用参考产品元素', fallbackLabel: '以参考素材整体识别结果为准', element: pick('reference', 'product'), fallback: roleFallback('reference') },
+    { slot: 'reference_background', title: '要不要采用参考素材里的背景/场景？', keepLabel: '要，采用参考背景场景', dropLabel: '不要采用参考背景', fallbackLabel: '以参考素材整体识别结果为准', element: pick('reference', 'background'), fallback: roleFallback('reference') },
   ]
-  if (configs.some((item) => !item.element)) return []
-  const firstPending = configs.findIndex((item) => !item.element?.confirmed && !item.element?.decision && !item.element?.selected)
+
+  if (!configs.some((item) => item.element || item.fallback)) return []
+  const firstPending = configs.findIndex((item) => !selectedBySlot(item.slot))
   const activeIndex = firstPending >= 0 ? firstPending : 0
+
   return configs.map((item, idx) => {
-    const element = item.element!
-    const valueText = element.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.description ?? element.value.value ?? element.value) : elementLabel(element)
-    const selectedOptionId = element.decision ? `${element.id}:${element.decision}` : (element.selected ? `${element.id}:keep` : undefined)
+    const element = item.element ?? item.fallback
+    const stepId = `fixed:${item.slot}`
+    const selection = selectedBySlot(item.slot)
+    const selectedDecision = selection?.decision === 'drop' ? 'drop' : selection?.decision ? 'keep' : undefined
+    const valueText = element?.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.description ?? element.value.value ?? element.value) : (element ? elementLabel(element) : item.fallbackLabel)
+    const selectedOptionId = selectedDecision ? `${stepId}:${selectedDecision}` : undefined
     const options: DecisionOption[] = [
-      { id: `${element.id}:keep`, label: item.keepLabel, description: valueText, icon: '✓', semanticAction: 'keep', dimension: item.slot.includes('background') ? 'background' : 'product_fact', promptSlot: item.slot, fixedPromptQuestion: true, confidence: normalizeConfidence(element.confidence) },
-      { id: `${element.id}:drop`, label: item.dropLabel, description: valueText, icon: '–', semanticAction: 'drop', dimension: item.slot.includes('background') ? 'background' : 'product_fact', promptSlot: item.slot, fixedPromptQuestion: true, confidence: normalizeConfidence(element.confidence) },
+      { id: `${stepId}:keep`, label: item.keepLabel, description: valueText, icon: '✓', semanticAction: 'keep', dimension: item.slot.includes('background') ? 'background' : 'product_fact', promptSlot: item.slot, fixedPromptQuestion: true, confidence: normalizeConfidence(element?.confidence) },
+      { id: `${stepId}:drop`, label: item.dropLabel, description: valueText, icon: '–', semanticAction: 'drop', dimension: item.slot.includes('background') ? 'background' : 'product_fact', promptSlot: item.slot, fixedPromptQuestion: true, confidence: normalizeConfidence(element?.confidence) },
     ]
     return {
-      id: element.id,
+      id: stepId,
       stepNumber: idx + 1,
       title: item.title,
       description: valueText,
       options,
       selectedOptionId,
-      status: (selectedOptionId || element.confirmed ? 'completed' : idx === activeIndex ? 'active' : 'pending') as 'pending' | 'active' | 'completed',
+      status: (selectedOptionId ? 'completed' : idx === activeIndex ? 'active' : 'pending') as 'pending' | 'active' | 'completed',
     }
   })
 }
@@ -1102,6 +1138,47 @@ export async function updateAttentionDecision(productId: string, elementId: stri
     return
   }
   const stage = await getStageView(productId)
+  if (elementId.startsWith('fixed:') && option?.promptSlot) {
+    const slot = option.promptSlot
+    const sourceRole = slot.includes('sku') ? 'sku' : 'reference'
+    const element = (stage.deconstruction_elements ?? []).find((item) => item.source_role === sourceRole)
+    const existing = stage.intent_spec?.selections ?? []
+    const nextSelections = existing.filter((selection) => {
+      const metadata = selection.metadata ?? {}
+      return metadata.prompt_slot !== slot && selection.element_id !== elementId && selection.element_key !== slot
+    })
+    nextSelections.push({
+      element_id: elementId,
+      element_type: slot.includes('background') ? 'background' : 'product_fact',
+      element_key: slot,
+      decision,
+      label: option.label,
+      value: { description: option.description || option.label },
+      metadata: {
+        fixed_prompt_question: true,
+        prompt_slot: slot,
+        source_role: sourceRole,
+        source_element_id: element?.id,
+        semantic_action: option.semanticAction ?? decision,
+      },
+    })
+    await request(`${VWF}/${stage.session_id || stage.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        intent_spec: {
+          ...(stage.intent_spec ?? {}),
+          schema_version: stage.intent_spec?.schema_version ?? 'v1',
+          product_id: productId,
+          selections: nextSelections,
+          metadata: {
+            ...(stage.intent_spec?.metadata ?? {}),
+            updated_from: 'prep-fixed-four-questions',
+          },
+        },
+      }),
+    })
+    return
+  }
   await request(`${VWF}/${stage.session_id || stage.id}/deconstruction-elements/${elementId}`, {
     method: 'PATCH',
     body: JSON.stringify({
