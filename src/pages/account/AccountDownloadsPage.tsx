@@ -53,7 +53,6 @@ export default function AccountDownloadsPage() {
     () => (searchParams.get('productIds') ?? '').split(',').map(item => item.trim()).filter(Boolean),
     [searchParams],
   )
-  const missionSource = searchParams.get('source')
   const { t } = useTranslation()
   const [downloads, setDownloads] = useState<DownloadRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -126,12 +125,12 @@ export default function AccountDownloadsPage() {
       {/* Header */}
       <div className={`${inProductCenter ? 'rounded-[32px]' : 'rounded-3xl'} relative mx-auto flex max-w-[1500px] flex-col gap-4 border border-white/10 bg-[#080b11]/92 p-6 shadow-[0_28px_90px_rgba(0,0,0,0.45)] ring-1 ring-cyan-300/5 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between`}>
         <motion.div variants={itemVariants}>
-          {inProductCenter ? <div className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200/65">Delivery Station · DownloadRecord inspector</div> : null}
+          {inProductCenter ? <div className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200/65">交付中心 · 下载记录</div> : null}
           <h1 className="text-2xl font-semibold tracking-tight text-white">{inProductCenter ? '交付中心' : t('account.downloads.title')}</h1>
           <p className="mt-1.5 text-sm text-white/50">{inProductCenter ? '导出任务队列、下载追踪、包完整性校验、交付链路' : t('account.downloads.subtitle')}</p>
           {contextProductIDs.length > 0 ? (
             <div className="mt-3 rounded-2xl border border-amber-300/20 bg-amber-300/10 px-3 py-2 text-xs text-amber-100">
-              Mission handoff: showing DownloadRecord matches for {contextProductIDs.length} SKU from {missionSource || 'product-center'}; download buttons still require real downloadable=true.
+              当前共关联 {contextProductIDs.length} 个 SKU；只有文件准备完成后才会启用下载按钮。
             </div>
           ) : null}
           <div className="mt-4 flex flex-wrap gap-2">
@@ -170,17 +169,17 @@ export default function AccountDownloadsPage() {
               ['可下载', `${downloads.filter(item => item.downloadable).length}`],
               ['处理中', `${downloads.filter(item => item.status === 'generating' || item.status === 'pending').length}`],
               ['失败', `${downloads.filter(item => item.status === 'failed').length}`],
-              ['Contract needed', `${downloads.filter(item => !item.downloadable && item.status !== 'generating' && item.status !== 'pending' && item.status !== 'failed').length}`],
+              ['暂不可用', `${downloads.filter(item => !item.downloadable && item.status !== 'generating' && item.status !== 'pending' && item.status !== 'failed').length}`],
             ].map(([label, value]) => <span key={label} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-white/65">{label} <b className="text-cyan-100">{value}</b></span>)}
-            <span className="ml-auto rounded-full border border-cyan-300/18 bg-cyan-300/[0.08] px-3 py-1.5 text-xs text-cyan-100/75">真实导出 API: GET /api/v1/ecommerce/downloads/:id/content</span>
+            <span className="ml-auto rounded-full border border-cyan-300/18 bg-cyan-300/[0.08] px-3 py-1.5 text-xs text-cyan-100/75">可下载的交付文件会在这里统一管理</span>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {['全部','可下载','处理中','失败','Contract needed'].map((chip, index) => <button key={chip} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${index === 0 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-white/45'}`}>{chip}</button>)}
+            {['全部','可下载','处理中','失败','暂不可用'].map((chip, index) => <button key={chip} className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${index === 0 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-white/45'}`}>{chip}</button>)}
           </div>
 
           <section className="overflow-hidden rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 shadow-[0_20px_70px_rgba(0,0,0,0.36)]">
-            <div className="border-b border-white/[0.06] px-5 py-4"><h2 className="text-sm font-semibold text-white/85">导出任务队列 — {filteredDownloads.length} 条记录</h2><p className="mt-1 text-xs text-white/40">只有 DownloadRecord.downloadable=true 的记录启用下载；发布到 marketplace 仍 contract-needed。</p></div>
+            <div className="border-b border-white/[0.06] px-5 py-4"><h2 className="text-sm font-semibold text-white/85">导出任务队列 — {filteredDownloads.length} 条记录</h2><p className="mt-1 text-xs text-white/40">可下载的记录会启用下载按钮；暂不支持的平台发布会保持关闭。</p></div>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[980px] text-left text-sm"><thead className="bg-white/[0.035] text-[11px] uppercase tracking-[0.12em] text-white/35"><tr><th className="px-4 py-3">任务 ID</th><th className="px-4 py-3">SKU / 标题</th><th className="px-4 py-3">平台 / 站点 / 语言</th><th className="px-4 py-3">状态</th><th className="px-4 py-3">可下载</th><th className="px-4 py-3">创建时间</th><th className="px-4 py-3">操作</th></tr></thead>
               <tbody className="divide-y divide-white/[0.06]">{loading ? <tr><td colSpan={7} className="px-4 py-10 text-center text-white/40"><LoaderCircle className="mx-auto h-5 w-5 animate-spin" /></td></tr> : filteredDownloads.length ? filteredDownloads.map(item => <tr key={item.id} className="text-white/65 hover:bg-white/[0.025]"><td className="px-4 py-3 font-mono text-cyan-100/72">{item.id}</td><td className="px-4 py-3"><div className="font-semibold text-white/82">{item.productTitle || item.productSKU || item.id}</div><div className="font-mono text-xs text-white/38">{item.productSKU || item.productId}</div></td><td className="px-4 py-3">{item.platform} / {item.site || '—'} / {item.locale || '—'}</td><td className="px-4 py-3"><span className={`rounded-full border px-2 py-0.5 text-xs ${item.status === 'succeeded' ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-200' : item.status === 'failed' ? 'border-rose-300/25 bg-rose-300/10 text-rose-200' : 'border-amber-300/25 bg-amber-300/10 text-amber-200'}`}>{item.status}</span></td><td className="px-4 py-3">{item.downloadable ? <span className="text-emerald-200">✓ Yes</span> : <span className="text-white/35">✕ No</span>}</td><td className="px-4 py-3">{new Date(item.createdAt).toLocaleString()}</td><td className="px-4 py-3"><button onClick={() => handleDownload(item)} disabled={!item.downloadable || downloadingId === item.id} className="rounded-lg bg-cyan-200 px-3 py-1.5 text-xs font-bold text-[#05070b] disabled:cursor-not-allowed disabled:bg-white/[0.05] disabled:text-white/25">{item.downloadable ? '下载' : '下载禁用'}</button></td></tr>) : <tr><td colSpan={7} className="px-4 py-10 text-center text-white/40">暂无导出任务。</td></tr>}</tbody></table>
@@ -188,8 +187,8 @@ export default function AccountDownloadsPage() {
           </section>
 
           <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5"><div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">包预览 / Package Preview</div><div className="mb-4 flex gap-2">{['文件','Manifest','追踪','错误'].map((tab, index) => <span key={tab} className={`rounded-full border px-3 py-1 text-xs ${index === 0 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-white/45'}`}>{tab}</span>)}</div><div className="space-y-2">{(filteredDownloads[0]?.assets || []).slice(0,5).map(asset => <div key={asset.relationId} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-sm"><span className="text-white/65">{asset.fileName || asset.assetRole}</span><span className="text-white/35">{asset.mimeType || 'asset'}</span></div>)}{!filteredDownloads[0]?.assets?.length ? <div className="rounded-2xl border border-dashed border-white/10 p-5 text-sm text-white/42">选择/生成导出包后展示文件、manifest、checksum 和素材清单。</div> : null}</div></div>
-            <aside className="rounded-[28px] border border-amber-300/18 bg-amber-300/[0.06] p-5 text-xs leading-6 text-amber-100/78"><div className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-amber-100">HONEST CONTRACT NOTE</div><p>Delivery Station shows export queue and package preview only. No marketplace publish. Route handoff requires channel contract. Download button enabled only for rows marked downloadable=true and backed by the real content API.</p></aside>
+            <div className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5"><div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">包预览</div><div className="mb-4 flex gap-2">{['文件','素材','追踪','错误'].map((tab, index) => <span key={tab} className={`rounded-full border px-3 py-1 text-xs ${index === 0 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-white/45'}`}>{tab}</span>)}</div><div className="space-y-2">{(filteredDownloads[0]?.assets || []).slice(0,5).map(asset => <div key={asset.relationId} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-sm"><span className="text-white/65">{asset.fileName || asset.assetRole}</span><span className="text-white/35">{asset.mimeType || 'asset'}</span></div>)}{!filteredDownloads[0]?.assets?.length ? <div className="rounded-2xl border border-dashed border-white/10 p-5 text-sm text-white/42">选择/生成导出包后展示文件、素材清单和校验信息。</div> : null}</div></div>
+            <aside className="rounded-[28px] border border-amber-300/18 bg-amber-300/[0.06] p-5 text-xs leading-6 text-amber-100/78"><div className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-amber-100">交付说明</div><p>这里展示导出队列和包预览。平台发布暂未开放；只有已生成且可下载的记录会启用下载按钮。</p></aside>
           </section>
         </motion.section>
       ) : null}
@@ -378,11 +377,11 @@ export default function AccountDownloadsPage() {
             <h2 className="text-sm font-medium text-slate-200">Package preview tabs / tracking drawer</h2>
             <p className="mt-1 text-xs text-slate-400">{t('account.downloads.trace.subtitle')}</p>
             <div className="mt-3 flex gap-2 text-[11px]">
-              {['Manifest', 'Assets', 'Precheck'].map(tab => (
-                <span key={tab} className={`rounded-full border px-2.5 py-1 ${tab === 'Manifest' ? 'border-cyan-300/25 bg-cyan-300/10 text-cyan-100' : 'border-white/10 bg-white/5 text-white/45'}`}>{tab}</span>
+              {['文件', '素材', '检查'].map(tab => (
+                <span key={tab} className={`rounded-full border px-2.5 py-1 ${tab === '文件' ? 'border-cyan-300/25 bg-cyan-300/10 text-cyan-100' : 'border-white/10 bg-white/5 text-white/45'}`}>{tab}</span>
               ))}
             </div>
-            <div className="mt-3 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-[11px] leading-5 text-amber-100/75">Precheck modal contract: download stays disabled unless DownloadRecord.downloadable=true and packageUrl/file payload exists.</div>
+            <div className="mt-3 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-[11px] leading-5 text-amber-100/75">下载按钮只会在文件准备完成后启用。</div>
           </div>
           <div className="flex-1 divide-y divide-white/5 overflow-y-auto custom-scrollbar">
             {filteredDownloads.slice(0, 8).length ? filteredDownloads.slice(0, 8).map((item) => (

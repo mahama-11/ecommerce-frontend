@@ -14,9 +14,7 @@ const HomePage = lazy(() => import('@/pages/HomePage'))
 const PricingPage = lazy(() => import('@/pages/PricingPage'))
 const SolutionDetailPage = lazy(() => import('@/pages/SolutionDetailPage'))
 const ToolPage = lazy(() => import('@/pages/ToolPage'))
-const ProductAiWorkspacePage = lazy(() => import('@/pages/ToolPage').then(module => ({ default: module.ProductScopedToolPage })))
 const BatchListingPage = lazy(() => import('@/pages/BatchListingPage'))
-const ProductVisualToolsPage = lazy(() => import('@/pages/ProductVisualToolsPage'))
 const AboutUsPage = lazy(() => import('@/pages/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('@/pages/HelpCenterPage'))
 const ContactPage = lazy(() => import('@/pages/ContactPage'))
@@ -121,6 +119,7 @@ export const router = createBrowserRouter([
       { index: true, element: <S><HomePage /></S> },
       { path: 'home', element: <S><HomePage /></S> },
       { path: 'pricing', element: <S><PricingPage /></S> },
+      { path: 'solutions', element: <S><SolutionDetailPage /></S> },
       { path: 'solutions/:slug', element: <S><SolutionDetailPage /></S> },
       { path: 'aboutus', element: <S><AboutUsPage /></S> },
       { path: 'help', element: <S><HelpCenterPage /></S> },
@@ -171,18 +170,23 @@ export const router = createBrowserRouter([
     { path: 'workbench/downloads', element: <S><AccountDownloadsPage /></S> },
     { path: ':productId/ai/:toolSlug', element: <Navigate to="/products/:productId/production/prep" replace /> },
   ]),
-  // Inventory Module — 库存管理 (dev bypass: no RequireAuth)
+  // Inventory Module — 库存中心，属于登录后的业务工作区
   {
     path: '/inventory',
-    element: <S><InventoryLayout /></S>,
+    element: <S><RequireAuth /></S>,
     children: [
-      { index: true, element: <S><InventoryDashboardPage /></S> },
-      { path: 'replenishment', element: <S><InventoryReplenishmentPage /></S> },
-      { path: 'products', element: <S><InventoryProductManagePage /></S> },
-      { path: 'inbound', element: <S><InventoryInboundPage /></S> },
-      { path: 'alerts', element: <S><InventoryAlertsPage /></S> },
-      { path: 'analysis', element: <S><InventoryAnalysisPage /></S> },
-      { path: 'settings', element: <S><InventorySettingsPage /></S> },
+      {
+        element: <S><InventoryLayout /></S>,
+        children: [
+          { index: true, element: <S><InventoryDashboardPage /></S> },
+          { path: 'replenishment', element: <S><InventoryReplenishmentPage /></S> },
+          { path: 'products', element: <S><InventoryProductManagePage /></S> },
+          { path: 'inbound', element: <S><InventoryInboundPage /></S> },
+          { path: 'alerts', element: <S><InventoryAlertsPage /></S> },
+          { path: 'analysis', element: <S><InventoryAnalysisPage /></S> },
+          { path: 'settings', element: <S><InventorySettingsPage /></S> },
+        ],
+      },
     ],
   },
   // V2 Production Pipeline (intent-driven)

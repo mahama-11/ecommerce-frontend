@@ -84,6 +84,8 @@ export type DecisionOption = {
   confidence?: number
   semanticAction?: 'keep' | 'replace' | 'drop' | 'crop'
   dimension?: 'lighting' | 'material' | 'background' | 'composition' | 'color' | 'effect' | 'crop' | 'product_fact' | 'reference_strategy' | 'other'
+  promptSlot?: 'sku_product' | 'sku_background' | 'reference_product' | 'reference_background'
+  fixedPromptQuestion?: boolean
   cropHint?: { x: number; y: number; width: number; height: number }
 }
 

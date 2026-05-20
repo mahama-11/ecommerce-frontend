@@ -19,6 +19,8 @@ const en = {
   },
   nav: {
     products: 'Products',
+    workbench: 'Workbench',
+    inventoryDemo: 'Inventory Center',
     solutions: 'Solutions',
     pricing: 'Pricing',
     aboutUs: 'About Us',
@@ -78,6 +80,12 @@ const en = {
       quick_entry_title: 'Quick Entry',
       quick_entry_products: 'SKU Queue',
       quick_entry_queue_hint: 'Manage SKUs / Check status',
+      quick_entry_product_center: 'Product Center',
+      quick_entry_product_center_hint: 'Manage SKUs / Check status',
+      quick_entry_template_market: 'Template Market',
+      quick_entry_template_market_hint: 'Reuse templates / Start faster',
+      quick_entry_inventory_demo: 'Inventory Center',
+      quick_entry_inventory_demo_hint: 'Manage inventory overview, replenishment, and alerts',
     },
     marquee: {
       sellers_trust: 'Trusted by Sellers',

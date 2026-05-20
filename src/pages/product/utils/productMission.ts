@@ -116,69 +116,69 @@ export function deriveMissionWorkUnit(product: ProductListItem): MissionWorkUnit
     },
     {
       key: 'commercial',
-      label: 'Commercial/quota gate',
+      label: '商业/额度检查',
       state: 'commercial-gate',
-      detail: 'Product list cannot infer quota or commercial entitlement; route to commercial review when needed.',
+      detail: '商品列表无法判断额度和商业状态；需要时请进入商业审核。',
     },
   ]
 
-  contractNotes.push('Product list status is derived only from backend asset/listing/export fields.')
-  contractNotes.push('Delivery downloadability is not claimed here; verify in Delivery Station.')
-  contractNotes.push('Commercial/quota state is not guessed from SKU list.')
+  contractNotes.push('商品列表只展示素材、Listing 和导出状态，不推断隐藏状态。')
+  contractNotes.push('是否可下载请进入交付中心确认。')
+  contractNotes.push('商业额度状态需要进入审核页确认。')
 
-  let blocker = 'Ready for operator handoff.'
+  let blocker = '可以交给运营继续处理。'
   let nextBestAction: NextBestAction = {
     label: 'Open Mission Detail',
     station: 'detail',
     href: `/products/${product.id}`,
     state: 'available',
-    helper: 'Inspect full SKU record and existing real product contracts.',
+    helper: '查看完整商品资料和当前可用状态。',
   }
 
   if (product.status === 'archived') {
-    blocker = 'SKU is archived; production actions are disabled until reviewed.'
+    blocker = 'SKU 已归档，复核前不能继续生产。'
     nextBestAction = {
-      label: 'Review Commercial Gate',
+      label: '复核商业状态',
       station: 'commercial',
       href: `/products/${product.id}`,
       state: 'commercial-gate',
-      helper: 'Archived/commercial state requires explicit operator review.',
+      helper: '归档或商业状态需要运营明确复核。',
     }
   } else if (product.assetStatus !== 'ready' || !product.hasPrimaryAsset) {
-    blocker = product.assetStatus === 'partial' ? 'Visual set is partial; primary/role coverage is incomplete.' : 'Visual assets are missing.'
+    blocker = product.assetStatus === 'partial' ? '素材还不完整，主图或角色覆盖不足。' : '缺少视觉素材。'
     nextBestAction = {
-      label: 'Route to Visual Station',
+      label: '进入视觉生产',
       station: 'visual',
       href: `/products/${encodeURIComponent(product.id)}/production/prep`,
       state: 'available',
-      helper: '打开真实生产准备流程；列表页不承诺生成成功。'
+      helper: '打开生产准备流程，补齐图片解析和选择。'
     }
   } else if (product.listingStatus !== 'ready') {
-    blocker = product.listingStatus === 'partial' ? 'Listing exists but still needs validation/adoption.' : 'Listing copy/version is missing.'
+    blocker = product.listingStatus === 'partial' ? 'Listing 已存在，但还需要校验或采纳。' : '缺少 Listing 文案或版本。'
     nextBestAction = {
       label: '进入 Listing 配置',
       station: 'listing',
       href: `/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=product-center`,
       state: 'available',
-      helper: '进入 Listing 配置；版本创建/采用由真实后端接口执行。'
+      helper: '进入 Listing 配置，创建或采纳可用版本。'
     }
   } else if (product.exportStatus === 'pending') {
-    blocker = 'Export package is not confirmed ready from list data.'
+    blocker = '导出包还没有确认准备完成。'
     nextBestAction = {
-      label: 'Open Export Handoff',
+      label: '打开导出交接',
       station: 'detail',
       href: `/products/${product.id}`,
       state: 'partial',
-      helper: 'Use Product Detail export contracts; do not claim downloadable delivery here.',
+      helper: '进入商品详情检查导出条件。',
     }
   } else {
-    blocker = 'Package may be ready; downloadability must be verified from DownloadRecord.'
+    blocker = '导出包可能已准备好，请进入交付中心确认是否可下载。'
     nextBestAction = {
-      label: 'Route to Delivery Station',
+      label: '进入交付中心',
       station: 'delivery',
       href: `/products/workbench/downloads?productIds=${encodeURIComponent(product.id)}&source=mission-control`,
       state: 'contract-needed',
-      helper: 'Delivery Station owns real DownloadRecord.downloadable checks.',
+      helper: '在交付中心确认文件是否已经准备好。',
     }
   }
 

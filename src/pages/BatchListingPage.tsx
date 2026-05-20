@@ -586,7 +586,7 @@ export default function BatchListingPage() {
             <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.32)]">
               <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">DRAFT 预览 — {previewProduct?.skuCode || '未选择'}</div>
               <div className="mb-4 flex flex-wrap gap-2">{['标题','五点描述','描述','平台适配','校验'].map((tab, index) => <span key={tab} className={`rounded-full border px-3 py-1 text-xs ${index === 0 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-white/45'}`}>{tab}</span>)}</div>
-              {previewDraft ? <div className="rounded-2xl border border-white/[0.06] bg-black/20 p-5"><h2 className="text-xl font-semibold leading-snug text-white/92">{previewDraft.title || 'Untitled Product'}</h2><p className="mt-2 text-sm text-white/45">Draft title generated from parsed_info + base_info keywords. Score: 82/100.</p><div className="mt-4 flex flex-wrap gap-2">{previewDraft.keywords.slice(0, 6).map(keyword => <span key={keyword} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs text-white/55">{keyword}</span>)}</div></div> : <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-white/42">选择 SKU 后显示草稿预览。</div>}
+              {previewDraft ? <div className="rounded-2xl border border-white/[0.06] bg-black/20 p-5"><h2 className="text-xl font-semibold leading-snug text-white/92">{previewDraft.title || 'Untitled Product'}</h2><p className="mt-2 text-sm text-white/45">草稿标题根据图片解析和基础关键词生成。评分：82/100。</p><div className="mt-4 flex flex-wrap gap-2">{previewDraft.keywords.slice(0, 6).map(keyword => <span key={keyword} className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-xs text-white/55">{keyword}</span>)}</div></div> : <div className="rounded-2xl border border-dashed border-white/10 p-5 text-sm text-white/42">选择一个 SKU 后预览批量生成草稿。</div>}
             </section>
 
             <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.32)]">
@@ -607,7 +607,7 @@ export default function BatchListingPage() {
             </div>
             <div className="rounded-[28px] border border-rose-300/16 bg-rose-300/[0.045] p-5">
               <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-rose-100/70">Validation Rail</div>
-              <div className="space-y-3 text-xs leading-5"><div className="rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-rose-100/72">BLOCKER: 素材不完整的 SKU 不能创建可导出版本。</div><div className="rounded-2xl border border-amber-300/18 bg-amber-300/[0.06] p-3 text-amber-100/72">WARNING: 标题长度、平台字段映射需要在创建前校验。</div><div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3 text-white/50">INFO: batch create/adopt 已接真实后端 API；marketplace publish 仍 contract-needed。</div></div>
+              <div className="space-y-3 text-xs leading-5"><div className="rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-rose-100/72">提醒：素材不完整的 SKU 不能创建可导出版本。</div><div className="rounded-2xl border border-amber-300/18 bg-amber-300/[0.06] p-3 text-amber-100/72">注意：标题长度、平台字段映射需要在创建前校验。</div><div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3 text-white/50">批量创建/采纳已可使用；平台发布暂未开放。</div></div>
             </div>
 
           </aside>

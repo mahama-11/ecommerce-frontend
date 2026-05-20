@@ -21,7 +21,7 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
   )
 }
 
-function PriorityBadge({ qty, current, safe }: { qty: number; current: number; safe: number }) {
+function PriorityBadge({ current, safe }: { current: number; safe: number }) {
   const ratio = current / safe
   const cls = ratio < 0.5 ? 'bg-red-400/15 text-red-300' : ratio < 0.7 ? 'bg-amber-400/15 text-amber-300' : 'bg-emerald-400/15 text-emerald-300'
   const label = ratio < 0.5 ? '高' : ratio < 0.7 ? '中' : '低'
@@ -35,7 +35,7 @@ function PriorityBadge({ qty, current, safe }: { qty: number; current: number; s
 
 export default function InventoryReplenishmentPage() {
   const { t } = useTranslation()
-  const { currentCalc, calculating, calculateReplenishment, clearCurrentCalc } = useInventoryStore()
+  const { calculating, calculateReplenishment, clearCurrentCalc } = useInventoryStore()
 
   const [csvText, setCsvText] = useState('')
   const [safeStockDays] = useState(15)
@@ -60,7 +60,7 @@ export default function InventoryReplenishmentPage() {
   }, [])
 
   // 执行计算
-  const handleCalculate = async (rows?: ReplenishmentRow[]) => {
+  const handleCalculate = async (_rows?: ReplenishmentRow[]) => {
     const result = await calculateReplenishment(safeStockDays, replenishFactor, period)
     setCalcResult(result)
   }
@@ -294,7 +294,7 @@ AMZ-KEY-200,机械键盘 RGB,30,420,45,0,60`)
                         <td className="px-4 py-3 text-right font-mono text-white/60">{Math.ceil(targetStock)}</td>
                         <td className={`px-4 py-3 text-right font-mono font-bold ${row.suggestedQty > 0 ? 'text-[#ffb84d]' : 'text-white/40'}`}>{row.suggestedQty}</td>
                         <td className="px-4 py-3 text-center">
-                          <PriorityBadge qty={row.suggestedQty} current={row.currentStock} safe={Math.ceil(row.avgDailySales * safeStockDays)} />
+                          <PriorityBadge current={row.currentStock} safe={Math.ceil(row.avgDailySales * safeStockDays)} />
                         </td>
                       </tr>
                     )

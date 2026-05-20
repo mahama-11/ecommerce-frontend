@@ -89,6 +89,14 @@ export const useInventoryStore = create<InventoryState>((set, get) => ({
 
   filter: { ...DEFAULT_FILTER },
 
+  loadingStats: false,
+  loadingProducts: false,
+  loadingAlerts: false,
+  loadingInbound: false,
+  loadingSales: false,
+  loadingSettings: false,
+  calculating: false,
+
   // 筛选操作
   setFilter: (partial) => {
     set(state => ({

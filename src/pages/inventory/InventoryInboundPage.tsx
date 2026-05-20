@@ -5,7 +5,6 @@
 
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Truck, Package } from 'lucide-react'
 import { useInventoryStore } from '@/store/inventoryStore'
 
 function StatusBadge({ status }: { status: string }) {

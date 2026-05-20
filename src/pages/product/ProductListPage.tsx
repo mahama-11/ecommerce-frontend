@@ -361,7 +361,7 @@ function ProductListPage() {
             <span className="text-sm text-white/50">已选 {selectedUnits.length} 个 SKU</span>
             <button disabled className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-1.5 text-xs font-semibold text-white/25">批量 Adopt</button>
             <Link to={selectedUnits.length ? `/products/workbench/downloads?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>查看交付历史</Link>
-            <span className="text-xs text-white/34">真实后端未接的批量动作保持 disabled / contract-needed。</span>
+            <span className="text-xs text-white/34">暂未开放的批量动作会保持不可点击。</span>
           </div>
         </motion.section>
 
