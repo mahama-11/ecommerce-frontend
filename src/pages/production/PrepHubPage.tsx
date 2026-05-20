@@ -860,6 +860,10 @@ export default function PrepHubPage() {
       : '可以开始解析。'
   const parsingBlocked = parsing?.status === 'failed' || Boolean(parsingPoll.error)
   const parsingBlockerMessage = parsingPoll.error || parsing?.thirdPartyResult?.error || (!dualTrackReady && hasSources ? dualTrackBlocker : undefined)
+  const lowConfidenceAttributes = (parsing?.mergedAttributes ?? []).filter((attribute) => attribute.confidence <= 0.2 || String(attribute.value || '').includes('暂不直接展示原始 JSON'))
+  const parsingQualityWarning = parsing?.status === 'succeeded' && lowConfidenceAttributes.length > 0
+    ? `图片识别已返回，但有 ${lowConfidenceAttributes.length} 项可信度较低，请核对四问说明后再继续。`
+    : null
   const attributeDecisionByKey = useMemo(() => {
     const decisions = new Map<string, AttentionDecision>()
     const put = (key: string | undefined, decision: AttentionDecision) => {
@@ -1005,6 +1009,24 @@ export default function PrepHubPage() {
                   <p className="mt-0.5 text-[10px] text-cyan-100/55">图片正在识别中，完成后会自动更新中间选择和右侧属性。</p>
                 </div>
               </div>
+            </div>
+          )}
+          {parsingBlocked && parsingBlockerMessage && (
+            <div className="rounded-xl border border-rose-300/25 bg-rose-400/[0.08] px-4 py-3 text-xs leading-relaxed text-rose-100">
+              <div className="mb-1 flex items-center gap-2 font-semibold">
+                <AlertCircle className="h-4 w-4" />
+                图片识别未完成
+              </div>
+              <p className="text-rose-100/75">{parsingBlockerMessage}</p>
+            </div>
+          )}
+          {parsingQualityWarning && (
+            <div className="rounded-xl border border-amber-300/25 bg-amber-400/[0.08] px-4 py-3 text-xs leading-relaxed text-amber-100">
+              <div className="mb-1 flex items-center gap-2 font-semibold">
+                <AlertCircle className="h-4 w-4" />
+                识别结果需要核对
+              </div>
+              <p className="text-amber-100/75">{parsingQualityWarning}</p>
             </div>
           )}
 

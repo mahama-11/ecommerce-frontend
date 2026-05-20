@@ -84,6 +84,7 @@ type DeconstructionJobDTO = {
   runtime_job_id?: string
   status: string
   stage?: string
+  stage_message?: string
   progress?: number
   unavailable_reason?: string
   error_code?: string
@@ -707,12 +708,17 @@ function stageToParsing(stage: StageViewDTO): DualTrackParsing {
     : attributes.length > 0
       ? 'succeeded'
       : 'idle'
+  const job = stage.deconstruction_job
+  const failureText = job?.error_message
+    || (job?.error_code ? `图片识别失败：${job.error_code}` : undefined)
+    || (status === 'failed' && job?.stage_message ? job.stage_message : undefined)
+    || stage.runtime_capability_error?.message
   const result = {
     track: 'third_party' as const,
     status,
     attributes,
     parsedAt: stage.updated_at,
-    error: stage.deconstruction_job?.error_message || stage.runtime_capability_error?.message,
+    error: failureText,
   }
   return {
     status,
