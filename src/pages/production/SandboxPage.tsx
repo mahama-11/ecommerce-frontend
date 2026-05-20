@@ -35,15 +35,16 @@ import type {
   StrategySummary,
   ParsingSource,
   ProductionFanoutTask,
+  ImageGenerationProviderCode,
 } from '@/types/production'
 import type { PromptPlanSummary } from '@/services/production'
 
 // ─── Static Data ─────────────────────────────────────────────
 
 const MODEL_OPTIONS: ModelOption[] = [
-  { id: 'pro-v6', name: 'Pro-v6', label: 'Pro-v6（推荐）', description: '更精细的细节，更稳定的风格还原能力', costPerImage: 10, recommended: true },
-  { id: 'basic-v4', name: 'Basic-v4', label: 'Basic-v4', description: '更快的生成速度，适合批量预览', costPerImage: 4 },
-  { id: 'sdxl-turbo', name: 'SDXL-Turbo', label: 'SDXL-Turbo', description: '极速生成，适合快速迭代', costPerImage: 2 },
+  { id: 'comfyui-bridge', name: 'ComfyUI Bridge', label: '默认稳定模式', description: '适合正式生产，出图质量和稳定性优先', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' },
+  { id: 'gemini-pro-image', name: 'Gemini Pro Image', label: '高质量创意模式', description: '适合需要更强图片理解和编辑能力的场景', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' },
+  { id: 'gemini-flash-image', name: 'Gemini Flash Image', label: '快速预览模式', description: '适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' },
 ]
 
 const RESOLUTION_OPTIONS: ResolutionOption[] = [
@@ -61,8 +62,6 @@ const TEMPLATES: SceneTemplate[] = [
 
 const SAMPLING_OPTIONS = ['DPM++ 2M Karras', 'Euler a', 'DPM++ SDE Karras', 'Euler', 'DDIM', 'UniPC']
 
-const KEYWORD_PATTERNS = ['水珠效果', '背景更暗', '金属质感', '增加光影', '暖色调', '冷色调', '景深效果', '虚化背景', '高对比度', '柔和光线']
-
 const SCENE_TAG_OPTIONS = ['主图', '海报', '使用图', '细节图', '对比图']
 
 function defaultDetailRequirement(sceneTag: string): string {
@@ -72,6 +71,24 @@ function defaultDetailRequirement(sceneTag: string): string {
   if (sceneTag.includes('细节') || sceneTag === 'detail') return '突出材质、纹理、接口或关键工艺，避免主体变形'
   if (sceneTag.includes('对比') || sceneTag === 'comparison') return '左右/前后对比清晰，差异点明确，信息层级干净'
   return '围绕当前槽位目标生成，保持 SKU 一致性和可商用画面质量'
+}
+
+function templateDifferentiationRequirement(template: SceneTemplate, sceneTag?: string): string {
+  const rules = template.compositionRules.length > 0 ? template.compositionRules.join('；') : '按模板构图规则执行'
+  const platform = template.platform ? `平台：${template.platform}` : '平台：通用'
+  return [
+    `模板：${template.name}`,
+    `模板类别：${template.category} / ${sceneTag || template.category}`,
+    `画幅：${template.aspectRatio}`,
+    platform,
+    `模板目标：${template.description}`,
+    `构图规则：${rules}`,
+  ].join('；')
+}
+
+function buildSlotDetailRequirement(template: SceneTemplate, sceneTag?: string, slotDetail?: string): string {
+  const detail = (slotDetail || defaultDetailRequirement(sceneTag || template.category)).trim()
+  return `${templateDifferentiationRequirement(template, sceneTag)}；槽位要求：${detail}`
 }
 
 function userSummaryText(value: unknown): string {
@@ -88,6 +105,113 @@ function userSummaryText(value: unknown): string {
     .replace(/scene_generation/gi, '场景生成')
     .replace(/background_replace/gi, '背景替换')
     .replace(/image_enhancement/gi, '图片增强')
+}
+
+function readString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function readObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+}
+
+function stripMarkdownJsonFence(value: string): string {
+  return value
+    .replace(/```json\s*/gi, '')
+    .replace(/```/g, '')
+    .trim()
+}
+
+function isRawDeconstructionPayload(value: string): boolean {
+  const text = stripMarkdownJsonFence(value)
+  if (!text) return false
+  if (/deconstruction_elements|source_reference_id|element_type|element_key/.test(text)) return true
+  try {
+    const parsed = JSON.parse(text)
+    return Boolean(parsed && typeof parsed === 'object' && ('deconstruction_elements' in parsed || 'source_reference_id' in parsed))
+  } catch {
+    return false
+  }
+}
+
+function cleanPromptText(value: unknown): string {
+  const text = readString(value)
+  if (!text || isRawDeconstructionPayload(text)) return ''
+  return stripMarkdownJsonFence(text)
+}
+
+function displayPlanText(value: unknown): string {
+  if (value == null) return ''
+  if (typeof value === 'string') {
+    if (isRawDeconstructionPayload(value)) return '图片解析结果已返回，但不是可直接展示的出图文案。'
+    return value.trim()
+  }
+  if (Array.isArray(value)) {
+    const parts = value.map(displayPlanText).filter(Boolean)
+    return parts.join('、')
+  }
+  if (typeof value === 'object') {
+    const obj = readObject(value)
+    for (const key of ['generation_prompt', 'final_prompt', 'positive_prompt', 'creative_brief', 'prompt', 'summary', 'description']) {
+      const text = displayPlanText(obj[key])
+      if (text && !text.includes('不是可直接展示')) return text
+    }
+    if ('deconstruction_elements' in obj || 'source_reference_id' in obj) return '图片解析结果已返回，但不是可直接展示的出图文案。'
+    const parts = Object.entries(obj)
+      .filter(([key]) => !/deconstruction|source_reference|element_|runtime|生成服务/i.test(key))
+      .slice(0, 3)
+      .map(([key, item]) => `${key}: ${typeof item === 'object' ? '已配置' : String(item)}`)
+    return parts.join('；')
+  }
+  return String(value)
+}
+
+function promptPlanGenerationPrompt(plan: PromptPlanSummary | null): string {
+  const variables = readObject(plan?.variables)
+  for (const key of ['composed_prompt_text', 'generation_prompt', 'final_prompt', 'positive_prompt', 'creative_brief', 'prompt']) {
+    const text = cleanPromptText(variables[key])
+    if (text) return text
+  }
+  return ''
+}
+
+function promptPlanKeywords(plan: PromptPlanSummary | null): string[] {
+  const variables = readObject(plan?.variables)
+  const raw = variables.style_keywords
+  return Array.isArray(raw) ? raw.map((item) => readString(item)).filter(Boolean) : []
+}
+
+function promptPlanFieldSummary(plan: PromptPlanSummary | null, key: string): string {
+  const variables = readObject(plan?.variables)
+  const value = variables[key]
+  if (!value) return '未返回'
+  const text = displayPlanText(value)
+  return text || '已配置'
+}
+
+function promptPlanBlockerText(plan: PromptPlanSummary | null): string {
+  const blocker = plan?.blockers?.find(item => item.target === 'prompt_plan' || item.target === 'prompt_planner')
+    ?? plan?.blockers?.find(item => item.target === 'deconstruction_job' || item.target === 'source_references')
+    ?? plan?.blockers?.[0]
+  if (!blocker) {
+    if (plan?.status && !['ready', 'unknown'].includes(plan.status)) return '出图方案还在整理中。请稍等片刻，或点击「生成/刷新出图方案」重新确认。'
+    return '还没有生成出图方案。请先点击「生成/刷新出图方案」；如果按钮不可点，请回到生产准备页，完成图片解析和选择。'
+  }
+  const code = String(blocker.code || '').toUpperCase()
+  if (code.includes('DECONSTRUCTION') || blocker.target === 'deconstruction_job') return '图片还没有解析完成。请回到生产准备页，确认图片识别结果，并完成保留、替换或排除的选择。'
+  if (code.includes('INTENT_SPEC')) return '还没有形成清晰的出图方向。请先在生产准备页确认图片属性和选择。'
+  if (code.includes('DUAL_TRACK_SOURCE')) return '素材还不完整。请在生产准备页至少上传商品图和参考图，并完成解析。'
+  if (code.includes('CAPABILITY') || blocker.target === 'runtime_capabilities') return '图片生成服务暂时繁忙。请稍后再试。'
+  if (code.includes('CONTRACT') || blocker.target === 'prompt_plan') return '出图方案还没准备好。请先点击「生成/刷新出图方案」，等待整理完成后再开始生产。'
+  return '出图方案暂时不可用。请检查生产准备页是否已完成，或稍后重试。'
+}
+
+function promptPlanStatusText(plan: PromptPlanSummary | null): string {
+  if (!plan) return '还没有生成出图方案。请先点击「生成/刷新出图方案」。'
+  if (plan.status === 'ready' && plan.promptId) return '出图方案已准备好，可以开始生产。'
+  if (['blocked', 'failed', 'contract_needed'].includes(plan.status)) return promptPlanBlockerText(plan)
+  if (plan.status === 'processing' || plan.status === 'pending' || plan.status === 'created') return '大模型正在整理出图方案，通常需要 1-2 分钟。'
+  return promptPlanBlockerText(plan)
 }
 
 // ─── Mock Strategy Summary (will come from Prep Hub in real flow) ───
@@ -195,14 +319,6 @@ function WireframePreview({ template, index }: { template: SceneTemplate; index:
 
 // ─── Keyword Recognition ─────────────────────────────────────
 
-function recognizeKeywords(text: string): string[] {
-  const found: string[] = []
-  KEYWORD_PATTERNS.forEach((kw) => {
-    if (text.includes(kw)) found.push(kw)
-  })
-  return found
-}
-
 // ─── Section Card Wrapper ────────────────────────────────────
 
 function SectionCard({
@@ -250,9 +366,8 @@ export default function SandboxPage() {
     selectedResolution,
     advancedParams,
     advancedExpanded,
-    diyPrompt,
-    recognizedKeywords,
     strategySummary,
+    diyPrompt,
     setProductId,
     addAssetTask,
     removeAssetTask,
@@ -262,9 +377,8 @@ export default function SandboxPage() {
     setSelectedResolution,
     setAdvancedParams,
     setAdvancedExpanded,
-    setDiyPrompt,
-    setRecognizedKeywords,
     setStrategySummary,
+    setDiyPrompt,
     setIntents,
     setIsRunning,
     reset,
@@ -273,6 +387,7 @@ export default function SandboxPage() {
   const [executing, setExecuting] = useState(false)
   const [promptPlanning, setPromptPlanning] = useState(false)
   const [promptPlan, setPromptPlan] = useState<PromptPlanSummary | null>(null)
+  const [promptPlanNotice, setPromptPlanNotice] = useState<string | null>(null)
   const [executionNotice, setExecutionNotice] = useState<string | null>(null)
   const [executionProgress, setExecutionProgress] = useState<number | null>(null)
   const [executionPhase, setExecutionPhase] = useState<'idle' | 'waiting' | 'ready' | 'failed'>('idle')
@@ -313,7 +428,7 @@ export default function SandboxPage() {
         setStrategySummary({
           overview: intents.length > 0
             ? intents.map((intent) => userSummaryText(intent.description)).join('；')
-            : '还没有可用于生成的 LLM 策略。请先回到生产准备，完成解析属性确认和 LLM 决策树选择。',
+            : '还没有可用于生成的策略输入。请先回到生产准备，完成解析属性确认和 Keep/Replace/Drop 选择。',
           attributes: intents.map((intent) => ({
             key: intent.id,
             label: userSummaryText(intent.type),
@@ -326,7 +441,7 @@ export default function SandboxPage() {
         if (cancelled) return
         setIntents([])
         setStrategySummary({
-          overview: '暂时没有读取到 LLM 策略内容。请先回到生产准备，完成解析属性确认和 LLM 决策树选择。',
+          overview: '暂时没有读取到策略输入内容。请先回到生产准备，完成解析属性确认和 Keep/Replace/Drop 选择。',
           attributes: [],
         })
       })
@@ -359,30 +474,44 @@ export default function SandboxPage() {
   const runPromptPlanner = async () => {
     if (!productId) return
     setPromptPlanning(true)
+    setPromptPlanNotice('正在整理出图方案，完成后会在这里展示新的出图要求和关键参数。')
     try {
       const job = await productionApi.requestPromptPlanner(productId, { marketplace: 'amazon', locale: 'zh-CN', promptVariables: { source: 'sandbox-prompt-diff' } })
       toast.showToast(job.runtimeJobId ? '已开始整理本次出图方案。' : '已刷新出图方案。', 'success')
       let latest: PromptPlanSummary | null = null
-      for (let i = 0; i < 24; i += 1) {
-        await new Promise(resolve => setTimeout(resolve, 2500))
+      const maxPromptPlanPolls = 90
+      for (let i = 0; i < maxPromptPlanPolls; i += 1) {
+        await new Promise(resolve => setTimeout(resolve, i === 0 ? 1000 : 1500))
         latest = await productionApi.getPromptPlanSummary(productId)
         setPromptPlan(latest)
-        if (latest.source === 'llm_prompt_planner' || latest.status === 'blocked') break
+        if (latest.status === 'ready' && latest.promptId) {
+          setPromptPlanNotice(`出图方案已准备好：${promptPlanGenerationPrompt(latest) || '已整理好本次出图要求'}。确认图片和槽位后即可开始生产。`)
+          break
+        }
+        if (['blocked', 'failed', 'contract_needed'].includes(latest.status)) {
+          setPromptPlanNotice('出图方案暂时不可用，请回到生产准备补齐图片解析或选择。')
+          break
+        }
+        const waitedSeconds = Math.round(i === 0 ? 1 : 1 + i * 1.5)
+        setPromptPlanNotice(`大模型正在整理出图方案… 已等待 ${waitedSeconds} 秒，通常需要 1-2 分钟。完成前不会点亮生产按钮。`)
+      }
+      if (latest && !(latest.status === 'ready' && latest.promptId) && !['blocked', 'failed', 'contract_needed'].includes(latest.status)) {
+        const finalLatest = await productionApi.getPromptPlanSummary(productId)
+        setPromptPlan(finalLatest)
+        if (finalLatest.status === 'ready' && finalLatest.promptId) {
+          setPromptPlanNotice(`出图方案已准备好：${promptPlanGenerationPrompt(finalLatest) || '已整理好本次出图要求'}。确认图片和槽位后即可开始生产。`)
+        } else {
+          setPromptPlanNotice('出图方案还在大模型队列中；可以稍后刷新，系统不会在结果不明确时点亮生产按钮。')
+        }
       }
     } catch (e) {
-      toast.showToast(e instanceof Error ? e.message : '生成出图方案失败，请稍后重试。', 'error')
+      const message = e instanceof Error ? e.message : '生成出图方案失败，请稍后重试。'
+      setPromptPlanNotice(message)
+      toast.showToast(message, 'error')
     } finally {
       setPromptPlanning(false)
     }
   }
-
-  // Recognize keywords when DIY prompt changes
-  useEffect(() => {
-    const keywords = recognizeKeywords(diyPrompt)
-    if (JSON.stringify(keywords) !== JSON.stringify(recognizedKeywords)) {
-      setRecognizedKeywords(keywords)
-    }
-  }, [diyPrompt, recognizedKeywords, setRecognizedKeywords])
 
   // Credit calculation
   const creditBreakdown = useMemo(() => {
@@ -425,7 +554,7 @@ export default function SandboxPage() {
         templateName: template.name,
         slotIndex,
         sceneTag: slot.sceneTag,
-        detailRequirement: slot.detailRequirement || defaultDetailRequirement(slot.sceneTag || template.category),
+        detailRequirement: buildSlotDetailRequirement(template, slot.sceneTag, slot.detailRequirement),
         negativeRequirement: slot.negativeRequirement || advancedParams.negativePrompt,
         status: 'pending',
         progress: 0,
@@ -439,11 +568,6 @@ export default function SandboxPage() {
     (templateId: string) => TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0],
     [],
   )
-
-  // Handlers
-  const handleDiyChange = (value: string) => {
-    setDiyPrompt(value)
-  }
 
   const adjustImageCount = (delta: number) => {
     setImageCount(Math.max(1, Math.min(10, imageCount + delta)))
@@ -473,11 +597,15 @@ export default function SandboxPage() {
   const executeProduction = async () => {
     if (!productId) return
     if (store.intents.length === 0) {
-      toast.showToast('还没有可用于生成的策略。请先完成生产准备里的图片解析和选择。', 'error')
+      const message = '还不能开始生产：卡在策略输入。请先回到生产准备，完成图片解析结果确认和 Keep/Replace/Drop 选择。'
+      toast.showToast(message, 'error')
+      setExecutionNotice(message)
+      setExecutionProgress(null)
+      setExecutionPhase('failed')
       return
     }
     if (!promptPlan || promptPlan.status !== 'ready' || !promptPlan.promptId) {
-      const message = '请先点击左侧「生成/刷新出图方案」，等方案状态变为“可用于生产”后再开始生产。'
+      const message = `还不能开始生产：${promptPlanStatusText(promptPlan)}`
       toast.showToast(message, 'error')
       setExecutionNotice(message)
       setExecutionProgress(null)
@@ -492,14 +620,14 @@ export default function SandboxPage() {
     try {
       const selectedIntentIds = store.intents.map((intent) => intent.id)
       if (fanoutTasks.length === 0) {
-        toast.showToast('没有可提交的输入图片 × 模板任务。请先在 Prep 上传 SKU 图片并选择模板槽位。', 'error')
+        toast.showToast('没有可提交的出图槽位。请先在 Prep 上传 SKU 图片并生成出图方案。', 'error')
         setExecutionPhase('failed')
         setIsRunning(false)
         return
       }
       const batch = await productionApi.executeFanoutIntents(productId, selectedIntentIds, fanoutTasks, {
         ...(store.executionConfig ?? {
-          provider: 'comfyui' as const,
+          provider: 'comfyui_bridge' as const,
           maxConcurrency: 1,
           retryOnFailure: true,
           maxRetries: 2,
@@ -507,46 +635,53 @@ export default function SandboxPage() {
         }),
         providerConfig: {
           ...(store.executionConfig?.providerConfig ?? {}),
-          model_id: selectedModel,
+          generation_provider_code: (currentModel?.providerCode ?? 'comfyui_bridge') satisfies ImageGenerationProviderCode,
+          model_id: currentModel?.modelId ?? selectedModel,
+          ui_model_option_id: selectedModel,
           resolution_id: currentResolution?.id,
           dimensions: currentResolution?.dimensions,
           fanout_total: fanoutTasks.length,
-          task_slots: taskSlots.map((asset, index) => ({
+          task_slots: fanoutTasks.map((task, index) => ({
             index,
-            asset_task_id: asset.id,
-            scene_tag: asset.sceneTag,
-            source_id: asset.sourceId,
-            template_id: asset.templateId,
-            detail_requirement: asset.detailRequirement,
-            negative_requirement: asset.negativeRequirement || advancedParams.negativePrompt,
+            asset_task_id: task.id,
+            scene_tag: task.sceneTag,
+            source_id: task.sourceId,
+            template_id: task.templateId,
+            template_name: task.templateName,
+            detail_requirement: task.detailRequirement,
+            negative_requirement: task.negativeRequirement || advancedParams.negativePrompt,
           })),
+          prompt_composer: {
+            diy_prompt_text: diyPrompt,
+            negative_prompt_text: advancedParams.negativePrompt,
+          },
         },
       })
       setFanoutTasksState(batch.tasks)
-      toast.showToast(`已提交 ${batch.totalTasks} 个真实生产任务，正在等待结果返回。`, 'success')
-      setExecutionNotice(`已按任务配额提交 ${batch.totalTasks} 个真实任务；多张输入图会按槽位轮转分配。结果返回前不会展示占位图。`)
+      toast.showToast(`已提交 ${batch.totalTasks} 个生产任务，正在等待结果返回。`, 'success')
+      setExecutionNotice(`已按任务配额提交 ${batch.totalTasks} 个生成任务；系统使用生产准备中的商品图作为输入。结果返回前不会展示占位图。`)
       for (let attempt = 0; attempt < 80; attempt += 1) {
         await new Promise(resolve => setTimeout(resolve, attempt === 0 ? 1200 : 3000))
         const latest = await productionApi.getFanoutBatchStatus(productId, batch)
         setFanoutTasksState(latest.tasks)
         setExecutionProgress(latest.totalTasks > 0 ? Math.round(((latest.completedTasks + latest.failedTasks) / latest.totalTasks) * 100) : 0)
-        setExecutionNotice(`已完成 ${latest.completedTasks}/${latest.totalTasks}，失败 ${latest.failedTasks}。真实结果返回后进入工坊。`)
+        setExecutionNotice(`已完成 ${latest.completedTasks}/${latest.totalTasks}，失败 ${latest.failedTasks}。结果返回后进入工坊。`)
         if (latest.completedTasks + latest.failedTasks >= latest.totalTasks) {
           if (latest.completedTasks > 0) {
             setExecutionPhase('ready')
             setIsRunning(false)
-            toast.showToast(`已有 ${latest.completedTasks} 个真实结果返回，正在进入工坊。`, 'success')
+            toast.showToast(`已有 ${latest.completedTasks} 个结果返回，正在进入工坊。`, 'success')
             navigate(`/products/${productId}/production/workshop`)
           } else {
             setExecutionPhase('failed')
             setIsRunning(false)
-            toast.showToast('本次 fan-out 任务没有成功结果，系统未展示占位图。', 'error')
+            toast.showToast('本次批量任务没有成功结果，系统未展示占位图。', 'error')
           }
           return
         }
       }
       setExecutionPhase('waiting')
-      setExecutionNotice('生产仍在进行中，暂时还没有真实结果返回。系统会停留在本页，不展示占位图；你可以稍后刷新或进入工坊查看是否已返回。')
+      setExecutionNotice('生产仍在进行中，暂时还没有结果返回。系统会停留在本页，不展示占位图；你可以稍后刷新或进入工坊查看是否已返回。')
     } catch (e) {
       const message = e instanceof Error ? e.message : '提交失败，请稍后重试。'
       toast.showToast(message, 'error')
@@ -568,12 +703,13 @@ export default function SandboxPage() {
   const hasRunnableIntents = store.intents.length > 0
   const promptPlanReady = promptPlan?.status === 'ready' && Boolean(promptPlan.promptId)
   const canStartProduction = hasRunnableIntents && promptPlanReady && fanoutTasks.length > 0 && !executing
+  const promptPlanBlocker = promptPlanStatusText(promptPlan)
   const startProductionBlocker = !hasRunnableIntents
-    ? '先回到生产准备，完成解析属性确认和 LLM 决策树选择。'
+    ? '先回到生产准备，完成图片解析结果确认和取舍选择。'
     : !promptPlanReady
-      ? '先点击左侧「生成/刷新出图方案」，等方案状态变为“可用于生产”。'
+      ? promptPlanBlocker
       : fanoutTasks.length === 0
-        ? '请选择至少一张输入图片和一个模板槽位。'
+        ? '请先在 Prep 上传至少一张 SKU 图片。'
         : '可以开始生产。'
   const promptPlanSourceLabel = promptPlan?.source === 'llm_prompt_planner'
     ? '已按你的选择整理'
@@ -587,6 +723,13 @@ export default function SandboxPage() {
       : promptPlan?.status
         ? '整理中'
         : '未知'
+  const generationPromptText = promptPlanGenerationPrompt(promptPlan)
+  const promptKeywords = promptPlanKeywords(promptPlan)
+  const productionReadinessItems = [
+    { label: '策略输入', ok: hasRunnableIntents, detail: hasRunnableIntents ? `${store.intents.length} 条已确认` : '还没有可生成的选择' },
+    { label: '出图方案', ok: promptPlanReady, detail: promptPlanReady ? '已准备好' : promptPlanBlocker },
+    { label: '出图槽位', ok: fanoutTasks.length > 0, detail: fanoutTasks.length > 0 ? `${fanoutTasks.length} 个任务` : '等待 Prep 图片' },
+  ]
 
   return (
     <div className="mx-auto max-w-[1440px] px-5 py-6">
@@ -613,14 +756,14 @@ export default function SandboxPage() {
         {/* ─── Left Column (3 cols) ────────────────────────── */}
         <div className="space-y-5 lg:col-span-3">
           {/* 1. Strategy Summary */}
-          <SectionCard title="LLM 策略摘要" subtitle="来自生产准备的动态选择">
+          <SectionCard title="策略输入摘要" subtitle="来自 Prep 图片解析与 Keep/Replace/Drop 选择">
             {strategySummary ? (
               <div className="space-y-4">
                 {/* Overview */}
                 <div className="rounded-xl border border-white/[0.04] bg-white/[0.015] p-3">
                   <div className="mb-1.5 flex items-center gap-1.5">
                     <Sparkles className="h-3 w-3 text-amber-400/60" />
-                    <span className="text-[10px] font-medium text-white/40">Prompt 输入概览</span>
+                    <span className="text-[10px] font-medium text-white/40">出图要求概览</span>
                   </div>
                   <p className="text-[11px] leading-relaxed text-white/50">
                     {strategySummary.overview}
@@ -677,10 +820,37 @@ export default function SandboxPage() {
                   <span>准备状态</span>
                   <span>{promptPlanStatusLabel}</span>
                 </div>
+                {!promptPlanReady && (
+                  <div className="mt-2 rounded-md border border-amber-300/10 bg-amber-300/[0.04] px-2 py-1.5 leading-relaxed text-amber-100/75">
+                    下一步：{promptPlanBlocker}
+                  </div>
+                )}
                 {promptPlan?.promptId && (
                   <div className="mt-1 truncate text-white/30">方案已保存，可用于本次生产</div>
                 )}
               </div>
+              {promptPlanNotice && (
+                <div className="rounded-lg border border-cyan-300/15 bg-cyan-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-cyan-100/75" aria-live="polite">
+                  {promptPlanNotice}
+                </div>
+              )}
+              {promptPlanReady && (
+                <div className="space-y-2 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.045] p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-semibold text-emerald-100/80">本次出图要求</p>
+                    <span className="rounded-full bg-emerald-300/10 px-2 py-0.5 text-[9px] text-emerald-100/55">已准备好</span>
+                  </div>
+                  <p className="rounded-lg bg-black/25 p-2 text-[10px] leading-relaxed text-white/75">
+                    {generationPromptText || '出图要求已整理完成。'}
+                  </p>
+                  <div className="grid grid-cols-1 gap-2 text-[9px] text-white/42">
+                    <div><span className="text-white/28">风格关键词：</span>{promptKeywords.length ? promptKeywords.join('、') : '未返回'}</div>
+                    <div><span className="text-white/28">背景：</span>{promptPlanFieldSummary(promptPlan, 'background')}</div>
+                    <div><span className="text-white/28">光线：</span>{promptPlanFieldSummary(promptPlan, 'lighting')}</div>
+                    <div><span className="text-white/28">构图：</span>{promptPlanFieldSummary(promptPlan, 'composition')}</div>
+                  </div>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={runPromptPlanner}
@@ -688,11 +858,16 @@ export default function SandboxPage() {
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-[11px] font-medium text-cyan-200 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {promptPlanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                {promptPlanning ? '正在整理出图方案...' : '生成/刷新出图方案'}
+                {promptPlanning ? '正在整理出图方案...' : hasRunnableIntents ? '生成/刷新出图方案' : '先完成 Prep 后生成方案'}
               </button>
+              {!hasRunnableIntents && (
+                <div className="rounded-lg border border-amber-300/15 bg-amber-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-amber-100/75">
+                  生成方案按钮不可用：请先回到生产准备页，完成图片解析并确认至少一条选择。
+                </div>
+              )}
               {!promptPlanReady && (
                 <div className="rounded-lg border border-amber-300/15 bg-amber-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-amber-100/75">
-                  这是开始生产前的必做步骤：先生成出图方案，系统会把生产准备里的选择整理成可执行要求。完成后右下角“开始生产”才会变为可用。
+                  {promptPlanBlocker}
                 </div>
               )}
               <div className="space-y-2 rounded-lg border border-white/[0.04] bg-black/20 p-3">
@@ -714,62 +889,12 @@ export default function SandboxPage() {
             </div>
           </SectionCard>
 
-          {/* 2. DIY Extra Requirements */}
-          <SectionCard title="额外生成要求">
-            <div className="space-y-3">
-              <p className="text-[10px] leading-relaxed text-white/25">
-                可输入对本次生成的额外要求，例如：增加水珠效果、背景更暗、突出产品重量感等...
-              </p>
-              <textarea
-                value={diyPrompt}
-                onChange={(e) => handleDiyChange(e.target.value)}
-                rows={4}
-                placeholder="输入额外要求..."
-                className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] text-white placeholder:text-white/15 outline-none transition focus:border-cyan-400/30"
-              />
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] text-white/20">
-                  {diyPrompt.length}/500
-                </span>
-                {recognizedKeywords.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => { setDiyPrompt(''); setRecognizedKeywords([]) }}
-                    className="text-[9px] text-white/20 hover:text-white/40"
-                  >
-                    清空
-                  </button>
-                )}
-              </div>
-
-              {/* Recognized Keywords */}
-              {recognizedKeywords.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  className="space-y-1.5"
-                >
-                  <span className="text-[9px] text-white/30">已识别关键词：</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {recognizedKeywords.map((kw) => (
-                      <span
-                        key={kw}
-                        className="rounded-md bg-cyan-400/8 px-2 py-0.5 text-[10px] text-cyan-400/70"
-                      >
-                        {kw}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          </SectionCard>
         </div>
 
         {/* ─── Center Column (6 cols) ──────────────────────── */}
         <div className="space-y-5 lg:col-span-6">
           {/* 3. Task Allocation */}
-          <SectionCard title="任务配额与出图槽位" subtitle="任务配额=槽位数；每个槽位可指定图类型、输入图和细节要求">
+          <SectionCard title="任务配额与出图槽位" subtitle="任务配额=槽位数；源图沿用 Prep 中已解析的 SKU 图片">
             <div className="space-y-4">
               {/* Image Count */}
               <div className="flex items-center gap-4">
@@ -795,39 +920,14 @@ export default function SandboxPage() {
                     <Plus className="h-3 w-3" />
                   </button>
                 </div>
-                <span className="text-[9px] text-white/20">最多支持 10 个槽位；1 个槽位 = 1 个 runtime 任务</span>
-              </div>
-
-              {/* Source image selection */}
-              <div className="rounded-xl border border-cyan-400/10 bg-cyan-400/[0.03] p-3">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-[10px] font-medium text-cyan-100/70">输入图片（{selectedSourceIds.length || 0}）</span>
-                  <span className="text-[9px] text-white/25">真实 fan-out：任务配额 = {fanoutTasks.length} 个 runtime 任务</span>
-                </div>
-                {sourceOptions.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {sourceOptions.map((source) => {
-                      const active = selectedSourceIds.includes(source.id)
-                      return (
-                        <button
-                          key={source.id}
-                          type="button"
-                          onClick={() => setSelectedSourceIds(current => active ? current.filter(id => id !== source.id) : [...current, source.id])}
-                          className={`rounded-lg border px-2.5 py-1.5 text-[10px] transition ${active ? 'border-cyan-300/40 bg-cyan-300/10 text-cyan-100' : 'border-white/[0.06] bg-white/[0.02] text-white/35 hover:text-white/60'}`}
-                        >
-                          {source.name || source.id}
-                        </button>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-[10px] text-white/30">还没有读取到 SKU 输入图；请先回 Prep 上传/解析图片。</p>
-                )}
+                <span className="text-[9px] text-white/20">最多支持 10 个槽位；1 个槽位 = 1 张待生成图片</span>
               </div>
 
               {/* Asset Rows */}
               <div className="space-y-2">
-                {taskSlots.map((asset, idx) => (
+                {taskSlots.map((asset, idx) => {
+                  const template = getTemplate(asset.templateId)
+                  return (
                   <motion.div
                     key={asset.id}
                     initial={{ opacity: 0, x: -8 }}
@@ -845,10 +945,10 @@ export default function SandboxPage() {
                           槽位 {idx + 1} / {imageCount}
                         </span>
                         <span className="rounded bg-cyan-400/10 px-1.5 py-0.5 text-[9px] text-cyan-100/60">
-                          {fanoutTasks[idx]?.sourceName || '待选输入图'}
+                          {fanoutTasks[idx]?.sourceName ? '使用 Prep SKU 图' : '等待 Prep 图片'}
                         </span>
                       </div>
-                      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                      <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                         <label className="space-y-1">
                           <span className="text-[9px] text-white/25">图类型</span>
                           <select
@@ -859,18 +959,6 @@ export default function SandboxPage() {
                             className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus:border-cyan-400/30"
                           >
                             {SCENE_TAG_OPTIONS.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
-                          </select>
-                        </label>
-                        <label className="space-y-1">
-                          <span className="text-[9px] text-white/25">输入图</span>
-                          <select
-                            value={asset.sourceId || fanoutTasks[idx]?.sourceId || ''}
-                            onChange={(e) => ensureTaskForSlot(asset, { sourceId: e.target.value })}
-                            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus:border-cyan-400/30"
-                          >
-                            {selectedSources.map((source) => (
-                              <option key={source.id} value={source.id}>{source.name || source.id}</option>
-                            ))}
                           </select>
                         </label>
                         <label className="space-y-1">
@@ -887,6 +975,9 @@ export default function SandboxPage() {
                             ))}
                           </select>
                         </label>
+                      </div>
+                      <div className="rounded-lg border border-cyan-300/10 bg-cyan-300/[0.04] px-2.5 py-2 text-[9px] leading-relaxed text-cyan-100/65">
+                        已注入默认模板配置：{template.description}；{template.compositionRules.join('；')}；画幅 {template.aspectRatio}。
                       </div>
                       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                         <input
@@ -915,7 +1006,8 @@ export default function SandboxPage() {
                       </button>
                     )}
                   </motion.div>
-                ))}
+                  )
+                })}
               </div>
 
               {/* Add Asset */}
@@ -942,7 +1034,7 @@ export default function SandboxPage() {
             </div>
             <p className="mt-3 flex items-center gap-1 text-[9px] text-white/15">
               <Info className="h-3 w-3" />
-              本次会按「任务配额槽位」创建独立真实生产任务；每个槽位都有自己的输入图、图类型、模板和细节要求，不再做输入图 × 模板的矩阵膨胀。
+              本次会按「任务配额槽位」创建独立生成任务；源图沿用生产准备中的商品图，每个槽位只配置图类型、模板和细节要求。
             </p>
           </SectionCard>
         </div>
@@ -991,6 +1083,19 @@ export default function SandboxPage() {
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/20" />
                 </div>
+              </div>
+
+              {/* Manual Prompt */}
+              <div>
+                <label className="mb-1.5 block text-[11px] text-white/40">手动补充要求</label>
+                <textarea
+                  value={diyPrompt}
+                  onChange={(e) => setDiyPrompt(e.target.value)}
+                  rows={4}
+                  placeholder="可选，例如：更高端酒店氛围、画面更温暖、主体居中突出。"
+                  className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] leading-relaxed text-white placeholder:text-white/15 outline-none transition focus:border-cyan-400/30"
+                />
+                <p className="mt-1 text-[9px] leading-relaxed text-white/25">这段会和生产准备、模板、槽位细节一起组成“本次出图要求”。</p>
               </div>
 
               {/* Advanced Settings (Collapsible) */}
@@ -1162,9 +1267,9 @@ export default function SandboxPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-              <span className="text-[10px] text-white/30">真实任务数</span>
+              <span className="text-[10px] text-white/30">预计生成数量</span>
               <span className="text-[10px] tabular-nums text-white/50">
-                {creditBreakdown.imageCount} 个 runtime 任务
+                {creditBreakdown.imageCount} 张图片
                   </span>
                 </div>
                 <div className="border-t border-white/[0.03] pt-2">
@@ -1176,20 +1281,84 @@ export default function SandboxPage() {
                   </div>
                 </div>
               </div>
+
+              <div className={`rounded-xl border px-3 py-2.5 text-[10px] leading-relaxed ${
+                canStartProduction
+                  ? 'border-emerald-300/15 bg-emerald-300/[0.05] text-emerald-100/75'
+                  : 'border-amber-300/15 bg-amber-300/[0.055] text-amber-100/75'
+              }`}>
+                {canStartProduction
+                  ? '出图方案已准备好。点击下方按钮开始生成，结果返回后自动进入工坊。'
+                  : `开始生产前还需要：${startProductionBlocker}`}
+              </div>
+
+              <div className="space-y-1 rounded-xl border border-white/[0.04] bg-white/[0.015] p-3">
+                <p className="text-[10px] font-medium text-white/45">开始生产检查</p>
+                {productionReadinessItems.map((item) => (
+                  <div key={item.label} className="grid grid-cols-[72px_1fr] gap-2 text-[10px]">
+                    <span className={item.ok ? 'text-emerald-200/75' : 'text-amber-100/70'}>{item.ok ? '✓' : '•'} {item.label}</span>
+                    <span className="text-right leading-relaxed text-white/42">{item.detail}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!canStartProduction) {
+                    setExecutionPhase('idle')
+                    setExecutionProgress(null)
+                    setExecutionNotice(`开始生产前还需要：${startProductionBlocker}`)
+                    return
+                  }
+                  void executeProduction()
+                }}
+                disabled={executing}
+                aria-disabled={!canStartProduction}
+                title={startProductionBlocker}
+                className={`group inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition ${canStartProduction ? 'bg-gradient-to-r from-cyan-500 to-blue-500 shadow-cyan-500/10 hover:shadow-cyan-500/20' : 'border border-amber-300/20 bg-amber-300/10 text-amber-100/85 shadow-amber-500/5 hover:bg-amber-300/15'} disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                <span>{executing ? '正在出图...' : canStartProduction ? '开始生产' : '查看原因和下一步'}</span>
+              </button>
+              {!canStartProduction && !executing && (
+                <p className="text-center text-[9px] leading-relaxed text-amber-100/55">
+                  当前按钮只用于查看原因，不会提交生产任务；只有策略输入、出图方案、出图槽位全部通过后才会变成“开始生产”。
+                </p>
+              )}
+
+              {executionNotice && (
+                <div className={`rounded-xl border px-3 py-2.5 text-[10px] leading-relaxed ${
+                  executionPhase === 'ready'
+                    ? 'border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-100/80'
+                    : executionPhase === 'failed'
+                      ? 'border-rose-400/20 bg-rose-400/[0.06] text-rose-100/80'
+                      : 'border-cyan-400/20 bg-cyan-400/[0.06] text-cyan-100/80'
+                }`} aria-live="polite">
+                  <div className="flex items-center gap-2">
+                    {executionPhase === 'waiting' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    <span>{executionNotice}</span>
+                  </div>
+                  {executionProgress != null && executionPhase === 'waiting' && (
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
+                      <div
+                        className="h-full rounded-full bg-cyan-300/70 transition-all duration-500"
+                        style={{ width: `${Math.max(8, executionProgress)}%` }}
+                      />
+                    </div>
+                  )}
+                  {fanoutTasksState.length > 0 && (
+                    <div className="mt-2 text-[10px] text-white/35">
+                      批量任务：{fanoutTasksState.filter(task => task.status === 'succeeded').length}/{fanoutTasksState.length} 已返回结果
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </SectionCard>
         </div>
       </div>
 
-      <div className={`mx-auto mt-6 max-w-2xl rounded-xl border px-4 py-3 text-center text-[11px] leading-relaxed ${
-        canStartProduction
-          ? 'border-emerald-300/15 bg-emerald-300/[0.05] text-emerald-100/75'
-          : 'border-amber-300/15 bg-amber-300/[0.055] text-amber-100/75'
-      }`}>
-        {canStartProduction
-          ? '出图方案已准备好，可以开始生产。提交后会停留在本页显示进度，真实结果返回后再进入工坊。'
-          : `开始生产前还需要：${startProductionBlocker}`}
-      </div>
 
       {/* ─── Bottom Action Bar ─────────────────────────────── */}
       <motion.div
@@ -1207,51 +1376,8 @@ export default function SandboxPage() {
           返回上一步
         </button>
 
-        <button
-          type="button"
-          onClick={() => void executeProduction()}
-          disabled={!canStartProduction}
-          title={startProductionBlocker}
-          className="group inline-flex flex-1 max-w-xl items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/10 transition hover:shadow-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {executing ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Play className="h-4 w-4" />
-          )}
-          <span>
-            {executing ? '正在出图...' : promptPlanReady ? '开始生产' : '先生成出图方案'}
-          </span>
-        </button>
       </motion.div>
 
-      {executionNotice && (
-        <div className={`mx-auto mt-3 max-w-2xl rounded-xl border px-4 py-3 text-center text-[11px] leading-relaxed ${
-          executionPhase === 'ready'
-            ? 'border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-100/80'
-            : executionPhase === 'failed'
-              ? 'border-rose-400/20 bg-rose-400/[0.06] text-rose-100/80'
-              : 'border-cyan-400/20 bg-cyan-400/[0.06] text-cyan-100/80'
-        }`} aria-live="polite">
-          <div className="flex items-center justify-center gap-2">
-            {executionPhase === 'waiting' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            <span>{executionNotice}</span>
-          </div>
-          {executionProgress != null && executionPhase === 'waiting' && (
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
-              <div
-                className="h-full rounded-full bg-cyan-300/70 transition-all duration-500"
-                style={{ width: `${Math.max(8, executionProgress)}%` }}
-              />
-            </div>
-          )}
-          {fanoutTasksState.length > 0 && (
-            <div className="mt-2 text-[10px] text-white/35">
-              fan-out：{fanoutTasksState.filter(task => task.status === 'succeeded').length}/{fanoutTasksState.length} 已返回真实结果
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Summary Info Bar */}
       <motion.div
@@ -1272,9 +1398,9 @@ export default function SandboxPage() {
       <p className="mt-1 text-center text-[9px] text-white/15">
         {hasRunnableIntents
           ? promptPlanReady
-            ? '温馨提示：提交后会在本页显示出图进度；真实结果返回后再进入工坊。'
-            : '开始生产前必须先生成出图方案；这是必做步骤，不是可选操作。'
-          : '还没有可用于生成的策略，请先完成生产准备里的图片解析和选择。'}
+            ? '提交后会在本页显示进度；生成完成后再进入工坊查看结果。'
+            : '请先点击「生成/刷新出图方案」。方案整理好后，就可以开始生产。'
+          : '请先回到生产准备，完成图片解析并确认保留、替换或排除的选择。'}
       </p>
     </div>
   )

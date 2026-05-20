@@ -219,7 +219,7 @@ export const MOCK_INTENTS: CompiledIntent[] = [
 ]
 
 export const MOCK_EXECUTION_CONFIG: ExecutionConfig = {
-  provider: 'comfyui',
+  provider: 'comfyui_bridge',
   maxConcurrency: 3,
   retryOnFailure: true,
   maxRetries: 2,

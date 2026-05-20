@@ -698,7 +698,7 @@ function WeightControl({
         >
           <Save className="h-4 w-4 text-amber-200/50" />
           <span className="text-[10px] text-white/40">保存为模板</span>
-          <span className="text-[8px] text-white/20">真实结果保存</span>
+          <span className="text-[8px] text-white/20">结果保存</span>
         </button>
       </div>
     </div>
@@ -914,9 +914,9 @@ export default function WorkshopPage() {
         weightParams,
         'Workshop branch regeneration',
       )
-      toast.showToast(`已提交真实分支出图任务：${result.versionId}，等待 result asset 回调...`, 'info')
+      toast.showToast(`已提交分支出图任务：${result.versionId}，请等待结果返回。`, 'info')
       await productionApi.waitForGenerationResult(productId, result.versionId)
-      toast.showToast(`真实分支出图完成：${result.versionId}`, 'success')
+      toast.showToast(`分支出图完成：${result.versionId}`, 'success')
       const [nextVariants, nextNodes] = await Promise.all([
         productionApi.listVariants(productId),
         productionApi.listGenerationVersions(productId),
@@ -949,7 +949,7 @@ export default function WorkshopPage() {
       return
     }
     targets.forEach((variant) => handleDownload(variant))
-    toast.showToast(`已开始下载 ${targets.length} 个真实结果资产`, 'success')
+    toast.showToast(`已开始下载 ${targets.length} 个结果文件`, 'success')
   }, [selectedVariants, variants, handleDownload, toast])
 
   const handleSaveTemplate = useCallback(async () => {
@@ -1006,9 +1006,9 @@ export default function WorkshopPage() {
         'Workshop regeneration',
         'workshop_regenerate',
       )
-      toast.showToast(`已提交真实重生成任务：${result.versionId}，等待 result asset 回调...`, 'info')
+      toast.showToast(`已提交重生成任务：${result.versionId}，请等待结果返回。`, 'info')
       await productionApi.waitForGenerationResult(productId, result.versionId)
-      toast.showToast(`真实重生成完成：${result.versionId}`, 'success')
+      toast.showToast(`重生成完成：${result.versionId}`, 'success')
       const [nextVariants, nextNodes] = await Promise.all([
         productionApi.listVariants(productId),
         productionApi.listGenerationVersions(productId),

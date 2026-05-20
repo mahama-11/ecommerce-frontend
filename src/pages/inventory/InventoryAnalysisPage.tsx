@@ -10,7 +10,7 @@ import { useInventoryStore } from '@/store/inventoryStore'
 
 export default function InventoryAnalysisPage() {
   const { t } = useTranslation()
-  const { salesAnalysis, loadingSales, loadSales } = useInventoryStore()
+  const { salesAnalysis, loadSales } = useInventoryStore()
 
   useEffect(() => {
     void loadSales('30d')
@@ -85,7 +85,7 @@ export default function InventoryAnalysisPage() {
 
           {/* 简易柱状图 */}
           <div className="space-y-2">
-            {salesAnalysis.dataPoints.slice(-14).map((dp, i) => {
+            {salesAnalysis.dataPoints.slice(-14).map((dp) => {
               const max = Math.max(...salesAnalysis.dataPoints.map(d => d.sales))
               const width = max > 0 ? (dp.sales / max) * 100 : 0
               return (

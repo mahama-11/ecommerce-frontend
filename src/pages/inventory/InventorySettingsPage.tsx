@@ -11,7 +11,7 @@ import type { InventorySettings } from '@/types/inventory'
 
 export default function InventorySettingsPage() {
   const { t } = useTranslation()
-  const { settings, loadingSettings, loadSettings, saveSettings } = useInventoryStore()
+  const { settings, loadSettings, saveSettings } = useInventoryStore()
 
   const [form, setForm] = useState<InventorySettings>({
     defaultSafeStockDays: 14,

@@ -31,6 +31,7 @@ import type {
   LlmDecisionTreeResult,
   DecisionStep,
   ParsedAttribute,
+  ImageUnderstandingProviderCode,
 } from '@/types/production'
 
 // ─── Polling helper ──────────────────────────────────────────
@@ -45,18 +46,29 @@ function usePolling<T>(
   const [loading, setLoading] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const startedAtRef = useRef<number | null>(null)
+  const inFlightRef = useRef(false)
+  const fetcherRef = useRef(fetcher)
+  const shouldPollRef = useRef(shouldPoll)
+
+  useEffect(() => {
+    fetcherRef.current = fetcher
+    shouldPollRef.current = shouldPoll
+  }, [fetcher, shouldPoll])
 
   const start = useCallback(async () => {
+    if (inFlightRef.current) return
     if (!startedAtRef.current) startedAtRef.current = Date.now()
+    inFlightRef.current = true
     setLoading(true)
     setError(null)
     try {
-      const result = await fetcher()
+      const result = await fetcherRef.current()
       setData(result)
-      if (shouldPoll(result)) {
+      if (shouldPollRef.current(result)) {
         if (Date.now() - startedAtRef.current > maxDurationMs) {
-          throw new Error(`解析等待超时：后端任务未在 ${Math.round(maxDurationMs / 1000)} 秒内完成，请稍后重试或重新开始解析。`)
+          throw new Error(`图片解析等待超时：本次识别还没有完成，请稍后重试。`)
         }
+        if (timerRef.current) clearTimeout(timerRef.current)
         timerRef.current = setTimeout(() => void start(), intervalMs)
       } else {
         startedAtRef.current = null
@@ -64,13 +76,15 @@ function usePolling<T>(
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Polling error')
     } finally {
+      inFlightRef.current = false
       setLoading(false)
     }
-  }, [fetcher, shouldPoll, intervalMs, maxDurationMs])
+  }, [intervalMs, maxDurationMs])
 
   const stop = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
     startedAtRef.current = null
+    inFlightRef.current = false
   }, [])
 
   useEffect(() => stop, [stop])
@@ -377,12 +391,13 @@ function DecisionStepCard({
 
 // ─── Attribute Row (read-only display) ──────────────────────
 
-type AttentionDecision = 'keep' | 'replace' | 'drop'
+type AttentionDecision = 'keep' | 'replace' | 'drop' | 'crop'
 
 
 function decisionFromOptionId(optionId?: string): AttentionDecision | undefined {
   if (!optionId) return undefined
   if (optionId.endsWith(':drop')) return 'drop'
+  if (optionId.endsWith(':crop')) return 'crop'
   if (optionId.endsWith(':replace')) return 'replace'
   if (optionId.endsWith(':keep')) return 'keep'
   return undefined
@@ -394,11 +409,13 @@ function AttributeRow({ attr, decision }: { attr: ParsedAttribute; decision?: At
   const label = localizeAttributeLabel(attr, i18n.language)
   const value = localizeAttributeValue(attr.value, i18n.language)
   const decisionLabel = decision === 'keep'
-    ? '已纳入 LLM Prompt'
+    ? '已纳入出图要求'
     : decision === 'replace'
       ? '以当前 SKU 替换主体'
+      : decision === 'crop'
+        ? '局部/裁剪纳入出图要求'
       : decision === 'drop'
-        ? '已排除，不进入 Prompt'
+        ? '已排除，不进入出图要求'
         : '待确认取舍'
   const decisionClass = decision === 'keep'
     ? 'border-violet-300/15 bg-violet-400/10 text-violet-100/75'
@@ -449,7 +466,7 @@ export default function PrepHubPage() {
     globalDriftBias,
     setProductId,
     addSource,
-    removeSource,
+    setSources,
     setParsing,
     setDecisionTree,
     setGlobalDriftBias,
@@ -483,19 +500,24 @@ export default function PrepHubPage() {
     }
   }, [productId, sources.length, addSource])
 
+  const hydratedProductRef = useRef<string | null>(null)
   useEffect(() => {
     if (!productId || parsing || decisionTree) return
+    if (hydratedProductRef.current === productId) return
+    hydratedProductRef.current = productId
     let cancelled = false
-    productionApi.getParsingResult(productId)
-      .then(async (result) => {
+    Promise.all([
+      productionApi.getParsingResult(productId),
+      productionApi.getDecisionTree(productId),
+    ])
+      .then(([result, tree]) => {
         if (cancelled || result.status === 'idle') return
         setParsing(result)
-        if (result.status === 'succeeded') {
-          const tree = await productionApi.getDecisionTree(productId)
-          if (!cancelled && tree.status !== 'idle') setDecisionTree(tree)
-        }
+        if (result.status === 'succeeded' && tree.status !== 'idle') setDecisionTree(tree)
       })
-      .catch(() => {})
+      .catch(() => {
+        if (hydratedProductRef.current === productId) hydratedProductRef.current = null
+      })
     return () => {
       cancelled = true
     }
@@ -505,6 +527,7 @@ export default function PrepHubPage() {
   const skuInputRef = useRef<HTMLInputElement>(null)
   const refInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [understandingProvider, setUnderstandingProvider] = useState<ImageUnderstandingProviderCode>('comfyui_bridge')
 
   const handleFiles = useCallback(
     async (files: FileList | File[], sourceType: 'sku_image' | 'reference_image') => {
@@ -512,8 +535,10 @@ export default function PrepHubPage() {
       setUploading(true)
       try {
         for (const file of Array.from(files)) {
-          if (!file.type.startsWith('image/')) {
-            toast.showToast(`${file.name} is not an image`, 'error')
+          try {
+            productionApi.validateParsingSourceFile(file)
+          } catch (validationError) {
+            toast.showToast(validationError instanceof Error ? validationError.message : '图片格式或大小不符合要求', 'error')
             continue
           }
           const source = await productionApi.uploadParsingSource(productId, file, sourceType)
@@ -560,6 +585,25 @@ export default function PrepHubPage() {
     [handleFiles],
   )
 
+  const handleRemoveSource = useCallback(async (sourceId: string) => {
+    if (!productId) return
+    const target = sources.find((source) => source.id === sourceId || source.assetId === sourceId || source.sourceReferenceId === sourceId)
+    if (!target) return
+    const previous = sources
+    const next = sources.filter((source) => source.id !== sourceId && source.assetId !== sourceId && source.sourceReferenceId !== sourceId)
+    setSources(next)
+    try {
+      await productionApi.removeParsingSource(productId, target)
+      if (next.length === 0) {
+        setParsing(null)
+        setDecisionTree(null)
+      }
+    } catch (e) {
+      setSources(previous)
+      toast.showToast(e instanceof Error ? e.message : '删除图片失败，请稍后重试。', 'error')
+    }
+  }, [productId, sources, setSources, setParsing, setDecisionTree, toast])
+
   // ─── Parsing ────────────────────────────────────────────
   const parsingPoll = usePolling<DualTrackParsing>(
     () => productionApi.getParsingResult(productId!),
@@ -575,7 +619,7 @@ export default function PrepHubPage() {
     if (autoPollingProductRef.current === productId) return
     autoPollingProductRef.current = productId
     parsingPoll.start()
-  }, [productId, parsing?.status, parsingPoll])
+  }, [productId, parsing?.status, parsingPoll.error, parsingPoll.start])
 
   // ─── Dev mode: auto-fill mock sources & trigger parsing ──
   const devAutoFilled = useRef(false)
@@ -596,12 +640,13 @@ export default function PrepHubPage() {
             productId,
             sourceIds: MOCK_SOURCES.map((s) => s.id),
             tracks: ['comfyui', 'third_party'],
+            providerCode: understandingProvider,
           })
           parsingPoll.start()
         } catch { /* ignore */ }
       }, 300)
     }
-  }, [productId, sources.length, parsing, addSource, parsingPoll])
+  }, [productId, sources.length, parsing, addSource, parsingPoll, understandingProvider])
 
   const startParsing = useCallback(async () => {
     if (!productId) return
@@ -621,6 +666,7 @@ export default function PrepHubPage() {
         productId,
         sourceIds: sources.map((s) => s.id),
         tracks: ['comfyui', 'third_party'],
+        providerCode: understandingProvider,
       })
       parsingPoll.start()
     } catch (e) {
@@ -634,7 +680,7 @@ export default function PrepHubPage() {
       })
       toast.showToast(message, 'error')
     }
-  }, [productId, sources, skuSources.length, refSources.length, parsingPoll, setParsing, toast])
+  }, [productId, sources, skuSources.length, refSources.length, parsingPoll, setParsing, toast, understandingProvider])
 
   // Sync poll results into store
   useEffect(() => {
@@ -647,24 +693,26 @@ export default function PrepHubPage() {
     (d) => d.status === 'evaluating',
   )
 
-  const evaluateTree = useCallback(async () => {
-    if (!productId || !parsing?.mergedAttributes) return
-    try {
-      await productionApi.evaluateDecisionTree({
-        productId,
-        attributes: parsing.mergedAttributes,
-      })
-      treePoll.start()
-    } catch (e) {
-      toast.showToast(e instanceof Error ? e.message : 'Evaluation failed', 'error')
-    }
-  }, [productId, parsing, treePoll, toast])
-
+  const decisionHydratingProductRef = useRef<string | null>(null)
   useEffect(() => {
-    if (parsing?.status === 'succeeded' && !decisionTree) {
-      void evaluateTree()
+    if (!productId || parsing?.status !== 'succeeded' || decisionTree) {
+      if (parsing?.status !== 'succeeded') decisionHydratingProductRef.current = null
+      return
     }
-  }, [parsing?.status, decisionTree, evaluateTree])
+    if (decisionHydratingProductRef.current === productId) return
+    decisionHydratingProductRef.current = productId
+    let cancelled = false
+    productionApi.getDecisionTree(productId)
+      .then((tree) => {
+        if (!cancelled && tree.status !== 'idle') setDecisionTree(tree)
+      })
+      .catch(() => {
+        if (decisionHydratingProductRef.current === productId) decisionHydratingProductRef.current = null
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [productId, parsing?.status, decisionTree, setDecisionTree])
 
   useEffect(() => {
     if (treePoll.data) setDecisionTree(treePoll.data)
@@ -742,8 +790,10 @@ export default function PrepHubPage() {
       setSessionSelections(optimisticSelections)
       setCurrentStepIndex(nextPending >= 0 ? nextPending : Math.max(currentIdx, 0))
 
+      const currentStep = decisionTree.steps.find((step) => step.id === stepId)
+      const currentOption = currentStep?.options.find((option) => option.id === optionId)
       try {
-        await productionApi.updateAttentionDecision(productId, stepId, decision, targetAssetId)
+        await productionApi.updateAttentionDecision(productId, stepId, decision, targetAssetId, currentOption)
         const [updatedParsing, updatedTree] = await Promise.all([
           productionApi.getParsingResult(productId),
           productionApi.getDecisionTree(productId),
@@ -874,7 +924,7 @@ export default function PrepHubPage() {
             uploading={uploading}
             onDrop={onDropSku}
             onFileInput={onFileInputSku}
-            onRemove={removeSource}
+            onRemove={handleRemoveSource}
             inputRef={skuInputRef}
           />
           <UploadZone
@@ -887,7 +937,7 @@ export default function PrepHubPage() {
             uploading={uploading}
             onDrop={onDropRef}
             onFileInput={onFileInputRef}
-            onRemove={removeSource}
+            onRemove={handleRemoveSource}
             inputRef={refInputRef}
           />
 
@@ -900,6 +950,24 @@ export default function PrepHubPage() {
                 </p>
               </div>
               {dualTrackReady ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200/70" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-200/70" />}
+            </div>
+            <div className="mb-3 rounded-xl border border-white/[0.06] bg-black/20 p-3">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-semibold text-cyan-100/70">图片识别方式</span>
+                <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/35">可切换模型效果</span>
+              </div>
+              <select
+                value={understandingProvider}
+                onChange={(event) => setUnderstandingProvider(event.target.value as ImageUnderstandingProviderCode)}
+                disabled={isParsing}
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-[11px] text-white/70 outline-none transition focus:border-cyan-300/30 disabled:opacity-40"
+              >
+                <option value="comfyui_bridge">ComfyUI Bridge（默认稳定）</option>
+                <option value="gemini_visual_understanding">Gemini Flash 视觉理解（新模式）</option>
+              </select>
+              <p className="mt-1.5 text-[9px] leading-relaxed text-cyan-100/45">
+                选择不同的识别方式，可以对比图片的光影、材质和构图判断。
+              </p>
             </div>
             <button
               type="button"
@@ -923,7 +991,7 @@ export default function PrepHubPage() {
                 <Loader2 className="h-5 w-5 animate-spin text-cyan-300" />
                 <div>
                   <p className="text-xs font-semibold text-cyan-100">正在解析 SKU 与参考图</p>
-                  <p className="mt-0.5 text-[10px] text-cyan-100/55">已进入真实后端解析队列，完成后会自动更新中间决策树和右侧属性。</p>
+                  <p className="mt-0.5 text-[10px] text-cyan-100/55">图片正在识别中，完成后会自动更新中间选择和右侧属性。</p>
                 </div>
               </div>
             </div>
@@ -989,7 +1057,7 @@ export default function PrepHubPage() {
               {/* Questionnaire progress */}
               <div className="rounded-xl border border-violet-400/10 bg-violet-400/[0.04] p-3">
                 <div className="mb-2 flex items-center justify-between text-[10px]">
-                  <span className="font-medium text-violet-200/80">LLM 策略确认</span>
+                  <span className="font-medium text-violet-200/80">出图四问确认</span>
                   <span className="tabular-nums text-white/35">
                     已确认 {decisionProgress.answered} / {decisionProgress.total}，还剩 {decisionProgress.remaining} 项
                   </span>
@@ -1001,7 +1069,7 @@ export default function PrepHubPage() {
                   />
                 </div>
                 <p className="mt-2 text-[10px] leading-relaxed text-white/35">
-                  LLM 会根据 SKU 图、参考图和解析属性生成策略项；你的选择会直接影响后续 Prompt 与生成意图。选择后自动进入下一项，你也可以返回上一步修改。
+                  按四个固定问题选择“要/不要”：SKU 产品、SKU 背景、参考产品、参考背景。系统会把选择结果转成自然语言，并拼进下一步的本次出图要求。
                 </p>
                 {decisionProgress.historicalAnswered > 0 && Object.keys(sessionSelections).length === 0 && (
                   <div className="mt-3 rounded-lg border border-cyan-300/15 bg-cyan-300/[0.05] p-2.5 text-[10px] leading-relaxed text-cyan-100/70">
@@ -1132,7 +1200,7 @@ export default function PrepHubPage() {
           {parsing?.mergedAttributes.length ? (
             <div className="space-y-2">
               <div className="rounded-xl border border-emerald-400/10 bg-emerald-400/[0.035] p-3 text-[10px] leading-relaxed text-white/40">
-                这里展示双轨解析得到的属性。中间的 LLM 决策树会把每一项标记为“纳入 Prompt / 主体替换为 SKU / 不进入 Prompt”，并同步影响策略配置页的生成意图。
+                这里展示图片解析得到的 SKU 与参考素材信息。中间四问会把“要/不要”转成自然语言，并同步影响下一步出图要求。
               </div>
               <div className="space-y-1.5 max-h-[430px] overflow-y-auto pr-1 scrollbar-thin">
               {parsing.mergedAttributes.map((attr) => {

@@ -23,6 +23,8 @@ import type {
   VersionNode,
   ProductionFanoutTask,
   ProductionFanoutBatch,
+  DecisionOption,
+  DecisionStep,
 } from '@/types/production'
 import {
   isDevMode,
@@ -245,6 +247,9 @@ type StageViewDTO = VisualSession & {
 const sessionKey = (productId: string) => `ecommerce.production.visualSession.${productId}`
 const sourceKey = (productId: string) => `ecommerce.production.sources.${productId}`
 const intentKey = (productId: string) => `ecommerce.production.intents.${productId}`
+const ALLOWED_SOURCE_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+export const MAX_PARSING_SOURCE_IMAGE_BYTES = 10 * 1024 * 1024
+
 
 function getStored<T>(key: string, fallback: T): T {
   try {
@@ -270,6 +275,34 @@ function readFileAsDataURL(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error ?? new Error('Failed to read file'))
     reader.readAsDataURL(file)
   })
+}
+
+function readImageDimensions(file: File): Promise<{ width?: number; height?: number }> {
+  if (!file.type.startsWith('image/')) return Promise.resolve({})
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+    const cleanup = () => URL.revokeObjectURL(url)
+    image.onload = () => {
+      cleanup()
+      resolve({ width: image.naturalWidth || image.width, height: image.naturalHeight || image.height })
+    }
+    image.onerror = () => {
+      cleanup()
+      resolve({})
+    }
+    image.src = url
+  })
+}
+
+export function validateParsingSourceFile(file: File): void {
+  const type = file.type || 'application/octet-stream'
+  if (!ALLOWED_SOURCE_IMAGE_TYPES.has(type)) {
+    throw new Error(`${file.name} 格式暂不支持。请上传 JPG、PNG 或 WebP 图片。`)
+  }
+  if (file.size > MAX_PARSING_SOURCE_IMAGE_BYTES) {
+    throw new Error(`${file.name} 太大（${(file.size / 1024 / 1024).toFixed(1)}MB）。请压缩到 10MB 以内，建议长边 2000px 内。`)
+  }
 }
 
 function contractNeeded(message: string): never {
@@ -331,7 +364,7 @@ async function resolveProductionPromptTemplateId(locale = 'zh-CN'): Promise<stri
     .filter(item => item.id)
     .sort((a, b) => Number(b.recommendScore ?? 0) - Number(a.recommendScore ?? 0))[0]
   if (!selected?.id) {
-    contractNeeded('Template Center 没有可用的 image 模板，不能创建真实 Prompt Center 快照。')
+    contractNeeded('暂时没有可用的图片模板。请稍后重试，或先选择其他模板。')
   }
   return selected.id
 }
@@ -408,6 +441,13 @@ export type PromptPlanSummary = {
   variables: Record<string, unknown>
   metadata: Record<string, unknown>
   diff: PromptDiffSummary
+  readiness?: {
+    overall?: string
+    prompt?: string
+    generation?: string
+    blockers?: Array<{ code: string; message: string; target?: string }>
+  }
+  blockers: Array<{ code: string; message: string; target?: string }>
 }
 
 function compactDiffValue(value: unknown): string {
@@ -423,7 +463,7 @@ function humanizeDiffPath(path: unknown): string {
   const raw = String(path ?? 'change')
   const tail = raw.split('.').filter(Boolean).pop() ?? raw
   const labels: Record<string, string> = {
-    prompt_id: '提示词计划 ID',
+    prompt_id: '出图方案',
     scene_type: '场景类型',
     tool_slug: '生产工具',
     locale: '语言',
@@ -445,6 +485,8 @@ function stringifyDiffItem(item: unknown): string {
   if (typeof item === 'string') return item
   if (item && typeof item === 'object') {
     const obj = item as Record<string, unknown>
+    if (obj.field && 'value' in obj) return `${humanizeDiffPath(obj.field)}：${compactDiffValue(obj.value)}`
+    if (obj.field && ('previous_value' in obj || 'current_value' in obj)) return `${humanizeDiffPath(obj.field)}：${compactDiffValue(obj.previous_value)} → ${compactDiffValue(obj.current_value)}`
     if (obj.field || obj.from || obj.to) return `${humanizeDiffPath(obj.field)}：${compactDiffValue(obj.from)} → ${compactDiffValue(obj.to)}`
     if (obj.path && 'value' in obj) return `${humanizeDiffPath(obj.path)}：${compactDiffValue(obj.value)}`
     if (obj.path && ('previous' in obj || 'current' in obj)) return `${humanizeDiffPath(obj.path)}：${compactDiffValue(obj.previous)} → ${compactDiffValue(obj.current)}`
@@ -457,6 +499,10 @@ function promptPlanSummary(stage: StageViewDTO): PromptPlanSummary {
   const metadata = plan.metadata ?? {}
   const rawDiff = (metadata.prompt_diff ?? metadata.diff ?? {}) as Record<string, unknown>
   const toStrings = (value: unknown) => Array.isArray(value) ? value.map(stringifyDiffItem) : []
+  const promptBlockers = [
+    ...(Array.isArray(plan.blockers) ? plan.blockers : []),
+    ...(Array.isArray(stage.readiness?.blockers) ? stage.readiness.blockers.filter(blocker => !blocker.target || ['prompt_plan', 'prompt_planner', 'source_references', 'deconstruction_job', 'runtime_capabilities'].includes(blocker.target)) : []),
+  ]
   return {
     status: String(plan.status ?? 'unknown'),
     source: String(metadata.source ?? 'backend_intent_fusion'),
@@ -470,6 +516,13 @@ function promptPlanSummary(stage: StageViewDTO): PromptPlanSummary {
       changed: toStrings(rawDiff.changed),
       status: typeof rawDiff.status === 'string' ? rawDiff.status : undefined,
     },
+    readiness: stage.readiness ? {
+      overall: stage.readiness.overall,
+      prompt: stage.readiness.prompt,
+      generation: stage.readiness.generation,
+      blockers: stage.readiness.blockers,
+    } : undefined,
+    blockers: promptBlockers,
   }
 }
 
@@ -503,11 +556,11 @@ export async function ensurePromptPlanReady(productId: string, opts?: { marketpl
     latest = await getPromptPlanSummary(productId)
     if (latest.status === 'ready' && latest.promptId) return latest
     if (['blocked', 'failed', 'contract_needed'].includes(latest.status)) {
-      contractNeeded('生成方案没有拿到真实 Prompt Center 快照，不能继续出图。')
+      contractNeeded('出图方案暂时不可用，请回到生产准备页确认图片解析和选择后再试。')
     }
     await delay(1500)
   }
-  contractNeeded('生成方案等待超时，尚未拿到真实 Prompt Center 快照。')
+  contractNeeded('出图方案整理超时，请稍后刷新重试。')
 }
 
 function normalizeStatus(status?: string): 'idle' | 'parsing' | 'succeeded' | 'failed' {
@@ -544,12 +597,30 @@ function userFacingText(input: unknown): string {
     : typeof input === 'object' && input !== null
       ? JSON.stringify(input)
       : String(input ?? '')
+  const withoutFence = raw.replace(/```json\s*/gi, '').replace(/```/g, '').trim()
+  if (/deconstruction_elements|source_reference_id|element_type|element_key/.test(withoutFence)) {
+    try {
+      const parsed = JSON.parse(withoutFence)
+      if (parsed && typeof parsed === 'object') {
+        const elements = Array.isArray((parsed as Record<string, unknown>).deconstruction_elements)
+          ? ((parsed as Record<string, unknown>).deconstruction_elements as unknown[])
+          : []
+        return elements.length > 0 ? `已返回 ${elements.length} 条图片解析结果` : '图片解析结果已返回，暂未提取到可展示元素'
+      }
+    } catch {
+      return '图片解析结果已返回，暂不直接展示原始 JSON'
+    }
+  }
   return raw
     .replace(/Manifest-declared SKU visual asset; geometry analysis pending runtime image bytes/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
     .replace(/Manifest-declared SKU asset; geometry not extractable without image bytes\.?/gi, '已识别为当前商品图片；系统会在生成时以实物图为准。')
     .replace(/Requested element:\s*product geometry analysis pending visual byte ingestion for asset_[A-Za-z0-9_-]+/gi, '当前图片可以作为商品主体，但外形细节还需要在生成前再次确认。')
     .replace(/Requested element:\s*material analysis pending visual byte ingestion for asset_[A-Za-z0-9_-]+/gi, '当前图片可以作为材质参考，但具体材质还需要确认。')
     .replace(/Reference asset available:\s*asset_[A-Za-z0-9_-]+\s*\([^)]*\)\s*for comparative visual analysis/gi, '参考图已就绪，可用于对比风格、场景和构图。')
+    .replace(/Visual description/gi, '视觉描述')
+    .replace(/Provider reference description/gi, '参考图解析描述')
+    .replace(/reference_strategy/gi, '参考策略')
+    .replace(/product_fact/gi, '商品事实')
     .replace(/All visual facts unverified:.*$/gi, '当前还有部分视觉细节无法自动确认，请以你上传的商品图为准。')
     .replace(/geometry not extractable without image bytes\.?/gi, '图片细节不足，建议确认商品外形。')
     .replace(/backend/gi, '系统')
@@ -605,8 +676,12 @@ function elementToAttribute(element: DeconstructionElementDTO): ParsedAttribute 
 }
 
 function stageToParsing(stage: StageViewDTO): DualTrackParsing {
-  const status = normalizeStatus(stage.deconstruction_job?.status ?? stage.status)
   const attributes = (stage.deconstruction_elements ?? []).map(elementToAttribute)
+  const status = stage.deconstruction_job
+    ? normalizeStatus(stage.deconstruction_job.status)
+    : attributes.length > 0
+      ? 'succeeded'
+      : 'idle'
   const result = {
     track: 'third_party' as const,
     status,
@@ -624,29 +699,38 @@ function stageToParsing(stage: StageViewDTO): DualTrackParsing {
 }
 
 function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
-  const blockers = stage.readiness?.blockers ?? stage.prompt_plan?.blockers ?? []
   const selections = stage.intent_spec?.selections ?? []
   const elements = stage.deconstruction_elements ?? []
-  const visibleElements = elements.slice(0, 6)
+  const blockers = elements.length > 0 ? (stage.readiness?.blockers ?? stage.prompt_plan?.blockers ?? []) : []
+  const fixedSteps = fixedPromptQuestionSteps(elements)
+  const visibleElements = fixedSteps.length > 0 ? [] : elements.slice(0, 8)
   const activeIndex = Math.max(0, visibleElements.findIndex((element) => !element.confirmed))
-  const steps = visibleElements.map((element, idx) => ({
-    id: element.id,
-    stepNumber: idx + 1,
-    title: elementLabel(element),
-    description: element.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.description ?? element.value.value ?? element.value) : undefined,
-    options: [
-      { id: `${element.id}:keep`, label: '保留参考图效果', description: '沿用参考图里的场景、光线或氛围', confidence: normalizeConfidence(element.confidence) },
-      { id: `${element.id}:replace`, label: '换成我的商品', description: '以当前商品图为主体，参考图只作风格参考' },
-      { id: `${element.id}:drop`, label: '不采用这一项', description: '这项不进入后续生成要求' },
-    ],
-    selectedOptionId: element.decision ? `${element.id}:${element.decision}` : (element.selected ? `${element.id}:keep` : undefined),
-    status: (element.confirmed ? 'completed' : idx === activeIndex ? 'active' : 'pending') as 'pending' | 'active' | 'completed',
-  }))
+  const dynamicSteps = visibleElements.map((element, idx) => {
+    const dimension = visualDecisionDimension(element)
+    const valueText = element.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.description ?? element.value.value ?? element.value) : undefined
+    const optionLabel = valueText ? valueText.slice(0, 42) : elementLabel(element)
+    const options: DecisionOption[] = [
+      { id: `${element.id}:keep`, label: `保留${dimension.shortLabel}`, description: `把“${optionLabel}”纳入下一步出图约束`, icon: dimension.icon, confidence: normalizeConfidence(element.confidence), semanticAction: 'keep', dimension: dimension.key },
+      { id: `${element.id}:replace`, label: `调整${dimension.shortLabel}`, description: `以当前 SKU 为主体，替换或弱化该维度的参考效果`, icon: '⇄', semanticAction: 'replace', dimension: dimension.key },
+      { id: `${element.id}:crop`, label: `裁剪/局部采用${dimension.shortLabel}`, description: `只采用该属性对应的局部区域或构图线索`, icon: '✂️', semanticAction: 'crop', dimension: dimension.key, cropHint: cropHintFromElement(element) },
+      { id: `${element.id}:drop`, label: '不采用', description: '该属性不会进入本次出图要求', icon: '–', semanticAction: 'drop', dimension: dimension.key },
+    ]
+    return {
+      id: element.id,
+      stepNumber: idx + 1,
+      title: `${dimension.label} · ${elementLabel(element)}`,
+      description: valueText,
+      options,
+      selectedOptionId: element.decision ? `${element.id}:${element.decision}` : (element.selected ? `${element.id}:keep` : undefined),
+      status: (element.confirmed ? 'completed' : idx === activeIndex ? 'active' : 'pending') as 'pending' | 'active' | 'completed',
+    }
+  })
+  const steps = fixedSteps.length > 0 ? fixedSteps : dynamicSteps
   return {
     status: blockers.length > 0 ? 'failed' : (selections.length > 0 || elements.length > 0 ? 'succeeded' : 'idle'),
     root: {
       id: 'root',
-      question: '本轮视觉策略取舍',
+      question: fixedSteps.length > 0 ? '本次出图四项选择' : '本轮视觉策略取舍',
       confidence: elements.length ? elements.reduce((sum, e) => sum + normalizeConfidence(e.confidence), 0) / elements.length : 0,
       status: steps.every(step => step.status === 'completed') ? 'completed' : 'active',
       children: steps.map((step) => ({
@@ -661,11 +745,73 @@ function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
       })),
     },
     steps,
-    recommendedActions: blockers.length > 0 ? blockers.map(b => userFacingText(b.message)) : ['确认要保留哪些参考效果', '补充生成要求', '进入策略配置'],
+    recommendedActions: blockers.length > 0 ? blockers.map(b => userFacingText(b.message)) : fixedSteps.length > 0 ? ['按四个固定问题选择“要/不要”', '选择结果会转成自然语言并进入本次出图要求', '底部侧重比例会同步影响 SKU 与参考素材的权重'] : ['逐项确认光影/材质/背景/构图等关键属性', '需要局部保留时选择“调整/裁剪”', '已确认的选择会进入出图要求并驱动下一步生成'],
     overallConfidence: elements.length ? elements.reduce((sum, e) => sum + normalizeConfidence(e.confidence), 0) / elements.length : 0,
     provider: 'internal',
     evaluatedAt: stage.updated_at,
   }
+}
+
+function fixedPromptQuestionSteps(elements: DeconstructionElementDTO[]): DecisionStep[] {
+  const pick = (role: 'sku' | 'reference', kind: 'product' | 'background') => {
+    const matcher = kind === 'product'
+      ? /product|geometry|subject|main|主体|商品|产品|梳子|元素/i
+      : /background|scene|backdrop|环境|背景|场景/i
+    return elements.find((element) => element.source_role === role && matcher.test(`${element.element_type} ${element.element_key} ${element.label}`))
+  }
+  const configs: Array<{ slot: NonNullable<DecisionOption['promptSlot']>; title: string; keepLabel: string; dropLabel: string; element?: DeconstructionElementDTO }> = [
+    { slot: 'sku_product', title: '要不要保留 SKU 原图里的产品主体？', keepLabel: '要，保留 SKU 产品主体', dropLabel: '不要使用 SKU 产品主体', element: pick('sku', 'product') },
+    { slot: 'sku_background', title: '要不要保留 SKU 原图里的背景？', keepLabel: '要，保留 SKU 背景', dropLabel: '不要，改换 SKU 背景', element: pick('sku', 'background') },
+    { slot: 'reference_product', title: '要不要把参考素材里的产品元素带入画面？', keepLabel: '要，参考产品元素进入画面', dropLabel: '不要使用参考产品元素', element: pick('reference', 'product') },
+    { slot: 'reference_background', title: '要不要采用参考素材里的背景/场景？', keepLabel: '要，采用参考背景场景', dropLabel: '不要采用参考背景', element: pick('reference', 'background') },
+  ]
+  if (configs.some((item) => !item.element)) return []
+  if (new Set(configs.map((item) => item.element!.id)).size !== configs.length) return []
+  const firstPending = configs.findIndex((item) => !item.element?.confirmed)
+  const activeIndex = firstPending >= 0 ? firstPending : 0
+  return configs.map((item, idx) => {
+    const element = item.element!
+    const valueText = element.value ? userFacingText(element.value.text ?? element.value.label ?? element.value.description ?? element.value.value ?? element.value) : elementLabel(element)
+    const selectedOptionId = element.decision ? `${element.id}:${element.decision}` : (element.selected ? `${element.id}:keep` : undefined)
+    const options: DecisionOption[] = [
+      { id: `${element.id}:keep`, label: item.keepLabel, description: valueText, icon: '✓', semanticAction: 'keep', dimension: item.slot.includes('background') ? 'background' : 'product_fact', promptSlot: item.slot, fixedPromptQuestion: true, confidence: normalizeConfidence(element.confidence) },
+      { id: `${element.id}:drop`, label: item.dropLabel, description: valueText, icon: '–', semanticAction: 'drop', dimension: item.slot.includes('background') ? 'background' : 'product_fact', promptSlot: item.slot, fixedPromptQuestion: true, confidence: normalizeConfidence(element.confidence) },
+    ]
+    return {
+      id: element.id,
+      stepNumber: idx + 1,
+      title: item.title,
+      description: valueText,
+      options,
+      selectedOptionId,
+      status: (element.confirmed ? 'completed' : idx === activeIndex ? 'active' : 'pending') as 'pending' | 'active' | 'completed',
+    }
+  })
+}
+
+function visualDecisionDimension(element: DeconstructionElementDTO): { key: NonNullable<DecisionOption['dimension']>; label: string; shortLabel: string; icon: string } {
+  const raw = `${element.element_type || ''} ${element.element_key || ''} ${element.label || ''}`.toLowerCase()
+  if (/light|lighting|shadow|highlight|光|影|明暗|高光/.test(raw)) return { key: 'lighting', label: '光影', shortLabel: '光影', icon: '💡' }
+  if (/material|texture|fabric|metal|wood|leather|材质|纹理|质感/.test(raw)) return { key: 'material', label: '材质/质感', shortLabel: '材质', icon: '🧵' }
+  if (/background|scene|backdrop|环境|背景|场景/.test(raw)) return { key: 'background', label: '背景/场景', shortLabel: '背景', icon: '🌄' }
+  if (/composition|layout|angle|pose|framing|构图|角度|姿态|画面/.test(raw)) return { key: 'composition', label: '构图/角度', shortLabel: '构图', icon: '📐' }
+  if (/color|palette|tone|颜色|色彩|色调/.test(raw)) return { key: 'color', label: '色彩', shortLabel: '色彩', icon: '🎨' }
+  if (/effect|style|atmosphere|mood|效果|风格|氛围/.test(raw)) return { key: 'effect', label: '风格/效果', shortLabel: '效果', icon: '✨' }
+  if (/crop|region|bbox|局部|裁剪/.test(raw)) return { key: 'crop', label: '局部/裁剪', shortLabel: '局部', icon: '✂️' }
+  if (element.source_role === 'reference') return { key: 'reference_strategy', label: '参考效果', shortLabel: '参考效果', icon: '🖼️' }
+  return { key: 'product_fact', label: '商品属性', shortLabel: '商品属性', icon: '🏷️' }
+}
+
+function cropHintFromElement(element: DeconstructionElementDTO): DecisionOption['cropHint'] | undefined {
+  const raw = element.value?.bbox ?? element.value?.crop ?? element.value?.region
+  if (!raw || typeof raw !== 'object') return undefined
+  const value = raw as Record<string, unknown>
+  const x = Number(value.x ?? 0)
+  const y = Number(value.y ?? 0)
+  const width = Number(value.width ?? value.w ?? 1)
+  const height = Number(value.height ?? value.h ?? 1)
+  if (![x, y, width, height].every(Number.isFinite)) return undefined
+  return { x, y, width, height }
 }
 
 function getLocalSources(productId: string): ParsingSource[] {
@@ -713,6 +859,7 @@ export async function listParsingSources(productId: string): Promise<ParsingSour
 }
 
 export async function uploadParsingSource(productId: string, file: File, sourceType: ParsingSource['type'] = 'sku_image'): Promise<ParsingSource> {
+  validateParsingSourceFile(file)
   if (isDevMode()) {
     await delay(600)
     const source: ParsingSource = {
@@ -731,7 +878,7 @@ export async function uploadParsingSource(productId: string, file: File, sourceT
   }
 
   const skuCode = await getSkuCode(productId)
-  const payload = await readFileAsDataURL(file)
+  const [payload, dimensions] = await Promise.all([readFileAsDataURL(file), readImageDimensions(file)])
   const asset = await request<{ id: string; mime_type: string; file_name?: string }>(`/api/v1/ecommerce/assets/source`, {
     method: 'POST',
     body: JSON.stringify({
@@ -740,6 +887,8 @@ export async function uploadParsingSource(productId: string, file: File, sourceT
       file_name: file.name,
       mime_type: file.type || 'application/octet-stream',
       payload,
+      width: dimensions.width,
+      height: dimensions.height,
       metadata: { frontend_entrypoint: 'pre_generation_hub', source_role: sourceType === 'reference_image' ? 'reference' : 'sku' },
     }),
   })
@@ -768,6 +917,35 @@ export async function uploadParsingSource(productId: string, file: File, sourceT
   const sources = getLocalSources(productId).filter((item) => item.assetId !== asset.id && item.id !== asset.id)
   saveLocalSources(productId, [...sources, source])
   return source
+}
+
+export async function removeParsingSource(productId: string, source: ParsingSource): Promise<void> {
+  const removeLocal = () => {
+    const sources = getLocalSources(productId).filter((item) =>
+      item.id !== source.id &&
+      item.assetId !== source.assetId &&
+      item.sourceReferenceId !== source.sourceReferenceId &&
+      item.assetRelationId !== source.assetRelationId,
+    )
+    saveLocalSources(productId, sources)
+  }
+  if (isDevMode()) {
+    removeLocal()
+    return
+  }
+  const session = await ensureVisualSession(productId)
+  const sourceReferenceId = source.sourceReferenceId
+  const calls: Promise<unknown>[] = []
+  if (sourceReferenceId) {
+    calls.push(request(`${VWF}/${session.id}/source-references/${sourceReferenceId}`, { method: 'DELETE', silent: true }))
+  }
+  if (source.assetRelationId) {
+    calls.push(request(`/api/v1/ecommerce/products/${productId}/assets/${source.assetRelationId}`, { method: 'DELETE', silent: true }))
+  }
+  if (calls.length > 0) {
+    await Promise.allSettled(calls)
+  }
+  removeLocal()
 }
 
 
@@ -814,7 +992,7 @@ export async function startParsing(req: StartParsingRequest): Promise<StartParsi
   const skuSources = selectedSources.filter(s => (s.sourceRole ?? (s.type === 'reference_image' ? 'reference' : 'sku')) === 'sku')
   const referenceSources = selectedSources.filter(s => (s.sourceRole ?? (s.type === 'reference_image' ? 'reference' : 'sku')) === 'reference')
   if (skuSources.length === 0 || referenceSources.length === 0) {
-    contractNeeded('Dual-track parsing requires at least one SKU source and one reference source before runtime execution.')
+    contractNeeded('请至少选择一张商品图和一张参考图，然后再开始图片解析。')
   }
 
   const sourceRefs = [] as SourceReferenceDTO[]
@@ -830,6 +1008,7 @@ export async function startParsing(req: StartParsingRequest): Promise<StartParsi
   saveLocalSources(req.productId, updatedSources)
 
   const sourceRefIds = sourceRefs.map(item => item.id).sort()
+  const providerCode = req.providerCode && req.providerCode !== 'comfyui_bridge' ? req.providerCode : undefined
   const jobs: DeconstructionJobDTO[] = []
   for (const sourceRef of sourceRefs) {
     const job = await request<DeconstructionJobDTO>(`${VWF}/${session.id}/deconstruction-jobs`, {
@@ -844,6 +1023,7 @@ export async function startParsing(req: StartParsingRequest): Promise<StartParsi
           frontend_tracks: req.tracks,
           source_reference_ids: sourceRefIds,
           image_understanding_policy: 'single_image_per_runtime_job',
+          provider_code: providerCode,
         },
       }),
     })
@@ -894,7 +1074,7 @@ export async function updateParsedAttribute(productId: string, key: string, valu
   })
 }
 
-export async function updateAttentionDecision(productId: string, elementId: string, decision: 'keep' | 'replace' | 'drop', targetAssetId?: string): Promise<void> {
+export async function updateAttentionDecision(productId: string, elementId: string, decision: 'keep' | 'replace' | 'drop' | 'crop', targetAssetId?: string, option?: DecisionOption): Promise<void> {
   if (isDevMode()) {
     await delay(200)
     return
@@ -905,13 +1085,24 @@ export async function updateAttentionDecision(productId: string, elementId: stri
     body: JSON.stringify({
       selected: decision !== 'drop',
       decision,
-      target_asset_id: decision === 'replace' ? targetAssetId : undefined,
+      target_asset_id: decision === 'replace' || decision === 'crop' ? targetAssetId : undefined,
+      group_path: option?.dimension ? ['visual_attribute', option.dimension] : undefined,
       rationale: decision === 'replace'
         ? '以当前商品图为主体，参考图只作风格参考'
         : decision === 'keep'
           ? '保留参考图中的视觉效果'
-          : '不采用这一项参考元素',
-      metadata: { updated_from: 'prep-attention-tree' },
+          : decision === 'crop'
+            ? '仅采用参考图中的局部区域或裁剪线索'
+            : '不采用这一项参考元素',
+      metadata: {
+        updated_from: 'prep-attention-tree',
+        dimension: option?.dimension,
+        semantic_action: option?.semanticAction ?? decision,
+        crop_hint: option?.cropHint,
+        option_label: option?.label,
+        fixed_prompt_question: option?.fixedPromptQuestion,
+        prompt_slot: option?.promptSlot,
+      },
     }),
   })
 }
@@ -927,7 +1118,6 @@ export async function updateDriftControl(productId: string, referenceBias: numbe
   await request<VisualSession>(`${VWF}/${session.id}`, {
     method: 'PATCH',
     body: JSON.stringify({
-      current_stage: 'prompt',
       intent_spec: {
         ...(stage.intent_spec ?? {}),
         schema_version: stage.intent_spec?.schema_version ?? 'v1',
@@ -937,6 +1127,8 @@ export async function updateDriftControl(productId: string, referenceBias: numbe
           attribute_drift: {
             reference_bias: normalized,
             sku_bias: 100 - normalized,
+            reference_weight: normalized,
+            sku_weight: 100 - normalized,
             mode: normalized > 65 ? 'focus_reference' : normalized < 35 ? 'focus_sku' : 'balanced',
           },
         },
@@ -961,11 +1153,11 @@ function selectionLabel(selection: NonNullable<IntentSpecDTO['selections']>[numb
 function selectionDecisionLabel(decision?: string): string {
   switch ((decision ?? '').toLowerCase()) {
     case 'keep':
-      return '纳入 Prompt：保留参考效果'
+      return '纳入出图要求：保留参考效果'
     case 'replace':
-      return '纳入 Prompt：主体替换为当前 SKU'
+      return '纳入出图要求：主体替换为当前 SKU'
     case 'drop':
-      return '不进入 Prompt：已排除'
+      return '不进入出图要求：已排除'
     default:
       return '待确认'
   }
@@ -974,7 +1166,14 @@ function selectionDecisionLabel(decision?: string): string {
 function selectionDescription(selection: NonNullable<IntentSpecDTO['selections']>[number]): string {
   const label = selectionLabel(selection)
   const decision = selectionDecisionLabel(selection.decision)
-  const value = selection.value ? userFacingText(selection.value.text ?? selection.value.label ?? selection.value.value ?? '') : ''
+  const value = selection.value ? userFacingText(
+    selection.value.text
+      ?? selection.value.description
+      ?? selection.value.provider_text
+      ?? selection.value.label
+      ?? selection.value.value
+      ?? ''
+  ) : ''
   return value ? `${label}｜${decision}｜${value}` : `${label}｜${decision}`
 }
 
@@ -1089,6 +1288,7 @@ function buildSafeGenerationMetadata(intentIds: string[], config?: ExecutionConf
     source,
     ui_execution_config: config ? {
       requested_engine: config.provider,
+      generation_provider_code: typeof config.providerConfig?.generation_provider_code === 'string' ? config.providerConfig.generation_provider_code : config.provider,
       max_concurrency: config.maxConcurrency,
       retry_on_failure: config.retryOnFailure,
       max_retries: config.maxRetries,
@@ -1119,7 +1319,7 @@ function generationExecutionStatus(version: GenerationVersionDTO): GenerationExe
   const failed = ['failed', 'cancelled', 'contract_needed', 'blocked'].includes(status) || ['failed', 'cancelled', 'contract_needed', 'blocked'].includes(String(stage ?? '').toLowerCase())
   const terminal = successful || failed
   const message = successful
-    ? `已生成 ${resultAssetCount} 张真实结果图，可以进入工坊查看。`
+    ? `已生成 ${resultAssetCount} 张结果图，可以进入工坊查看。`
     : failed
       ? '本次生产没有成功完成，系统没有展示占位图。请检查生成方案或稍后重试。'
       : progress > 0
@@ -1159,11 +1359,11 @@ export async function waitForGenerationResult(productId: string, versionId: stri
     latest = await getGenerationExecutionStatus(productId, versionId)
     if (latest.successful && latest.resultAssetCount > 0) return latest
     if (latest.terminal) {
-      contractNeeded(latest.message || '真实出图任务已结束，但没有返回可展示的结果资产。')
+      contractNeeded(latest.message || '本次出图已结束，但没有返回可展示结果。')
     }
     await delay(2500)
   }
-  contractNeeded('真实出图等待超时，尚未收到 result asset 回调。')
+  contractNeeded('出图等待超时：本次结果还没有返回，请稍后刷新或重试。')
 }
 
 export async function executeIntents(productId: string, intentIds: string[], config?: ExecutionConfig): Promise<{ jobId: string; versionId: string; status: string; runtimeJobId?: string }> {
@@ -1222,7 +1422,7 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
     }
   }
   if (tasks.length === 0) {
-    contractNeeded('没有可提交的 fan-out 任务；请选择至少一张输入图片和一个模板槽位。')
+    contractNeeded('没有可提交的出图槽位；请先在 Prep 上传至少一张 SKU 图片，并保留至少一个生产槽位。')
   }
 
   const session = await ensureVisualSession(productId)
@@ -1255,7 +1455,7 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
         } else if (task.status === 'failed') {
           nextFailures.push({ ...task, retryCount: attempt + 1 })
         } else {
-          nextFailures.push({ ...task, status: 'failed', error: task.error || '任务超时，未在本轮执行窗口内产生真实 result asset。', retryCount: attempt + 1 })
+          nextFailures.push({ ...task, status: 'failed', error: task.error || '任务超时，本轮没有返回可展示结果。', retryCount: attempt + 1 })
         }
       }
     }
@@ -1290,6 +1490,17 @@ async function submitFanoutWave(sessionId: string, batchId: string, productId: s
       max_retries: config?.maxRetries,
       timeout_seconds: config?.timeoutSeconds,
       provider_config: config?.providerConfig,
+      prompt_variables: {
+        ...(typeof config?.providerConfig?.prompt_composer === 'object' && config.providerConfig.prompt_composer !== null ? { prompt_composer: config.providerConfig.prompt_composer } : {}),
+        fanout_slot_prompts: tasks.map(task => ({
+          slot_index: task.slotIndex,
+          template_id: task.templateId,
+          template_name: task.templateName,
+          scene_tag: task.sceneTag,
+          detail_requirement: task.detailRequirement,
+          negative_requirement: task.negativeRequirement,
+        })),
+      },
       metadata: {
         ...buildSafeGenerationMetadata(intentIds, config, 'sandbox_generation_fanout'),
         fanout_batch_id: batchId,
@@ -1317,7 +1528,7 @@ async function submitFanoutWave(sessionId: string, batchId: string, productId: s
       status: ['queued', 'processing'].includes(String(version.status).toLowerCase()) ? 'queued' : String(version.status).toLowerCase() === 'completed' ? 'succeeded' : 'failed',
       progress: Number(version.progress ?? 5),
       resultAssetCount: version.result_assets?.length ?? 0,
-      error: version.status === 'contract_needed' ? '生成服务未创建真实 runtime job' : undefined,
+      error: version.status === 'contract_needed' ? '生成服务暂时没有开始任务' : undefined,
       retryCount: original?.retryCount ?? attempt,
     } as ProductionFanoutTask
   })
@@ -1401,7 +1612,7 @@ export async function createWorkshopGenerationVersion(
     },
   })
   if (!promptPlan.promptId) {
-    contractNeeded('Workshop 生成没有拿到真实 prompt_id，不能创建出图 runtime job。')
+    contractNeeded('出图方案还没准备好，请先生成或刷新方案后再试。')
   }
   const response = await request<GenerationVersionDTO>(`${VWF}/${session.id}/generation-versions`, {
     method: 'POST',
@@ -1424,10 +1635,10 @@ export async function createWorkshopGenerationVersion(
     }),
   })
   if (response.status === 'contract_needed') {
-    contractNeeded('Workshop generation 没有创建真实 runtime job；系统不会用占位图冒充结果。')
+    contractNeeded('本次生成没有成功开始。系统不会展示占位图，请稍后重试。')
   }
   if (!response.runtime_job_id) {
-    contractNeeded(`Workshop generation version 已创建但没有 runtime job；status=${response.status}。`)
+    contractNeeded(`本次生成还没有开始，当前状态：${response.status}。`)
   }
   return {
     jobId: response.runtime_job_id || response.version_id,
@@ -1551,15 +1762,15 @@ export async function createInpaintTask(_productId: string, req: CreateInpaintTa
     await delay(1500)
     return mockInpaintTask(req.variantId, req.regions, req.prompt)
   }
-  contractNeeded('In-painting backend contract is not enabled yet; no production task was created.')
+  contractNeeded('局部重绘功能暂未开放，本次没有创建生产任务。')
 }
 
-export async function getInpaintTask(productId: string, taskId: string): Promise<InpaintTask> {
+export async function getInpaintTask(_productId: string, _taskId: string): Promise<InpaintTask> {
   if (isDevMode()) {
     await delay(300)
     return mockInpaintTask('var-1', [{ x: 100, y: 100, width: 200, height: 150 }], 'demo inpaint')
   }
-  contractNeeded(`In-painting backend contract is not enabled yet; no production task was loaded for ${productId}/${taskId}.`)
+  contractNeeded('局部重绘功能暂未开放，暂时无法加载这条任务。')
 }
 
 export async function getOrCreateRefinementSession(_productId: string, variantId: string): Promise<RefinementSession> {
@@ -1567,7 +1778,7 @@ export async function getOrCreateRefinementSession(_productId: string, variantId
     await delay(600)
     return mockRefinementSession(variantId)
   }
-  contractNeeded('Refinement backend contract is not enabled yet; no production session was created.')
+  contractNeeded('图片再加工功能暂未开放，本次没有创建会话。')
 }
 
 export async function sendRefinementMessage(_productId: string, _sessionId: string, req: SendRefinementMessageRequest): Promise<RefinementMessage> {
@@ -1575,7 +1786,7 @@ export async function sendRefinementMessage(_productId: string, _sessionId: stri
     await delay(1200)
     return mockRefinementReply(req.content)
   }
-  contractNeeded('Refinement backend contract is not enabled yet; no production message was created.')
+  contractNeeded('图片再加工功能暂未开放，本次没有发送消息。')
 }
 
 
@@ -1588,7 +1799,7 @@ export async function saveVariantAsTemplate(productId: string, variantId: string
   const session = await ensureVisualSession(productId)
   const [versionId, assetId] = variantId.split(':')
   if (!versionId || !assetId) {
-    contractNeeded('Save as template requires a backend generation version asset id.')
+    contractNeeded('请先选择一张已生成的图片，再保存为模板。')
   }
   const result = await request<{ template: { id: string }; saved_templates?: unknown[] }>(`${VWF}/${session.id}/generation-versions/${versionId}/save-as-template`, {
     method: 'POST',

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Outlet, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Menu, X, Layers, Zap, Globe, BriefcaseBusiness } from 'lucide-react'
+import { Menu, X, Layers, Zap, Globe, BriefcaseBusiness, PackageSearch } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import UserAccountMenu, { getUserDisplayName } from '@/components/account/UserAccountMenu'
 import { logoutAuth } from '@/state/auth'
@@ -17,14 +17,16 @@ export default function PortalLayout() {
   const locale = language.startsWith('en') ? 'en' : 'zh'
   const loginPath = getAuthAwareLoginPath(isAuthenticated)
   const startPath = getAuthAwareStartPath(isAuthenticated)
-  const workbenchPath = getAuthAwareStartPath(isAuthenticated)
+  const workbenchPath = isAuthenticated ? '/products' : loginPath
+  const inventoryPath = isAuthenticated ? '/inventory' : loginPath
 
   const topLinks = useMemo(() => ([
-    { label: t('nav.workbench'), to: workbenchPath },
-    { label: t('nav.solutions'), to: '/solutions' },
-    { label: t('nav.pricing'), to: '/pricing' },
-    { label: t('nav.aboutUs'), to: '/aboutus' },
-  ]), [t, workbenchPath])
+    { key: 'workbench', label: t('nav.workbench'), to: workbenchPath },
+    { key: 'inventory', label: t('nav.inventoryDemo'), to: inventoryPath },
+    { key: 'solutions', label: t('nav.solutions'), to: '/solutions' },
+    { key: 'pricing', label: t('nav.pricing'), to: '/pricing' },
+    { key: 'about', label: t('nav.aboutUs'), to: '/aboutus' },
+  ]), [t, workbenchPath, inventoryPath])
 
   const footerColumns = useMemo(() => ([
     {
@@ -80,7 +82,8 @@ export default function PortalLayout() {
                 to={link.to}
                 className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:bg-white/[0.05] hover:text-white"
               >
-                {link.to === workbenchPath ? <BriefcaseBusiness className="h-4 w-4 text-cyan-200/75" /> : null}
+                {link.key === 'workbench' ? <BriefcaseBusiness className="h-4 w-4 text-cyan-200/75" /> : null}
+                {link.key === 'inventory' ? <PackageSearch className="h-4 w-4 text-amber-200/75" /> : null}
                 {link.label}
               </Link>
             ))}

@@ -5,6 +5,8 @@
 // ─── Prep Hub Types ─────────────────────────────────────────
 
 export type ParsingTrack = 'comfyui' | 'third_party'
+export type ImageUnderstandingProviderCode = 'comfyui_bridge' | 'gemini_visual_understanding'
+export type ImageGenerationProviderCode = 'comfyui_bridge' | 'gemini_image_generation' | 'volcengine'
 
 export type ParsingSource = {
   id: string
@@ -80,6 +82,11 @@ export type DecisionOption = {
   description?: string
   icon?: string // icon name or emoji
   confidence?: number
+  semanticAction?: 'keep' | 'replace' | 'drop' | 'crop'
+  dimension?: 'lighting' | 'material' | 'background' | 'composition' | 'color' | 'effect' | 'crop' | 'product_fact' | 'reference_strategy' | 'other'
+  promptSlot?: 'sku_product' | 'sku_background' | 'reference_product' | 'reference_background'
+  fixedPromptQuestion?: boolean
+  cropHint?: { x: number; y: number; width: number; height: number }
 }
 
 export type DecisionStep = {
@@ -138,7 +145,7 @@ export type CompiledIntent = {
   createdAt: string
 }
 
-export type ExecutionProvider = 'comfyui' | 'third_party_api'
+export type ExecutionProvider = ImageGenerationProviderCode | 'third_party_api'
 
 export type ExecutionConfig = {
   provider: ExecutionProvider
@@ -225,6 +232,8 @@ export type ModelOption = {
   description: string
   costPerImage: number
   recommended?: boolean
+  providerCode?: ImageGenerationProviderCode
+  modelId?: string
 }
 
 export type ResolutionOption = {
@@ -390,6 +399,7 @@ export type StartParsingRequest = {
   productId: string
   sourceIds: string[]
   tracks: ParsingTrack[]
+  providerCode?: ImageUnderstandingProviderCode
 }
 
 export type StartParsingResponse = {

@@ -3,7 +3,7 @@
 // 暗色侧边栏 + 7 项导航，视觉与 ProductWorkbenchLayout 一致
 // ============================================================
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -159,7 +159,7 @@ export default function InventoryLayout() {
         <header className="sticky top-0 z-30 flex h-[52px] items-center justify-between border-b border-white/[0.06] bg-[#080b11]/88 px-6 backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <Link
-              to="/inventory"
+              to={isAuthenticated ? '/products' : '/'}
               className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-white/48 transition hover:bg-white/[0.04] hover:text-white/80"
             >
               <Home className="h-3.5 w-3.5" />

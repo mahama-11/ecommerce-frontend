@@ -724,9 +724,9 @@ export function ProductDetailPage() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-black/15 p-4 text-sm leading-6 text-white/45">后端当前未返回结构化 spec_json；此处保持真实空状态，不伪造解析结果。</div>
+                <div className="rounded-2xl border border-dashed border-white/10 bg-black/15 p-4 text-sm leading-6 text-white/45">当前还没有结构化商品规格；请先补齐商品资料或重新解析素材。</div>
               )}
-              <div className="mt-4 rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3 text-xs text-cyan-100/58">parsed_info 由系统自动解析写入，前端不可修改；后续模块只读取，不重复解析。</div>
+              <div className="mt-4 rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3 text-xs text-cyan-100/58">图片解析结果由系统自动写入，前端不可修改；后续模块只读取，不重复解析。</div>
             </section>
 
             <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.32)]">
@@ -751,7 +751,7 @@ export function ProductDetailPage() {
                   <PrecheckLine label="已采用 Listing" ok={product.listingStatus === 'ready' || data.listingVersions.some(v => v.status === 'adopted')} value={data.listingVersions.find(v => v.status === 'adopted')?.versionLabel || '未采用'} />
                   <PrecheckLine label="必需素材" ok={product.assetStatus === 'ready'} value={product.assetStatus === 'ready' ? '素材完整' : '主图/必需素材缺失'} />
                   <PrecheckLine label="平台/站点/语言" ok value={`${exportForm.platform} / ${exportForm.site} / ${exportForm.locale}`} />
-                  <PrecheckLine label="Manifest" ok={product.exportStatus === 'done'} value={product.exportStatus === 'done' ? '已生成' : '未生成'} />
+                  <PrecheckLine label="文件清单" ok={product.exportStatus === 'done'} value={product.exportStatus === 'done' ? '已生成' : '未生成'} />
                 </div>
                 <button onClick={() => setShowExportModal(true)} disabled={product.assetStatus !== 'ready'} className="mt-4 w-full rounded-xl bg-cyan-200 px-4 py-2.5 text-xs font-bold text-[#05070b] disabled:cursor-not-allowed disabled:bg-white/[0.05] disabled:text-white/28">创建导出任务{product.assetStatus !== 'ready' ? '（禁用：素材不完整）' : ''}</button>
                 <p className="mt-3 text-xs leading-5 text-rose-100/65">导出前必须满足：已采用 Listing + 必需素材完整 + 平台配置存在。</p>
