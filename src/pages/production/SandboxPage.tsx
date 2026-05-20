@@ -212,19 +212,23 @@ function promptPlanBlockerText(plan: PromptPlanSummary | null): string {
     return '还没有生成出图方案。请先点击「生成/刷新出图方案」；如果按钮不可点，请回到生产准备页，完成图片解析和选择。'
   }
   const code = String(blocker.code || '').toUpperCase()
-  if (code.includes('DECONSTRUCTION') || blocker.target === 'deconstruction_job') return '图片还没有解析完成。请回到生产准备页，确认图片识别结果，并完成保留、替换或排除的选择。'
-  if (code.includes('INTENT_SPEC')) return '还没有形成清晰的出图方向。请先在生产准备页确认图片属性和选择。'
+  if (code.includes('QUALITY')) return '图片识别结果太弱或为空。请回到生产准备页重新解析图片，确认能看到可读的商品/参考信息后再生成方案。'
+  if (code.includes('ATTENTION_DECISION') || code.includes('CHOICE')) return '还差四问选择。请回到生产准备页，把 4 个“要/不要”都确认后再生成方案。'
+  if (code.includes('SKU_FACTS')) return 'SKU 图片还没有可用识别结果。请回到生产准备页重新解析 SKU 图。'
+  if (code.includes('REFERENCE_STRATEGIES')) return '参考素材还没有可用识别结果。请回到生产准备页重新解析参考图。'
+  if (code.includes('DECONSTRUCTION') || blocker.target === 'deconstruction_job') return '图片还没有解析完成。请回到生产准备页，确认图片识别结果，并完成 4 个“要/不要”选择。'
+  if (code.includes('INTENT_SPEC')) return '还没有形成清晰的出图方向。请先在生产准备页确认图片属性和 4 个选择。'
   if (code.includes('DUAL_TRACK_SOURCE')) return '素材还不完整。请在生产准备页至少上传商品图和参考图，并完成解析。'
   if (code.includes('CAPABILITY') || blocker.target === 'runtime_capabilities') return '图片生成服务暂时繁忙。请稍后再试。'
   if (code.includes('CONTRACT') || blocker.target === 'prompt_plan') return '出图方案还没准备好。请先点击「生成/刷新出图方案」，等待整理完成后再开始生产。'
-  return '出图方案暂时不可用。请检查生产准备页是否已完成，或稍后重试。'
+  return '出图方案暂时不可用。请回到生产准备页检查图片识别结果和 4 个选择。'
 }
 
 function promptPlanStatusText(plan: PromptPlanSummary | null): string {
   if (!plan) return '还没有生成出图方案。请先点击「生成/刷新出图方案」。'
   if (plan.status === 'ready' && plan.promptId) return '出图方案已准备好，可以开始生产。'
   if (['blocked', 'failed', 'contract_needed'].includes(plan.status)) return promptPlanBlockerText(plan)
-  if (plan.status === 'processing' || plan.status === 'pending' || plan.status === 'created') return '大模型正在整理出图方案，通常需要 1-2 分钟。'
+  if (plan.status === 'processing' || plan.status === 'pending' || plan.status === 'created') return '正在整理出图方案，请稍等片刻。'
   return promptPlanBlockerText(plan)
 }
 
@@ -503,11 +507,11 @@ export default function SandboxPage() {
           break
         }
         if (['blocked', 'failed', 'contract_needed'].includes(latest.status)) {
-          setPromptPlanNotice('出图方案暂时不可用，请回到生产准备补齐图片解析或选择。')
+          setPromptPlanNotice(promptPlanStatusText(latest))
           break
         }
         const waitedSeconds = Math.round(i === 0 ? 1 : 1 + i * 1.5)
-        setPromptPlanNotice(`大模型正在整理出图方案… 已等待 ${waitedSeconds} 秒，通常需要 1-2 分钟。完成前不会点亮生产按钮。`)
+        setPromptPlanNotice(`正在整理出图方案… 已等待 ${waitedSeconds} 秒。完成前不会点亮生产按钮。`)
       }
       if (latest && !(latest.status === 'ready' && latest.promptId) && !['blocked', 'failed', 'contract_needed'].includes(latest.status)) {
         const finalLatest = await productionApi.getPromptPlanSummary(productId)
@@ -593,6 +597,11 @@ export default function SandboxPage() {
       return
     }
     updateAssetTask(asset.id, patch)
+  }
+
+  const handleRemoveTaskSlot = (asset: AssetTask) => {
+    removeAssetTask(asset.id)
+    setImageCount(Math.max(1, imageCount - 1))
   }
 
   const addNewAsset = () => {
@@ -1013,7 +1022,9 @@ export default function SandboxPage() {
                     {!asset.id.startsWith('planned-') && (
                       <button
                         type="button"
-                        onClick={() => removeAssetTask(asset.id)}
+                        onClick={() => handleRemoveTaskSlot(asset)}
+                        aria-label={`删除${asset.name}，并减少一个出图槽位`}
+                        title="删除该槽位"
                         className="shrink-0 text-white/15 hover:text-red-400/80"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
