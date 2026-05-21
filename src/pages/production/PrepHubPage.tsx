@@ -19,7 +19,6 @@ import {
   Circle,
   Sparkles,
   Tag,
-  SkipForward,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePrepStore } from '@/store/productionStore'
@@ -93,6 +92,10 @@ function usePolling<T>(
 }
 
 const ATTRIBUTE_LABEL_ZH: Record<string, string> = {
+  product_info: '图片中的产品信息',
+  background_info: '图片中的背景信息',
+  provider_reference_description: '参考素材解析结果',
+  reference_style: '参考素材风格',
   product_geometry: '商品形态',
   geometry: '商品形态',
   material: '材质',
@@ -203,16 +206,24 @@ function UploadZone({
       >
         {sources.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {sources.map((src) => (
-              <div
+            {sources.map((src) => {
+              const previewUrl = src.thumbnailUrl || src.url;
+              return (
+                <div
                 key={src.id}
                 className="group relative aspect-square overflow-hidden rounded-lg border border-white/[0.06] bg-white/[0.03]"
               >
-                <img
-                  src={src.thumbnailUrl || src.url}
-                  alt={src.name || ''}
-                  className="h-full w-full object-cover"
-                />
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt={src.name || ''}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] text-white/40">
+                    {src.name || '图片待就绪'}
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={(e) => {
@@ -228,8 +239,9 @@ function UploadZone({
                     {src.name || src.type}
                   </span>
                 </div>
-              </div>
-            ))}
+                </div>
+              );
+            })}
             <div className="flex aspect-square flex-col items-center justify-center rounded-lg border border-dashed border-white/[0.08] bg-white/[0.01] text-white/25">
               <Upload className="mb-1 h-4 w-4" />
               <span className="text-[9px]">继续添加/替换</span>
@@ -335,7 +347,6 @@ function DecisionStepCard({
               <button
                 key={option.id}
                 type="button"
-                disabled={false}
                 onClick={() => onSelectOption(step.id, option.id)}
                 className={`group relative flex flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left transition ${
                   isSelected
@@ -720,17 +731,9 @@ export default function PrepHubPage() {
 
   // ─── Interactive decision tree step selection ───────────
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [decisionTreeSkipped, setDecisionTreeSkipped] = useState(false)
   const [sessionSelections, setSessionSelections] = useState<Record<string, string>>({})
   const [usePreviousSelections, setUsePreviousSelections] = useState(true)
 
-  // Sync currentStepIndex when decisionTree.steps changes
-  useEffect(() => {
-    if (decisionTree?.steps) {
-      const activeIdx = decisionTree.steps.findIndex((s) => s.status === 'active')
-      if (activeIdx >= 0 && Object.keys(sessionSelections).length > 0) setCurrentStepIndex(activeIdx)
-    }
-  }, [decisionTree?.steps, sessionSelections])
 
   useEffect(() => {
     setSessionSelections({})
@@ -748,7 +751,7 @@ export default function PrepHubPage() {
       answered: effectiveAnswered,
       historicalAnswered,
       remaining: Math.max(total - effectiveAnswered, 0),
-      complete: total > 0 && effectiveAnswered >= total,
+      complete: total >= 4 && effectiveAnswered >= total,
       percent: total > 0 ? Math.round((effectiveAnswered / total) * 100) : 0,
     }
   }, [decisionTree?.steps, sessionSelections, usePreviousSelections])
@@ -770,7 +773,18 @@ export default function PrepHubPage() {
         status: isAnswered ? 'completed' as const : idx === activeIndex ? 'active' as const : 'pending' as const,
       }
     })
-  }, [decisionTree?.steps, sessionSelections, usePreviousSelections, currentStepIndex])
+  }, [decisionTree?.steps, sessionSelections, currentStepIndex])
+
+  useEffect(() => {
+    if (displaySteps.length === 0) return
+    if (currentStepIndex >= displaySteps.length) {
+      setCurrentStepIndex(displaySteps.length - 1)
+      return
+    }
+    const current = displaySteps[currentStepIndex]
+    const nextUnanswered = displaySteps.findIndex((step, idx) => idx > currentStepIndex && !step.selectedOptionId)
+    if (current?.selectedOptionId && nextUnanswered >= 0) setCurrentStepIndex(nextUnanswered)
+  }, [displaySteps, currentStepIndex])
 
   const handleSelectOption = useCallback(
     async (stepId: string, optionId: string) => {
@@ -783,10 +797,16 @@ export default function PrepHubPage() {
       }
 
       const previousSelections = sessionSelections
+      const previousUsePreviousSelections = usePreviousSelections
       const optimisticSelections = { ...sessionSelections, [stepId]: optionId }
       const rawSteps = decisionTree.steps ?? []
       const currentIdx = rawSteps.findIndex((s) => s.id === stepId)
-      const nextPending = rawSteps.findIndex((candidate, i) => i > currentIdx && !optimisticSelections[candidate.id])
+      const nextPending = rawSteps.findIndex((candidate, i) => {
+        if (i <= currentIdx) return false
+        const selected = optimisticSelections[candidate.id] ?? candidate.selectedOptionId
+        return !selected
+      })
+      setUsePreviousSelections(false)
       setSessionSelections(optimisticSelections)
       setCurrentStepIndex(nextPending >= 0 ? nextPending : Math.max(currentIdx, 0))
 
@@ -801,24 +821,23 @@ export default function PrepHubPage() {
         setParsing(updatedParsing)
         setDecisionTree(updatedTree)
       } catch (e) {
+        setUsePreviousSelections(previousUsePreviousSelections)
         setSessionSelections(previousSelections)
         setCurrentStepIndex(Math.max(currentIdx, 0))
         toast.showToast(e instanceof Error ? e.message : '保存选择失败，请重试。', 'error')
         return
       }
     },
-    [decisionTree, productId, skuSources, sessionSelections, setParsing, setDecisionTree, toast],
+    [decisionTree, productId, skuSources, sessionSelections, usePreviousSelections, setParsing, setDecisionTree, toast],
   )
 
   // ─── Navigate to Sandbox ────────────────────────────────
   const goToSandbox = () => {
-    if (productId) navigate(`/products/${productId}/production/sandbox`)
-  }
-
-  const handleSkipDecisionTree = () => {
-    if (window.confirm(t('production.prep.skipDecisionTreeConfirm'))) {
-      setDecisionTreeSkipped(true)
+    if (!prepCanEnterSandbox) {
+      toast.showToast(prepNextStepHint, 'info')
+      return
     }
+    if (productId) navigate(`/products/${productId}/production/sandbox`)
   }
 
   const commitDriftBias = useCallback(async (value: number = globalDriftBias) => {
@@ -849,6 +868,20 @@ export default function PrepHubPage() {
       : '可以开始解析。'
   const parsingBlocked = parsing?.status === 'failed' || Boolean(parsingPoll.error)
   const parsingBlockerMessage = parsingPoll.error || parsing?.thirdPartyResult?.error || (!dualTrackReady && hasSources ? dualTrackBlocker : undefined)
+  const lowConfidenceAttributes = (parsing?.mergedAttributes ?? []).filter((attribute) => attribute.confidence <= 0.2 || String(attribute.value || '').includes('暂不直接展示原始 JSON'))
+  const hasLowConfidenceAttributes = parsing?.status === 'succeeded' && lowConfidenceAttributes.length > 0
+  const parsingQualityWarning = hasLowConfidenceAttributes && !decisionProgress.complete
+    ? `图片识别已返回，但有 ${lowConfidenceAttributes.length} 项可信度较低，请核对四问说明后再继续。`
+    : null
+  const parsingQualityReviewedMessage = hasLowConfidenceAttributes && decisionProgress.complete
+    ? `已通过四问核对 ${lowConfidenceAttributes.length} 项低可信识别结果，下一步会按你的选择合成本次出图要求。`
+    : null
+  const prepCanEnterSandbox = parsing?.status === 'succeeded' && decisionProgress.complete
+  const prepNextStepHint = parsing?.status !== 'succeeded'
+    ? '请先完成商品图和参考图解析。'
+    : !decisionProgress.complete
+      ? (parsingQualityWarning ?? `还差 ${decisionProgress.remaining || 4} 个“要/不要”选择，请先完成出图四问。`)
+      : '可以进入策略配置。'
   const attributeDecisionByKey = useMemo(() => {
     const decisions = new Map<string, AttentionDecision>()
     const put = (key: string | undefined, decision: AttentionDecision) => {
@@ -892,7 +925,7 @@ export default function PrepHubPage() {
             {t('production.prep.subtitle')}
           </p>
         </div>
-        {parsing?.status === 'succeeded' && (decisionTree?.status === 'succeeded' || decisionTreeSkipped) && (
+        {prepCanEnterSandbox && (
           <button
             type="button"
             onClick={goToSandbox}
@@ -954,7 +987,7 @@ export default function PrepHubPage() {
             <div className="mb-3 rounded-xl border border-white/[0.06] bg-black/20 p-3">
               <div className="mb-1 flex items-center justify-between gap-2">
                     <span className="text-[10px] font-semibold text-cyan-100/70">图片识别方式</span>
-                <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/35">可切换模型效果</span>
+                <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9px] text-white/35">可切换识别侧重</span>
               </div>
               <select
                 value={understandingProvider}
@@ -962,11 +995,11 @@ export default function PrepHubPage() {
                 disabled={isParsing}
                 className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-[11px] text-white/70 outline-none transition focus:border-cyan-300/30 disabled:opacity-40"
               >
-                <option value="comfyui_bridge">ComfyUI Bridge（默认稳定）</option>
-                <option value="gemini_visual_understanding">Gemini Flash 视觉理解（新模式）</option>
+                <option value="comfyui_bridge">稳定识别（推荐）</option>
+                <option value="gemini_visual_understanding">增强识别</option>
               </select>
               <p className="mt-1.5 text-[9px] leading-relaxed text-cyan-100/45">
-                选择不同的识别方式，可以对比图片的光影、材质和构图判断。
+                选择不同的识别侧重，可以对比图片的光影、材质和构图判断。
               </p>
             </div>
             <button
@@ -994,6 +1027,33 @@ export default function PrepHubPage() {
                   <p className="mt-0.5 text-[10px] text-cyan-100/55">图片正在识别中，完成后会自动更新中间选择和右侧属性。</p>
                 </div>
               </div>
+            </div>
+          )}
+          {parsingBlocked && parsingBlockerMessage && (
+            <div className="rounded-xl border border-rose-300/25 bg-rose-400/[0.08] px-4 py-3 text-xs leading-relaxed text-rose-100">
+              <div className="mb-1 flex items-center gap-2 font-semibold">
+                <AlertCircle className="h-4 w-4" />
+                图片识别未完成
+              </div>
+              <p className="text-rose-100/75">{parsingBlockerMessage}</p>
+            </div>
+          )}
+          {parsingQualityWarning && (
+            <div className="rounded-xl border border-amber-300/25 bg-amber-400/[0.08] px-4 py-3 text-xs leading-relaxed text-amber-100">
+              <div className="mb-1 flex items-center gap-2 font-semibold">
+                <AlertCircle className="h-4 w-4" />
+                识别结果需要核对
+              </div>
+              <p className="text-amber-100/75">{parsingQualityWarning}</p>
+            </div>
+          )}
+          {parsingQualityReviewedMessage && (
+            <div className="rounded-xl border border-emerald-300/20 bg-emerald-400/[0.07] px-4 py-3 text-xs leading-relaxed text-emerald-100">
+              <div className="mb-1 flex items-center gap-2 font-semibold">
+                <CheckCircle2 className="h-4 w-4" />
+                低可信项已核对
+              </div>
+              <p className="text-emerald-100/75">{parsingQualityReviewedMessage}</p>
             </div>
           )}
 
@@ -1033,16 +1093,6 @@ export default function PrepHubPage() {
               <BrainCircuit className="h-4 w-4 text-violet-400" />
               {t('production.prep.decisionTree')}
             </h2>
-            {!decisionTreeSkipped && steps.length > 0 && (
-              <button
-                type="button"
-                onClick={handleSkipDecisionTree}
-                className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-medium text-white/35 transition hover:bg-white/[0.06] hover:text-white/60"
-              >
-                <SkipForward className="h-3 w-3" />
-                跳过
-              </button>
-            )}
           </div>
 
           {isEvaluating ? (
@@ -1300,19 +1350,20 @@ export default function PrepHubPage() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="sticky bottom-4 z-20 mt-5 rounded-2xl border border-emerald-300/20 bg-[#07120f]/95 p-4 shadow-[0_18px_60px_rgba(16,185,129,0.16)] backdrop-blur"
+          className={`sticky bottom-4 z-20 mt-5 rounded-2xl border p-4 shadow-[0_18px_60px_rgba(16,185,129,0.16)] backdrop-blur ${prepCanEnterSandbox ? 'border-emerald-300/20 bg-[#07120f]/95' : 'border-amber-300/20 bg-[#141006]/95'}`}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-emerald-100">生产准备已完成</p>
-              <p className="mt-1 text-[11px] text-emerald-100/55">下一步进入策略配置：确认生成数量、模板预览和执行参数。</p>
+              <p className={`text-sm font-semibold ${prepCanEnterSandbox ? 'text-emerald-100' : 'text-amber-100'}`}>{prepCanEnterSandbox ? '生产准备已完成' : '生产准备还差一步'}</p>
+              <p className={`mt-1 text-[11px] ${prepCanEnterSandbox ? 'text-emerald-100/55' : 'text-amber-100/65'}`}>{prepCanEnterSandbox ? '下一步进入策略配置：确认生成数量、模板预览和执行参数。' : prepNextStepHint}</p>
             </div>
             <button
               type="button"
               onClick={goToSandbox}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-2 text-xs font-bold text-slate-950 transition hover:bg-emerald-300"
+              aria-disabled={!prepCanEnterSandbox}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${prepCanEnterSandbox ? 'bg-emerald-400 text-slate-950 hover:bg-emerald-300' : 'border border-amber-300/20 bg-amber-300/10 text-amber-100 hover:bg-amber-300/15'}`}
             >
-              进入策略配置
+              {prepCanEnterSandbox ? '进入策略配置' : '查看下一步'}
               <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>

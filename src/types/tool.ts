@@ -1,15 +1,23 @@
-// ─── Tool / Solution / Pricing Types ─────────────────────
-
 export interface ToolDef {
   id: string
   slug: string
   name: string
   desc: string
-  icon?: string
-  category: string
+  icon: string
+  category: ToolCategory
   complexity: number
   tags: string[]
+  comingSoon?: boolean
 }
+
+export type ToolCategory =
+  | 'model'
+  | 'product'
+  | 'suite'
+  | 'video'
+  | 'designer'
+  | 'chat'
+  | 'database'
 
 export interface SolutionDef {
   id: string

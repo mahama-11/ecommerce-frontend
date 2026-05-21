@@ -187,7 +187,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       {
         title: { zh: '结果回写能力', en: 'Result Write-back' },
         desc: { zh: '后续可回写到 Listing、设计器、知识库或下载中心。', en: 'Later writes output back to listings, designer, knowledge base, or download center.' },
-        meta: { zh: '预留工作流接口位', en: 'Workflow hooks reserved' },
+        meta: { zh: '工作流衔接', en: 'Workflow ready' },
       },
     ],
     actions: [
@@ -218,7 +218,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       {
         title: { zh: '引用式回答', en: 'Citation-style Answers' },
         desc: { zh: '输出答案时带来源片段与命中位置，便于审核。', en: 'Answer panels can show evidence snippets and hit locations for auditing.' },
-        meta: { zh: '工程化可信输出', en: 'Trustworthy output by design' },
+        meta: { zh: '可信输出', en: 'Trustworthy output' },
       },
     ],
     actions: [
@@ -248,8 +248,8 @@ const PAGE_MAP: Record<string, PageMeta> = {
       },
       {
         title: { zh: '结果质检位', en: 'Quality Check Slot' },
-        desc: { zh: '预留敏感词、长度、关键词覆盖率和品牌口吻检查。', en: 'Reserve checks for sensitive terms, length, keyword coverage, and brand tone.' },
-        meta: { zh: '后续衔接审核动作', en: 'Ready for review workflow' },
+        desc: { zh: '支持敏感词、长度、关键词覆盖率和品牌口吻检查。', en: 'Checks for sensitive terms, length, keyword coverage, and brand tone.' },
+        meta: { zh: '内容审核', en: 'Content review' },
       },
     ],
     actions: [
@@ -368,7 +368,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       {
         title: { zh: '品类策略训练', en: 'Category Strategy Training' },
         desc: { zh: '围绕平台、预算、供应链特点建立选品偏好。', en: 'Build selection preferences around channel, budget, and supply chain realities.' },
-        meta: { zh: '预留参数调优位', en: 'Parameter tuning slot reserved' },
+        meta: { zh: '偏好可调', en: 'Preference tuning' },
       },
       {
         title: { zh: '策略复盘面板', en: 'Strategy Review Panel' },
@@ -403,7 +403,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       },
       {
         title: { zh: '知识治理面板', en: 'Knowledge Governance' },
-        desc: { zh: '预留失效标记、权限、引用来源和更新时间。', en: 'Reserve staleness flags, permission controls, source references, and timestamps.' },
+        desc: { zh: '展示失效标记、权限、引用来源和更新时间。', en: 'Show staleness flags, permission controls, source references, and timestamps.' },
         meta: { zh: '团队共享资产底座', en: 'Foundation for team-shared assets' },
       },
     ],
@@ -435,7 +435,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       {
         title: { zh: '模板反查关系', en: 'Template Backlinks' },
         desc: { zh: '后续模板、设计器和下载中心都能回溯到素材来源。', en: 'Templates, designer, and download center can all trace back to the source asset.' },
-        meta: { zh: '为后续联动预留', en: 'Ready for future linking' },
+        meta: { zh: '可衔接后续动作', en: 'Ready for next actions' },
       },
     ],
     actions: [
@@ -492,7 +492,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       {
         title: { zh: '规则优先级', en: 'Rule Priorities' },
         desc: { zh: '区分平台级、品牌级和活动级的不同敏感规则。', en: 'Separate platform-, brand-, and campaign-level rule sets.' },
-        meta: { zh: '工程化审核基础', en: 'Auditing foundation' },
+        meta: { zh: '内容审核基础', en: 'Review foundation' },
       },
       {
         title: { zh: '结果修复建议', en: 'Fix Suggestions' },
@@ -526,9 +526,9 @@ const PAGE_MAP: Record<string, PageMeta> = {
         meta: { zh: '服务跨模块检索', en: 'Supports cross-module retrieval' },
       },
       {
-        title: { zh: '自动打标位', en: 'Auto-tag Hooks' },
-        desc: { zh: '为后续 AI 自动识别素材和内容打标预留接口。', en: 'Reserve hooks for AI-based asset and content auto-tagging.' },
-        meta: { zh: '工程化可扩展', en: 'Engineering-friendly expansion' },
+        title: { zh: '自动打标', en: 'Auto Tagging' },
+        desc: { zh: '自动识别素材和内容特征，减少手工整理。', en: 'AI-based asset and content tagging reduces manual organization.' },
+        meta: { zh: '可持续扩展', en: 'Extensible workflow' },
       },
     ],
     actions: [
@@ -740,12 +740,12 @@ const PAGE_MAP: Record<string, PageMeta> = {
       {
         title: { zh: '项目级协作', en: 'Project Collaboration' },
         desc: { zh: '按项目和产品线组织共享资产与进度。', en: 'Organize shared assets and progress by project and product line.' },
-        meta: { zh: '为团队版预埋骨架', en: 'Team plan foundation' },
+        meta: { zh: '团队协作空间', en: 'Team workspace' },
       },
       {
         title: { zh: '权限与版本', en: 'Permissions and Versions' },
-        desc: { zh: '预留成员角色、审批和版本回滚设计。', en: 'Reserve roles, approval states, and version rollback flows.' },
-        meta: { zh: '后续接权限系统', en: 'Ready for authz integration' },
+        desc: { zh: '支持成员角色、审批和版本回滚管理。', en: 'Manage roles, approvals, and version rollback flows.' },
+        meta: { zh: '团队权限管理', en: 'Team permissions' },
       },
     ],
     actions: [
@@ -805,9 +805,9 @@ const PAGE_MAP: Record<string, PageMeta> = {
         meta: { zh: '为商业化落地预埋', en: 'Commercialization-ready skeleton' },
       },
       {
-        title: { zh: '发票与状态位', en: 'Invoice and Status Slots' },
-        desc: { zh: '预留支付、开票、退款和售后状态展示。', en: 'Reserve views for payment, invoicing, refund, and support states.' },
-        meta: { zh: '后续接平台后端', en: 'Ready for backend connection' },
+        title: { zh: '发票与售后状态', en: 'Invoices and Support Status' },
+        desc: { zh: '集中查看支付、开票、退款和售后状态。', en: 'Track payment, invoicing, refund, and support states.' },
+        meta: { zh: '订单状态管理', en: 'Order status management' },
       },
     ],
     actions: [
@@ -852,8 +852,8 @@ const PAGE_MAP: Record<string, PageMeta> = {
     section: 'portal',
     decoration: DefaultDecoration,
     subtitle: {
-      zh: '门户层页面也保留工程化骨架，后续可以填充品牌故事、能力地图和团队介绍。',
-      en: 'Portal pages keep an engineering-ready skeleton for future brand story, capability maps, and team content.',
+      zh: '门户页面用于承载品牌故事、能力地图和团队介绍，让访客快速理解产品价值。',
+      en: 'Portal pages present the brand story, capability map, and team information so visitors understand product value quickly.',
     },
     stats: [
       { value: '3', label: { zh: '内容分栏', en: 'Content Columns' } },
@@ -895,7 +895,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       {
         title: { zh: '帮助主题树', en: 'Help Topic Tree' },
         desc: { zh: '按门户、工具、模板、订单和团队模块分层。', en: 'Split by portal, tools, templates, orders, and team modules.' },
-        meta: { zh: '文档中心骨架', en: 'Documentation center skeleton' },
+        meta: { zh: '文档中心', en: 'Documentation center' },
       },
       {
         title: { zh: '引导式教程', en: 'Guided Tutorials' },
@@ -1023,8 +1023,8 @@ const PAGE_MAP: Record<string, PageMeta> = {
       },
       {
         title: { zh: '工单路由', en: 'Ticket Routing' },
-        desc: { zh: '后续会接销售、客服和技术支持三类处理流。', en: 'Can route later to sales, support, and technical assistance flows.' },
-        meta: { zh: '工程化服务承接', en: 'Service workflow ready' },
+        desc: { zh: '面向销售、客服和专家支持三类协作流。', en: 'Routes work across sales, support, and expert assistance flows.' },
+        meta: { zh: '服务协作', en: 'Service collaboration' },
       },
     ],
     actions: [
@@ -1049,7 +1049,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
     cards: [
       {
         title: { zh: '岗位分区', en: 'Role Categories' },
-        desc: { zh: '产品、前端、后端、AI 应用和商业化方向可逐步补齐。', en: 'Product, frontend, backend, AI application, and commerce tracks can be filled in over time.' },
+        desc: { zh: '覆盖产品、设计、工程、AI 应用和商业化等岗位方向。', en: 'Covers product, design, engineering, AI application, and commerce roles.' },
         meta: { zh: '门户延伸页', en: 'Portal extension page' },
       },
       {
@@ -1069,8 +1069,8 @@ const PAGE_MAP: Record<string, PageMeta> = {
     section: 'portal',
     decoration: DocDecoration,
     subtitle: {
-      zh: '隐私政策页保留文档结构骨架，后续可接完整协议内容。',
-      en: 'The privacy policy page keeps a document-ready shell for full policy content later.',
+      zh: '隐私政策按清晰结构呈现，方便查看数据使用和权益说明。',
+      en: 'The privacy policy is structured for clear data-use and rights explanations.',
     },
     stats: [
       { value: '1', label: { zh: '协议主体', en: 'Policy Body' } },
@@ -1085,7 +1085,7 @@ const PAGE_MAP: Record<string, PageMeta> = {
       },
       {
         title: { zh: '版本声明', en: 'Version Notice' },
-        desc: { zh: '预留更新时间和重要变更提示。', en: 'Reserve updated timestamps and change notices.' },
+        desc: { zh: '展示更新时间和重要变更提示。', en: 'Show update timestamps and important notices.' },
         meta: { zh: '适合法务维护', en: 'Legal maintenance ready' },
       },
     ],
@@ -1100,8 +1100,8 @@ const PAGE_MAP: Record<string, PageMeta> = {
     section: 'portal',
     decoration: DocDecoration,
     subtitle: {
-      zh: '服务条款页和隐私政策类似，作为后续协议文档的工程化容器。',
-      en: 'The terms page mirrors privacy as an engineering-ready shell for future agreement content.',
+      zh: '服务条款以清晰分区呈现，方便理解权利、义务和使用边界。',
+      en: 'The terms page explains rights, responsibilities, and usage boundaries in clear sections.',
     },
     stats: [
       { value: '1', label: { zh: '协议版本', en: 'Agreement Version' } },
@@ -1128,11 +1128,11 @@ const PAGE_MAP: Record<string, PageMeta> = {
 }
 
 const sectionBadgeMap: Record<PageMeta['section'], LocalizedText> = {
-  ops: { zh: 'AI 智能运营骨架', en: 'AI Operations Skeleton' },
-  data: { zh: '数据资料库骨架', en: 'Data Library Skeleton' },
-  design: { zh: '视觉工作台骨架', en: 'Visual Workbench Skeleton' },
-  business: { zh: '商业系统骨架', en: 'Commerce Skeleton' },
-  portal: { zh: '门户信息页骨架', en: 'Portal Information Skeleton' },
+  ops: { zh: 'AI 智能运营', en: 'AI Operations' },
+  data: { zh: '数据资料库', en: 'Data Library' },
+  design: { zh: '视觉工作台', en: 'Visual Workbench' },
+  business: { zh: '商业系统', en: 'Commerce' },
+  portal: { zh: '门户信息页', en: 'Portal Information' },
 }
 
 const PORTAL_DETAIL_MAP: Record<
@@ -1340,16 +1340,16 @@ export default function GenericPage() {
 
           <aside className="glass rounded-2xl p-5">
             <div className="mb-4 text-sm font-medium text-white/75">
-              {locale === 'zh' ? '页面骨架预览' : 'Page Skeleton Preview'}
+              {locale === 'zh' ? '页面预览' : 'Page Preview'}
             </div>
             <div className="mb-5 flex justify-center opacity-70">
               <Decoration />
             </div>
             <div className="space-y-3 text-sm text-white/50">
               {[
-                locale === 'zh' ? '当前为第一阶段工程化骨架，重点验证信息架构与页面分工。' : 'This is a phase-one engineering skeleton focused on structure and page responsibilities.',
-                locale === 'zh' ? '后续会接入真实数据、状态流、权限与异步任务。' : 'Real data, state flows, permissions, and async jobs will be connected later.',
-                locale === 'zh' ? '页面结构已为组件复用、路由扩展和后端联动预留接口位。' : 'The structure already reserves extension points for reusable components, routing, and backend integration.',
+                locale === 'zh' ? '当前页面展示核心信息架构与主要操作路径。' : 'This page shows the core information architecture and main workflows.',
+                locale === 'zh' ? '页面会随真实业务数据和团队协作持续完善。' : 'The page will evolve with real business data and team collaboration.',
+                locale === 'zh' ? '各模块按业务职责分区，方便后续持续扩展。' : 'Modules are organized by business responsibility for continuous expansion.',
               ].map(item => (
                 <div key={item} className="flex items-start gap-2">
                   <ArrowRight className="mt-0.5 h-4 w-4 text-brand-400" />

@@ -148,8 +148,8 @@ interface SandboxState {
 const defaultExecutionConfig: ExecutionConfig = {
   provider: 'comfyui_bridge',
   maxConcurrency: 3,
-  retryOnFailure: true,
-  maxRetries: 2,
+  retryOnFailure: false,
+  maxRetries: 0,
   timeoutSeconds: 300,
 }
 
@@ -166,9 +166,9 @@ export const useSandboxStore = create<SandboxState>((set) => ({
   diyPrompt: '',
   recognizedKeywords: [],
   assetTasks: [
-    { id: 'asset-1', name: 'Asset 01（主图）', sceneTag: '主图', templateId: 'amazon-hero', detailRequirement: '主体完整、白底/浅底、符合电商主图规范' },
-    { id: 'asset-2', name: 'Asset 02（营销海报）', sceneTag: '海报', templateId: 'industrial-poster', detailRequirement: '突出产品质感和卖点，允许更强氛围光与背景层次' },
-    { id: 'asset-3', name: 'Asset 03（使用场景图）', sceneTag: '使用图', templateId: 'lifestyle-scene', detailRequirement: '强调真实使用场景，产品主体需清晰可识别' },
+    { id: 'asset-1', name: '任务 01（主图）', sceneTag: '主图', templateId: 'amazon-hero', detailRequirement: '主体完整、白底/浅底、符合电商主图规范' },
+    { id: 'asset-2', name: '任务 02（营销海报）', sceneTag: '海报', templateId: 'industrial-poster', detailRequirement: '突出产品质感和卖点，允许更强氛围光与背景层次' },
+    { id: 'asset-3', name: '任务 03（使用场景图）', sceneTag: '使用图', templateId: 'lifestyle-scene', detailRequirement: '强调真实使用场景，产品主体需清晰可识别' },
   ],
   imageCount: 3,
   selectedModel: 'comfyui-bridge',
@@ -228,9 +228,9 @@ export const useSandboxStore = create<SandboxState>((set) => ({
       diyPrompt: '',
       recognizedKeywords: [],
       assetTasks: [
-        { id: 'asset-1', name: 'Asset 01（主图）', sceneTag: '主图', templateId: 'amazon-hero', detailRequirement: '主体完整、白底/浅底、符合电商主图规范' },
-        { id: 'asset-2', name: 'Asset 02（营销海报）', sceneTag: '海报', templateId: 'industrial-poster', detailRequirement: '突出产品质感和卖点，允许更强氛围光与背景层次' },
-        { id: 'asset-3', name: 'Asset 03（使用场景图）', sceneTag: '使用图', templateId: 'lifestyle-scene', detailRequirement: '强调真实使用场景，产品主体需清晰可识别' },
+        { id: 'asset-1', name: '任务 01（主图）', sceneTag: '主图', templateId: 'amazon-hero', detailRequirement: '主体完整、白底/浅底、符合电商主图规范' },
+        { id: 'asset-2', name: '任务 02（营销海报）', sceneTag: '海报', templateId: 'industrial-poster', detailRequirement: '突出产品质感和卖点，允许更强氛围光与背景层次' },
+        { id: 'asset-3', name: '任务 03（使用场景图）', sceneTag: '使用图', templateId: 'lifestyle-scene', detailRequirement: '强调真实使用场景，产品主体需清晰可识别' },
       ],
       imageCount: 3,
       selectedModel: 'comfyui-bridge',

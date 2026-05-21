@@ -710,9 +710,11 @@ function WeightControl({
 
 function ComparePanel({
   nodes,
+  variants,
   onClose,
 }: {
   nodes: VersionNode[]
+  variants: AssetVariant[]
   onClose: () => void
 }) {
   if (nodes.length === 0) return null
@@ -733,6 +735,11 @@ function ComparePanel({
               <span className="text-[9px] text-white/25">{fmtDate(node.timestamp)}</span>
             </div>
             <p className="text-[10px] leading-relaxed text-white/45">{node.description}</p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {variants.filter((variant) => String(variant.metadata?.generation_group_id ?? '') === node.id).slice(0, 6).map((variant) => (
+                <img key={variant.id} src={variant.thumbnailUrl} alt={node.label} className="aspect-square rounded-lg border border-white/[0.06] object-cover" />
+              ))}
+            </div>
             <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
               <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">SKU Bias <b className="text-cyan-300">{node.skuBias}%</b></div>
               <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">REF Bias <b className="text-violet-300">{node.refBias}%</b></div>
@@ -823,8 +830,12 @@ export default function WorkshopPage() {
   const [zoomVariant, setZoomVariant] = useState<AssetVariant | null>(null)
   const [actionBusy, setActionBusy] = useState(false)
   const hasGenerationVersions = versionNodes.length > 0
-  const activeVersionLabel = versionNodes.find((node) => node.id === activeVersionId)?.version ?? versionNodes.at(-1)?.version ?? null
-  const selectedVariants = variants.filter((variant) => selectedVariantIds.includes(variant.id))
+  const activeNode = versionNodes.find((node) => node.id === activeVersionId) ?? versionNodes.at(-1)
+  const activeVersionLabel = activeNode?.version ?? null
+  const visibleVariants = activeVersionId
+    ? variants.filter((variant) => String(variant.metadata?.generation_group_id ?? '') === activeVersionId)
+    : variants
+  const selectedVariants = visibleVariants.filter((variant) => selectedVariantIds.includes(variant.id))
   const compareNodes = compareVersionIds
     .map((versionId) => versionNodes.find((node) => node.id === versionId))
     .filter((node): node is VersionNode => Boolean(node))
@@ -885,12 +896,13 @@ export default function WorkshopPage() {
   const handleVersionSelect = useCallback(
     (versionId: string) => {
       setActiveVersionId(versionId)
+      setSelectedVariantIds([])
       const node = versionNodes.find((n) => n.id === versionId)
       if (node) {
         setWeightParams(node.weightParams)
       }
     },
-    [versionNodes, setActiveVersionId, setWeightParams],
+    [versionNodes, setActiveVersionId, setSelectedVariantIds, setWeightParams],
   )
 
 
@@ -905,12 +917,13 @@ export default function WorkshopPage() {
   }, [versionNodes, activeVersionId, setCompareVersionIds, setIsComparing])
 
   const handleBranch = useCallback(async () => {
-    if (!productId || !activeVersionId) return
+    const targetVersionId = activeNode?.sourceVersionId ?? activeVersionId
+    if (!productId || !targetVersionId) return
     setActionBusy(true)
     try {
       const result = await productionApi.createBranchGenerationVersion(
         productId,
-        activeVersionId,
+        targetVersionId,
         weightParams,
         'Workshop branch regeneration',
       )
@@ -929,10 +942,9 @@ export default function WorkshopPage() {
     } finally {
       setActionBusy(false)
     }
-  }, [productId, activeVersionId, weightParams, setVariants, setVersionNodes, setActiveVersionId, toast])
+  }, [productId, activeNode, activeVersionId, weightParams, setVariants, setVersionNodes, setActiveVersionId, toast])
 
 
-  // Download handler
   const handleDownload = useCallback((variant: AssetVariant) => {
     toast.showToast('开始下载...', 'info')
     const a = document.createElement('a')
@@ -996,12 +1008,13 @@ export default function WorkshopPage() {
   }, [productId, selectedVariantIds, toast])
 
   const handleRegenerate = useCallback(async () => {
-    if (!productId || !activeVersionId) return
+    const targetVersionId = activeNode?.sourceVersionId ?? activeVersionId
+    if (!productId || !targetVersionId) return
     setActionBusy(true)
     try {
       const result = await productionApi.createWorkshopGenerationVersion(
         productId,
-        activeVersionId,
+        targetVersionId,
         weightParams,
         'Workshop regeneration',
         'workshop_regenerate',
@@ -1021,7 +1034,7 @@ export default function WorkshopPage() {
     } finally {
       setActionBusy(false)
     }
-  }, [productId, activeVersionId, weightParams, setVariants, setVersionNodes, setActiveVersionId, toast])
+  }, [productId, activeNode, activeVersionId, weightParams, setVariants, setVersionNodes, setActiveVersionId, toast])
 
   return (
     <div className="mx-auto max-w-[1440px] px-5 py-6">
@@ -1072,7 +1085,7 @@ export default function WorkshopPage() {
             className="min-h-0 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
           >
             <VariantGrid
-              variants={variants}
+              variants={visibleVariants}
               selectedIds={selectedVariantIds}
               busy={actionBusy}
               onToggle={handleToggle}
@@ -1108,7 +1121,7 @@ export default function WorkshopPage() {
       </div>
 
       {isComparing && (
-        <ComparePanel nodes={compareNodes} onClose={() => setIsComparing(false)} />
+        <ComparePanel nodes={compareNodes} variants={variants} onClose={() => setIsComparing(false)} />
       )}
 
       {/* Zoom Modal */}

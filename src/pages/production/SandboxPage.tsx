@@ -42,9 +42,10 @@ import type { PromptPlanSummary } from '@/services/production'
 // ─── Static Data ─────────────────────────────────────────────
 
 const MODEL_OPTIONS: ModelOption[] = [
-  { id: 'comfyui-bridge', name: 'ComfyUI Bridge', label: '默认稳定模式', description: '适合正式生产，出图质量和稳定性优先', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' },
-  { id: 'gemini-pro-image', name: 'Gemini Pro Image', label: '高质量创意模式', description: '适合需要更强图片理解和编辑能力的场景', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' },
-  { id: 'gemini-flash-image', name: 'Gemini Flash Image', label: '快速预览模式', description: '适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' },
+  { id: 'comfyui-bridge', name: '稳定生产模式', label: '默认稳定模式', description: '适合正式生产，出图质量和稳定性优先', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' },
+  { id: 'minimax-image-01', name: 'MiniMax 图生图', label: 'MiniMax 图生图', description: '适合用当前商品/参考图做图生图，保持主体并生成电商成片', costPerImage: 10, providerCode: 'minimax_image_generation', modelId: 'image-01' },
+  { id: 'gemini-pro-image', name: '高质量创意模式', label: '高质量创意模式', description: '适合需要更强图片理解和编辑能力的场景', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' },
+  { id: 'gemini-flash-image', name: '快速预览模式', label: '快速预览模式', description: '适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' },
 ]
 
 const RESOLUTION_OPTIONS: ResolutionOption[] = [
@@ -86,13 +87,46 @@ function templateDifferentiationRequirement(template: SceneTemplate, sceneTag?: 
   ].join('；')
 }
 
-function buildSlotDetailRequirement(template: SceneTemplate, sceneTag?: string, slotDetail?: string): string {
+function templateHardDifferentiator(template: SceneTemplate, slotIndex: number): string {
+  if (template.id === 'amazon-hero') {
+    return '强制差异化执行：只做平台主图；纯白/浅灰干净背景；正面或 3/4 居中展示；禁止生活场景、海报光效、桌面道具、文字排版；主体占画面 80%-90%。'
+  }
+  if (template.id === 'industrial-poster') {
+    return '强制差异化执行：只做纵向营销海报；深色工业背景、斜向硬光、金属/科技质感、低机位或英雄视角；允许抽象背景层次；不得使用纯白主图背景或生活桌面场景。'
+  }
+  if (template.id === 'lifestyle-scene') {
+    return '强制差异化执行：只做横向真实使用场景；居家/办公/桌面环境、自然光或暖光、产品处于实际使用语境；不得使用纯白主图构图或纵向海报构图。'
+  }
+  if (template.id === 'detail-closeup') {
+    return '强制差异化执行：只做微距细节特写；局部材质、接口、纹理或工艺占画面主体；浅景深；不得展示完整主图或海报式全景。'
+  }
+  if (template.id === 'comparison-split') {
+    return '强制差异化执行：只做左右/前后对比图；分屏、标注信息区、差异点明确；不得做单一产品主图、生活场景或海报。'
+  }
+  return `强制差异化执行：当前是第 ${slotIndex + 1} 个槽位，必须在背景、画幅、镜头距离、光线方向、商品呈现方式上与其他槽位显著不同。`
+}
+
+function buildSlotDetailRequirement(template: SceneTemplate, sceneTag?: string, slotDetail?: string, slotIndex = 0): string {
   const detail = (slotDetail || defaultDetailRequirement(sceneTag || template.category)).trim()
-  return `${templateDifferentiationRequirement(template, sceneTag)}；槽位要求：${detail}`
+  return `${templateDifferentiationRequirement(template, sceneTag)}；${templateHardDifferentiator(template, slotIndex)}；槽位要求：${detail}；避免同质化：不要沿用其他槽位的背景、构图、镜头距离或光线氛围。`
 }
 
 function userSummaryText(value: unknown): string {
-  return String(value ?? '')
+  const raw = (() => {
+    if (value == null) return ''
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value)
+    if (Array.isArray(value)) return value.map(userSummaryText).filter(Boolean).join('，')
+    if (typeof value === 'object') {
+      const obj = value as Record<string, unknown>
+      for (const key of ['description', 'summary', 'text', 'label', 'title', 'value']) {
+        const text = userSummaryText(obj[key])
+        if (text) return text
+      }
+      return '已配置'
+    }
+    return String(value)
+  })()
+  return raw
     .replace(/Product Geometry/gi, '商品形态')
     .replace(/Reference Composition/gi, '参考图构图')
     .replace(/Analysis Limitation/gi, '识别提醒')
@@ -198,19 +232,75 @@ function promptPlanBlockerText(plan: PromptPlanSummary | null): string {
     return '还没有生成出图方案。请先点击「生成/刷新出图方案」；如果按钮不可点，请回到生产准备页，完成图片解析和选择。'
   }
   const code = String(blocker.code || '').toUpperCase()
-  if (code.includes('DECONSTRUCTION') || blocker.target === 'deconstruction_job') return '图片还没有解析完成。请回到生产准备页，确认图片识别结果，并完成保留、替换或排除的选择。'
-  if (code.includes('INTENT_SPEC')) return '还没有形成清晰的出图方向。请先在生产准备页确认图片属性和选择。'
+  if (code.includes('SKU_ANALYSIS_QUALITY') || (code.includes('SKU') && code.includes('QUALITY'))) return 'SKU 图片识别结果不足。请回到生产准备页，重新解析或替换更清晰的商品图；确认商品主体信息可读后，再生成出图方案。'
+  if (code.includes('REFERENCE') && code.includes('QUALITY')) return '参考图识别结果不足。请回到生产准备页，重新解析或替换更清晰的参考图；确认风格、场景或构图信息可读后，再生成出图方案。'
+  if (code.includes('QUALITY')) return '图片识别结果太弱或为空。请回到生产准备页重新解析图片，确认能看到可读的商品/参考信息后再生成方案。'
+  if (code.includes('ATTENTION_DECISION') || code.includes('CHOICE')) return '还差四问选择。请回到生产准备页，把 4 个“要/不要”都确认后再生成方案。'
+  if (code.includes('SKU_FACTS')) return 'SKU 图片还没有可用识别结果。请回到生产准备页重新解析 SKU 图。'
+  if (code.includes('REFERENCE_STRATEGIES')) return '参考素材还没有可用识别结果。请回到生产准备页重新解析参考图。'
+  if (code.includes('DECONSTRUCTION') || blocker.target === 'deconstruction_job') return '图片还没有解析完成。请回到生产准备页，确认图片识别结果，并完成 4 个“要/不要”选择。'
+  if (code.includes('INTENT_SPEC')) return '还没有形成清晰的出图方向。请先在生产准备页确认图片属性和 4 个选择。'
   if (code.includes('DUAL_TRACK_SOURCE')) return '素材还不完整。请在生产准备页至少上传商品图和参考图，并完成解析。'
   if (code.includes('CAPABILITY') || blocker.target === 'runtime_capabilities') return '图片生成服务暂时繁忙。请稍后再试。'
   if (code.includes('CONTRACT') || blocker.target === 'prompt_plan') return '出图方案还没准备好。请先点击「生成/刷新出图方案」，等待整理完成后再开始生产。'
-  return '出图方案暂时不可用。请检查生产准备页是否已完成，或稍后重试。'
+  return '出图方案暂时不可用。请回到生产准备页检查图片识别结果和 4 个选择。'
+}
+
+function promptPlannerErrorText(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error ?? '')
+  const normalized = raw.toUpperCase()
+  if (normalized.includes('SKU_ANALYSIS_QUALITY') || (normalized.includes('SKU') && normalized.includes('LOW CONFIDENCE'))) {
+    return 'SKU 图片识别结果不足。请回到生产准备页，重新解析或替换更清晰的商品图；确认商品主体信息可读后，再生成出图方案。'
+  }
+  if (normalized.includes('REFERENCE') && normalized.includes('LOW CONFIDENCE')) {
+    return '参考图识别结果不足。请回到生产准备页，重新解析或替换更清晰的参考图；确认风格、场景或构图信息可读后，再生成出图方案。'
+  }
+  if (normalized.includes('QUALITY') || normalized.includes('IMAGE ANALYSIS')) {
+    return '图片识别结果不足。请回到生产准备页重新解析图片，确认商品图和参考图信息可读后，再生成出图方案。'
+  }
+  return raw || '生成出图方案失败，请稍后重试。'
+}
+
+function productionTaskStatusLabel(task: ProductionFanoutTask): string {
+  if (task.status === 'succeeded') return '已完成'
+  if (task.status === 'failed') return '失败'
+  if (task.status === 'executing') return '生成中'
+  if (task.status === 'queued') return '排队中'
+  return '等待中'
+}
+
+function productionTaskTitle(task: ProductionFanoutTask, index: number): string {
+  return task.sceneTag || task.templateName || `第 ${index + 1} 张`
+}
+
+function productionProgressNotice(batch: { completedTasks: number; failedTasks: number; totalTasks: number; tasks: ProductionFanoutTask[] }): string {
+  const running = batch.tasks.filter(task => task.status === 'executing' || task.status === 'queued').length
+  if (batch.completedTasks + batch.failedTasks >= batch.totalTasks) {
+    const firstError = batch.tasks.find(task => task.status === 'failed')?.error
+    return `本轮生成结束：${batch.completedTasks}/${batch.totalTasks} 张已完成${batch.failedTasks > 0 ? `，${batch.failedTasks} 张失败${firstError ? `：${firstError}` : ''}` : ''}。`
+  }
+  const latestDone = [...batch.tasks].reverse().find(task => task.status === 'succeeded')
+  const doneText = latestDone ? `，刚完成「${productionTaskTitle(latestDone, batch.tasks.indexOf(latestDone))}」` : ''
+  return `正在生成：${batch.completedTasks}/${batch.totalTasks} 张已完成，${running} 张进行中${doneText}。预计需要数分钟，请保持本页打开。`
+}
+
+function preloadFanoutResultImages(tasks: ProductionFanoutTask[]): Promise<void> {
+  const urls = tasks.flatMap(task => task.resultAssetUrls ?? []).filter((url): url is string => Boolean(url))
+  if (urls.length === 0 || typeof window === 'undefined' || typeof document === 'undefined') return Promise.resolve()
+  return Promise.all(urls.map(url => new Promise<void>((resolve) => {
+    const image = document.createElement('img')
+    const timer = window.setTimeout(resolve, 8000)
+    image.onload = () => { window.clearTimeout(timer); resolve() }
+    image.onerror = () => { window.clearTimeout(timer); resolve() }
+    image.src = url
+  }))).then(() => undefined)
 }
 
 function promptPlanStatusText(plan: PromptPlanSummary | null): string {
   if (!plan) return '还没有生成出图方案。请先点击「生成/刷新出图方案」。'
   if (plan.status === 'ready' && plan.promptId) return '出图方案已准备好，可以开始生产。'
   if (['blocked', 'failed', 'contract_needed'].includes(plan.status)) return promptPlanBlockerText(plan)
-  if (plan.status === 'processing' || plan.status === 'pending' || plan.status === 'created') return '大模型正在整理出图方案，通常需要 1-2 分钟。'
+  if (plan.status === 'processing' || plan.status === 'pending' || plan.status === 'created') return '正在整理出图方案，请稍等片刻。'
   return promptPlanBlockerText(plan)
 }
 
@@ -378,7 +468,6 @@ export default function SandboxPage() {
     setAdvancedParams,
     setAdvancedExpanded,
     setStrategySummary,
-    setDiyPrompt,
     setIntents,
     setIsRunning,
     reset,
@@ -428,7 +517,7 @@ export default function SandboxPage() {
         setStrategySummary({
           overview: intents.length > 0
             ? intents.map((intent) => userSummaryText(intent.description)).join('；')
-            : '还没有可用于生成的策略输入。请先回到生产准备，完成解析属性确认和 Keep/Replace/Drop 选择。',
+            : '还没有可用于生成的策略输入。请先回到生产准备，完成图片解析和四个“要/不要”选择。',
           attributes: intents.map((intent) => ({
             key: intent.id,
             label: userSummaryText(intent.type),
@@ -441,7 +530,7 @@ export default function SandboxPage() {
         if (cancelled) return
         setIntents([])
         setStrategySummary({
-          overview: '暂时没有读取到策略输入内容。请先回到生产准备，完成解析属性确认和 Keep/Replace/Drop 选择。',
+          overview: '暂时没有读取到策略输入内容。请先回到生产准备，完成图片解析和四个“要/不要”选择。',
           attributes: [],
         })
       })
@@ -476,7 +565,13 @@ export default function SandboxPage() {
     setPromptPlanning(true)
     setPromptPlanNotice('正在整理出图方案，完成后会在这里展示新的出图要求和关键参数。')
     try {
-      const job = await productionApi.requestPromptPlanner(productId, { marketplace: 'amazon', locale: 'zh-CN', promptVariables: { source: 'sandbox-prompt-diff' } })
+      const job = await productionApi.requestPromptPlanner(productId, {
+        marketplace: 'amazon',
+        locale: 'zh-CN',
+        promptVariables: {
+          source: 'sandbox-prompt-diff',
+        },
+      })
       toast.showToast(job.runtimeJobId ? '已开始整理本次出图方案。' : '已刷新出图方案。', 'success')
       let latest: PromptPlanSummary | null = null
       const maxPromptPlanPolls = 90
@@ -485,27 +580,27 @@ export default function SandboxPage() {
         latest = await productionApi.getPromptPlanSummary(productId)
         setPromptPlan(latest)
         if (latest.status === 'ready' && latest.promptId) {
-          setPromptPlanNotice(`出图方案已准备好：${promptPlanGenerationPrompt(latest) || '已整理好本次出图要求'}。确认图片和槽位后即可开始生产。`)
+          setPromptPlanNotice('出图方案已更新。请查看下方“本次出图要求”和“变化说明”，确认图片和槽位后即可开始生产。')
           break
         }
         if (['blocked', 'failed', 'contract_needed'].includes(latest.status)) {
-          setPromptPlanNotice('出图方案暂时不可用，请回到生产准备补齐图片解析或选择。')
+          setPromptPlanNotice(promptPlanStatusText(latest))
           break
         }
         const waitedSeconds = Math.round(i === 0 ? 1 : 1 + i * 1.5)
-        setPromptPlanNotice(`大模型正在整理出图方案… 已等待 ${waitedSeconds} 秒，通常需要 1-2 分钟。完成前不会点亮生产按钮。`)
+        setPromptPlanNotice(`正在整理出图方案… 已等待 ${waitedSeconds} 秒。完成前不会点亮生产按钮。`)
       }
       if (latest && !(latest.status === 'ready' && latest.promptId) && !['blocked', 'failed', 'contract_needed'].includes(latest.status)) {
         const finalLatest = await productionApi.getPromptPlanSummary(productId)
         setPromptPlan(finalLatest)
         if (finalLatest.status === 'ready' && finalLatest.promptId) {
-          setPromptPlanNotice(`出图方案已准备好：${promptPlanGenerationPrompt(finalLatest) || '已整理好本次出图要求'}。确认图片和槽位后即可开始生产。`)
+          setPromptPlanNotice('出图方案已更新。请查看下方“本次出图要求”和“变化说明”，确认图片和槽位后即可开始生产。')
         } else {
-          setPromptPlanNotice('出图方案还在大模型队列中；可以稍后刷新，系统不会在结果不明确时点亮生产按钮。')
+          setPromptPlanNotice('出图方案还在整理中；可以稍后刷新，系统不会在结果不明确时点亮生产按钮。')
         }
       }
     } catch (e) {
-      const message = e instanceof Error ? e.message : '生成出图方案失败，请稍后重试。'
+      const message = promptPlannerErrorText(e)
       setPromptPlanNotice(message)
       toast.showToast(message, 'error')
     } finally {
@@ -554,7 +649,7 @@ export default function SandboxPage() {
         templateName: template.name,
         slotIndex,
         sceneTag: slot.sceneTag,
-        detailRequirement: buildSlotDetailRequirement(template, slot.sceneTag, slot.detailRequirement),
+        detailRequirement: buildSlotDetailRequirement(template, slot.sceneTag, slot.detailRequirement, slotIndex),
         negativeRequirement: slot.negativeRequirement || advancedParams.negativePrompt,
         status: 'pending',
         progress: 0,
@@ -581,8 +676,17 @@ export default function SandboxPage() {
     updateAssetTask(asset.id, patch)
   }
 
+  const handleRemoveTaskSlot = (asset: AssetTask) => {
+    removeAssetTask(asset.id)
+    setImageCount(Math.max(1, imageCount - 1))
+  }
+
   const addNewAsset = () => {
-    const idx = assetTasks.length + 1
+    if (imageCount >= 10) {
+      toast.showToast('最多支持 10 个出图槽位。', 'info')
+      return
+    }
+    const idx = Math.min(10, Math.max(imageCount + 1, assetTasks.length + 1))
     const newAsset: AssetTask = {
       id: `asset-${Date.now()}`,
       name: `任务 ${String(idx).padStart(2, '0')}（新增）`,
@@ -597,7 +701,7 @@ export default function SandboxPage() {
   const executeProduction = async () => {
     if (!productId) return
     if (store.intents.length === 0) {
-      const message = '还不能开始生产：卡在策略输入。请先回到生产准备，完成图片解析结果确认和 Keep/Replace/Drop 选择。'
+      const message = '还不能开始生产：卡在策略输入。请先回到生产准备，完成图片解析和四个“要/不要”选择。'
       toast.showToast(message, 'error')
       setExecutionNotice(message)
       setExecutionProgress(null)
@@ -614,6 +718,7 @@ export default function SandboxPage() {
     }
     setExecutionNotice('正在提交生产任务，请稍候...')
     setExecutionProgress(0)
+    setFanoutTasksState(fanoutTasks)
     setExecutionPhase('waiting')
     setExecuting(true)
     setIsRunning(true)
@@ -628,9 +733,9 @@ export default function SandboxPage() {
       const batch = await productionApi.executeFanoutIntents(productId, selectedIntentIds, fanoutTasks, {
         ...(store.executionConfig ?? {
           provider: 'comfyui_bridge' as const,
-          maxConcurrency: 1,
-          retryOnFailure: true,
-          maxRetries: 2,
+          maxConcurrency: 3,
+          retryOnFailure: false,
+          maxRetries: 0,
           timeoutSeconds: 300,
         }),
         providerConfig: {
@@ -656,32 +761,35 @@ export default function SandboxPage() {
             negative_prompt_text: advancedParams.negativePrompt,
           },
         },
+      }, {
+        onProgress: (latest) => {
+          setFanoutTasksState(latest.tasks)
+          setExecutionProgress(latest.totalTasks > 0 ? Math.round(((latest.completedTasks + latest.failedTasks) / latest.totalTasks) * 100) : 0)
+          setExecutionNotice(productionProgressNotice(latest))
+        },
       })
       setFanoutTasksState(batch.tasks)
-      toast.showToast(`已提交 ${batch.totalTasks} 个生产任务，正在等待结果返回。`, 'success')
-      setExecutionNotice(`已按任务配额提交 ${batch.totalTasks} 个生成任务；系统使用生产准备中的商品图作为输入。结果返回前不会展示占位图。`)
-      for (let attempt = 0; attempt < 80; attempt += 1) {
-        await new Promise(resolve => setTimeout(resolve, attempt === 0 ? 1200 : 3000))
-        const latest = await productionApi.getFanoutBatchStatus(productId, batch)
-        setFanoutTasksState(latest.tasks)
-        setExecutionProgress(latest.totalTasks > 0 ? Math.round(((latest.completedTasks + latest.failedTasks) / latest.totalTasks) * 100) : 0)
-        setExecutionNotice(`已完成 ${latest.completedTasks}/${latest.totalTasks}，失败 ${latest.failedTasks}。结果返回后进入工坊。`)
-        if (latest.completedTasks + latest.failedTasks >= latest.totalTasks) {
-          if (latest.completedTasks > 0) {
-            setExecutionPhase('ready')
-            setIsRunning(false)
-            toast.showToast(`已有 ${latest.completedTasks} 个结果返回，正在进入工坊。`, 'success')
-            navigate(`/products/${productId}/production/workshop`)
-          } else {
-            setExecutionPhase('failed')
-            setIsRunning(false)
-            toast.showToast('本次批量任务没有成功结果，系统未展示占位图。', 'error')
-          }
-          return
-        }
+      setExecutionProgress(batch.totalTasks > 0 ? Math.round(((batch.completedTasks + batch.failedTasks) / batch.totalTasks) * 100) : 0)
+      setExecutionNotice(productionProgressNotice(batch))
+      if (batch.completedTasks > 0 && batch.failedTasks === 0) {
+        setExecutionPhase('ready')
+        setIsRunning(false)
+        setExecutionNotice('结果图已生成，正在加载图片，加载完成后进入工坊。')
+        await preloadFanoutResultImages(batch.tasks)
+        toast.showToast(`已有 ${batch.completedTasks} 个结果返回，正在进入工坊。`, 'success')
+        navigate(`/products/${productId}/production/workshop`)
+      } else if (batch.completedTasks > 0) {
+        const failedReason = batch.tasks.find(task => task.status === 'failed')?.error || '部分槽位没有返回可展示结果。'
+        setExecutionPhase('failed')
+        setIsRunning(false)
+        setExecutionNotice(`已生成 ${batch.completedTasks}/${batch.totalTasks} 张；${batch.failedTasks} 张失败：${failedReason}`)
+        toast.showToast(`已生成 ${batch.completedTasks}/${batch.totalTasks} 张，部分失败：${failedReason}`, 'error')
+      } else {
+        setExecutionPhase('failed')
+        setIsRunning(false)
+        toast.showToast('本次批量任务没有成功结果，系统未展示占位图。', 'error')
       }
-      setExecutionPhase('waiting')
-      setExecutionNotice('生产仍在进行中，暂时还没有结果返回。系统会停留在本页，不展示占位图；你可以稍后刷新或进入工坊查看是否已返回。')
+      return
     } catch (e) {
       const message = e instanceof Error ? e.message : '提交失败，请稍后重试。'
       toast.showToast(message, 'error')
@@ -756,7 +864,7 @@ export default function SandboxPage() {
         {/* ─── Left Column (3 cols) ────────────────────────── */}
         <div className="space-y-5 lg:col-span-3">
           {/* 1. Strategy Summary */}
-          <SectionCard title="策略输入摘要" subtitle="来自 Prep 图片解析与 Keep/Replace/Drop 选择">
+          <SectionCard title="策略输入摘要" subtitle="来自生产准备页的图片解析与四个“要/不要”选择">
             {strategySummary ? (
               <div className="space-y-4">
                 {/* Overview */}
@@ -801,7 +909,7 @@ export default function SandboxPage() {
               <div className="flex min-h-[160px] flex-col items-center justify-center text-center">
                 <AlertCircle className="mb-2 h-6 w-6 text-white/15" />
                 <p className="text-[11px] text-white/30">暂无策略摘要</p>
-                <p className="mt-0.5 text-[10px] text-white/20">请先完成 Prep Hub 的解析与决策</p>
+                <p className="mt-0.5 text-[10px] text-white/20">请先完成生产准备页的解析与选择</p>
               </div>
             )}
           </SectionCard>
@@ -809,7 +917,7 @@ export default function SandboxPage() {
           <SectionCard title="出图方案 / 变化说明" subtitle="把你的选择整理成后续出图要求">
             <div className="space-y-3">
               <div className="rounded-lg border border-white/[0.04] bg-white/[0.015] p-3 text-[10px] text-white/45">
-                <p className="mb-2 leading-relaxed text-white/35">点击后，系统会把生产准备里的图片识别结果和你的选择整理成一份出图方案；下方只展示这次方案新增、移除或调整了什么。</p>
+                <p className="mb-2 leading-relaxed text-white/35">点击后，系统会把生产准备里的图片识别结果和你的选择整理成一份出图方案；准备好后，上方展示最终出图要求，下方只展示新增、移除或调整的变化。</p>
                 <div className="flex items-center justify-between gap-2">
                   <span>方案来源</span>
                   <span className={promptPlan?.source === 'llm_prompt_planner' ? 'text-emerald-300/80' : 'text-amber-300/80'}>
@@ -881,7 +989,7 @@ export default function SandboxPage() {
                 ) : (
                   <p className="text-[10px] text-white/25">
                     {promptPlan?.diff.status === 'not_returned'
-                      ? '方案已准备好，本次没有明显变化。'
+                      ? '没有返回变化清单；请以上方“本次出图要求”为准。'
                       : '完成生产准备里的选择后，点击上方按钮，系统会整理本次出图要求并展示变化。'}
                   </p>
                 )}
@@ -999,7 +1107,9 @@ export default function SandboxPage() {
                     {!asset.id.startsWith('planned-') && (
                       <button
                         type="button"
-                        onClick={() => removeAssetTask(asset.id)}
+                        onClick={() => handleRemoveTaskSlot(asset)}
+                        aria-label={`删除${asset.name}，并减少一个出图槽位`}
+                        title="删除该槽位"
                         className="shrink-0 text-white/15 hover:text-red-400/80"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -1011,7 +1121,7 @@ export default function SandboxPage() {
               </div>
 
               {/* Add Asset */}
-              {assetTasks.length < 10 && (
+              {imageCount < 10 && (
                 <button
                   type="button"
                   onClick={addNewAsset}
@@ -1064,38 +1174,6 @@ export default function SandboxPage() {
                 {currentModel && (
                   <p className="mt-1 text-[9px] text-white/25">{currentModel.description}</p>
                 )}
-              </div>
-
-              {/* Resolution Selection */}
-              <div>
-                <label className="mb-1.5 block text-[11px] text-white/40">分辨率 / 清晰度</label>
-                <div className="relative">
-                  <select
-                    value={selectedResolution}
-                    onChange={(e) => setSelectedResolution(e.target.value)}
-                    className="w-full appearance-none rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] text-white outline-none transition focus:border-cyan-400/30"
-                  >
-                    {RESOLUTION_OPTIONS.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.label} ({r.dimensions})
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/20" />
-                </div>
-              </div>
-
-              {/* Manual Prompt */}
-              <div>
-                <label className="mb-1.5 block text-[11px] text-white/40">手动补充要求</label>
-                <textarea
-                  value={diyPrompt}
-                  onChange={(e) => setDiyPrompt(e.target.value)}
-                  rows={4}
-                  placeholder="可选，例如：更高端酒店氛围、画面更温暖、主体居中突出。"
-                  className="w-full resize-none rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] leading-relaxed text-white placeholder:text-white/15 outline-none transition focus:border-cyan-400/30"
-                />
-                <p className="mt-1 text-[9px] leading-relaxed text-white/25">这段会和生产准备、模板、槽位细节一起组成“本次出图要求”。</p>
               </div>
 
               {/* Advanced Settings (Collapsible) */}
@@ -1319,11 +1397,11 @@ export default function SandboxPage() {
                 className={`group inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition ${canStartProduction ? 'bg-gradient-to-r from-cyan-500 to-blue-500 shadow-cyan-500/10 hover:shadow-cyan-500/20' : 'border border-amber-300/20 bg-amber-300/10 text-amber-100/85 shadow-amber-500/5 hover:bg-amber-300/15'} disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                <span>{executing ? '正在出图...' : canStartProduction ? '开始生产' : '查看原因和下一步'}</span>
+                <span>{executing ? '正在出图...' : canStartProduction ? '开始生产' : '补齐生成条件'}</span>
               </button>
               {!canStartProduction && !executing && (
                 <p className="text-center text-[9px] leading-relaxed text-amber-100/55">
-                  当前按钮只用于查看原因，不会提交生产任务；只有策略输入、出图方案、出图槽位全部通过后才会变成“开始生产”。
+                  当前按钮不会提交生产任务；只有策略输入、出图方案、出图槽位全部通过后才会变成“开始生产”。
                 </p>
               )}
 
@@ -1348,8 +1426,33 @@ export default function SandboxPage() {
                     </div>
                   )}
                   {fanoutTasksState.length > 0 && (
-                    <div className="mt-2 text-[10px] text-white/35">
-                      批量任务：{fanoutTasksState.filter(task => task.status === 'succeeded').length}/{fanoutTasksState.length} 已返回结果
+                    <div className="mt-3 space-y-2">
+                      <div className="text-[10px] text-white/45">
+                        批量任务：{fanoutTasksState.filter(task => task.status === 'succeeded').length}/{fanoutTasksState.length} 已返回结果
+                      </div>
+                      <div className="space-y-1.5">
+                        {fanoutTasksState.map((task, index) => {
+                          const done = task.status === 'succeeded'
+                          const failed = task.status === 'failed'
+                          return (
+                            <div key={task.id} className="rounded-lg border border-white/[0.06] bg-black/10 px-2 py-1.5">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="truncate text-[10px] text-white/70">第 {index + 1} 张 · {productionTaskTitle(task, index)}</span>
+                                <span className={done ? 'text-[10px] text-emerald-200/80' : failed ? 'text-[10px] text-rose-200/80' : 'text-[10px] text-cyan-200/75'}>
+                                  {productionTaskStatusLabel(task)} {Math.max(0, Math.min(100, Math.round(task.progress || 0)))}%
+                                </span>
+                              </div>
+                              <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[0.08]">
+                                <div
+                                  className={done ? 'h-full rounded-full bg-emerald-300/75 transition-all duration-500' : failed ? 'h-full rounded-full bg-rose-300/75 transition-all duration-500' : 'h-full rounded-full bg-cyan-300/70 transition-all duration-500'}
+                                  style={{ width: `${done ? 100 : Math.max(8, Math.min(100, Math.round(task.progress || 0)))}%` }}
+                                />
+                              </div>
+                              {task.error && <div className="mt-1 text-[9px] text-rose-100/65">{task.error}</div>}
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>

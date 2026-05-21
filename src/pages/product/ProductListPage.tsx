@@ -49,6 +49,8 @@ const INITIAL_CREATE_FORM: ProductCreateForm = {
   newTag: '',
 }
 
+const SKU_PAGE_SIZE = 10
+
 function parseTags(value: unknown) {
   return String(value ?? '')
     .split(/[,;\n|]/)
@@ -113,6 +115,7 @@ function ProductListPage() {
   const [showPreviewDrawer, setShowPreviewDrawer] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [focusedProductId, setFocusedProductId] = useState<string>('')
+  const [currentPage, setCurrentPage] = useState(1)
   const [createForm, setCreateForm] = useState<ProductCreateForm>(INITIAL_CREATE_FORM)
   const [importRows, setImportRows] = useState<ImportRow[]>([])
   const [parsingImport, setParsingImport] = useState(false)
@@ -121,6 +124,10 @@ function ProductListPage() {
   useEffect(() => {
     void loadProducts()
   }, [])
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeStage, keyword])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -274,6 +281,15 @@ function ProductListPage() {
 
   const focusedUnit = missionUnits.find(unit => unit.product.id === focusedProductId) ?? filteredUnits[0] ?? missionUnits[0] ?? null
   const selectedUnits = missionUnits.filter(unit => selectedIds.includes(unit.product.id))
+  const totalPages = Math.max(1, Math.ceil(filteredUnits.length / SKU_PAGE_SIZE))
+  const safeCurrentPage = Math.min(currentPage, totalPages)
+  const pageStart = (safeCurrentPage - 1) * SKU_PAGE_SIZE
+  const pageEnd = Math.min(filteredUnits.length, pageStart + SKU_PAGE_SIZE)
+  const visibleUnits = filteredUnits.slice(pageStart, pageEnd)
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages)
+  }, [currentPage, totalPages])
 
   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } }
   const itemVariants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 260, damping: 26 } } }
@@ -316,8 +332,11 @@ function ProductListPage() {
         </motion.div>
 
         <motion.section variants={itemVariants} className="mb-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">SKU 工作队列 — {filteredUnits.length} 个活跃</div>
-          <div className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-[#0b0d14] shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">
+            <span>SKU 工作队列 — {filteredUnits.length} 个活跃</span>
+            {filteredUnits.length > SKU_PAGE_SIZE ? <span data-testid="sku-pagination-summary">第 {safeCurrentPage} / {totalPages} 页 · 当前 {pageStart + 1}-{pageEnd}</span> : null}
+          </div>
+          <div data-testid="sku-list-panel" className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-[#0b0d14] shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
             <div className="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(72px,0.5fr)_minmax(80px,0.55fr)_minmax(72px,0.5fr)_minmax(72px,0.5fr)_minmax(150px,0.9fr)] border-b border-white/[0.06] bg-[#0b0d14] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/34 max-xl:hidden">
               <div>SKU</div><div>标题 / 类目</div><div>真实就绪项</div><div>素材</div><div>Listing</div><div>导出</div><div>更新时间</div><div>操作</div>
             </div>
@@ -327,7 +346,7 @@ function ProductListPage() {
               <div className="flex min-h-[260px] items-center justify-center text-sm text-white/40">没有匹配的 SKU。</div>
             ) : (
               <div className="divide-y divide-white/[0.06]">
-                {filteredUnits.slice(0, 8).map(unit => {
+                {visibleUnits.map(unit => {
                   const product = unit.product
                   const focused = focusedUnit?.product.id === product.id
                   const selected = selectedIds.includes(product.id)
@@ -352,6 +371,30 @@ function ProductListPage() {
                 })}
               </div>
             )}
+            {!loading && filteredUnits.length > SKU_PAGE_SIZE ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs text-white/45">
+                <span data-testid="sku-pagination-range">显示 {pageStart + 1}-{pageEnd} / {filteredUnits.length} 个 SKU</span>
+                <div className="flex items-center gap-2" data-testid="sku-pagination-controls">
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage <= 1}
+                    onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                    className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 font-semibold text-white/70 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    上一页
+                  </button>
+                  <span className="rounded-lg border border-white/[0.06] bg-black/20 px-3 py-1.5 text-white/55">{safeCurrentPage} / {totalPages}</span>
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage >= totalPages}
+                    onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                    className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 font-semibold text-white/70 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    下一页
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </motion.section>
 

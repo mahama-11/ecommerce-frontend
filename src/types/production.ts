@@ -6,7 +6,7 @@
 
 export type ParsingTrack = 'comfyui' | 'third_party'
 export type ImageUnderstandingProviderCode = 'comfyui_bridge' | 'gemini_visual_understanding'
-export type ImageGenerationProviderCode = 'comfyui_bridge' | 'gemini_image_generation' | 'volcengine'
+export type ImageGenerationProviderCode = 'comfyui_bridge' | 'gemini_image_generation' | 'minimax_image_generation' | 'volcengine'
 
 export type ParsingSource = {
   id: string
@@ -205,6 +205,7 @@ export type ProductionFanoutTask = {
   status: FanoutTaskStatus
   progress: number
   resultAssetCount: number
+  resultAssetUrls?: string[]
   error?: string
   retryCount?: number
 }
@@ -356,6 +357,9 @@ export type VersionNode = {
   prompt?: string
   negativePrompt?: string
   weightParams: WeightParams
+  sourceVersionId?: string
+  versionIds?: string[]
+  resultAssetCount?: number
 }
 
 export type WeightParams = {

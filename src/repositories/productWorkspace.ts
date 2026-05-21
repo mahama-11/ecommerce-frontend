@@ -29,7 +29,11 @@ function shouldUseApi() {
 export const productWorkspaceRepository = {
   async listSavedTemplates() {
     if (shouldUseApi()) {
-      return request<SavedTemplateRecord[]>('/api/v1/ecommerce/templates/saved')
+      try {
+        return await request<SavedTemplateRecord[]>('/api/v1/ecommerce/templates/saved')
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return getSavedTemplatesFromMock()
@@ -37,10 +41,14 @@ export const productWorkspaceRepository = {
 
   async saveSavedTemplate(record: SavedTemplateRecord) {
     if (shouldUseApi()) {
-      return request<SavedTemplateRecord[]>('/api/v1/ecommerce/templates/saved', {
-        method: 'POST',
-        body: JSON.stringify(record),
-      })
+      try {
+        return await request<SavedTemplateRecord[]>('/api/v1/ecommerce/templates/saved', {
+          method: 'POST',
+          body: JSON.stringify(record),
+        })
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return saveTemplateRecordToMock(record)
@@ -48,10 +56,14 @@ export const productWorkspaceRepository = {
 
   async updateSavedTemplate(record: SavedTemplateRecord) {
     if (shouldUseApi()) {
-      return request<SavedTemplateRecord[]>(`/api/v1/ecommerce/templates/saved/${encodeURIComponent(record.id)}`, {
-        method: 'PUT',
-        body: JSON.stringify(record),
-      })
+      try {
+        return await request<SavedTemplateRecord[]>(`/api/v1/ecommerce/templates/saved/${encodeURIComponent(record.id)}`, {
+          method: 'PUT',
+          body: JSON.stringify(record),
+        })
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return saveTemplateRecordToMock(record)
@@ -59,9 +71,13 @@ export const productWorkspaceRepository = {
 
   async deleteSavedTemplate(id: string) {
     if (shouldUseApi()) {
-      return request<SavedTemplateRecord[]>(`/api/v1/ecommerce/templates/saved/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      })
+      try {
+        return await request<SavedTemplateRecord[]>(`/api/v1/ecommerce/templates/saved/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        })
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return getSavedTemplatesFromMock().filter(item => item.id !== id)
@@ -69,9 +85,13 @@ export const productWorkspaceRepository = {
 
   async useSavedTemplate(id: string) {
     if (shouldUseApi()) {
-      return request<SavedTemplateRecord>(`/api/v1/ecommerce/templates/saved/${encodeURIComponent(id)}/use`, {
-        method: 'POST',
-      })
+      try {
+        return await request<SavedTemplateRecord>(`/api/v1/ecommerce/templates/saved/${encodeURIComponent(id)}/use`, {
+          method: 'POST',
+        })
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return getSavedTemplatesFromMock().find(item => item.id === id) ?? null
@@ -79,7 +99,11 @@ export const productWorkspaceRepository = {
 
   async listWorkflowEvents() {
     if (shouldUseApi()) {
-      return request<WorkflowEvent[]>('/api/v1/ecommerce/workflow/events')
+      try {
+        return await request<WorkflowEvent[]>('/api/v1/ecommerce/workflow/events')
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return getWorkflowEventsFromMock()
@@ -87,10 +111,14 @@ export const productWorkspaceRepository = {
 
   async saveWorkflowEvent(event: WorkflowEvent) {
     if (shouldUseApi()) {
-      return request<WorkflowEvent[]>('/api/v1/ecommerce/workflow/events', {
-        method: 'POST',
-        body: JSON.stringify(event),
-      })
+      try {
+        return await request<WorkflowEvent[]>('/api/v1/ecommerce/workflow/events', {
+          method: 'POST',
+          body: JSON.stringify(event),
+        })
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return saveWorkflowEventToMock(event)
@@ -98,7 +126,11 @@ export const productWorkspaceRepository = {
 
   async listLinkedDesignAssets() {
     if (shouldUseApi()) {
-      return request<LinkedDesignAsset[]>('/api/v1/ecommerce/assets/linked-designs')
+      try {
+        return await request<LinkedDesignAsset[]>('/api/v1/ecommerce/assets/linked-designs')
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return getLinkedDesignAssetsFromMock()
@@ -106,10 +138,14 @@ export const productWorkspaceRepository = {
 
   async saveLinkedDesignAsset(asset: LinkedDesignAsset) {
     if (shouldUseApi()) {
-      return request<LinkedDesignAsset[]>('/api/v1/ecommerce/assets/linked-designs', {
-        method: 'POST',
-        body: JSON.stringify(asset),
-      })
+      try {
+        return await request<LinkedDesignAsset[]>('/api/v1/ecommerce/assets/linked-designs', {
+          method: 'POST',
+          body: JSON.stringify(asset),
+        })
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return saveLinkedDesignAssetToMock(asset)
@@ -117,7 +153,11 @@ export const productWorkspaceRepository = {
 
   async listLinkedDeliveries() {
     if (shouldUseApi()) {
-      return request<LinkedDelivery[]>('/api/v1/ecommerce/deliveries/linked')
+      try {
+        return await request<LinkedDelivery[]>('/api/v1/ecommerce/deliveries/linked')
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return getLinkedDeliveriesFromMock()
@@ -125,10 +165,14 @@ export const productWorkspaceRepository = {
 
   async saveLinkedDelivery(delivery: LinkedDelivery) {
     if (shouldUseApi()) {
-      return request<LinkedDelivery[]>('/api/v1/ecommerce/deliveries/linked', {
-        method: 'POST',
-        body: JSON.stringify(delivery),
-      })
+      try {
+        return await request<LinkedDelivery[]>('/api/v1/ecommerce/deliveries/linked', {
+          method: 'POST',
+          body: JSON.stringify(delivery),
+        })
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return saveLinkedDeliveryToMock(delivery)
@@ -136,7 +180,11 @@ export const productWorkspaceRepository = {
 
   async listTemplateBridges() {
     if (shouldUseApi()) {
-      return request<LinkedTemplateBridge[]>('/api/v1/ecommerce/workflow/template-bridges')
+      try {
+        return await request<LinkedTemplateBridge[]>('/api/v1/ecommerce/workflow/template-bridges')
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return getTemplateBridgesFromMock()
@@ -144,10 +192,14 @@ export const productWorkspaceRepository = {
 
   async saveTemplateBridge(bridge: LinkedTemplateBridge) {
     if (shouldUseApi()) {
-      return request<LinkedTemplateBridge[]>('/api/v1/ecommerce/workflow/template-bridges', {
-        method: 'POST',
-        body: JSON.stringify(bridge),
-      })
+      try {
+        return await request<LinkedTemplateBridge[]>('/api/v1/ecommerce/workflow/template-bridges', {
+          method: 'POST',
+          body: JSON.stringify(bridge),
+        })
+      } catch {
+        // Temporarily keep the workbench usable while backend connectivity is being stabilized.
+      }
     }
 
     return saveTemplateBridgeToMock(bridge)

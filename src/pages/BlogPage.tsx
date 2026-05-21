@@ -62,8 +62,8 @@ export default function BlogPage() {
           <h1 className="text-3xl font-bold gradient-text sm:text-5xl">{t('pages.blog')}</h1>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-white/60 sm:text-base">
             {text(locale, {
-              zh: 'Blog 从占位状态升级为内容中心骨架，承接案例、教程、更新和趋势内容，后续既能对外表达产品，也能承担搜索流量入口。',
-              en: 'The blog evolves into a content-hub skeleton for case studies, tutorials, updates, and industry insights, supporting both product storytelling and search acquisition.',
+              zh: '沉淀案例、教程、产品更新和行业趋势，帮助团队与客户更快理解最佳实践。',
+              en: 'Case studies, tutorials, product updates, and industry insights help teams and customers learn best practices faster.',
             })}
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_200px]">
@@ -89,7 +89,7 @@ export default function BlogPage() {
             <div key={item.zh} className="glass rounded-2xl p-5">
               <div className="text-sm font-medium text-white">{text(locale, item)}</div>
               <div className="mt-2 text-xs text-white/40">
-                {locale === 'zh' ? '内容栏目骨架已预留' : 'Editorial slot reserved'}
+                {locale === 'zh' ? '内容栏目持续更新' : 'Editorial sections in progress'}
               </div>
             </div>
           ))}

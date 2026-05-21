@@ -94,8 +94,8 @@ export default function AccountBillingPage() {
       </div>
 
       <motion.section variants={itemVariants} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((item) => (
-          <motion.div variants={itemVariants} key={item.label} className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl p-5 shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-colors hover:border-white/10">
+        {stats.map((item, index) => (
+          <motion.div variants={itemVariants} key={`${item.label}-${index}`} className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl p-5 shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-colors hover:border-white/10">
             <div className="flex items-center gap-3">
               <item.icon className="h-4 w-4 text-slate-500" />
               <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">{item.label}</div>
@@ -110,8 +110,8 @@ export default function AccountBillingPage() {
           { label: t('account.billing.stats.settledRecords'), value: summary?.settled_count ?? 0, color: 'text-slate-100' },
           { label: t('account.billing.stats.refundedRecords'), value: summary?.refunded_count ?? 0, color: 'text-rose-400' },
           { label: t('account.billing.stats.channelRetries'), value: (summary?.channel_pending_count ?? 0) + (summary?.channel_failed_count ?? 0), color: 'text-amber-400' }
-        ].map((item) => (
-          <motion.div variants={itemVariants} key={item.label} className="rounded-xl border border-white/5 bg-white/[0.03] p-5 shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-colors hover:border-white/10">
+        ].map((item, index) => (
+          <motion.div variants={itemVariants} key={`${item.label}-${index}`} className="rounded-xl border border-white/5 bg-white/[0.03] p-5 shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-colors hover:border-white/10">
             <div className="text-xs font-medium text-slate-500 uppercase tracking-wider">{item.label}</div>
             <div className={`mt-2 text-2xl font-semibold tracking-tight ${item.color}`}>{item.value}</div>
           </motion.div>
@@ -130,8 +130,8 @@ export default function AccountBillingPage() {
               { label: getCommercialAssetLabel(t, 'ECOMMERCE_CREDIT'), value: `${assetMap.get('ECOMMERCE_CREDIT') || 0} ${t('account.common.unit.credits')}` },
               { label: getCommercialAssetLabel(t, 'ECOMMERCE_PROMO_CREDIT'), value: `${assetMap.get('ECOMMERCE_PROMO_CREDIT') || 0} ${t('account.common.unit.credits')}` },
               { label: getCommercialAssetLabel(t, 'ecommerce.image.generate'), value: `${quota?.remaining || 0} ${t('account.common.unit.quota')}` },
-            ].map(item => (
-              <motion.div variants={itemVariants} key={item.label} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
+            ].map((item, index) => (
+              <motion.div variants={itemVariants} key={`${item.label}-${index}`} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
                 <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">{item.label}</div>
                 <div className="text-lg font-semibold text-slate-100">{item.value}</div>
               </motion.div>
@@ -150,8 +150,8 @@ export default function AccountBillingPage() {
             </Link>
           </div>
           <div className="divide-y divide-white/5">
-            {walletHistory.length ? walletHistory.slice(0, 5).map(item => (
-              <motion.div variants={itemVariants} key={item.id} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
+            {walletHistory.length ? walletHistory.slice(0, 5).map((item, index) => (
+              <motion.div variants={itemVariants} key={item.id || `${item.reference_id || item.asset_code}-${index}`} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium text-slate-100">{getWalletHistoryTitleLabel(t, item)}</div>
                   <div className="mt-1 truncate text-xs text-slate-500">
@@ -211,8 +211,8 @@ export default function AccountBillingPage() {
         </div>
 
         <div className="divide-y divide-white/5">
-          {visibleCharges.length ? visibleCharges.map(item => (
-            <motion.div variants={itemVariants} key={item.id} className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-white/[0.03]">
+          {visibleCharges.length ? visibleCharges.map((item, index) => (
+            <motion.div variants={itemVariants} key={item.id || `${item.event_id || item.business_type}-${index}`} className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-white/[0.03]">
               <div className="min-w-0">
                 <div className="text-sm font-medium text-slate-100 truncate">{item.business_type || t('account.billing.records.usageRecord')}</div>
                 <div className="mt-1 text-xs text-slate-500 truncate">

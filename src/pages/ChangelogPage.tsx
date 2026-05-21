@@ -108,7 +108,7 @@ export default function ChangelogPage() {
                 <span>{locale === 'zh' ? '更新聚焦维度' : 'Update Dimensions'}</span>
               </div>
               <div className="space-y-2 text-sm text-white/45">
-                <div>{locale === 'zh' ? '页面骨架与视觉层' : 'Page skeleton and visual layer'}</div>
+                <div>{locale === 'zh' ? '页面内容与视觉层' : 'Page content and visual layer'}</div>
                 <div>{locale === 'zh' ? '基础状态与任务流' : 'Foundation states and task flows'}</div>
                 <div>{locale === 'zh' ? '商业化与资料治理' : 'Commercial and asset governance'}</div>
                 <div>{locale === 'zh' ? '对外门户与开发者入口' : 'Portal and developer-facing entry points'}</div>
