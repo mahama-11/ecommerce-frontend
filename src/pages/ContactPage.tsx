@@ -81,7 +81,7 @@ export default function ContactPage() {
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="glass rounded-2xl p-6">
             <div className="mb-5 text-sm font-medium text-white/75">
-              {locale === 'zh' ? '沟通表单骨架' : 'Conversation Form Skeleton'}
+              {locale === 'zh' ? '留下联系方式' : 'Contact request'}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <input
@@ -112,7 +112,7 @@ export default function ContactPage() {
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
               <button className="btn-primary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white">
-                <span>{locale === 'zh' ? '模拟提交线索' : 'Submit Mock Inquiry'}</span>
+                <span>{locale === 'zh' ? '提交需求' : 'Submit request'}</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
               <Link to="/pricing" className="btn-outline inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold">

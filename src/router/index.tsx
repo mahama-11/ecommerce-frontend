@@ -1,6 +1,41 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { lazy, Suspense, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react'
+import { lazy as reactLazy, Suspense, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react'
 import type { RouteObject } from 'react-router-dom'
+
+function ChunkLoadRecovery() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#0a0a12] px-6 text-center text-white">
+      <div className="max-w-sm space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+        <p className="text-sm font-medium">页面资源已更新</p>
+        <p className="text-xs leading-relaxed text-white/55">请刷新页面后继续，当前填写内容会尽量保留。</p>
+        <button type="button" onClick={() => window.location.reload()} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black">
+          刷新页面
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function isChunkLoadError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error || '')
+  return /Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk|dynamically imported module/i.test(message)
+}
+
+function lazy<T extends ComponentType<any>>(loader: () => Promise<{ default: T }>): LazyExoticComponent<T> {
+  return reactLazy(() => loader().catch((error) => {
+    if (typeof window !== 'undefined' && isChunkLoadError(error)) {
+      const key = 'ecommerce:chunk-reload-once'
+      if (window.sessionStorage.getItem(key) !== '1') {
+        window.sessionStorage.setItem(key, '1')
+        window.location.reload()
+        return new Promise<{ default: T }>(() => {})
+      }
+      window.sessionStorage.removeItem(key)
+      return { default: ChunkLoadRecovery as unknown as T }
+    }
+    throw error
+  }))
+}
 
 const RequireAuth = lazy(() => import('@/components/auth/RequireAuth'))
 const RequireOrgAdmin = lazy(() => import('@/components/auth/RequireOrgAdmin'))
@@ -14,7 +49,9 @@ const HomePage = lazy(() => import('@/pages/HomePage'))
 const PricingPage = lazy(() => import('@/pages/PricingPage'))
 const SolutionDetailPage = lazy(() => import('@/pages/SolutionDetailPage'))
 const ToolPage = lazy(() => import('@/pages/ToolPage'))
+const ProductAiWorkspacePage = lazy(() => import('@/pages/ToolPage').then(module => ({ default: module.ProductScopedToolPage })))
 const BatchListingPage = lazy(() => import('@/pages/BatchListingPage'))
+const ProductVisualToolsPage = lazy(() => import('@/pages/ProductVisualToolsPage'))
 const AboutUsPage = lazy(() => import('@/pages/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('@/pages/HelpCenterPage'))
 const ContactPage = lazy(() => import('@/pages/ContactPage'))
@@ -151,7 +188,7 @@ export const router = createBrowserRouter([
   { path: '/database/tagManage', ...consolePage(AssetCommercePage) },
   { path: '/draw/scene-reference', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/product-home', element: <Navigate to="/products" replace /> },
-  { path: '/draw/product-records', element: <Navigate to="/products" replace /> },
+  { path: '/draw/product-records', element: <Navigate to="/products/workbench/visual-tools" replace /> },
   { path: '/draw/designer-home', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/my-design', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/my-template', ...consolePage(DesignWorkbenchPage) },
@@ -161,14 +198,14 @@ export const router = createBrowserRouter([
     { index: true, element: <S><ProductListPage /></S> },
     { path: 'workbench', element: <Navigate to="/products" replace /> },
     { path: 'downloads', element: <Navigate to="/products/workbench/downloads" replace /> },
-    { path: 'visual-tools', element: <Navigate to="/products" replace /> },
+    { path: 'visual-tools', element: <Navigate to="/products/workbench/visual-tools" replace /> },
     { path: 'batch-listing', element: <Navigate to="/products/workbench/batch-listing" replace /> },
     { path: ':id', element: <S><ProductDetailPage /></S> },
     { path: 'workbench/batch-listing', element: <S><BatchListingPage /></S> },
-    { path: 'workbench/visual-tools', element: <Navigate to="/products" replace /> },
-    { path: 'workbench/visual-tools/:toolSlug', element: <Navigate to="/products" replace /> },
+    { path: 'workbench/visual-tools', element: <S><ProductVisualToolsPage /></S> },
+    { path: 'workbench/visual-tools/:toolSlug', element: <S><ProductVisualToolsPage /></S> },
     { path: 'workbench/downloads', element: <S><AccountDownloadsPage /></S> },
-    { path: ':productId/ai/:toolSlug', element: <Navigate to="/products/:productId/production/prep" replace /> },
+    { path: ':productId/ai/:toolSlug', element: <S><ProductAiWorkspacePage /></S> },
   ]),
   // Inventory Module — 库存中心，属于登录后的业务工作区
   {

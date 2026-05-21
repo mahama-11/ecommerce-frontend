@@ -8,6 +8,7 @@ export const Z_INDEX = {
   floatingToolControl: 'z-40',
   dropdown: 'z-50',
   popover: 'z-50',
+  modal: 'z-50',
   drawer: 'z-50',
   portalNav: 'z-50',
   toast: 'z-[60]',

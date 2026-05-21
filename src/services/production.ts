@@ -159,6 +159,7 @@ type GenerationVersionDTO = {
   parent_version_id?: string
   prompt_plan_status?: string
   metadata?: Record<string, unknown>
+  blockers?: Array<{ code: string; message: string; target?: string }>
   created_at?: string
 }
 
@@ -668,6 +669,10 @@ function elementLabel(element: DeconstructionElementDTO): string {
   const raw = element.label || element.element_key || element.element_type
   const key = String(raw ?? '').toLowerCase().replace(/\s+/g, '_')
   const labels: Record<string, string> = {
+    product_info: '图片中的产品信息',
+    background_info: '图片中的背景信息',
+    provider_reference_description: '参考素材解析结果',
+    reference_style: '参考素材风格',
     product_geometry: '商品形态',
     geometry: '商品形态',
     material: '材质质感',
@@ -709,10 +714,12 @@ function stageToParsing(stage: StageViewDTO): DualTrackParsing {
       ? 'succeeded'
       : 'idle'
   const job = stage.deconstruction_job
-  const failureText = job?.error_message
-    || (job?.error_code ? `图片识别失败：${job.error_code}` : undefined)
-    || (status === 'failed' && job?.stage_message ? job.stage_message : undefined)
-    || stage.runtime_capability_error?.message
+  const failureText = userFacingParsingFailure(
+    job?.error_message
+      || (job?.error_code ? `图片识别失败：${job.error_code}` : undefined)
+      || (status === 'failed' && job?.stage_message ? job.stage_message : undefined)
+      || stage.runtime_capability_error?.message,
+  )
   const result = {
     track: 'third_party' as const,
     status,
@@ -727,6 +734,23 @@ function stageToParsing(stage: StageViewDTO): DualTrackParsing {
     mergedAttributes: attributes,
     conflicts: [],
   }
+}
+
+function userFacingParsingFailure(message?: string): string | undefined {
+  const text = String(message ?? '').trim()
+  if (!text) return undefined
+  const lower = text.toLowerCase()
+  if (
+    lower.includes('traceback')
+    || lower.includes('name \'traceback\' is not defined')
+    || lower.includes('provider_submit_failed')
+    || lower.includes('comfyui bridge request failed')
+    || lower.includes('gemini')
+    || lower.includes('python')
+  ) {
+    return '图片识别服务暂时不可用，请稍后重试；系统不会用假结果继续下一步。'
+  }
+  return text
 }
 
 function stageToDecisionTree(stage: StageViewDTO): LlmDecisionTreeResult {
@@ -1061,6 +1085,8 @@ export async function startParsing(req: StartParsingRequest): Promise<StartParsi
 
   const sourceRefs = [] as SourceReferenceDTO[]
   const updatedSources = [...localSources]
+  const providerCode = req.providerCode && req.providerCode !== 'comfyui_bridge' ? req.providerCode : undefined
+  const providerKey = providerCode ?? 'comfyui_bridge'
   for (const source of selectedSources) {
     const sourceRef = await ensureSourceReference(session.id, req.productId, source)
     sourceRefs.push(sourceRef)
@@ -1072,14 +1098,13 @@ export async function startParsing(req: StartParsingRequest): Promise<StartParsi
   saveLocalSources(req.productId, updatedSources)
 
   const sourceRefIds = sourceRefs.map(item => item.id).sort()
-  const providerCode = req.providerCode && req.providerCode !== 'comfyui_bridge' ? req.providerCode : undefined
   const jobs: DeconstructionJobDTO[] = []
   for (const sourceRef of sourceRefs) {
     const job = await request<DeconstructionJobDTO>(`${VWF}/${session.id}/deconstruction-jobs`, {
       method: 'POST',
       body: JSON.stringify({
         source_reference_id: sourceRef.id,
-        idempotency_key: `deconstruct:${session.id}:${sourceRef.id}:${sourceRefIds.join('+')}`,
+        idempotency_key: `deconstruct:${session.id}:${sourceRef.id}:${sourceRefIds.join('+')}:${providerKey}`,
         requested_elements: ['product_geometry', 'material', 'style', 'scene', 'brand_constraints'],
         metadata: {
           frontend_entrypoint: 'production-prep',
@@ -1409,6 +1434,7 @@ export type GenerationExecutionStatus = {
   stage?: string
   progress: number
   resultAssetCount: number
+  resultAssetUrls?: string[]
   runtimeJobId?: string
   terminal: boolean
   successful: boolean
@@ -1423,10 +1449,13 @@ function generationExecutionStatus(version: GenerationVersionDTO): GenerationExe
   const successful = (status === 'completed' || status === 'succeeded' || stage === 'completed') && resultAssetCount > 0
   const failed = ['failed', 'cancelled', 'contract_needed', 'blocked'].includes(status) || ['failed', 'cancelled', 'contract_needed', 'blocked'].includes(String(stage ?? '').toLowerCase())
   const terminal = successful || failed
+  const blockerMessage = version.blockers?.map(blocker => blocker.message).filter(Boolean).join('；')
+    || String((version.metadata?.runtime_result as Record<string, unknown> | undefined)?.error_message ?? '')
+    || String((version.metadata?.runtime_update as Record<string, unknown> | undefined)?.error_message ?? '')
   const message = successful
     ? `已生成 ${resultAssetCount} 张结果图，可以进入工坊查看。`
     : failed
-      ? '本次生产没有成功完成，系统没有展示占位图。请检查生成方案或稍后重试。'
+      ? (blockerMessage || '本次生产没有成功完成，系统没有展示占位图。请检查生成方案或稍后重试。')
       : progress > 0
         ? `正在出图，当前进度约 ${progress}%。请保持本页打开，结果返回后会自动进入工坊。`
         : '生产任务已提交，正在等待生成服务返回进度。请保持本页打开。'
@@ -1436,6 +1465,7 @@ function generationExecutionStatus(version: GenerationVersionDTO): GenerationExe
     stage,
     progress,
     resultAssetCount,
+    resultAssetUrls: version.result_assets?.map(asset => asset.asset_content_url).filter((url): url is string => Boolean(url)),
     runtimeJobId: version.runtime_job_id,
     terminal,
     successful,
@@ -1506,16 +1536,22 @@ export async function executeIntents(productId: string, intentIds: string[], con
 
 
 
-export async function executeFanoutIntents(productId: string, intentIds: string[], tasks: ProductionFanoutTask[], config?: ExecutionConfig): Promise<ProductionFanoutBatch> {
+export async function executeFanoutIntents(
+  productId: string,
+  intentIds: string[],
+  tasks: ProductionFanoutTask[],
+  config?: ExecutionConfig,
+  opts?: { onProgress?: (batch: ProductionFanoutBatch) => void },
+): Promise<ProductionFanoutBatch> {
   if (isDevMode()) {
     await delay(1200)
     const batchId = `fanout-${uid()}`
-    return {
+    const devBatch = {
       batchId,
       productId,
       intentIds,
-      tasks: tasks.map((task) => ({ ...task, versionId: `gv-${uid()}`, runtimeJobId: `runtime-${uid()}`, status: 'queued', progress: 5 })),
-      status: 'queued',
+      tasks: tasks.map((task) => ({ ...task, versionId: `gv-${uid()}`, runtimeJobId: `runtime-${uid()}`, status: 'queued' as const, progress: 5 })),
+      status: 'queued' as const,
       totalTasks: tasks.length,
       completedTasks: 0,
       failedTasks: 0,
@@ -1525,6 +1561,8 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
       maxRetries: config?.maxRetries,
       waves: 1,
     }
+    opts?.onProgress?.(devBatch)
+    return devBatch
   }
   if (tasks.length === 0) {
     contractNeeded('没有可提交的出图槽位；请先在 Prep 上传至少一张 SKU 图片，并保留至少一个生产槽位。')
@@ -1545,6 +1583,7 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
   const completed = new Map<string, ProductionFanoutTask>()
   const finalFailures = new Map<string, ProductionFanoutTask>()
   let pending: ProductionFanoutTask[] = tasks.map(task => ({ ...task, status: 'pending' as const, progress: 0, retryCount: task.retryCount ?? 0 }))
+  opts?.onProgress?.(summarizeFanoutBatch(batchId, productId, intentIds, pending, { maxConcurrency, retryOnFailure, maxRetries, waves: 0 }))
   let waveCount = 0
 
   for (let attempt = 0; pending.length > 0; attempt += 1) {
@@ -1553,7 +1592,10 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
       const wave = pending.slice(offset, offset + maxConcurrency)
       waveCount += 1
       const submitted = await submitFanoutWave(session.id, batchId, productId, intentIds, wave, config, attempt, waveCount)
-      const settled = await waitForFanoutWave(productId, submitted.tasks, timeoutMs)
+      opts?.onProgress?.(summarizeFanoutBatch(batchId, productId, intentIds, mergeFanoutProgress(tasks, submitted.tasks), { maxConcurrency, retryOnFailure, maxRetries, waves: waveCount }))
+      const settled = await waitForFanoutWave(productId, submitted.tasks, timeoutMs, (latest) => {
+        opts?.onProgress?.(summarizeFanoutBatch(batchId, productId, intentIds, mergeFanoutProgress(tasks, latest.tasks), { maxConcurrency, retryOnFailure, maxRetries, waves: waveCount }))
+      })
       for (const task of settled.tasks) {
         if (task.status === 'succeeded') {
           completed.set(task.id, task)
@@ -1572,7 +1614,14 @@ export async function executeFanoutIntents(productId: string, intentIds: string[
   }
 
   const merged = tasks.map(task => completed.get(task.id) ?? finalFailures.get(task.id) ?? { ...task, status: 'failed' as const, error: '任务未被调度。' })
-  return summarizeFanoutBatch(batchId, productId, intentIds, merged, { maxConcurrency, retryOnFailure, maxRetries, waves: waveCount })
+  const finalBatch = summarizeFanoutBatch(batchId, productId, intentIds, merged, { maxConcurrency, retryOnFailure, maxRetries, waves: waveCount })
+  opts?.onProgress?.(finalBatch)
+  return finalBatch
+}
+
+function mergeFanoutProgress(allTasks: ProductionFanoutTask[], updates: ProductionFanoutTask[]): ProductionFanoutTask[] {
+  const byId = new Map(updates.map(task => [task.id, task]))
+  return allTasks.map(task => byId.get(task.id) ?? task)
 }
 
 async function submitFanoutWave(sessionId: string, batchId: string, productId: string, intentIds: string[], tasks: ProductionFanoutTask[], config: ExecutionConfig | undefined, attempt: number, wave: number): Promise<ProductionFanoutBatch> {
@@ -1633,6 +1682,7 @@ async function submitFanoutWave(sessionId: string, batchId: string, productId: s
       status: ['queued', 'processing'].includes(String(version.status).toLowerCase()) ? 'queued' : String(version.status).toLowerCase() === 'completed' ? 'succeeded' : 'failed',
       progress: Number(version.progress ?? 5),
       resultAssetCount: version.result_assets?.length ?? 0,
+      resultAssetUrls: version.result_assets?.map(asset => asset.asset_content_url).filter((url): url is string => Boolean(url)),
       error: version.status === 'contract_needed' ? '生成服务暂时没有开始任务' : undefined,
       retryCount: original?.retryCount ?? attempt,
     } as ProductionFanoutTask
@@ -1645,11 +1695,12 @@ async function submitFanoutWave(sessionId: string, batchId: string, productId: s
   })
 }
 
-async function waitForFanoutWave(productId: string, tasks: ProductionFanoutTask[], timeoutMs: number): Promise<ProductionFanoutBatch> {
+async function waitForFanoutWave(productId: string, tasks: ProductionFanoutTask[], timeoutMs: number, onProgress?: (batch: ProductionFanoutBatch) => void): Promise<ProductionFanoutBatch> {
   let current = summarizeFanoutBatch(`wave-${Date.now()}`, productId, [], tasks)
   const startedAt = Date.now()
   while (Date.now() - startedAt < timeoutMs) {
     current = await getFanoutBatchStatus(productId, current)
+    onProgress?.(current)
     const terminal = current.tasks.every(task => task.status === 'succeeded' || task.status === 'failed')
     if (terminal) return current
     await delay(3000)
@@ -1688,6 +1739,7 @@ export async function getFanoutBatchStatus(productId: string, batch: ProductionF
       status: latest.successful ? 'succeeded' : latest.terminal ? 'failed' : latest.progress > 5 ? 'executing' : 'queued',
       progress: latest.progress,
       resultAssetCount: latest.resultAssetCount,
+      resultAssetUrls: latest.resultAssetUrls,
       error: latest.terminal && !latest.successful ? latest.message : task.error,
     } as ProductionFanoutTask
   }))
@@ -1793,6 +1845,25 @@ function generationVersionLabel(index: number): string {
   return `V${index + 1}.0`
 }
 
+function generationGroupId(version: GenerationVersionDTO): string {
+  const metadata = version.metadata ?? {}
+  const fanoutBatchId = String(metadata.fanout_batch_id ?? '').trim()
+  const fanoutRunId = String(metadata.fanout_run_id ?? '').trim()
+  if (fanoutBatchId && fanoutRunId) return `fanout:${fanoutBatchId}:${fanoutRunId}`
+  if (fanoutBatchId) return `fanout:${fanoutBatchId}`
+  const promptId = String(version.prompt_id ?? '').trim()
+  if (promptId) return `prompt:${promptId}`
+  return version.version_id
+}
+
+function generationGroupDescription(versions: GenerationVersionDTO[]): string {
+  const completed = versions.filter(v => ['completed', 'succeeded'].includes(String(v.status ?? '').toLowerCase()) || String(v.stage ?? '').toLowerCase() === 'result_available').length
+  const totalAssets = versions.reduce((sum, version) => sum + (version.result_assets?.length ?? 0), 0)
+  const pending = versions.length - completed
+  const templates = Array.from(new Set(versions.map(v => String(v.metadata?.template_id ?? '')).filter(Boolean)))
+  return `完成 ${completed}/${versions.length} 个任务 · ${totalAssets} 张结果${pending > 0 ? ` · ${pending} 个处理中` : ''}${templates.length > 0 ? ` · ${templates.join(' / ')}` : ''}`
+}
+
 function versionWeightParams(version: GenerationVersionDTO) {
   const config = (version.metadata?.config ?? {}) as Record<string, unknown>
   const skuBias = Number(config.skuBias ?? config.sku_bias ?? 70)
@@ -1811,25 +1882,39 @@ export async function listGenerationVersions(productId: string): Promise<Version
   }
   const stage = await getStageView(productId)
   const versions = [...(stage.generation_versions ?? [])].sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
-  return versions.map((version, index) => {
+  const groups = new Map<string, GenerationVersionDTO[]>()
+  versions.forEach((version) => {
+    const key = generationGroupId(version)
+    groups.set(key, [...(groups.get(key) ?? []), version])
+  })
+  const grouped = Array.from(groups.entries()).map(([id, groupVersions]) => {
+    const sortedGroup = groupVersions.sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
+    const representative = sortedGroup.slice().reverse().find(version => (version.result_assets?.length ?? 0) > 0) ?? sortedGroup.at(-1)!
+    const latest = sortedGroup.at(-1)!
+    return { id, versions: sortedGroup, representative, latest }
+  }).sort((a, b) => String(a.latest.created_at ?? '').localeCompare(String(b.latest.created_at ?? '')))
+  return grouped.map((group, index) => {
     const label = generationVersionLabel(index)
-    const weights = versionWeightParams(version)
-    const current = version.version_id === versions.at(-1)?.version_id
+    const weights = versionWeightParams(group.representative)
+    const current = group.id === grouped.at(-1)?.id
     return {
-      id: version.version_id,
+      id: group.id,
       version: label,
       label,
-      description: `${version.status}${version.stage ? ` · ${version.stage}` : ''}`,
+      description: generationGroupDescription(group.versions),
       skuBias: weights.skuBias,
       refBias: 100 - weights.skuBias,
-      timestamp: version.created_at || new Date().toISOString(),
-      strategySnapshot: String(version.metadata?.source ?? version.prompt_plan_status ?? 'backend_generation_version'),
+      timestamp: group.latest.created_at || new Date().toISOString(),
+      strategySnapshot: String(group.representative.metadata?.source ?? group.representative.prompt_plan_status ?? 'backend_generation_version'),
       isCurrent: current,
-      parentId: version.parent_version_id,
+      parentId: undefined,
       childrenIds: [],
-      prompt: version.prompt_id,
+      prompt: group.representative.prompt_id,
       negativePrompt: undefined,
       weightParams: weights,
+      sourceVersionId: group.representative.version_id,
+      versionIds: group.versions.map(version => version.version_id),
+      resultAssetCount: group.versions.reduce((sum, version) => sum + (version.result_assets?.length ?? 0), 0),
     }
   })
 }
@@ -1845,6 +1930,7 @@ export async function listVariants(productId: string): Promise<AssetVariant[]> {
     asset,
   })))
   return Promise.all(variants.map(async ({ version, asset }) => {
+    const groupId = generationGroupId(version)
     const assetContentPath = asset.asset_content_url || (asset.asset_id ? `/api/v1/ecommerce/assets/${asset.asset_id}/content` : '')
     const authenticatedUrl = assetContentPath ? await fetchAuthenticatedObjectUrl(assetContentPath) : ''
     const done = ['completed', 'succeeded'].includes(String(version.status ?? '').toLowerCase()) || String(version.stage ?? '').toLowerCase() === 'completed'
@@ -1856,7 +1942,7 @@ export async function listVariants(productId: string): Promise<AssetVariant[]> {
       width: Number(asset.metadata?.width ?? 1024),
       height: Number(asset.metadata?.height ?? 1024),
       status: asset.selected || asset.asset_id === version.selected_result_asset_id ? 'selected' : (done ? 'ready' : 'generating'),
-      metadata: { ...version.metadata, ...asset.metadata, version_id: version.version_id, asset_id: asset.asset_id, asset_content_url: assetContentPath, stage: version.stage, progress: version.progress, status: version.status },
+      metadata: { ...version.metadata, ...asset.metadata, generation_group_id: groupId, version_id: version.version_id, asset_id: asset.asset_id, asset_content_url: assetContentPath, stage: version.stage, progress: version.progress, status: version.status },
       createdAt: version.created_at || new Date().toISOString(),
     }
   }))
