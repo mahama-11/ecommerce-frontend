@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'; import { useParams, useNavigate } from 'react-router-dom'; import { useTranslation } from 'react-i18next'; import { Play, Minus, Plus, Settings, Loader2, AlertCircle, Trash2, ChevronDown, ChevronLeft, Hexagon, Sun, Frame, Package, Palette, Scale, Info, Sparkles, Image, ChevronUp, } from 'lucide-react'; import { motion, AnimatePresence } from 'framer-motion'; import { useSandboxStore } from '@/store/productionStore'; import * as productionApi from '@/services/production'; import { useToastStore } from '@/store/toastStore'; import { isDevMode } from '@/mocks/productionDemo'; import type { SceneTemplate, ModelOption, ResolutionOption, AssetTask, StrategySummary, ParsingSource, ProductionFanoutTask, ImageGenerationProviderCode, } from '@/types/production'; import type { PromptPlanSummary } from '@/services/production'
+import { Button } from '@/components/ui/Button'
 const MODEL_OPTIONS: ModelOption[] = [ { id: 'comfyui-bridge', name: '稳定生产模式', label: '默认稳定模式', description: '适合正式生产，出图质量和稳定性优先', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' }, { id: 'minimax-image-01', name: 'MiniMax 图生图', label: 'MiniMax 图生图', description: '适合用当前商品/参考图做图生图，保持主体并生成电商成片', costPerImage: 10, providerCode: 'minimax_image_generation', modelId: 'image-01' }, { id: 'gemini-pro-image', name: '高质量创意模式', label: '高质量创意模式', description: '适合需要更强图片理解和编辑能力的场景', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' }, { id: 'gemini-flash-image', name: '快速预览模式', label: '快速预览模式', description: '适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' }, ]
 const RESOLUTION_OPTIONS: ResolutionOption[] = [ { id: '1024-square', label: '标准方图', dimensions: '1024×1024', costMultiplier: 1 }, { id: '720-wide', label: '横版预览', dimensions: '1280×720', costMultiplier: 0.75 }, ]
 const TEMPLATES: SceneTemplate[] = [ { id: 'amazon-hero', name: 'Amazon 平台主图模板', category: 'hero', aspectRatio: '1:1', description: '纯白背景，主体居中，符合 Amazon 主图规范', compositionRules: ['中心构图，突出主体', '纯色或渐变背景，无干扰', '符合平台主图规范'], platform: 'Amazon' }, { id: 'industrial-poster', name: '工业风营销海报模板', category: 'poster', aspectRatio: '3:4', description: '深色工业风背景，强调产品质感与力量感', compositionRules: ['纵向构图，强调视觉冲击', '可容纳文案信息区', '适合活动 / 促销场景'], platform: '通用' }, { id: 'lifestyle-scene', name: '场景使用图模板', category: 'lifestyle', aspectRatio: '16:9', description: '真实使用场景，展示产品在实际环境中的效果', compositionRules: ['场景化构图，增强真实感', '展示产品使用环境', '增强信任感与代入感'], platform: '通用' }, { id: 'detail-closeup', name: '细节特写模板', category: 'detail', aspectRatio: '1:1', description: '局部放大，突出材质纹理与工艺细节', compositionRules: ['微距视角，强调细节', '浅景深效果', '突出材质与工艺'], platform: '通用' }, { id: 'comparison-split', name: '对比图模板', category: 'comparison', aspectRatio: '16:9', description: '左右对比，突出产品优势与差异点', compositionRules: ['对称分割布局', '强调对比差异', '适合功能卖点展示'], platform: '通用' }, ]
@@ -406,11 +407,11 @@ export default function SandboxPage() {
                     <span className="text-[10px] font-medium text-white/40">出图要求概览</span> </div>
                   <p className="text-[11px] leading-relaxed text-white/50">
                     {strategySummary.overview} </p>
-                  <button
+                  <Button
                     type="button"
                     className="mt-2 text-[10px] text-cyan-400/60 hover:text-cyan-400"
                   >
-                    查看详情 → </button> </div>
+                    查看详情 → </Button> </div>
                 {/* Attributes */}
                 <div className="space-y-2">
                   {strategySummary.attributes.map((attr) => {
@@ -453,14 +454,14 @@ export default function SandboxPage() {
                     <div><span className="text-white/28">背景：</span>{promptPlanFieldSummary(promptPlan, 'background')}</div>
                     <div><span className="text-white/28">光线：</span>{promptPlanFieldSummary(promptPlan, 'lighting')}</div>
                     <div><span className="text-white/28">构图：</span>{promptPlanFieldSummary(promptPlan, 'composition')}</div> </div> </div> )}
-              <button
+              <Button
                 type="button"
                 onClick={runPromptPlanner}
                 disabled={promptPlanning || !hasRunnableIntents}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-[11px] font-medium text-cyan-200 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {promptPlanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                {promptPlanning ? '正在整理出图方案...' : hasRunnableIntents ? '生成/刷新出图方案' : '先完成 Prep 后生成方案'} </button>
+                {promptPlanning ? '正在整理出图方案...' : hasRunnableIntents ? '生成/刷新出图方案' : '先完成 Prep 后生成方案'} </Button>
               {!hasRunnableIntents && ( <div className="rounded-lg border border-amber-300/15 bg-amber-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-amber-100/75">
                   生成方案按钮不可用：请先回到生产准备页，完成图片解析并确认至少一条选择。 </div> )}
               {!promptPlanReady && ( <div className="rounded-lg border border-amber-300/15 bg-amber-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-amber-100/75">
@@ -481,22 +482,22 @@ export default function SandboxPage() {
               <div className="flex items-center gap-4">
                 <span className="text-[11px] text-white/50">生成图片数量</span>
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => adjustImageCount(-1)}
                     disabled={imageCount <= 1}
                     className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-white/40 transition hover:border-white/15 hover:text-white disabled:opacity-30"
                   >
-                    <Minus className="h-3 w-3" /> </button>
+                    <Minus className="h-3 w-3" /> </Button>
                   <span className="min-w-[20px] text-center text-sm font-semibold text-white">
                     {imageCount} </span>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => adjustImageCount(1)}
                     disabled={imageCount >= 10}
                     className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-white/40 transition hover:border-white/15 hover:text-white disabled:opacity-30"
                   >
-                    <Plus className="h-3 w-3" /> </button> </div>
+                    <Plus className="h-3 w-3" /> </Button> </div>
                 <span className="text-[9px] text-white/20">最多支持 10 个槽位；1 个槽位 = 1 张待生成图片</span> </div>
               {/* Asset Rows */}
               <div className="space-y-2">
@@ -553,22 +554,22 @@ export default function SandboxPage() {
                           placeholder="本槽位不希望出现的内容，可选"
                           className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[10px] text-white placeholder:text-white/15 outline-none focus:border-cyan-400/30"
                         /> </div> </div>
-                    {!asset.id.startsWith('planned-') && ( <button
+                    {!asset.id.startsWith('planned-') && ( <Button
                         type="button"
                         onClick={() => handleRemoveTaskSlot(asset)}
                         aria-label={`删除${asset.name}，并减少一个出图槽位`}
                         title="删除该槽位"
                         className="shrink-0 text-white/15 hover:text-red-400/80"
                       >
-                        <Trash2 className="h-3.5 w-3.5" /> </button> )} </motion.div> ) })} </div>
+                        <Trash2 className="h-3.5 w-3.5" /> </Button> )} </motion.div> ) })} </div>
               {/* Add Asset */}
-              {imageCount < 10 && ( <button
+              {imageCount < 10 && ( <Button
                   type="button"
                   onClick={addNewAsset}
                   className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/[0.06] bg-white/[0.01] py-2.5 text-[11px] text-white/30 transition hover:border-white/10 hover:text-white/50"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  添加新任务 </button> )} </div> </SectionCard>
+                  添加新任务 </Button> )} </div> </SectionCard>
           {/* 4. Template Preview */}
           <SectionCard title={`模板参考（${imageCount} 个槽位）`}>
             <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${imageCount >= 5 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
@@ -598,13 +599,13 @@ export default function SandboxPage() {
                 {currentModel && ( <p className="mt-1 text-[9px] text-white/25">{currentModel.description}</p> )} </div>
               {/* Advanced Settings (Collapsible) */}
               <div className="rounded-xl border border-white/[0.04] bg-white/[0.01]">
-                <button
+                <Button
                   type="button"
                   onClick={() => setAdvancedExpanded(!advancedExpanded)}
                   className="flex w-full items-center justify-between px-3 py-2.5"
                 >
                   <span className="text-[11px] text-white/40">高级设置</span>
-                  {advancedExpanded ? ( <ChevronUp className="h-3.5 w-3.5 text-white/20" /> ) : ( <ChevronDown className="h-3.5 w-3.5 text-white/20" /> )} </button>
+                  {advancedExpanded ? ( <ChevronUp className="h-3.5 w-3.5 text-white/20" /> ) : ( <ChevronDown className="h-3.5 w-3.5 text-white/20" /> )} </Button>
                 <AnimatePresence>
                   {advancedExpanded && ( <motion.div
                       initial={{ height: 0, opacity: 0 }}
@@ -624,13 +625,13 @@ export default function SandboxPage() {
                               onChange={(e) => setAdvancedParams({ seed: Number(e.target.value) }) }
                               className="flex-1 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] text-white outline-none focus:border-cyan-400/30"
                             />
-                            <button
+                            <Button
                               type="button"
                               onClick={() => setAdvancedParams({ seed: Math.floor(Math.random() * 999999999) })}
                               className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-1.5 text-white/30 hover:text-white/50"
                               title="Random seed"
                             >
-                              <Settings className="h-3 w-3" /> </button> </div> </div>
+                              <Settings className="h-3 w-3" /> </Button> </div> </div>
                         {/* 不希望出现的内容 */}
                         <div>
                           <label className="mb-1 block text-[10px] text-white/30">不希望出现的内容</label>
@@ -683,14 +684,14 @@ export default function SandboxPage() {
                         {/* High Res Fix Toggle */}
                         <label className="flex items-center justify-between rounded-lg border border-white/[0.03] bg-white/[0.01] px-2.5 py-2">
                           <span className="text-[10px] text-white/30">高倍修复</span>
-                          <button
+                          <Button
                             type="button"
                             onClick={() => setAdvancedParams({ highResFix: !advancedParams.highResFix })}
                             className={`relative h-4 w-7 rounded-full transition-colors ${ advancedParams.highResFix ? 'bg-cyan-400/40' : 'bg-white/[0.08]' }`}
                           >
                             <span
                               className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform ${ advancedParams.highResFix ? 'left-[14px]' : 'left-0.5' }`}
-                            /> </button> </label> </div> </motion.div> )} </AnimatePresence> </div> </div> </SectionCard>
+                            /> </Button> </label> </div> </motion.div> )} </AnimatePresence> </div> </div> </SectionCard>
           {/* 6. Credits Estimation */}
           <SectionCard title="消耗预估">
             <div className="space-y-3">
@@ -721,7 +722,7 @@ export default function SandboxPage() {
                 {productionReadinessItems.map((item) => ( <div key={item.label} className="grid grid-cols-[72px_1fr] gap-2 text-[10px]">
                     <span className={item.ok ? 'text-emerald-200/75' : 'text-amber-100/70'}>{item.ok ? '✓' : '•'} {item.label}</span>
                     <span className="text-right leading-relaxed text-white/42">{item.detail}</span> </div> ))} </div>
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   if (!canStartProduction) { setExecutionPhase('idle')
@@ -735,7 +736,7 @@ export default function SandboxPage() {
                 className={`group inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition ${canStartProduction ? 'bg-gradient-to-r from-cyan-500 to-blue-500 shadow-cyan-500/10 hover:shadow-cyan-500/20' : 'border border-amber-300/20 bg-amber-300/10 text-amber-100/85 shadow-amber-500/5 hover:bg-amber-300/15'} disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                <span>{executing ? '正在出图...' : canStartProduction ? '开始生产' : '补齐生成条件'}</span> </button>
+                <span>{executing ? '正在出图...' : canStartProduction ? '开始生产' : '补齐生成条件'}</span> </Button>
               {!canStartProduction && !executing && ( <p className="text-center text-[9px] leading-relaxed text-amber-100/55">
                   当前按钮不会提交生产任务；只有策略输入、出图方案、出图槽位全部通过后才会变成“开始生产”。 </p> )}
               {executionNotice && ( <div className={`rounded-xl border px-3 py-2.5 text-[10px] leading-relaxed ${ executionPhase === 'ready' ? 'border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-100/80' : executionPhase === 'failed' ? 'border-rose-400/20 bg-rose-400/[0.06] text-rose-100/80' : 'border-cyan-400/20 bg-cyan-400/[0.06] text-cyan-100/80' }`} aria-live="polite">
@@ -772,13 +773,13 @@ export default function SandboxPage() {
         transition={{ delay: 0.2 }}
         className="mt-6 flex items-center justify-between gap-4"
       >
-        <button
+        <Button
           type="button"
           onClick={goBack}
           className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3 text-xs text-white/50 transition hover:border-white/10 hover:text-white/70"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
-          返回上一步 </button> </motion.div>
+          返回上一步 </Button> </motion.div>
       {/* Summary Info Bar */}
       <motion.div
         initial={{ opacity: 0 }}

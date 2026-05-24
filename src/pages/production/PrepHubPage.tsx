@@ -14,6 +14,7 @@ import { MOCK_SOURCES } from '@/mocks/productionDemo'
 import { useToastStore } from '@/store/toastStore'
 import type { DualTrackParsing, LlmDecisionTreeResult, DecisionStep,
   ParsedAttribute, ImageUnderstandingProviderCode, } from '@/types/production'
+import { Button } from '@/components/ui/Button'
 // ─── Polling helper ──────────────────────────────────────────
 function usePolling<T>( fetcher: () => Promise<T>, shouldPoll: (data: T) => boolean, intervalMs = 2000,
   maxDurationMs = 180000, ) {
@@ -115,13 +116,13 @@ function UploadZone({ title, icon: Icon, iconColor,
                     className="h-full w-full object-cover"
                   /> ) : ( <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] text-white/40">
                     {src.name || '图片待就绪'} </div> )}
-                <button
+                <Button
                   type="button"
                   onClick={(e) => { e.stopPropagation()
                     onRemove(src.id) }}
                   className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white/70 opacity-0 transition group-hover:opacity-100 hover:text-white"
                 >
-                  <X className="h-3 w-3" /> </button>
+                  <X className="h-3 w-3" /> </Button>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1">
                   <span className="line-clamp-1 text-[9px] text-white/65">
                     {src.name || src.type} </span> </div> </div>
@@ -179,7 +180,7 @@ function DecisionStepCard({ step, isCurrent, onSelectOption,
       {(isCurrent || step.status === 'completed') && step.options.length > 0 && ( <div className="grid grid-cols-2 gap-1.5">
           {step.options.map((option) => {
             const isSelected = option.id === step.selectedOptionId
-            return ( <button
+            return ( <Button
                 key={option.id}
                 type="button"
                 onClick={() => onSelectOption(step.id, option.id)}
@@ -194,7 +195,7 @@ function DecisionStepCard({ step, isCurrent, onSelectOption,
                     {Math.round(option.confidence * 100)}% </span> )}
                 {/* Selected indicator */}
                 {isSelected && ( <div className="absolute right-1.5 top-1.5">
-                    <CheckCircle2 className="h-3 w-3 text-violet-400" /> </div> )} </button>
+                    <CheckCircle2 className="h-3 w-3 text-violet-400" /> </div> )} </Button>
             ) })} </div> )}
       {/* Pending placeholder */}
       {step.status === 'pending' && step.options.length === 0 && ( <div className="flex items-center justify-center py-4">
@@ -498,13 +499,13 @@ export default function PrepHubPage() {
             {t('production.prep.title')} </h1>
           <p className="mt-1 text-sm text-white/50">
             {t('production.prep.subtitle')} </p> </div>
-        {prepCanEnterSandbox && ( <button
+        {prepCanEnterSandbox && ( <Button
             type="button"
             onClick={goToSandbox}
             className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-600"
           >
             {t('production.nav.sandbox')}
-            <ArrowRight className="h-3.5 w-3.5" /> </button> )} </motion.div>
+            <ArrowRight className="h-3.5 w-3.5" /> </Button> )} </motion.div>
       {/* ═══ 3-Column Layout ═══ */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* ─── Left: Dual-Track Parsing (SKU + Reference) (5 cols) ─── */}
@@ -561,14 +562,14 @@ export default function PrepHubPage() {
                 <option value="gemini_visual_understanding">增强识别</option> </select>
               <p className="mt-1.5 text-[9px] leading-relaxed text-cyan-100/45">
                 选择不同的识别侧重，可以对比图片的光影、材质和构图判断。 </p> </div>
-            <button
+            <Button
               type="button"
               onClick={startParsing}
               disabled={!dualTrackReady || isParsing}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-white/[0.06] disabled:text-white/35"
             >
               {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
-              {isParsing ? '正在解析...' : '开始解析'} </button>
+              {isParsing ? '正在解析...' : '开始解析'} </Button>
             {!dualTrackReady && ( <p className="mt-2 text-center text-[10px] text-amber-100/55">{dualTrackBlocker}</p> )} </div>
           {/* Parsing status */}
           {isParsing && ( <div className="relative overflow-hidden rounded-xl border border-cyan-300/25 bg-cyan-400/[0.08] px-4 py-3 shadow-[0_0_28px_rgba(34,211,238,0.12)]">
@@ -655,24 +656,24 @@ export default function PrepHubPage() {
                     /> )} </motion.div> </AnimatePresence>
               {/* Step navigation */}
               <div className="flex items-center justify-between pt-1">
-                <button
+                <Button
                   type="button"
                   disabled={currentStepIndex === 0}
                   onClick={() => setCurrentStepIndex((i) => i - 1)}
                   className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-white/[0.04] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
                 >
                   <ChevronLeft className="h-3 w-3" />
-                  上一项 </button>
+                  上一项 </Button>
                 <span className="text-[10px] tabular-nums text-white/20">
                   {currentStepIndex + 1} / {steps.length} </span>
-                <button
+                <Button
                   type="button"
                   disabled={currentStepIndex >= steps.length - 1}
                   onClick={() => setCurrentStepIndex((i) => i + 1)}
                   className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-white/[0.04] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
                 >
                   下一项
-                  <ChevronRight className="h-3 w-3" /> </button> </div>
+                  <ChevronRight className="h-3 w-3" /> </Button> </div>
               {/* Selection summary */}
               {decisionTree?.overallConfidence != null && ( <div className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-3 py-2.5">
                   <Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-400/60" />
@@ -778,18 +779,18 @@ export default function PrepHubPage() {
       {parsing?.status === 'succeeded' && ( <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`sticky bottom-4 z-20 mt-5 rounded-2xl border p-4 shadow-[0_18px_60px_rgba(16,185,129,0.16)] backdrop-blur ${prepCanEnterSandbox ? 'border-emerald-300/20 bg-[#07120f]/95' : 'border-amber-300/20 bg-[#141006]/95'}`}
+          className={`sticky bottom-4 z-20 mt-5 rounded-2xl border p-4 shadow-[0_18px_60px_rgba(16,185,129,0.16)] backdrop-blur ${prepCanEnterSandbox ? 'border-emerald-300/20 bg-[var(--ecom-surface)]' : 'border-amber-300/20 bg-[var(--ecom-surface-raised)]'}`}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className={`text-sm font-semibold ${prepCanEnterSandbox ? 'text-emerald-100' : 'text-amber-100'}`}>{prepCanEnterSandbox ? '生产准备已完成' : '生产准备还差一步'}</p>
               <p className={`mt-1 text-[11px] ${prepCanEnterSandbox ? 'text-emerald-100/55' : 'text-amber-100/65'}`}>{prepCanEnterSandbox ? '下一步进入策略配置：确认生成数量、模板预览和执行参数。' : prepNextStepHint}</p> </div>
-            <button
+            <Button
               type="button"
               onClick={goToSandbox}
               aria-disabled={!prepCanEnterSandbox}
               className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${prepCanEnterSandbox ? 'bg-emerald-400 text-slate-950 hover:bg-emerald-300' : 'border border-amber-300/20 bg-amber-300/10 text-amber-100 hover:bg-amber-300/15'}`}
             >
               {prepCanEnterSandbox ? '进入策略配置' : '查看下一步'}
-              <ArrowRight className="h-3.5 w-3.5" /> </button> </div> </motion.div>
+              <ArrowRight className="h-3.5 w-3.5" /> </Button> </div> </motion.div>
       )} </div> ) }

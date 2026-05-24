@@ -368,22 +368,15 @@
       "randomDarkHex": 2
     },
     "src/pages/production/PrepHubPage.tsx": {
-      "rawHexUtility": 2,
-      "bareButton": 7,
+      "rawHexUtility": 0,
+      "bareButton": 0,
       "adHocWhiteHover": 5,
       "adHocHeaderBg": 0,
       "randomDarkHex": 0
     },
-    "src/pages/production/SandboxPage.tsx": {
-      "rawHexUtility": 0,
-      "bareButton": 11,
-      "adHocWhiteHover": 0,
-      "adHocHeaderBg": 0,
-      "randomDarkHex": 0
-    },
     "src/pages/production/WorkshopPage.tsx": {
-      "rawHexUtility": 1,
-      "bareButton": 17,
+      "rawHexUtility": 0,
+      "bareButton": 0,
       "adHocWhiteHover": 2,
       "adHocHeaderBg": 0,
       "randomDarkHex": 0
@@ -425,10 +418,10 @@
     }
   },
   "totals": {
-    "files": 57,
+    "files": 56,
     "totals": {
-      "rawHexUtility": 115,
-      "bareButton": 182,
+      "rawHexUtility": 112,
+      "bareButton": 147,
       "adHocWhiteHover": 104,
       "adHocHeaderBg": 25,
       "randomDarkHex": 53
