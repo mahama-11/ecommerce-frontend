@@ -16,6 +16,34 @@
   --color-accent-500: #8b5cf6;
   --color-accent-600: #7c3aed;
 
+  /* Ecommerce dark product design tokens: use these for shared shells/buttons/cards. */
+  --ecom-bg: #0a0a12;
+  --ecom-header-bg: rgba(8, 11, 17, .88);
+  --ecom-dialog-bg: rgba(11, 13, 20, .95);
+  --ecom-surface: rgba(255, 255, 255, .035);
+  --ecom-surface-raised: rgba(255, 255, 255, .055);
+  --ecom-surface-hover: rgba(255, 255, 255, .07);
+  --ecom-surface-active: rgba(255, 255, 255, .08);
+  --ecom-border: rgba(255, 255, 255, .075);
+  --ecom-border-strong: rgba(255, 255, 255, .12);
+  --ecom-border-bright: rgba(255, 255, 255, .18);
+  --ecom-text-primary: #e8eaf0;
+  --ecom-text-secondary: rgba(255, 255, 255, .72);
+  --ecom-text-muted: rgba(255, 255, 255, .52);
+  --ecom-text-faint: rgba(255, 255, 255, .34);
+  --ecom-action-primary: #ffffff;
+  --ecom-action-primary-hover: #dff6ff;
+  --ecom-action-primary-text: #05070c;
+  --ecom-focus-ring: rgba(103, 232, 249, .68);
+  --ecom-accent-cyan-soft: rgba(34, 211, 238, .10);
+  --ecom-accent-emerald-soft: rgba(52, 211, 153, .08);
+  --ecom-radius-sm: 10px;
+  --ecom-radius-md: 14px;
+  --ecom-radius-lg: 18px;
+  --ecom-radius-xl: 28px;
+  --ecom-shadow-action: 0 12px 30px rgba(0, 0, 0, .22);
+  --ecom-shadow-dialog: 0 32px 120px rgba(0, 0, 0, .65);
+
   --animate-float: float 6s ease-in-out infinite;
   --animate-float-reverse: floatReverse 7s ease-in-out infinite;
   --animate-pulse-glow: pulse-glow 3s ease-in-out infinite;
@@ -91,7 +119,9 @@
   }
   body {
     margin: 0;
-    @apply bg-[#0a0a12] text-white antialiased;
+    background: var(--ecom-bg);
+    color: var(--ecom-text-primary);
+    @apply antialiased;
     overflow-x: hidden;
   }
 }

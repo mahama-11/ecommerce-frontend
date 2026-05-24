@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "ci:quick": "npm run typecheck && npm run build",
     "smoke:auth": "node scripts/ecommerce-auth-smoke.mjs",
+    "style:consistency": "node scripts/ecommerce-style-consistency.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

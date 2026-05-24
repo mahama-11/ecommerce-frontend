@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import UserAccountMenu from '@/components/account/UserAccountMenu'
+import { Button, ButtonLink } from '@/components/ui/Button'
+import { EcomHeader, EcomNavPill, EcomShell } from '@/components/ui/EcomShell'
 import { useAuth } from '@/hooks/useAuth'
 import { getAuthAwareLoginPath } from '@/utils/authNavigation'
 import { getProduct } from '@/services/product'
@@ -79,30 +81,22 @@ export default function ProductionLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-[#e8eaf0]">
-      {/* Ambient glow */}
-      <div className="pointer-events-none fixed inset-0 opacity-60">
-        <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-violet-400/10 blur-3xl" />
-        <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-amber-400/8 blur-3xl" />
-      </div>
-
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#080b11]/88 backdrop-blur-xl">
-        <div className="mx-auto flex h-[52px] max-w-[1440px] items-center justify-between gap-4 px-5">
-          {/* Left: Back + Product label + Step nav */}
+    <EcomShell>
+      <EcomHeader>
           <div className="flex min-w-0 items-center gap-2">
-            <Link
+            <ButtonLink
               to="/products"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-white/48 transition hover:bg-white/[0.04] hover:text-white/82"
+              variant="ghost"
+              size="sm"
               title={t('production.backToProducts')}
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">
                 {t('productCenter.shell.home')}
               </span>
-            </Link>
+            </ButtonLink>
 
-            <div className="h-4 w-px bg-white/10" />
+            <div className="h-4 w-px bg-[var(--ecom-border-strong)]" />
 
             <Link
               to="/products"
@@ -111,12 +105,11 @@ export default function ProductionLayout() {
               Product Center
             </Link>
 
-            <span className="text-white/30">/</span>
-            <span className="max-w-[180px] truncate text-xs text-white/50" title={productTitle || id}>
+            <span className="text-[var(--ecom-text-faint)]">/</span>
+            <span className="max-w-[180px] truncate text-xs text-[var(--ecom-text-muted)]" title={productTitle || id}>
               {productTitle || (id ? `#${id}` : '')}
             </span>
 
-            {/* Step navigation */}
             <nav className="ml-2 flex min-w-0 items-center gap-1 overflow-x-auto">
               {navItems.map((item, idx) => {
                 const active = item.match(pathname)
@@ -124,20 +117,15 @@ export default function ProductionLayout() {
                 return (
                   <div key={item.labelKey} className="flex items-center">
                     {idx > 0 && (
-                      <span className="mx-1 text-[10px] text-white/20">
+                      <span className="mx-1 text-[10px] text-[var(--ecom-text-faint)]">
                         →
                       </span>
                     )}
-                    <NavLink
-                      to={item.to}
-                      className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                        active
-                          ? 'bg-white/[0.07] text-white'
-                          : 'text-white/58 hover:bg-white/[0.04] hover:text-white'
-                      }`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                      {t(item.labelKey)}
+                    <NavLink to={item.to}>
+                      <EcomNavPill active={active}>
+                        <Icon className="h-3.5 w-3.5" />
+                        {t(item.labelKey)}
+                      </EcomNavPill>
                     </NavLink>
                   </div>
                 )
@@ -145,36 +133,30 @@ export default function ProductionLayout() {
             </nav>
           </div>
 
-          {/* Right: Controls */}
           <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
+            <Button
               onClick={toggleLang}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/[0.08] bg-[#080b11] px-2.5 py-1 text-xs text-white/48 transition hover:border-white/15 hover:text-white/80"
+              variant="quiet"
+              size="sm"
               title={t('productCenter.shell.switchLanguage')}
             >
               <Globe className="h-3.5 w-3.5" />
               <span>{languageLabel}</span>
-            </button>
+            </Button>
             {isAuthenticated ? (
               <UserAccountMenu compact />
             ) : (
-              <Link
-                to={loginPath}
-                className="inline-flex items-center gap-1 rounded-lg border border-brand-400/20 bg-brand-400/10 px-2.5 py-1 text-xs font-semibold text-brand-100 transition hover:border-brand-300/40 hover:bg-brand-400/15"
-              >
+              <ButtonLink to={loginPath} variant="secondary" size="sm">
                 <LogIn className="h-3.5 w-3.5" />
                 <span>{t('common.login')}</span>
-              </Link>
+              </ButtonLink>
             )}
           </div>
-        </div>
-      </header>
+      </EcomHeader>
 
-      {/* Page content */}
       <main className="relative min-h-[calc(100vh-52px)]">
         <Outlet />
       </main>
-    </div>
+    </EcomShell>
   )
 }
