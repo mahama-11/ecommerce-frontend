@@ -123,11 +123,11 @@
       "randomDarkHex": 0
     },
     "src/pages/BatchListingPage.tsx": {
-      "rawHexUtility": 11,
-      "bareButton": 10,
+      "rawHexUtility": 0,
+      "bareButton": 0,
       "adHocWhiteHover": 2,
-      "adHocHeaderBg": 4,
-      "randomDarkHex": 5
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
     },
     "src/pages/BlogPage.tsx": {
       "rawHexUtility": 0,
@@ -200,11 +200,11 @@
       "randomDarkHex": 0
     },
     "src/pages/ProductVisualToolsPage.tsx": {
-      "rawHexUtility": 7,
-      "bareButton": 3,
+      "rawHexUtility": 0,
+      "bareButton": 0,
       "adHocWhiteHover": 1,
-      "adHocHeaderBg": 5,
-      "randomDarkHex": 6
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
     },
     "src/pages/SolutionDetailPage.tsx": {
       "rawHexUtility": 2,
@@ -249,11 +249,11 @@
       "randomDarkHex": 0
     },
     "src/pages/account/AccountDownloadsPage.tsx": {
-      "rawHexUtility": 13,
-      "bareButton": 4,
+      "rawHexUtility": 0,
+      "bareButton": 0,
       "adHocWhiteHover": 3,
-      "adHocHeaderBg": 8,
-      "randomDarkHex": 9
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
     },
     "src/pages/account/AccountHistoryPage.tsx": {
       "rawHexUtility": 0,
@@ -420,11 +420,11 @@
   "totals": {
     "files": 56,
     "totals": {
-      "rawHexUtility": 112,
-      "bareButton": 147,
+      "rawHexUtility": 81,
+      "bareButton": 130,
       "adHocWhiteHover": 104,
-      "adHocHeaderBg": 25,
-      "randomDarkHex": 53
+      "adHocHeaderBg": 8,
+      "randomDarkHex": 33
     }
   }
 }
