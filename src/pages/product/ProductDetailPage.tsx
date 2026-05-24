@@ -7,6 +7,7 @@ import { ArrowLeft,
 import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
 import { ProductWorkflowNav } from '@/components/product-workbench/ProductWorkflowNav'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import { getProduct,
   updateProduct, calculateProfit,
   createExportTask, createListingVersion,
@@ -40,7 +41,7 @@ function SelectField({ label, value, onChange, options, inline = false }: { labe
         <select
           value={value}
           onChange={e => onChange(e.target.value)}
-          className="w-full appearance-none rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 pr-8 text-sm text-white/90 outline-none transition-all hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+          className="w-full appearance-none rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 pr-8 text-sm text-white/90 outline-none transition-all hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
         >
           {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)} </select>
         <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" /> </div>
@@ -54,7 +55,7 @@ function InputField({ label, value, onChange, placeholder, onBlur }: { label: st
         onChange={e => onChange(e.target.value)}
         onBlur={onBlur}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
       /> </div>
   ) }
 function TextareaField({ label, value, onChange, placeholder, rows, hint }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string, rows?: number, hint?: string }) {
@@ -65,7 +66,7 @@ function TextareaField({ label, value, onChange, placeholder, rows, hint }: { la
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows || 3}
-        className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 resize-y custom-scrollbar"
+        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 resize-y custom-scrollbar"
       />
       {hint && <div className="text-[11px] text-white/40">{hint}</div>} </div>
   ) }
@@ -404,11 +405,11 @@ export function ProductDetailPage() {
   void addDetailTag
   void removeDetailTag
   if (loading) {
-    return ( <div className="min-h-[calc(100vh-72px)] bg-[#09090b] text-white p-6 flex items-center justify-center">
+    return ( <div className="min-h-[calc(100vh-72px)] bg-[var(--ecom-bg)] text-white p-6 flex items-center justify-center">
         <LoaderCircle className="h-8 w-8 text-brand-500 animate-spin" /> </div>
     ) }
   if (!data) {
-    return ( <div className="min-h-[calc(100vh-72px)] bg-[#09090b] text-white p-6 flex items-center justify-center">
+    return ( <div className="min-h-[calc(100vh-72px)] bg-[var(--ecom-bg)] text-white p-6 flex items-center justify-center">
         <div className="text-center text-white/40">
           <p>{t('product.detail.notFound')}</p>
           <Link to="/products" className="text-cyan-200 hover:underline mt-2 inline-block">
@@ -438,7 +439,7 @@ export function ProductDetailPage() {
   void handleAssetSortOrderChange
   void handleMoveAsset
   void handleInspectExportAssets
-  return ( <div className="relative flex min-h-[calc(100vh-52px)] w-full flex-col overflow-hidden bg-[#0a0a12] text-[#e8eaf0] font-sans">
+  return ( <div className="relative flex min-h-[calc(100vh-52px)] w-full flex-col overflow-hidden bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)] font-sans">
       <div className="pointer-events-none fixed inset-0 opacity-60">
         <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
         <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" /> </div>
@@ -459,14 +460,14 @@ export function ProductDetailPage() {
               {product.skuCode} · {product.title} · {product.categoryId || 'Uncategorized'} · {product.status} / {product.assetStatus} / {product.listingStatus} </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => setShowListingModal(true)} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/72 transition hover:bg-white/[0.08]">新建 Listing 版本</button>
-            <button onClick={() => setShowProfitModal(true)} className="rounded-xl border border-white/10 bg-white/[0.045] px-4 py-2 text-xs font-semibold text-white/72 transition hover:bg-white/[0.08]">利润计算</button> </div>
+            <Button onClick={() => setShowListingModal(true)} variant="secondary" size="sm">新建 Listing 版本</Button>
+            <Button onClick={() => setShowProfitModal(true)} variant="secondary" size="sm">利润计算</Button> </div>
         </div>
         <div className="mb-5">
           <ProductWorkflowNav active="detail" productId={product.id} contextLabel={product.title} source="sku-detail" /> </div>
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-5">
-            <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.36)]">
+            <section className="rounded-[28px] border border-white/[0.07] bg-[var(--ecom-surface)] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.36)]">
               <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">基础信息</div>
               <div className="divide-y divide-white/[0.06] text-sm">
                 {[ ['SKU', product.skuCode],
@@ -489,32 +490,32 @@ export function ProductDetailPage() {
               ) : ( <div className="rounded-2xl border border-dashed border-white/10 bg-black/15 p-4 text-sm leading-6 text-white/45">当前还没有结构化商品规格；请先补齐商品资料或重新解析素材。</div>
               )}
               <div className="mt-4 rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3 text-xs text-cyan-100/58">图片解析结果由系统自动写入，前端不可修改；后续模块只读取，不重复解析。</div> </section>
-            <section className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.32)]">
+            <section className="rounded-[28px] border border-white/[0.07] bg-[var(--ecom-surface)] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.32)]">
               <div className="mb-4 flex items-center justify-between"><div className="text-xs font-bold uppercase tracking-[0.22em] text-white/38">SKU.ASSETS 素材库</div><span className="text-xs text-white/35">{data.assets.length}/5</span></div>
               <div className="mb-4 flex flex-wrap gap-2">{['主图','场景','模特','详情','视频'].map((role, index) => <span key={role} className={`rounded-full border px-3 py-1 text-xs ${index === 0 ? 'border-cyan-300/35 bg-cyan-300/12 text-cyan-100' : 'border-white/10 bg-white/[0.035] text-white/45'}`}>{role}</span>)}</div>
               {data.assets.length ? <div className="grid gap-3 sm:grid-cols-2">{data.assets.slice(0,4).map(asset => <div key={asset.relation.id} className="rounded-2xl border border-white/[0.07] bg-white/[0.035] p-3 text-xs text-white/65"><div className="font-semibold text-white/80">{asset.relation.assetRole || 'asset'}</div><div className="mt-1 truncate text-white/40">{asset.asset?.fileName || asset.asset?.id || asset.relation.assetId}</div></div>)}</div> : <div className="rounded-2xl border border-dashed border-rose-300/25 bg-rose-300/[0.055] p-5 text-sm text-rose-100/75">主图缺失。请进入视觉工作区生成并绑定到 SKU.assets。</div>} </section>
             <section className="grid gap-5 xl:grid-cols-2">
-              <div className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5">
+              <div className="rounded-[28px] border border-white/[0.07] bg-[var(--ecom-surface)] p-5">
                 <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">LISTING 版本</div>
                 <div className="space-y-2">
                   {data.listingVersions.slice(0, 4).map(version => <div key={version.id} className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm"><span className="font-mono text-white/75">v{version.versionNo}</span><span className={version.status === 'adopted' ? 'text-emerald-200' : 'text-white/48'}>{version.status} · {version.versionLabel}</span></div>)}
                   {!data.listingVersions.length ? <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/42">暂无 Listing 版本。</div> : null} </div>
-                <button onClick={() => setShowListingModal(true)} className="mt-4 rounded-xl bg-cyan-200 px-4 py-2 text-xs font-bold text-[#05070b]">新建版本</button>
+                <Button onClick={() => setShowListingModal(true)} className="mt-4" variant="primary" size="sm">新建版本</Button>
                 <p className="mt-3 text-xs leading-5 text-white/42">Listing = 只增不改的版本仓库。任何编辑必须通过新版本生成实现。</p> </div>
-              <div className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5">
+              <div className="rounded-[28px] border border-white/[0.07] bg-[var(--ecom-surface)] p-5">
                 <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">导出前校验</div>
                 <div className="space-y-2 text-sm">
                   <PrecheckLine label="已采用 Listing" ok={product.listingStatus === 'ready' || data.listingVersions.some(v => v.status === 'adopted')} value={data.listingVersions.find(v => v.status === 'adopted')?.versionLabel || '未采用'} />
                   <PrecheckLine label="必需素材" ok={product.assetStatus === 'ready'} value={product.assetStatus === 'ready' ? '素材完整' : '主图/必需素材缺失'} />
                   <PrecheckLine label="平台/站点/语言" ok value={`${exportForm.platform} / ${exportForm.site} / ${exportForm.locale}`} />
                   <PrecheckLine label="文件清单" ok={product.exportStatus === 'done'} value={product.exportStatus === 'done' ? '已生成' : '未生成'} /> </div>
-                <button onClick={() => setShowExportModal(true)} disabled={product.assetStatus !== 'ready'} className="mt-4 w-full rounded-xl bg-cyan-200 px-4 py-2.5 text-xs font-bold text-[#05070b] disabled:cursor-not-allowed disabled:bg-white/[0.05] disabled:text-white/28">创建导出任务{product.assetStatus !== 'ready' ? '（禁用：素材不完整）' : ''}</button>
+                <Button onClick={() => setShowExportModal(true)} disabled={product.assetStatus !== 'ready'} className="mt-4 w-full" variant="primary">创建导出任务{product.assetStatus !== 'ready' ? '（禁用：素材不完整）' : ''}</Button>
                 <p className="mt-3 text-xs leading-5 text-rose-100/65">导出前必须满足：已采用 Listing + 必需素材完整 + 平台配置存在。</p> </div>
             </section> </div>
           <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-            <div className="rounded-[28px] border border-white/[0.07] bg-[#080b11]/92 p-5">
+            <div className="rounded-[28px] border border-white/[0.07] bg-[var(--ecom-surface)] p-5">
               <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">利润计算</div>
-              {latestProfit ? <div className="grid grid-cols-2 gap-3"><DetailMetric label="净利" value={`${product.costCurrency || 'USD'} ${latestProfit.netProfit}`} /><DetailMetric label="利润率" value={`${latestProfit.netMargin}%`} /></div> : <button onClick={() => setShowProfitModal(true)} className="w-full rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2 text-sm text-white/70">计算利润</button>}
+              {latestProfit ? <div className="grid grid-cols-2 gap-3"><DetailMetric label="净利" value={`${product.costCurrency || 'USD'} ${latestProfit.netProfit}`} /><DetailMetric label="利润率" value={`${latestProfit.netMargin}%`} /></div> : <Button onClick={() => setShowProfitModal(true)} className="w-full" variant="secondary">计算利润</Button>}
               <div className="mt-4 rounded-2xl border border-white/[0.06] bg-black/20 p-3 text-xs leading-5 text-white/42">按真实后端利润快照计算：净利 = 售价 - 成本 - 物流 - 平台费 - 其他费用；利润率 = 净利 / 售价。</div> </div>
             <div className="rounded-[28px] border border-cyan-300/16 bg-cyan-300/[0.045] p-5">
               <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-cyan-100/70">状态总览</div>
@@ -525,14 +526,14 @@ export function ProductDetailPage() {
                 <StatusPill label="Export" ok={product.exportStatus === 'done' || product.exportStatus === 'ready'} /> </div>
               <div className="mt-4 rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-xs leading-5 text-rose-100/72">当前状态：{product.assetStatus !== 'ready' ? '缺素材，请在任务中心查看生成任务状态。' : product.listingStatus !== 'ready' ? '可进入 Listing 页面创建/采用版本。' : '可进入交付中心创建导出。'}</div>
               <div className="mt-4 space-y-2">
-                <Link to={`/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold text-white/70">去模板中心</Link>
-                <Link to={`/products/workbench/downloads?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-center text-xs font-semibold text-white/70">去交付中心</Link> </div>
+                <ButtonLink to={`/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="w-full" variant="secondary" size="sm">去模板中心</ButtonLink>
+                <ButtonLink to={`/products/workbench/downloads?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="w-full" variant="secondary" size="sm">去交付中心</ButtonLink> </div>
             </div> </aside>
         </div> </section>
       {/* Main Content */}
       {/* Modals */}
       {showProfitModal && ( <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl overflow-hidden">
+          <div className="bg-[var(--ecom-surface)] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl overflow-hidden">
             <div className="px-6 py-5 border-b border-white/5">
               <h2 className="text-lg font-semibold text-white/90">{t('product.detail.profitModal.title')}</h2> </div>
             <div className="p-6 space-y-4">
@@ -555,18 +556,19 @@ export function ProductDetailPage() {
                 <p className="mt-2 leading-5 text-white/38">{t('product.detail.profitModal.formulaHint')}</p> </div>
             </div>
             <div className="px-6 py-5 bg-white/[0.02] border-t border-white/5 flex gap-3">
-              <button onClick={() => setShowProfitModal(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 text-sm font-semibold transition">
-                {t('product.detail.profitModal.cancel')} </button>
-              <button
+              <Button onClick={() => setShowProfitModal(false)} className="flex-1" variant="secondary">
+                {t('product.detail.profitModal.cancel')} </Button>
+              <Button
                 onClick={handleCalculateProfit}
                 disabled={!profitForm.costPrice || !profitForm.listingPrice}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white disabled:bg-brand-500/50 disabled:cursor-not-allowed text-sm font-semibold transition"
+                className="flex-1"
+                variant="primary"
               >
-                {t('product.detail.profitModal.calculate')} </button>
+                {t('product.detail.profitModal.calculate')} </Button>
             </div> </div>
         </div> )}
       {showExportModal && ( <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl overflow-hidden">
+          <div className="bg-[var(--ecom-surface)] rounded-2xl w-full max-w-md border border-white/10 shadow-2xl overflow-hidden">
             <div className="px-6 py-5 border-b border-white/5">
               <h2 className="text-lg font-semibold text-white/90">{t('product.detail.exportModal.title')}</h2> </div>
             <div className="p-6 space-y-5">
@@ -578,18 +580,19 @@ export function ProductDetailPage() {
               <SelectField label={t('product.detail.exportModal.locale')} value={exportForm.locale} onChange={v => setExportForm({...exportForm, locale: v})} options={[{label: t('product.detail.locales.en_US'), value: 'en_US'}, {label: t('product.detail.locales.en_CA'), value: 'en_CA'}, {label: t('product.detail.locales.en_GB'), value: 'en_GB'}]} />
               <SelectField label={t('product.detail.exportModal.format')} value={exportForm.format} onChange={v => setExportForm({...exportForm, format: v})} options={[{label: t('product.detail.formats.CSV'), value: 'csv'}, {label: t('product.detail.formats.XLSX'), value: 'xlsx'}]} /> </div>
             <div className="px-6 py-5 bg-white/[0.02] border-t border-white/5 flex gap-3">
-              <button
+              <Button
                 onClick={() => { setShowExportModal(false)
                   setExportScopedRelationIds([]) }}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 text-sm font-semibold transition"
+                className="flex-1"
+                variant="secondary"
               >
-                {t('product.detail.exportModal.cancel')} </button>
-              <button onClick={handleCreateExport} className="flex-1 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white text-sm font-semibold transition">
-                {t('product.detail.exportModal.create')} </button>
+                {t('product.detail.exportModal.cancel')} </Button>
+              <Button onClick={handleCreateExport} className="flex-1" variant="primary">
+                {t('product.detail.exportModal.create')} </Button>
             </div> </div>
         </div> )}
       {showListingModal && ( <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0c0c10] rounded-2xl w-full max-w-lg border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-[var(--ecom-surface)] rounded-2xl w-full max-w-lg border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="px-6 py-5 border-b border-white/5 shrink-0">
               <h2 className="text-lg font-semibold text-white/90">{editingVersion ? t('product.detail.listingModal.titleEdit') : t('product.detail.listingModal.titleCreate')}</h2> </div>
             <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar">
@@ -611,7 +614,7 @@ export function ProductDetailPage() {
                         const newPoints = [...listingForm.bulletPoints]
                         newPoints[index] = e.target.value
                         setListingForm(prev => ({ ...prev, bulletPoints: newPoints })) }}
-                      className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+                      className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
                       placeholder={`${t('product.detail.listingModal.bulletPlaceholder')} ${index + 1}`}
                     /> ))}
                 </div> </div>
@@ -623,11 +626,11 @@ export function ProductDetailPage() {
                     value={listingForm.newKeyword}
                     onChange={(e) => setListingForm(prev => ({ ...prev, newKeyword: e.target.value }))}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addKeyword())}
-                    className="flex-1 rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+                    className="flex-1 rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
                     placeholder={t('product.detail.listingModal.addKeyword')}
                   />
-                  <button onClick={addKeyword} className="px-4 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-white text-sm font-medium transition">
-                    <Plus className="h-4 w-4" /> </button>
+                  <Button onClick={addKeyword} size="icon-sm" variant="secondary">
+                    <Plus className="h-4 w-4" /> </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {listingForm.keywords.map((kw) => ( <span
@@ -635,24 +638,26 @@ export function ProductDetailPage() {
                       className="px-2.5 py-1 rounded-lg bg-white/10 text-white/80 text-xs flex items-center gap-1.5"
                     >
                       {kw}
-                      <button onClick={() => setListingForm(prev => ({ ...prev, keywords: prev.keywords.filter(k => k !== kw) }))} className="hover:text-white">
-                        × </button>
+                      <Button onClick={() => setListingForm(prev => ({ ...prev, keywords: prev.keywords.filter(k => k !== kw) }))} size="icon-sm" variant="ghost" aria-label={`Remove ${kw}`}>
+                        × </Button>
                     </span> ))}
                 </div> </div>
             </div>
             <div className="px-6 py-5 bg-white/[0.02] border-t border-white/5 flex gap-3 shrink-0">
-              <button
+              <Button
                 onClick={() => { setShowListingModal(false)
                   setEditingVersion(null) }}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-white/80 text-sm font-semibold transition"
+                className="flex-1"
+                variant="secondary"
               >
-                {t('product.detail.listingModal.cancel')} </button>
-              <button
+                {t('product.detail.listingModal.cancel')} </Button>
+              <Button
                 onClick={handleCreateListing}
                 disabled={!listingForm.versionLabel || !listingForm.title || savingListing}
-                className="flex-1 px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 disabled:bg-brand-500/50 disabled:cursor-not-allowed text-white text-sm font-semibold transition"
+                className="flex-1"
+                variant="primary"
               >
-                {savingListing ? t('product.detail.listingModal.saving') : editingVersion ? t('product.detail.listingModal.saveChanges') : t('product.detail.listingModal.generate')} </button>
+                {savingListing ? t('product.detail.listingModal.saving') : editingVersion ? t('product.detail.listingModal.saveChanges') : t('product.detail.listingModal.generate')} </Button>
             </div> </div>
         </div> )}
     </div> )

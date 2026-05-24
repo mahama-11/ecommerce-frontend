@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowDown,
   ArrowUp, CheckCircle,
@@ -11,6 +10,7 @@ import { ArrowDown,
   Wand2, ChevronDown,
 } from 'lucide-react'
 import { downloadExportTask } from '@/services/product'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import type { DownloadRecord, ExportTask, ListingVersion, ProductAssetItem, ProfitSnapshot } from '@/types/product'
 function SelectField({ value, onChange, options, disabled = false }: { value: string, onChange: (v: string) => void, options: {label: string, value: string}[], disabled?: boolean }) {
   return ( <div className="relative">
@@ -18,7 +18,7 @@ function SelectField({ value, onChange, options, disabled = false }: { value: st
         value={value}
         onChange={e => onChange(e.target.value)}
         disabled={disabled}
-        className="w-full appearance-none rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 pr-8 text-sm text-white/90 outline-none transition-all hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full appearance-none rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 pr-8 text-sm text-white/90 outline-none transition-all hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)} </select>
       <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" /> </div>
@@ -133,7 +133,7 @@ export function AssetsTab({ productId,
         <SummaryChip label={t('product.detail.assetsTab.visibleAssets')} value={String(summary.visible)} helper={t('product.detail.assetsTab.visibleAssetsHelper')} />
         <SummaryChip label={t('product.detail.assetsTab.primaryAssets')} value={String(summary.primary)} helper={t('product.detail.assetsTab.primaryAssetsHelper')} />
         <SummaryChip label={t('product.detail.assetsTab.aiGenerated')} value={String(summary.aiGenerated)} helper={t('product.detail.assetsTab.aiGeneratedHelper')} /> </div>
-      <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg">
+      <div className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-lg">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="text-sm font-semibold text-white/90">{t('product.detail.assetsTab.exportTraceFilter')}</div>
@@ -141,21 +141,19 @@ export function AssetsTab({ productId,
               {t('product.detail.assetsTab.exportTraceFilterDesc')} </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
+            <Button
               onClick={() => onSelectDownload('all')}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${ selectedDownloadId === 'all'
-                  ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10'
-              }`}
+              variant={selectedDownloadId === 'all' ? 'primary' : 'quiet'}
+              size="sm"
             >
-              {t('product.detail.assetsTab.allAssets')} </button>
-            {downloads.map(download => ( <button
+              {t('product.detail.assetsTab.allAssets')} </Button>
+            {downloads.map(download => ( <Button
                 key={download.id}
                 onClick={() => onSelectDownload(download.id)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${ selectedDownloadId === download.id
-                    ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/10'
-                }`}
+                variant={selectedDownloadId === download.id ? 'primary' : 'quiet'}
+                size="sm"
               >
-                {download.platform.toUpperCase()} {download.site} · {download.format.toUpperCase()} </button>
+                {download.platform.toUpperCase()} {download.site} · {download.format.toUpperCase()} </Button>
             ))} </div>
         </div>
         {selectedDownload ? ( <div className="mt-4 rounded-xl border border-brand-500/20 bg-brand-500/10 px-4 py-3 text-sm text-brand-200">
@@ -163,13 +161,13 @@ export function AssetsTab({ productId,
         ) : null} </div>
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          {roles.map(role => ( <button
+          {roles.map(role => ( <Button
               key={role}
               onClick={() => setSelectedRole(role)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${ selectedRole === role ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/90 hover:bg-white/10'
-              }`}
+              variant={selectedRole === role ? 'secondary' : 'ghost'}
+              size="sm"
             >
-              {role === 'all' ? t('product.detail.assetsTab.allAssets') : t(`product.detail.assetRoles.${role}` as any, role) || role} </button>
+              {role === 'all' ? t('product.detail.assetsTab.allAssets') : t(`product.detail.assetRoles.${role}` as any, role) || role} </Button>
           ))} </div>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-white/70 hover:text-white cursor-pointer select-none">
@@ -180,36 +178,38 @@ export function AssetsTab({ productId,
             {t('product.detail.assetsTab.primaryOnly')}
             <input type="checkbox" className="hidden" checked={onlyPrimary} onChange={e => setOnlyPrimary(e.target.checked)} /> </label>
           <div className="h-4 w-px bg-white/20" />
-          <Link
+          <ButtonLink
             to={`/products/workbench/visual-tools?productId=${encodeURIComponent(productId)}&source=sku-detail-assets`}
-            className="inline-flex items-center gap-2 rounded-lg bg-brand-500 hover:bg-brand-400 px-3 py-1.5 text-sm font-medium text-white transition-colors"
+            variant="primary"
+            size="sm"
           >
             <Sparkles className="h-4 w-4" />
-            {t('product.detail.assetsTab.generateAssets')} </Link>
+            {t('product.detail.assetsTab.generateAssets')} </ButtonLink>
         </div> </div>
-      <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg">
+      <div className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-lg">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <div className="text-sm font-semibold text-white/90">{t('product.detail.assetsTab.workspaceFilters')}</div>
             <p className="mt-1 text-xs text-white/40">
               {t('product.detail.assetsTab.workspaceFiltersDesc')} </p>
           </div>
-          <button
+          <Button
             onClick={() => { setSearch('')
               setSourceFilter('all')
               setSortMode('sort_order')
               setSelectedRole('all')
               setOnlyPrimary(false) }}
-            className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
+            variant="quiet"
+            size="sm"
           >
-            {t('product.detail.assetsTab.resetFilters')} </button>
+            {t('product.detail.assetsTab.resetFilters')} </Button>
         </div>
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_repeat(2,minmax(0,1fr))]">
           <input
             value={search}
             onChange={event => setSearch(event.target.value)}
             placeholder={t('product.detail.assetsTab.searchPlaceholder')}
-            className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+            className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
           />
           <SelectField
             value={sourceFilter}
@@ -226,7 +226,7 @@ export function AssetsTab({ productId,
             ]}
           /> </div>
       </div>
-      <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg">
+      <div className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-lg">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <div className="text-sm font-semibold text-white/90">{t('product.detail.assetsTab.bulkActions')}</div>
@@ -236,18 +236,20 @@ export function AssetsTab({ productId,
           <div className="flex flex-wrap items-center gap-3 text-sm text-white/60">
             <span className="font-medium text-brand-400">{t('product.detail.assetsTab.selectedCount', { count: selectedRelationIds.length })}</span>
             <div className="h-4 w-px bg-white/20" />
-            <button
+            <Button
               onClick={toggleSelectVisible}
               disabled={visibleRelationIds.length === 0 || bulkMutating}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-medium transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              variant="quiet"
+              size="sm"
             >
-              {allVisibleSelected ? t('product.detail.assetsTab.clearVisible') : t('product.detail.assetsTab.selectVisible')} </button>
-            <button
+              {allVisibleSelected ? t('product.detail.assetsTab.clearVisible') : t('product.detail.assetsTab.selectVisible')} </Button>
+            <Button
               onClick={clearSelection}
               disabled={selectedRelationIds.length === 0 || bulkMutating}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-medium transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              variant="quiet"
+              size="sm"
             >
-              {t('product.detail.assetsTab.clearSelection')} </button>
+              {t('product.detail.assetsTab.clearSelection')} </Button>
           </div> </div>
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
           <SelectField
@@ -259,24 +261,24 @@ export function AssetsTab({ productId,
               {label: t('product.detail.assetRoles.detail_shot'), value: 'detail_shot'}, {label: t('product.detail.assetRoles.listing_attachment'), value: 'listing_attachment'},
             ]}
           />
-          <button
+          <Button
             onClick={() => void handleBulkRoleApply()}
             disabled={selectedRelationIds.length === 0 || bulkMutating}
-            className="rounded-lg border border-brand-500/30 bg-brand-500/10 px-4 py-2 text-sm font-medium text-brand-300 transition hover:bg-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            variant="secondary"
           >
-            {bulkMutating ? t('product.detail.assetsTab.saving') : t('product.detail.assetsTab.applyRole')} </button>
-          <button
+            {bulkMutating ? t('product.detail.assetsTab.saving') : t('product.detail.assetsTab.applyRole')} </Button>
+          <Button
             onClick={() => void handleBulkDelete()}
             disabled={selectedRelationIds.length === 0 || bulkMutating}
-            className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            variant="danger"
           >
-            {bulkMutating ? t('product.detail.assetsTab.saving') : t('product.detail.assetsTab.removeSelected')} </button>
-          <button
+            {bulkMutating ? t('product.detail.assetsTab.saving') : t('product.detail.assetsTab.removeSelected')} </Button>
+          <Button
             onClick={() => onCreateExportFromSelection(selectedRelationIds)}
             disabled={selectedRelationIds.length === 0 || bulkMutating}
-            className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            variant="secondary"
           >
-            {t('product.detail.assetsTab.exportSelected')} </button>
+            {t('product.detail.assetsTab.exportSelected')} </Button>
         </div> </div>
       <div className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4">
         {filteredAssets.map(({ relation, asset }) => {
@@ -288,10 +290,10 @@ export function AssetsTab({ productId,
           const selected = selectedRelationIds.includes(relation.id)
           return ( <div
               key={relation.id}
-              className={`group overflow-hidden rounded-2xl border bg-[#0c0c10] shadow-lg transition-all duration-300 hover:shadow-xl ${ selected ? 'border-brand-500 bg-brand-500/5' : 'border-white/10 hover:border-white/20'
+              className={`group overflow-hidden rounded-2xl border bg-[var(--ecom-surface)] shadow-lg transition-all duration-300 hover:shadow-xl ${ selected ? 'border-brand-500 bg-brand-500/5' : 'border-white/10 hover:border-white/20'
               }`}
             >
-              <div className="relative aspect-square overflow-hidden bg-[#18181b] border-b border-white/10">
+              <div className="relative aspect-square overflow-hidden bg-[var(--ecom-surface-raised)] border-b border-white/10">
                 {asset?.originalUrl ? ( <img
                     src={asset.originalUrl}
                     alt={relation.assetRole}
@@ -350,35 +352,40 @@ export function AssetsTab({ productId,
                         value={relation.sortOrder}
                         disabled={mutating}
                         onChange={event => onChangeSortOrder(relation.id, Number(event.target.value) || 0)}
-                        className="w-full rounded-lg border border-white/10 bg-[#18181b] px-3 py-2 text-sm text-white/90 outline-none transition-all focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
+                        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
                       /> </div>
                     <div className="flex gap-1 shrink-0">
-                      <button
+                      <Button
                         onClick={() => onMove(relation.id, 'up')}
                         disabled={mutating || !canMoveUp}
-                        className="flex h-[38px] w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                        size="icon-sm"
+                        variant="quiet"
                       >
-                        <ArrowUp className="h-4 w-4" /> </button>
-                      <button
+                        <ArrowUp className="h-4 w-4" /> </Button>
+                      <Button
                         onClick={() => onMove(relation.id, 'down')}
                         disabled={mutating || !canMoveDown}
-                        className="flex h-[38px] w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                        size="icon-sm"
+                        variant="quiet"
                       >
-                        <ArrowDown className="h-4 w-4" /> </button>
+                        <ArrowDown className="h-4 w-4" /> </Button>
                     </div> </div>
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       onClick={() => onMakePrimary(relation.id)}
                       disabled={mutating || relation.isPrimary}
-                      className="flex-1 rounded-lg border border-brand-500/30 bg-brand-500/10 py-2 text-xs font-semibold text-brand-300 transition hover:bg-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-white/5 disabled:text-white/40 disabled:border-white/10"
+                      className="flex-1"
+                      variant="secondary"
+                      size="sm"
                     >
-                      {mutating ? t('product.detail.assetsTab.saving') : relation.isPrimary ? t('product.detail.assetsTab.primary') : t('product.detail.assetsTab.setAsPrimary')} </button>
-                    <button
+                      {mutating ? t('product.detail.assetsTab.saving') : relation.isPrimary ? t('product.detail.assetsTab.primary') : t('product.detail.assetsTab.setAsPrimary')} </Button>
+                    <Button
                       onClick={() => onDelete(relation.id)}
                       disabled={mutating}
-                      className="flex w-[38px] shrink-0 items-center justify-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      size="icon-sm"
+                      variant="danger"
                     >
-                      {mutating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} </button>
+                      {mutating ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} </Button>
                   </div> </div>
               </div> </div>
           ) })}
@@ -402,12 +409,12 @@ export function ListingsTab({ versions,
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-white/60">
           {t('product.detail.listingsTabExt.count', { count: versions.length })} </p>
-        <button onClick={onGenerate} className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-400 shadow-md">
+        <Button onClick={onGenerate} variant="primary">
           <Wand2 className="h-4 w-4" />
-          {t('product.detail.listingsTabExt.generate')} </button>
+          {t('product.detail.listingsTabExt.generate')} </Button>
       </div>
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        {versions.map(version => ( <div key={version.id} className="rounded-2xl border border-white/10 bg-[#0c0c10] overflow-hidden flex flex-col shadow-lg transition-all hover:border-white/20">
+        {versions.map(version => ( <div key={version.id} className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] overflow-hidden flex flex-col shadow-lg transition-all hover:border-white/20">
             <div className="bg-white/5 px-5 py-4 border-b border-white/10 flex items-start justify-between gap-4">
               <div className="min-w-0 pr-2">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -424,13 +431,15 @@ export function ListingsTab({ versions,
                   <span>|</span>
                   <span>{version.locale}</span> </div>
               </div>
-              <button
+              <Button
                 onClick={() => onEdit(version)}
-                className="shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 transition hover:bg-white/10 hover:text-white"
+                className="shrink-0"
+                variant="quiet"
+                size="sm"
               >
-                {t('product.detail.listingsTabExt.edit')} </button>
+                {t('product.detail.listingsTabExt.edit')} </Button>
             </div>
-            <div className="p-5 flex-1 bg-[#09090b]/50 space-y-4">
+            <div className="p-5 flex-1 bg-[var(--ecom-bg)] space-y-4">
               <div>
                 <div className="text-[10px] uppercase tracking-wider text-white/30 mb-1.5">{t("product.detail.listingsTabExt.titleLabel")}</div>
                 <p className="text-sm text-white/80 leading-snug">{version.title}</p> </div>
@@ -439,13 +448,14 @@ export function ListingsTab({ versions,
                   <p className="text-xs text-white/60 line-clamp-3 leading-relaxed">{version.description}</p> </div>
               )} </div>
             {version.status !== 'adopted' && ( <div className="p-4 border-t border-white/5 bg-white/[0.02]">
-                <button
+                <Button
                   onClick={() => onAdopt(version.id)}
                   disabled={adoptingVersionId === version.id}
-                  className="w-full rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20 disabled:opacity-50 flex justify-center items-center gap-2"
+                  className="w-full"
+                  variant="secondary"
                 >
                   {adoptingVersionId === version.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
-                  {adoptingVersionId === version.id ? t('product.detail.listingsTabExt.adopting') : t('product.detail.listingsTabExt.adopt')} </button>
+                  {adoptingVersionId === version.id ? t('product.detail.listingsTabExt.adopting') : t('product.detail.listingsTabExt.adopt')} </Button>
               </div> )}
           </div> ))}
         {versions.length === 0 ? ( <div className="col-span-full rounded-2xl border border-dashed border-white/10 bg-white/[0.02] py-24 text-center text-white/40">
@@ -461,12 +471,12 @@ export function ProfitTab({ snapshots, onCalculate }: { snapshots: ProfitSnapsho
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-white/60">
           {t('product.detail.profitTab.count', { count: snapshots.length })} </p>
-        <button onClick={onCalculate} className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-400 shadow-md">
+        <Button onClick={onCalculate} variant="primary">
           <TrendingUp className="h-4 w-4" />
-          {t('product.detail.profitTab.calculate')} </button>
+          {t('product.detail.profitTab.calculate')} </Button>
       </div>
       <div className="space-y-4">
-        {snapshots.map(snapshot => ( <div key={snapshot.id} className="grid grid-cols-2 gap-6 rounded-2xl border border-white/10 bg-[#0c0c10] p-6 shadow-lg transition-all hover:border-white/20 md:grid-cols-4">
+        {snapshots.map(snapshot => ( <div key={snapshot.id} className="grid grid-cols-2 gap-6 rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-6 shadow-lg transition-all hover:border-white/20 md:grid-cols-4">
             <ProfitMetric label={t('product.detail.profitTab.grossProfit')} value={`$${snapshot.grossProfit.toFixed(2)}`} helper={`${(snapshot.grossMargin * 100).toFixed(1)}% margin`} />
             <ProfitMetric label={t('product.detail.profitTab.netProfit')} value={`$${snapshot.netProfit.toFixed(2)}`} helper={`${(snapshot.netMargin * 100).toFixed(1)}% margin`} />
             <ProfitMetric label={t('product.detail.profitTab.breakeven')} value={`$${snapshot.breakevenPrice.toFixed(2)}`} helper={t('product.detail.profitTab.minPrice')} />
@@ -506,18 +516,18 @@ export function ExportsTab({ tasks,
         <p className="text-sm font-medium text-white/60">
           {t('product.detail.exportsTabExt.count', { count: tasks.length })} · {t('product.detail.exportsTabExt.assetCount', { count: assetCount })} </p>
         <div className="flex flex-wrap items-center gap-3">
-          <Link to="/products/workbench/downloads" className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white">
-            {t('product.detail.exportsTabExt.downloadCenter')} </Link>
-          <button
+          <ButtonLink to="/products/workbench/downloads" variant="secondary">
+            {t('product.detail.exportsTabExt.downloadCenter')} </ButtonLink>
+          <Button
             onClick={onCreateFromSelection}
             disabled={selectedAssetCount === 0}
-            className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            variant="secondary"
           >
             <Eye className="h-4 w-4" />
-            {t('product.detail.exportsTabExt.exportSelected', { count: selectedAssetCount })} </button>
-          <button onClick={onCreate} className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-400 shadow-md">
+            {t('product.detail.exportsTabExt.exportSelected', { count: selectedAssetCount })} </Button>
+          <Button onClick={onCreate} variant="primary">
             <Download className="h-4 w-4" />
-            {t('product.detail.exportsTabExt.exportAll')} </button>
+            {t('product.detail.exportsTabExt.exportAll')} </Button>
         </div> </div>
       <div className="space-y-4">
         {tasks.map(task => {
@@ -525,7 +535,7 @@ export function ExportsTab({ tasks,
           const snapshotAssetCount = downloadTrace?.assetCount ?? task.assetCount ?? assetCount
           const snapshotListingLabel = downloadTrace?.listingVersionLabel ?? task.listingVersionLabel
           const snapshotPrimaryAssetRole = downloadTrace?.primaryAssetRole ?? task.primaryAssetRole
-          return ( <div key={task.id} className="flex flex-col md:flex-row md:items-center justify-between gap-6 rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg transition-all hover:border-white/20">
+          return ( <div key={task.id} className="flex flex-col md:flex-row md:items-center justify-between gap-6 rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-lg transition-all hover:border-white/20">
               <div className="space-y-2.5">
                 <div className="flex items-center gap-3">
                   <span className="font-semibold text-white/90">{t("product.detail.exportsTabExt.exportTitle", { platform: task.platform.toUpperCase() })}</span>
@@ -549,20 +559,22 @@ export function ExportsTab({ tasks,
                   ) : null} </div>
               </div>
               <div className="flex flex-wrap items-center gap-3 md:shrink-0 border-t border-white/5 pt-4 md:border-none md:pt-0">
-                {downloadTrace ? ( <button
+                {downloadTrace ? ( <Button
                     onClick={() => onInspectAssets(downloadTrace.id)}
-                    className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+                    className="flex-1 md:flex-none"
+                    variant="secondary"
                   >
                     <Eye className="h-4 w-4" />
-                    {t('product.detail.exportsTabExt.inspectAssets')} </button>
+                    {t('product.detail.exportsTabExt.inspectAssets')} </Button>
                 ) : null}
-                {task.status === 'succeeded' ? ( <button
+                {task.status === 'succeeded' ? ( <Button
                     onClick={() => void handleDownload(task)}
                     disabled={downloadingId === task.id}
-                    className="flex flex-1 md:flex-none items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:bg-emerald-600/50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                    className="flex-1 md:flex-none"
+                    variant="primary"
                   >
                     {downloadingId === task.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                    {downloadingId === task.id ? t('product.detail.exportsTabExt.downloading') : t('product.detail.exportsTabExt.download')} </button>
+                    {downloadingId === task.id ? t('product.detail.exportsTabExt.downloading') : t('product.detail.exportsTabExt.download')} </Button>
                 ) : ( <span className="flex-1 md:flex-none text-center rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/50">
                     {task.status === 'generating' ? t('product.detail.exportsTabExt.generating') : t('product.detail.exportsTabExt.pending')} </span>
                 )} </div>
@@ -583,7 +595,7 @@ export function HistoryTab({ activities,
       <p className="text-sm font-medium text-white/60">
         {t('product.detail.historyTab.count', { count: activities.length })} </p>
       <div className="space-y-4">
-        {activities.map(activity => ( <div key={activity.id} className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg transition-all hover:border-white/20">
+        {activities.map(activity => ( <div key={activity.id} className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-lg transition-all hover:border-white/20">
             <p className="font-semibold text-white/90">{activity.title}</p>
             <p className="mt-2 text-sm text-white/60 leading-relaxed">{activity.summary}</p>
             <p className="mt-3 text-[11px] font-mono text-white/30">{new Date(activity.createdAt).toLocaleString()}</p> </div>
@@ -596,7 +608,7 @@ export function HistoryTab({ activities,
     </div> )
 }
 function SummaryChip({ label, value, helper }: { label: string; value: string; helper: string }) {
-  return ( <div className="rounded-2xl border border-white/10 bg-[#0c0c10] p-5 shadow-lg">
+  return ( <div className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-lg">
       <div className="text-[10px] uppercase tracking-wider text-white/40">{label}</div>
       <div className="mt-2 text-2xl font-bold text-white/90">{value}</div>
       <div className="mt-1 text-[11px] text-white/40">{helper}</div> </div>
