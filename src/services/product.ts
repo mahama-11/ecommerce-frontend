@@ -15,9 +15,7 @@ import type {
   JsonObject,
 } from '@/types/product'
 import { ApiRequestError, downloadBinary, request } from './http'
-
 type RawRecord = Record<string, any>
-
 function normalizeAssetManifest(items: any[] | undefined) {
   return (items ?? []).map(item => ({
     relationId: item.relation_id ?? item.relationId ?? '',
@@ -30,7 +28,6 @@ function normalizeAssetManifest(items: any[] | undefined) {
     contentUrl: item.content_url ?? item.contentUrl,
   }))
 }
-
 function normalizeProduct(raw: RawRecord): Product {
   return {
     ...raw,
@@ -61,7 +58,6 @@ function normalizeProduct(raw: RawRecord): Product {
     activities: Array.isArray(raw.activities) ? raw.activities.map(normalizeActivity) : (raw.activities ?? []),
   } as Product
 }
-
 function normalizeListingVersion(raw: RawRecord): ListingVersion {
   return {
     ...raw,
@@ -72,7 +68,6 @@ function normalizeListingVersion(raw: RawRecord): ListingVersion {
     createdBy: raw.created_by ?? raw.createdBy ?? '',
   } as ListingVersion
 }
-
 function normalizeProfitSnapshot(raw: RawRecord): ProfitSnapshot {
   return {
     ...raw,
@@ -89,7 +84,6 @@ function normalizeProfitSnapshot(raw: RawRecord): ProfitSnapshot {
     createdAt: raw.created_at ?? raw.createdAt ?? '',
   } as ProfitSnapshot
 }
-
 function normalizeExportTask(raw: RawRecord): ExportTask {
   return {
     ...raw,
@@ -106,7 +100,6 @@ function normalizeExportTask(raw: RawRecord): ExportTask {
     createdBy: raw.created_by ?? raw.createdBy,
   } as ExportTask
 }
-
 function normalizeProductAsset(item: RawRecord): ProductAssetItem {
   const relation = item.relation ?? item
   const asset = item.asset ?? null
@@ -141,11 +134,9 @@ function normalizeProductAsset(item: RawRecord): ProductAssetItem {
     } : null,
   }
 }
-
 function normalizeActivity(raw: RawRecord): ProductActivity {
   return { ...raw, createdAt: raw.created_at ?? raw.createdAt ?? '' } as ProductActivity
 }
-
 function normalizeDownload(raw: RawRecord): DownloadRecord {
   return {
     ...raw,
@@ -166,7 +157,6 @@ function normalizeDownload(raw: RawRecord): DownloadRecord {
     createdAt: raw.created_at ?? raw.createdAt ?? '',
   } as DownloadRecord
 }
-
 function productPayload(data: Partial<{
   skuCode: string
   title: string
@@ -190,12 +180,10 @@ function productPayload(data: Partial<{
   if ('tags' in data) payload.tags = data.tags
   return payload
 }
-
 export async function listProducts() {
   const result = await request<RawRecord[]>('/api/v1/ecommerce/products', { method: 'GET' })
   return result.map(normalizeProduct) as ProductListItem[]
 }
-
 export function createProduct(data: {
   skuCode: string
   title: string
@@ -212,7 +200,6 @@ export function createProduct(data: {
     body: JSON.stringify(productPayload(data)),
   }).then(normalizeProduct)
 }
-
 export async function getProduct(productId: string) {
   const result = await request<{
     product: RawRecord
@@ -234,9 +221,7 @@ export async function getProduct(productId: string) {
     activities: (result.activities ?? []).map(normalizeActivity),
   }
 }
-
 type JsonStringOrObject = string | JsonObject | null | undefined
-
 type ParsedInfoDTO = {
   id?: string
   product_id?: string
@@ -264,7 +249,6 @@ type ParsedInfoDTO = {
   updated_at?: string
   updatedAt?: string
 }
-
 type PromptDTO = {
   id: string
   product_id?: string
@@ -285,7 +269,6 @@ type PromptDTO = {
   created_at?: string
   createdAt?: string
 }
-
 function parseJsonObject(value: JsonStringOrObject): JsonObject {
   if (!value) return {}
   if (typeof value === 'string') {
@@ -298,19 +281,16 @@ function parseJsonObject(value: JsonStringOrObject): JsonObject {
   }
   return value
 }
-
 function normalizeStringList(value: string | string[] | undefined): string[] {
   if (Array.isArray(value)) return value.filter(Boolean)
   if (!value) return []
   return value.split(',').map(item => item.trim()).filter(Boolean)
 }
-
 function isOptionalMissing(error: unknown) {
   if (!(error instanceof ApiRequestError)) return false
   const message = error.message.toLowerCase()
   return error.status === 404 || error.errorCode === 'NOT_FOUND' || message.includes('not found') || message.includes('record not found')
 }
-
 function normalizeParsedInfo(input: ParsedInfoDTO | null | undefined, productId: string): ProductParsedInfo | null {
   if (!input) return null
   return {
@@ -330,7 +310,6 @@ function normalizeParsedInfo(input: ParsedInfoDTO | null | undefined, productId:
     updatedAt: input.updatedAt ?? input.updated_at,
   }
 }
-
 function normalizePrompt(input: PromptDTO, productId: string): ProductPrompt {
   return {
     id: input.id,
@@ -346,7 +325,6 @@ function normalizePrompt(input: PromptDTO, productId: string): ProductPrompt {
     createdAt: input.createdAt ?? input.created_at ?? '',
   }
 }
-
 export async function getProductParsedInfo(productId: string) {
   try {
     const result = await request<ParsedInfoDTO | null>(`/api/v1/ecommerce/products/${productId}/parsed-info`, { method: 'GET', silent: true })
@@ -356,7 +334,6 @@ export async function getProductParsedInfo(productId: string) {
     throw error
   }
 }
-
 export async function listProductPrompts(productId: string) {
   try {
     const result = await request<PromptDTO[]>(`/api/v1/ecommerce/products/${productId}/prompts`, { method: 'GET', silent: true })
@@ -366,7 +343,6 @@ export async function listProductPrompts(productId: string) {
     throw error
   }
 }
-
 export async function generateProductPrompt(productId: string, input: GenerateProductPromptInput = {}) {
   const result = await request<PromptDTO>(`/api/v1/ecommerce/products/${productId}/prompts/generate`, {
     method: 'POST',
@@ -380,7 +356,6 @@ export async function generateProductPrompt(productId: string, input: GeneratePr
   })
   return normalizePrompt(result, productId)
 }
-
 export async function createProductPrompt(productId: string, input: CreateProductPromptInput) {
   const result = await request<PromptDTO>(`/api/v1/ecommerce/products/${productId}/prompts`, {
     method: 'POST',
@@ -395,7 +370,6 @@ export async function createProductPrompt(productId: string, input: CreateProduc
   })
   return normalizePrompt(result, productId)
 }
-
 export function updateProduct(
   productId: string,
   data: Partial<{
@@ -415,18 +389,15 @@ export function updateProduct(
     body: JSON.stringify(productPayload(data)),
   }).then(normalizeProduct)
 }
-
 export function updateProductStatus(productId: string, status: string) {
   return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   }).then(normalizeProduct)
 }
-
 export function listProductAssets(productId: string) {
   return request<RawRecord[]>(`/api/v1/ecommerce/products/${productId}/assets`, { method: 'GET' }).then(items => items.map(normalizeProductAsset))
 }
-
 export function addProductAsset(productId: string, data: {
   assetId: string
   relationType: string
@@ -451,7 +422,6 @@ export function addProductAsset(productId: string, data: {
     }),
   }).then(raw => normalizeProductAsset(raw).relation)
 }
-
 export function updateProductAssetRelation(
   productId: string,
   assetRelationId: string,
@@ -473,23 +443,19 @@ export function updateProductAssetRelation(
   if ('siteCode' in data) payload.site_code = data.siteCode
   if ('localeCode' in data) payload.locale_code = data.localeCode
   if ('sortOrder' in data) payload.sort_order = data.sortOrder
-
   return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/assets/${assetRelationId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
   }).then(raw => normalizeProductAsset(raw).relation)
 }
-
 export function deleteProductAsset(productId: string, assetRelationId: string) {
   return request<{ success: boolean }>(`/api/v1/ecommerce/products/${productId}/assets/${assetRelationId}`, {
     method: 'DELETE',
   })
 }
-
 export function listListingVersions(productId: string) {
   return request<RawRecord[]>(`/api/v1/ecommerce/products/${productId}/listing-versions`, { method: 'GET' }).then(items => items.map(normalizeListingVersion))
 }
-
 export function createListingVersion(productId: string, data: {
   versionLabel: string
   title: string
@@ -514,7 +480,6 @@ export function createListingVersion(productId: string, data: {
     }),
   }).then(normalizeListingVersion)
 }
-
 export async function batchCreateListingVersions(data: {
   items: Array<{
     productId: string
@@ -558,7 +523,6 @@ export async function batchCreateListingVersions(data: {
       })),
     }),
   })
-
   return {
     total: result.total,
     succeeded: result.succeeded,
@@ -575,14 +539,12 @@ export async function batchCreateListingVersions(data: {
     })),
   } satisfies BatchListingMutationResult
 }
-
 export function adoptListingVersion(productId: string, versionId: string) {
   return request<unknown>(`/api/v1/ecommerce/products/${productId}/listing-versions/adopt`, {
     method: 'POST',
     body: JSON.stringify({ version_id: versionId }),
   })
 }
-
 export async function batchAdoptListingVersions(data: {
   items: Array<{
     productId: string
@@ -612,7 +574,6 @@ export async function batchAdoptListingVersions(data: {
       })),
     }),
   })
-
   return {
     total: result.total,
     succeeded: result.succeeded,
@@ -629,13 +590,11 @@ export async function batchAdoptListingVersions(data: {
     })),
   } satisfies BatchListingMutationResult
 }
-
 export function deleteListingVersion(productId: string, versionId: string) {
   return request<{ success: boolean }>(`/api/v1/ecommerce/products/${productId}/listing-versions/${versionId}`, {
     method: 'DELETE',
   })
 }
-
 export function updateListingVersion(
   productId: string,
   versionId: string,
@@ -659,17 +618,14 @@ export function updateListingVersion(
   if ('platform' in data) payload.platform = data.platform
   if ('site' in data) payload.site = data.site
   if ('locale' in data) payload.locale = data.locale
-
   return request<RawRecord>(`/api/v1/ecommerce/products/${productId}/listing-versions/${versionId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
   }).then(normalizeListingVersion)
 }
-
 export function listProfitSnapshots(productId: string) {
   return request<RawRecord[]>(`/api/v1/ecommerce/products/${productId}/profit-snapshots`, { method: 'GET' }).then(items => items.map(normalizeProfitSnapshot))
 }
-
 export function calculateProfit(productId: string, data: {
   platform: string
   site: string
@@ -692,11 +648,9 @@ export function calculateProfit(productId: string, data: {
     }),
   }).then(normalizeProfitSnapshot)
 }
-
 export function listExportTasks(productId: string) {
   return request<RawRecord[]>(`/api/v1/ecommerce/products/${productId}/export-tasks`, { method: 'GET' }).then(items => items.map(normalizeExportTask))
 }
-
 export function createExportTask(productId: string, data: {
   platform: string
   site: string
@@ -715,7 +669,6 @@ export function createExportTask(productId: string, data: {
     }),
   }).then(normalizeExportTask)
 }
-
 export type ExportPackagePayload = {
   productIds: string[]
   platform: string
@@ -725,7 +678,6 @@ export type ExportPackagePayload = {
   listingVersionIds?: string[]
   assetRelationIds?: string[]
 }
-
 export function createExportPackage(data: ExportPackagePayload) {
   return request<RawRecord>('/api/v1/ecommerce/export-packages', {
     method: 'POST',
@@ -740,7 +692,6 @@ export function createExportPackage(data: ExportPackagePayload) {
     }),
   }).then(normalizeExportTask)
 }
-
 export function listExportPackages(params?: { productIds?: string[]; status?: string }) {
   const query = new URLSearchParams()
   if (params?.productIds?.length) query.set('product_ids', params.productIds.join(','))
@@ -748,15 +699,12 @@ export function listExportPackages(params?: { productIds?: string[]; status?: st
   const suffix = query.toString() ? `?${query.toString()}` : ''
   return request<RawRecord[]>(`/api/v1/ecommerce/export-packages${suffix}`, { method: 'GET' }).then(items => items.map(normalizeExportTask))
 }
-
 export function getExportPackage(packageId: string) {
   return request<RawRecord>(`/api/v1/ecommerce/export-packages/${packageId}`, { method: 'GET' }).then(normalizeExportTask)
 }
-
 export function retryExportPackage(packageId: string) {
   return request<RawRecord>(`/api/v1/ecommerce/export-packages/${packageId}/retry`, { method: 'POST' }).then(normalizeExportTask)
 }
-
 export function listAssetLibrary(params?: { assetType?: string; sourceType?: string; search?: string }) {
   const query = new URLSearchParams()
   if (params?.assetType) query.set('asset_type', params.assetType)
@@ -765,29 +713,24 @@ export function listAssetLibrary(params?: { assetType?: string; sourceType?: str
   const suffix = query.toString() ? `?${query.toString()}` : ''
   return request<RawRecord[]>(`/api/v1/ecommerce/asset-library${suffix}`, { method: 'GET' }).then(items => items.map(item => normalizeProductAsset({ relation: item.relation ?? item, asset: item.asset ?? item })))
 }
-
 export function getAssetLibraryItem(assetId: string) {
   return request<RawRecord>(`/api/v1/ecommerce/asset-library/${assetId}`, { method: 'GET' }).then(item => normalizeProductAsset({ relation: item.relation ?? item, asset: item.asset ?? item }))
 }
-
 export function getPromptCenterTemplate(templateKey: string) {
   return request<RawRecord>(`/api/v1/ecommerce/prompt-center/${encodeURIComponent(templateKey)}`, { method: 'GET' })
 }
-
 export function previewPromptCenterTemplate(data: { templateKey: string; variables: Record<string, unknown> }) {
   return request<RawRecord>('/api/v1/ecommerce/prompt-center/preview', {
     method: 'POST',
     body: JSON.stringify({ template_key: data.templateKey, variables: data.variables }),
   })
 }
-
 export function validatePromptCenterTemplate(data: { templateKey: string; content?: string; variables?: Record<string, unknown> }) {
   return request<RawRecord>('/api/v1/ecommerce/prompt-center/validate', {
     method: 'POST',
     body: JSON.stringify({ template_key: data.templateKey, content: data.content, variables: data.variables }),
   })
 }
-
 export function updateExportTaskStatus(
 	productId: string,
 	data: {
@@ -809,17 +752,14 @@ export function updateExportTaskStatus(
     }),
 	}).then(normalizeExportTask)
 }
-
 export function deleteProduct(productId: string) {
 	return request<{ success: boolean }>(`/api/v1/ecommerce/products/${productId}`, {
 		method: 'DELETE',
 	})
 }
-
 export function listDownloads() {
   return request<RawRecord[]>('/api/v1/ecommerce/downloads', { method: 'GET' }).then(items => items.map(normalizeDownload))
 }
-
 export async function downloadExport(record: Pick<DownloadRecord, 'id' | 'packageUrl' | 'downloadFileName'>) {
   if (record.packageUrl) {
     window.open(record.packageUrl, '_blank', 'noopener,noreferrer')
@@ -827,7 +767,6 @@ export async function downloadExport(record: Pick<DownloadRecord, 'id' | 'packag
   }
   await downloadBinary(`/api/v1/ecommerce/downloads/${record.id}/content`, record.downloadFileName)
 }
-
 export async function downloadExportTask(task: Pick<ExportTask, 'id' | 'packageUrl' | 'format'>, fallbackFileName?: string) {
   if (task.packageUrl) {
     window.open(task.packageUrl, '_blank', 'noopener,noreferrer')
