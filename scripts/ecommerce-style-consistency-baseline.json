@@ -361,11 +361,11 @@
       "randomDarkHex": 8
     },
     "src/pages/product/ProductListPage.tsx": {
-      "rawHexUtility": 19,
-      "bareButton": 18,
-      "adHocWhiteHover": 9,
+      "rawHexUtility": 0,
+      "bareButton": 0,
+      "adHocWhiteHover": 3,
       "adHocHeaderBg": 0,
-      "randomDarkHex": 14
+      "randomDarkHex": 0
     },
     "src/pages/product/components/ProductAIPipelinePanel.tsx": {
       "rawHexUtility": 7,
@@ -441,11 +441,11 @@
   "totals": {
     "files": 59,
     "totals": {
-      "rawHexUtility": 167,
-      "bareButton": 234,
-      "adHocWhiteHover": 112,
+      "rawHexUtility": 148,
+      "bareButton": 216,
+      "adHocWhiteHover": 106,
       "adHocHeaderBg": 30,
-      "randomDarkHex": 76
+      "randomDarkHex": 62
     }
   }
 }

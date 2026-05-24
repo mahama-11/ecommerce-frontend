@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { Download, FileSpreadsheet, LoaderCircle, Plus, Search, Upload, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
+import { Button, ButtonLink } from '@/components/ui/Button'
 import type { ProductListItem } from '@/types/product'
 import { createProduct, listProducts } from '@/services/product'
 import type { MissionStage } from './utils/productMission'
@@ -295,7 +296,7 @@ function ProductListPage() {
   const itemVariants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 260, damping: 26 } } }
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="show" className="relative min-h-full bg-[#0a0a12] text-[#e8eaf0]">
+    <motion.div variants={containerVariants} initial="hidden" animate="show" className="relative min-h-full bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)]">
       <div className="pointer-events-none fixed inset-0 opacity-60">
         <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
         <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" />
@@ -308,9 +309,9 @@ function ProductListPage() {
             <p className="mt-1 text-[13px] text-white/55">Create/Import → Queue → SKU Detail → Visual/Video → Assets → Listing → Export → Downloads</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <button onClick={() => setShowCreateModal(true)} className="inline-flex items-center gap-2 rounded-xl bg-cyan-200 px-4 py-2 text-sm font-semibold text-[#05070b] transition hover:bg-white"><Plus className="h-4 w-4" />新建 SKU</button>
-            <button onClick={() => setShowImportModal(true)} className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/82 transition hover:bg-white/[0.07]"><Upload className="h-4 w-4" />导入表格</button>
-            <button onClick={() => setShowPreviewDrawer(true)} className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/82 transition hover:bg-white/[0.07]">快速预览</button>
+            <Button onClick={() => setShowCreateModal(true)} variant="primary"><Plus className="h-4 w-4" />新建 SKU</Button>
+            <Button onClick={() => setShowImportModal(true)} variant="secondary"><Upload className="h-4 w-4" />导入表格</Button>
+            <Button onClick={() => setShowPreviewDrawer(true)} variant="secondary">快速预览</Button>
           </div>
         </motion.header>
 
@@ -327,7 +328,7 @@ function ProductListPage() {
             ['export', '待导出'],
             ['delivery', '交付中心'],
           ].map(([stage, label]) => (
-            <button key={stage} onClick={() => setActiveStage(stage as MissionStage | 'all')} className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${activeStage === stage ? 'border-cyan-300/40 bg-cyan-300/12 text-cyan-100' : 'border-white/[0.08] bg-white/[0.035] text-white/50 hover:text-white/75'}`}>{label}</button>
+            <Button key={stage} onClick={() => setActiveStage(stage as MissionStage | 'all')} variant={activeStage === stage ? 'primary' : 'quiet'} size="sm" className="rounded-full">{label}</Button>
           ))}
         </motion.div>
 
@@ -336,8 +337,8 @@ function ProductListPage() {
             <span>SKU 工作队列 — {filteredUnits.length} 个活跃</span>
             {filteredUnits.length > SKU_PAGE_SIZE ? <span data-testid="sku-pagination-summary">第 {safeCurrentPage} / {totalPages} 页 · 当前 {pageStart + 1}-{pageEnd}</span> : null}
           </div>
-          <div data-testid="sku-list-panel" className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-[#0b0d14] shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
-            <div className="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(72px,0.5fr)_minmax(80px,0.55fr)_minmax(72px,0.5fr)_minmax(72px,0.5fr)_minmax(150px,0.9fr)] border-b border-white/[0.06] bg-[#0b0d14] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/34 max-xl:hidden">
+          <div data-testid="sku-list-panel" className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-[var(--ecom-surface)] shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
+            <div className="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(72px,0.5fr)_minmax(80px,0.55fr)_minmax(72px,0.5fr)_minmax(72px,0.5fr)_minmax(150px,0.9fr)] border-b border-white/[0.06] bg-[var(--ecom-surface)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/34 max-xl:hidden">
               <div>SKU</div><div>标题 / 类目</div><div>真实就绪项</div><div>素材</div><div>Listing</div><div>导出</div><div>更新时间</div><div>操作</div>
             </div>
             {loading ? (
@@ -363,8 +364,8 @@ function ProductListPage() {
                       <QueueTag label={product.exportStatus === 'done' ? '已完成' : product.exportStatus === 'ready' ? '可交付' : '待导出'} tone={product.exportStatus === 'done' || product.exportStatus === 'ready' ? 'green' : 'red'} />
                       <div className="text-xs text-white/38">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</div>
                       <div className="flex flex-wrap gap-1.5">
-                        <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#05070b] transition hover:bg-cyan-100">详情</Link>
-                        <Link to={unit.nextBestAction.href} onClick={event => event.stopPropagation()} className={`inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-xs font-semibold transition ${unit.nextBestAction.station === 'visual' || unit.nextBestAction.station === 'listing' ? 'bg-cyan-200 text-[#05070b] hover:bg-white' : 'border border-white/[0.08] bg-white/[0.04] text-white/72 hover:bg-white/[0.08]'}`}>{unit.nextBestAction.label.replace('Route to Visual Station', '进入生产准备').replace('Route to Delivery Station', '查看交付历史').replace('Open Export Handoff', '创建导出任务')}</Link>
+                        <ButtonLink to={`/products/${product.id}`} onClick={event => event.stopPropagation()} variant="primary" size="sm">详情</ButtonLink>
+                        <ButtonLink to={unit.nextBestAction.href} onClick={event => event.stopPropagation()} variant={unit.nextBestAction.station === 'visual' || unit.nextBestAction.station === 'listing' ? 'primary' : 'secondary'} size="sm">{unit.nextBestAction.label.replace('Route to Visual Station', '进入生产准备').replace('Route to Delivery Station', '查看交付历史').replace('Open Export Handoff', '创建导出任务')}</ButtonLink>
                       </div>
                     </div>
                   )
@@ -375,23 +376,23 @@ function ProductListPage() {
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs text-white/45">
                 <span data-testid="sku-pagination-range">显示 {pageStart + 1}-{pageEnd} / {filteredUnits.length} 个 SKU</span>
                 <div className="flex items-center gap-2" data-testid="sku-pagination-controls">
-                  <button
-                    type="button"
+                  <Button
                     disabled={safeCurrentPage <= 1}
                     onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-                    className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 font-semibold text-white/70 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-35"
+                    variant="quiet"
+                    size="sm"
                   >
                     上一页
-                  </button>
+                  </Button>
                   <span className="rounded-lg border border-white/[0.06] bg-black/20 px-3 py-1.5 text-white/55">{safeCurrentPage} / {totalPages}</span>
-                  <button
-                    type="button"
+                  <Button
                     disabled={safeCurrentPage >= totalPages}
                     onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
-                    className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 font-semibold text-white/70 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-35"
+                    variant="quiet"
+                    size="sm"
                   >
                     下一页
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : null}
@@ -400,10 +401,10 @@ function ProductListPage() {
 
         <motion.section variants={itemVariants} className="mb-5">
           <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">批量操作栏（选中后激活）</div>
-          <div className="flex flex-wrap items-center gap-2 rounded-[28px] border border-white/[0.06] bg-[#0b0d14] p-4 shadow-[0_16px_48px_rgba(0,0,0,0.42)]">
+          <div className="flex flex-wrap items-center gap-2 rounded-[28px] border border-white/[0.06] bg-[var(--ecom-surface)] p-4 shadow-[0_16px_48px_rgba(0,0,0,0.42)]">
             <span className="text-sm text-white/50">已选 {selectedUnits.length} 个 SKU</span>
-            <button disabled className="rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-1.5 text-xs font-semibold text-white/25">批量 Adopt</button>
-            <Link to={selectedUnits.length ? `/products/workbench/downloads?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${selectedUnits.length ? 'border-white/[0.08] bg-white/[0.04] text-white/75 hover:bg-white/[0.08]' : 'pointer-events-none border-white/[0.05] bg-white/[0.02] text-white/25'}`}>查看交付历史</Link>
+            <Button disabled variant="quiet" size="sm">批量 Adopt</Button>
+            <ButtonLink to={selectedUnits.length ? `/products/workbench/downloads?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} variant="secondary" size="sm" className={selectedUnits.length ? '' : 'pointer-events-none opacity-45'}>查看交付历史</ButtonLink>
             <span className="text-xs text-white/34">暂未开放的批量动作会保持不可点击。</span>
           </div>
         </motion.section>
@@ -419,7 +420,7 @@ function ProductListPage() {
 
       {showCommandPalette ? (
         <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-md" onClick={() => setShowCommandPalette(false)}>
-          <div className="mx-auto mt-[12vh] w-full max-w-xl overflow-hidden rounded-2xl border border-white/12 bg-[#0b0d14] shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()}>
+          <div className="mx-auto mt-[12vh] w-full max-w-xl overflow-hidden rounded-2xl border border-white/12 bg-[var(--ecom-surface)] shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()}>
             <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3"><Search className="h-4 w-4 text-white/35" /><input autoFocus placeholder="搜索命令、SKU、站点..." className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/32" /><span className="text-xs text-white/28">ESC</span></div>
             <div className="p-2 text-sm">{['任务中心 ⌘1', 'Listing 配置 ⌘2', '交付中心 ⌘3'].map(item => <div key={item} className="rounded-xl px-3 py-2 text-white/70 hover:bg-white/[0.05]">{item}</div>)}</div>
           </div>
@@ -428,15 +429,15 @@ function ProductListPage() {
 
       {showPreviewDrawer && focusedUnit ? (
         <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setShowPreviewDrawer(false)}>
-          <aside className="ml-auto h-full w-full max-w-md border-l border-white/10 bg-[#0b0d14] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()}>
-            <button className="float-right rounded-lg border border-white/10 px-2 py-1 text-xs text-white/50" onClick={() => setShowPreviewDrawer(false)}>x</button>
+          <aside className="ml-auto h-full w-full max-w-md border-l border-white/10 bg-[var(--ecom-surface)] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()}>
+            <Button className="float-right" size="icon-sm" variant="quiet" onClick={() => setShowPreviewDrawer(false)}>x</Button>
             <h3 className="text-lg font-semibold text-white">{focusedUnit.product.skuCode}</h3>
             <p className="mt-1 text-sm text-white/55">{focusedUnit.product.title}</p>
             <div className="mt-5 space-y-4">
               <div><h4 className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-white/35">READINESS 维度</h4><div className="flex flex-wrap gap-2">{focusedUnit.readiness.map(item => <QueueTag key={item.key} label={item.label} tone={item.state === 'available' ? 'green' : item.state === 'partial' ? 'orange' : item.state === 'blocked' ? 'red' : 'orange'} />)}</div></div>
               <div><h4 className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-white/35">下一步动作</h4><p className="text-sm text-white/55">{focusedUnit.nextBestAction.helper}</p></div>
             </div>
-            <div className="mt-6 flex gap-2"><button onClick={() => setShowPreviewDrawer(false)} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-white/70">关闭</button><Link to={`/products/${focusedUnit.product.id}`} className="rounded-xl bg-cyan-200 px-4 py-2 text-sm font-semibold text-[#05070b]">进入 SKU 详情</Link></div>
+            <div className="mt-6 flex gap-2"><Button onClick={() => setShowPreviewDrawer(false)} variant="secondary">关闭</Button><ButtonLink to={`/products/${focusedUnit.product.id}`} variant="primary">进入 SKU 详情</ButtonLink></div>
           </aside>
         </div>
       ) : null}
@@ -446,10 +447,10 @@ function ProductListPage() {
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('product.list.createModal.skuCode')}>
-                <input type="text" value={createForm.skuCode} onChange={event => setCreateForm(prev => ({ ...prev, skuCode: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.skuPlaceholder')} />
+                <input type="text" value={createForm.skuCode} onChange={event => setCreateForm(prev => ({ ...prev, skuCode: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.skuPlaceholder')} />
               </Field>
               <Field label={t('product.list.createModal.currency')}>
-                <select value={createForm.costCurrency} onChange={event => setCreateForm(prev => ({ ...prev, costCurrency: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20">
+                <select value={createForm.costCurrency} onChange={event => setCreateForm(prev => ({ ...prev, costCurrency: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20">
                   <option value="USD">USD</option>
                   <option value="CNY">CNY</option>
                   <option value="EUR">EUR</option>
@@ -457,27 +458,27 @@ function ProductListPage() {
               </Field>
             </div>
             <Field label={t('product.list.createModal.productTitle')}>
-              <input type="text" value={createForm.title} onChange={event => setCreateForm(prev => ({ ...prev, title: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.titlePlaceholder')} />
+              <input type="text" value={createForm.title} onChange={event => setCreateForm(prev => ({ ...prev, title: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.titlePlaceholder')} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('product.list.createModal.category')}>
-                <input type="text" value={createForm.categoryId} onChange={event => setCreateForm(prev => ({ ...prev, categoryId: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.categoryPlaceholder')} />
+                <input type="text" value={createForm.categoryId} onChange={event => setCreateForm(prev => ({ ...prev, categoryId: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.categoryPlaceholder')} />
               </Field>
               <Field label={t('product.list.createModal.brand')}>
-                <input type="text" value={createForm.brandId} onChange={event => setCreateForm(prev => ({ ...prev, brandId: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.brandPlaceholder')} />
+                <input type="text" value={createForm.brandId} onChange={event => setCreateForm(prev => ({ ...prev, brandId: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.brandPlaceholder')} />
               </Field>
             </div>
             <Field label={t('product.list.createModal.tags')}>
               <div className="space-y-3">
                 <div className="flex gap-2">
-                  <input type="text" value={createForm.newTag} onChange={event => setCreateForm(prev => ({ ...prev, newTag: event.target.value }))} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addTag() } }} className="flex-1 rounded-md border border-white/10 bg-[#0a0a12] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.addTagPlaceholder')} />
-                  <button onClick={addTag} className="rounded-md border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-slate-200 transition hover:bg-white/10">{t('product.list.createModal.add')}</button>
+                  <input type="text" value={createForm.newTag} onChange={event => setCreateForm(prev => ({ ...prev, newTag: event.target.value }))} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addTag() } }} className="flex-1 rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.addTagPlaceholder')} />
+                  <Button onClick={addTag} variant="secondary">{t('product.list.createModal.add')}</Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {createForm.tags.map(tag => (
                     <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300">
                       {tag}
-                      <button onClick={() => setCreateForm(prev => ({ ...prev, tags: prev.tags.filter(item => item !== tag) }))}><X className="h-3 w-3" /></button>
+                      <Button onClick={() => setCreateForm(prev => ({ ...prev, tags: prev.tags.filter(item => item !== tag) }))} size="icon-sm" variant="ghost" aria-label={`Remove ${tag}`}><X className="h-3 w-3" /></Button>
                     </span>
                   ))}
                 </div>
@@ -485,8 +486,8 @@ function ProductListPage() {
             </Field>
           </div>
           <div className="mt-6 flex gap-3">
-            <button onClick={() => setShowCreateModal(false)} className="flex-1 rounded-md border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-slate-200 transition hover:bg-white/10">{t('product.list.createModal.cancel')}</button>
-            <button onClick={() => void handleCreate()} disabled={!createForm.skuCode.trim() || !createForm.title.trim()} className="flex-1 rounded-md bg-white px-4 py-2.5 text-sm font-medium text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50">{t('product.list.create')}</button>
+            <Button onClick={() => setShowCreateModal(false)} className="flex-1" variant="secondary">{t('product.list.createModal.cancel')}</Button>
+            <Button onClick={() => void handleCreate()} disabled={!createForm.skuCode.trim() || !createForm.title.trim()} className="flex-1" variant="primary">{t('product.list.create')}</Button>
           </div>
         </ModalShell>
       ) : null}
@@ -501,8 +502,8 @@ function ProductListPage() {
                   <div className="mt-1 text-sm text-white/45">{t('product.list.importModal.description')}{IMPORT_TEMPLATE_HEADERS.join(', ')}.</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={downloadImportTemplate} className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 transition hover:bg-white/10"><Download className="h-4 w-4" />{t('product.list.importModal.downloadTemplate')}</button>
-                  <button onClick={() => fileInputRef.current?.click()} className="inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-medium text-slate-950 transition hover:bg-slate-200"><FileSpreadsheet className="h-4 w-4" />{t('product.list.importModal.chooseFile')}</button>
+                  <Button onClick={downloadImportTemplate} variant="secondary"><Download className="h-4 w-4" />{t('product.list.importModal.downloadTemplate')}</Button>
+                  <Button onClick={() => fileInputRef.current?.click()} variant="primary"><FileSpreadsheet className="h-4 w-4" />{t('product.list.importModal.chooseFile')}</Button>
                 </div>
               </div>
               <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void handleImportFile(file) }} />
@@ -529,8 +530,8 @@ function ProductListPage() {
             )}
           </div>
           <div className="mt-6 flex gap-3">
-            <button onClick={() => { setImportRows([]); setShowImportModal(false) }} className="flex-1 rounded-md border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-slate-200 transition hover:bg-white/10">{t('product.list.importModal.close')}</button>
-            <button onClick={() => void handleImportSubmit()} disabled={importRows.filter(isImportRowValid).length === 0 || importing} className="flex-1 rounded-md bg-white px-4 py-2.5 text-sm font-medium text-slate-950 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50">{importing ? t('product.list.importModal.importing') : t('product.list.importModal.importValidRows')}</button>
+            <Button onClick={() => { setImportRows([]); setShowImportModal(false) }} className="flex-1" variant="secondary">{t('product.list.importModal.close')}</Button>
+            <Button onClick={() => void handleImportSubmit()} disabled={importRows.filter(isImportRowValid).length === 0 || importing} className="flex-1" variant="primary">{importing ? t('product.list.importModal.importing') : t('product.list.importModal.importValidRows')}</Button>
           </div>
         </ModalShell>
       ) : null}
@@ -562,7 +563,7 @@ function StationCard({ code, title, desc, status, tone, href }: { code: string; 
         ? 'bg-rose-300/12 text-rose-200'
         : 'bg-cyan-300/12 text-cyan-100'
   return (
-    <Link to={href} className="group flex min-h-[150px] flex-col gap-3 rounded-[28px] border border-white/[0.06] bg-[#0b0d14] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.42)] transition hover:border-white/12 hover:bg-white/[0.025]">
+    <Link to={href} className="group flex min-h-[150px] flex-col gap-3 rounded-[28px] border border-white/[0.06] bg-[var(--ecom-surface)] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.42)] transition hover:border-white/12 hover:bg-white/[0.025]">
       <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-300/18 bg-cyan-300/10 text-[11px] font-bold tracking-[0.08em] text-cyan-100">{code}</div>
       <div>
         <div className="font-semibold text-white/90">{title}</div>
@@ -576,10 +577,10 @@ function StationCard({ code, title, desc, status, tone, href }: { code: string; 
 function ModalShell({ title, onClose, size = 'md', children }: { title: string; onClose: () => void; size?: 'md' | 'xl'; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div role="dialog" aria-modal="true" aria-labelledby="product-modal-title" className={`w-full rounded-xl border border-white/10 bg-[#0a0a12] ${size === 'xl' ? 'max-w-5xl' : 'max-w-2xl'}`}>
+      <div role="dialog" aria-modal="true" aria-labelledby="product-modal-title" className={`w-full rounded-xl border border-white/10 bg-[var(--ecom-bg)] ${size === 'xl' ? 'max-w-5xl' : 'max-w-2xl'}`}>
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
           <h2 id="product-modal-title" className="text-xl font-semibold text-white">{title}</h2>
-          <button onClick={onClose} aria-label="Close modal" className="rounded-md border border-white/10 bg-white/5 p-2 text-white/60 transition hover:bg-white/10 hover:text-white"><X className="h-4 w-4" /></button>
+          <Button onClick={onClose} aria-label="Close modal" size="icon-sm" variant="quiet"><X className="h-4 w-4" /></Button>
         </div>
         <div className="max-h-[80vh] overflow-auto px-6 py-5">{children}</div>
       </div>
