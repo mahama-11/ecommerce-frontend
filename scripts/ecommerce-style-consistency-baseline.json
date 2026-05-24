@@ -1,0 +1,451 @@
+{
+  "schema_version": "1.0",
+  "policy": "No new style drift. Historical page-local styling is allowed only while it is burned down; counts may decrease but not increase.",
+  "rules": [
+    {
+      "key": "rawHexUtility",
+      "name": "raw hex color utility"
+    },
+    {
+      "key": "bareButton",
+      "name": "bare button element"
+    },
+    {
+      "key": "adHocWhiteHover",
+      "name": "ad-hoc white hover surface"
+    },
+    {
+      "key": "adHocHeaderBg",
+      "name": "ad-hoc header background"
+    },
+    {
+      "key": "randomDarkHex",
+      "name": "random dark hex utility"
+    }
+  ],
+  "scan": {
+    "src/components/DetailDrawer.tsx": {
+      "rawHexUtility": 1,
+      "bareButton": 1,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/components/Toast.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 1,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/components/account/UserAccountMenu.tsx": {
+      "rawHexUtility": 1,
+      "bareButton": 2,
+      "adHocWhiteHover": 3,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 1
+    },
+    "src/components/pricing/PricingPlanGrid.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 1,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/components/product-workbench/ProductWorkflowNav.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 0,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 1,
+      "randomDarkHex": 1
+    },
+    "src/components/product-workbench/index.tsx": {
+      "rawHexUtility": 5,
+      "bareButton": 3,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 3,
+      "randomDarkHex": 3
+    },
+    "src/layouts/AccountLayout.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 0,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 2
+    },
+    "src/layouts/ConsoleLayout.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 3,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 2
+    },
+    "src/layouts/InventoryLayout.tsx": {
+      "rawHexUtility": 4,
+      "bareButton": 1,
+      "adHocWhiteHover": 2,
+      "adHocHeaderBg": 2,
+      "randomDarkHex": 4
+    },
+    "src/layouts/OrgLayout.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 0,
+      "adHocWhiteHover": 2,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 2
+    },
+    "src/layouts/PortalLayout.tsx": {
+      "rawHexUtility": 4,
+      "bareButton": 4,
+      "adHocWhiteHover": 3,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 2
+    },
+    "src/pages/AgentTemplateMarketPage.tsx": {
+      "rawHexUtility": 3,
+      "bareButton": 16,
+      "adHocWhiteHover": 11,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/ApiDocsPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 0,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/AssetCommercePage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 7,
+      "adHocWhiteHover": 6,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/BatchListingPage.tsx": {
+      "rawHexUtility": 11,
+      "bareButton": 10,
+      "adHocWhiteHover": 2,
+      "adHocHeaderBg": 4,
+      "randomDarkHex": 5
+    },
+    "src/pages/BlogPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 1,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/ChangelogPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 0,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/ChatWorkspacePage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 6,
+      "adHocWhiteHover": 5,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/ContactPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 2,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/DesignWorkbenchPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 10,
+      "adHocWhiteHover": 6,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/GenericPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 0,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/HelpCenterPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 0,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/HomePage.tsx": {
+      "rawHexUtility": 5,
+      "bareButton": 0,
+      "adHocWhiteHover": 3,
+      "adHocHeaderBg": 1,
+      "randomDarkHex": 2
+    },
+    "src/pages/OpsWorkbenchPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 3,
+      "adHocWhiteHover": 2,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/PricingPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 1,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/ProductVisualToolsPage.tsx": {
+      "rawHexUtility": 7,
+      "bareButton": 3,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 5,
+      "randomDarkHex": 6
+    },
+    "src/pages/SolutionDetailPage.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 0,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 1,
+      "randomDarkHex": 2
+    },
+    "src/pages/TermsPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 0,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/ToolPage.tsx": {
+      "rawHexUtility": 3,
+      "bareButton": 11,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/account/AccountAssetsPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 0,
+      "adHocWhiteHover": 2,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/account/AccountBillingPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 1,
+      "adHocWhiteHover": 3,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/account/AccountCommissionPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 3,
+      "adHocWhiteHover": 4,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/account/AccountDownloadsPage.tsx": {
+      "rawHexUtility": 13,
+      "bareButton": 4,
+      "adHocWhiteHover": 3,
+      "adHocHeaderBg": 8,
+      "randomDarkHex": 9
+    },
+    "src/pages/account/AccountHistoryPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 1,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/account/AccountProfilePage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 2,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/account/AccountPromotionPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 3,
+      "adHocWhiteHover": 2,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/account/AccountTemplatesPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 5,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/auth/ForgotPasswordPage.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 1,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 1
+    },
+    "src/pages/auth/LoginPage.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 1,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 1
+    },
+    "src/pages/auth/RegisterPage.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 1,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 1
+    },
+    "src/pages/inventory/InventoryAlertsPage.tsx": {
+      "rawHexUtility": 1,
+      "bareButton": 2,
+      "adHocWhiteHover": 3,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/inventory/InventoryAnalysisPage.tsx": {
+      "rawHexUtility": 4,
+      "bareButton": 1,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 1
+    },
+    "src/pages/inventory/InventoryDashboardPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 3,
+      "adHocWhiteHover": 4,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/inventory/InventoryInboundPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 0,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/inventory/InventoryProductManagePage.tsx": {
+      "rawHexUtility": 3,
+      "bareButton": 6,
+      "adHocWhiteHover": 5,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 1
+    },
+    "src/pages/inventory/InventoryReplenishmentPage.tsx": {
+      "rawHexUtility": 12,
+      "bareButton": 5,
+      "adHocWhiteHover": 3,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 2
+    },
+    "src/pages/inventory/InventorySettingsPage.tsx": {
+      "rawHexUtility": 4,
+      "bareButton": 3,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 1
+    },
+    "src/pages/product/ProductDetailPage.tsx": {
+      "rawHexUtility": 19,
+      "bareButton": 13,
+      "adHocWhiteHover": 2,
+      "adHocHeaderBg": 5,
+      "randomDarkHex": 8
+    },
+    "src/pages/product/ProductListPage.tsx": {
+      "rawHexUtility": 19,
+      "bareButton": 18,
+      "adHocWhiteHover": 9,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 14
+    },
+    "src/pages/product/components/ProductAIPipelinePanel.tsx": {
+      "rawHexUtility": 7,
+      "bareButton": 8,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 2
+    },
+    "src/pages/product/components/ProductDetailTabs.tsx": {
+      "rawHexUtility": 14,
+      "bareButton": 21,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 1
+    },
+    "src/pages/production/PrepHubPage.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 7,
+      "adHocWhiteHover": 5,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/production/SandboxPage.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 11,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/production/WorkshopPage.tsx": {
+      "rawHexUtility": 1,
+      "bareButton": 17,
+      "adHocWhiteHover": 2,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/tool-page/components/GenerationSettingsPanel.tsx": {
+      "rawHexUtility": 3,
+      "bareButton": 5,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/tool-page/components/RecentActivityPanel.tsx": {
+      "rawHexUtility": 0,
+      "bareButton": 1,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/tool-page/components/ResultPanel.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 1,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/pages/tool-page/components/SourcePanel.tsx": {
+      "rawHexUtility": 1,
+      "bareButton": 3,
+      "adHocWhiteHover": 1,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    },
+    "src/router/index.tsx": {
+      "rawHexUtility": 2,
+      "bareButton": 1,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 2
+    }
+  },
+  "totals": {
+    "files": 59,
+    "totals": {
+      "rawHexUtility": 167,
+      "bareButton": 234,
+      "adHocWhiteHover": 112,
+      "adHocHeaderBg": 30,
+      "randomDarkHex": 76
+    }
+  }
+}
