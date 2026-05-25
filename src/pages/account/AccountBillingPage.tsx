@@ -18,6 +18,7 @@ import {
   formatWalletHistoryAmount,
   getCurrentSubscription,
 } from '@/utils/commercialDisplay'
+import { Button } from '@/components/ui/Button'
 
 
 const containerVariants = {
@@ -86,7 +87,7 @@ export default function AccountBillingPage() {
         </motion.div>
         <Link
           to="/pricing"
-          className="group inline-flex items-center justify-center gap-2 rounded-md btn-primary px-4 py-2 text-sm font-medium text-white shadow-md hover:shadow-lg transition-all active:scale-95 shrink-0"
+          className="group inline-flex items-center justify-center gap-2 rounded-md btn-primary px-4 py-2 text-sm font-medium text-white shadow-md hover:shadow-lg transition-colors active:scale-95 shrink-0"
         >
           <FileText className="h-4 w-4" />
           {t('nav.pricing')}
@@ -131,7 +132,7 @@ export default function AccountBillingPage() {
               { label: getCommercialAssetLabel(t, 'ECOMMERCE_PROMO_CREDIT'), value: `${assetMap.get('ECOMMERCE_PROMO_CREDIT') || 0} ${t('account.common.unit.credits')}` },
               { label: getCommercialAssetLabel(t, 'ecommerce.image.generate'), value: `${quota?.remaining || 0} ${t('account.common.unit.quota')}` },
             ].map((item, index) => (
-              <motion.div variants={itemVariants} key={`${item.label}-${index}`} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
+              <motion.div variants={itemVariants} key={`${item.label}-${index}`} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-[var(--ecom-surface-hover)]">
                 <div className="text-sm font-medium text-slate-400 uppercase tracking-wider">{item.label}</div>
                 <div className="text-lg font-semibold text-slate-100">{item.value}</div>
               </motion.div>
@@ -151,7 +152,7 @@ export default function AccountBillingPage() {
           </div>
           <div className="divide-y divide-white/5">
             {walletHistory.length ? walletHistory.slice(0, 5).map((item, index) => (
-              <motion.div variants={itemVariants} key={item.id || `${item.reference_id || item.asset_code}-${index}`} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
+              <motion.div variants={itemVariants} key={item.id || `${item.reference_id || item.asset_code}-${index}`} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-[var(--ecom-surface-hover)]">
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium text-slate-100">{getWalletHistoryTitleLabel(t, item)}</div>
                   <div className="mt-1 truncate text-xs text-slate-500">
@@ -190,7 +191,7 @@ export default function AccountBillingPage() {
                 { key: 'settled', label: t('account.common.filters.settled') },
                 { key: 'refunded', label: t('account.common.filters.refunded') },
               ].map(item => (
-                <button
+                <Button
                   key={item.key}
                   type="button"
                   onClick={() => setChargeFilter(item.key as typeof chargeFilter)}
@@ -201,7 +202,7 @@ export default function AccountBillingPage() {
                   }`}
                 >
                   {item.label}
-                </button>
+                </Button>
               ))}
             </div>
             <Link to="/account/downloads" className="text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors">
@@ -212,7 +213,7 @@ export default function AccountBillingPage() {
 
         <div className="divide-y divide-white/5">
           {visibleCharges.length ? visibleCharges.map((item, index) => (
-            <motion.div variants={itemVariants} key={item.id || `${item.event_id || item.business_type}-${index}`} className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-white/[0.03]">
+            <motion.div variants={itemVariants} key={item.id || `${item.event_id || item.business_type}-${index}`} className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-[var(--ecom-surface-hover)]">
               <div className="min-w-0">
                 <div className="text-sm font-medium text-slate-100 truncate">{item.business_type || t('account.billing.records.usageRecord')}</div>
                 <div className="mt-1 text-xs text-slate-500 truncate">

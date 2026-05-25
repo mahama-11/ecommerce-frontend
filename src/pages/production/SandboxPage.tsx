@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'; import { useParams, useNavigate } from 'react-router-dom'; import { useTranslation } from 'react-i18next'; import { Play, Minus, Plus, Settings, Loader2, AlertCircle, Trash2, ChevronDown, ChevronLeft, Hexagon, Sun, Frame, Package, Palette, Scale, Info, Sparkles, Image, ChevronUp, } from 'lucide-react'; import { motion, AnimatePresence } from 'framer-motion'; import { useSandboxStore } from '@/store/productionStore'; import * as productionApi from '@/services/production'; import { useToastStore } from '@/store/toastStore'; import { isDevMode } from '@/mocks/productionDemo'; import type { SceneTemplate, ModelOption, ResolutionOption, AssetTask, StrategySummary, ParsingSource, ProductionFanoutTask, ImageGenerationProviderCode, } from '@/types/production'; import type { PromptPlanSummary } from '@/services/production'
-const MODEL_OPTIONS: ModelOption[] = [ { id: 'comfyui-bridge', name: '稳定生产模式', label: '默认稳定模式', description: '适合正式生产，出图质量和稳定性优先', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' }, { id: 'minimax-image-01', name: 'MiniMax 图生图', label: 'MiniMax 图生图', description: '适合用当前商品/参考图做图生图，保持主体并生成电商成片', costPerImage: 10, providerCode: 'minimax_image_generation', modelId: 'image-01' }, { id: 'gemini-pro-image', name: '高质量创意模式', label: '高质量创意模式', description: '适合需要更强图片理解和编辑能力的场景', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' }, { id: 'gemini-flash-image', name: '快速预览模式', label: '快速预览模式', description: '适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' }, ]
-const RESOLUTION_OPTIONS: ResolutionOption[] = [ { id: '1024-square', label: '标准方图', dimensions: '1024×1024', costMultiplier: 1 }, { id: '720-wide', label: '横版预览', dimensions: '1280×720', costMultiplier: 0.75 }, ]
-const TEMPLATES: SceneTemplate[] = [ { id: 'amazon-hero', name: 'Amazon 平台主图模板', category: 'hero', aspectRatio: '1:1', description: '纯白背景，主体居中，符合 Amazon 主图规范', compositionRules: ['中心构图，突出主体', '纯色或渐变背景，无干扰', '符合平台主图规范'], platform: 'Amazon' }, { id: 'industrial-poster', name: '工业风营销海报模板', category: 'poster', aspectRatio: '3:4', description: '深色工业风背景，强调产品质感与力量感', compositionRules: ['纵向构图，强调视觉冲击', '可容纳文案信息区', '适合活动 / 促销场景'], platform: '通用' }, { id: 'lifestyle-scene', name: '场景使用图模板', category: 'lifestyle', aspectRatio: '16:9', description: '真实使用场景，展示产品在实际环境中的效果', compositionRules: ['场景化构图，增强真实感', '展示产品使用环境', '增强信任感与代入感'], platform: '通用' }, { id: 'detail-closeup', name: '细节特写模板', category: 'detail', aspectRatio: '1:1', description: '局部放大，突出材质纹理与工艺细节', compositionRules: ['微距视角，强调细节', '浅景深效果', '突出材质与工艺'], platform: '通用' }, { id: 'comparison-split', name: '对比图模板', category: 'comparison', aspectRatio: '16:9', description: '左右对比，突出产品优势与差异点', compositionRules: ['对称分割布局', '强调对比差异', '适合功能卖点展示'], platform: '通用' }, ]
+import { Button } from '@/components/ui/Button'; const MODEL_OPTIONS: ModelOption[] = [ { id: 'comfyui-bridge', name: '稳定生产模式', label: '默认稳定模式', description: '适合正式生产，出图质量和稳定性优先', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' }, { id: 'minimax-image-01', name: 'MiniMax 图生图', label: 'MiniMax 图生图', description: '适合用当前商品/参考图做图生图，保持主体并生成电商成片', costPerImage: 10, providerCode: 'minimax_image_generation', modelId: 'image-01' }, { id: 'gemini-pro-image', name: '高质量创意模式', label: '高质量创意模式', description: '适合需要更强图片理解和编辑能力的场景', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' }, { id: 'gemini-flash-image', name: '快速预览模式', label: '快速预览模式', description: '适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' }, ]
+const RESOLUTION_OPTIONS: ResolutionOption[] = [ { id: '1024-square', label: '标准方图', dimensions: '1024×1024', costMultiplier: 1 }, { id: '720-wide', label: '横版预览', dimensions: '1280×720', costMultiplier: 0.75 }, ]; const TEMPLATES: SceneTemplate[] = [ { id: 'amazon-hero', name: 'Amazon 平台主图模板', category: 'hero', aspectRatio: '1:1', description: '纯白背景，主体居中，符合 Amazon 主图规范', compositionRules: ['中心构图，突出主体', '纯色或渐变背景，无干扰', '符合平台主图规范'], platform: 'Amazon' }, { id: 'industrial-poster', name: '工业风营销海报模板', category: 'poster', aspectRatio: '3:4', description: '深色工业风背景，强调产品质感与力量感', compositionRules: ['纵向构图，强调视觉冲击', '可容纳文案信息区', '适合活动 / 促销场景'], platform: '通用' }, { id: 'lifestyle-scene', name: '场景使用图模板', category: 'lifestyle', aspectRatio: '16:9', description: '真实使用场景，展示产品在实际环境中的效果', compositionRules: ['场景化构图，增强真实感', '展示产品使用环境', '增强信任感与代入感'], platform: '通用' }, { id: 'detail-closeup', name: '细节特写模板', category: 'detail', aspectRatio: '1:1', description: '局部放大，突出材质纹理与工艺细节', compositionRules: ['微距视角，强调细节', '浅景深效果', '突出材质与工艺'], platform: '通用' }, { id: 'comparison-split', name: '对比图模板', category: 'comparison', aspectRatio: '16:9', description: '左右对比，突出产品优势与差异点', compositionRules: ['对称分割布局', '强调对比差异', '适合功能卖点展示'], platform: '通用' }, ]
 const SAMPLING_OPTIONS = ['DPM++ 2M Karras', 'Euler a', 'DPM++ SDE Karras', 'Euler', 'DDIM', 'UniPC']
 const SCENE_TAG_OPTIONS = ['主图', '海报', '使用图', '细节图', '对比图']
 function defaultDetailRequirement(sceneTag: string): string { if (sceneTag.includes('主图') || sceneTag === 'hero') return '主体完整、边缘清晰、背景干净，符合电商主图规范'; if (sceneTag.includes('海报') || sceneTag === 'poster') return '突出卖点与质感，允许氛围光、层次背景和营销构图'; if (sceneTag.includes('使用') || sceneTag === 'lifestyle') return '展示真实使用场景，产品主体必须清晰可识别'; if (sceneTag.includes('细节') || sceneTag === 'detail') return '突出材质、纹理、接口或关键工艺，避免主体变形'; if (sceneTag.includes('对比') || sceneTag === 'comparison') return '左右/前后对比清晰，差异点明确，信息层级干净'; return '围绕当前槽位目标生成，保持 SKU 一致性和可商用画面质量' }
@@ -189,10 +188,7 @@ function WireframePreview({ template, index }: { template: SceneTemplate; index:
               {template.platform} </span> )} </div>
         <ul className="space-y-0.5">
           {template.compositionRules.map((rule, i) => ( <li key={i} className="text-[9px] text-white/25">• {rule}</li> ))} </ul> </div> </div> ) }
-function SectionCard({ title, subtitle, children, className = '', }: { title: string
-  subtitle?: string
-  children: React.ReactNode
-  className?: string }) {
+function SectionCard({ title, subtitle, children, className = '', }: { title: string; subtitle?: string; children: React.ReactNode; className?: string }) {
   return ( <motion.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
@@ -406,11 +402,11 @@ export default function SandboxPage() {
                     <span className="text-[10px] font-medium text-white/40">出图要求概览</span> </div>
                   <p className="text-[11px] leading-relaxed text-white/50">
                     {strategySummary.overview} </p>
-                  <button
+                  <Button
                     type="button"
                     className="mt-2 text-[10px] text-cyan-400/60 hover:text-cyan-400"
                   >
-                    查看详情 → </button> </div>
+                    查看详情 → </Button> </div>
                 {/* Attributes */}
                 <div className="space-y-2">
                   {strategySummary.attributes.map((attr) => {
@@ -453,14 +449,14 @@ export default function SandboxPage() {
                     <div><span className="text-white/28">背景：</span>{promptPlanFieldSummary(promptPlan, 'background')}</div>
                     <div><span className="text-white/28">光线：</span>{promptPlanFieldSummary(promptPlan, 'lighting')}</div>
                     <div><span className="text-white/28">构图：</span>{promptPlanFieldSummary(promptPlan, 'composition')}</div> </div> </div> )}
-              <button
+              <Button
                 type="button"
                 onClick={runPromptPlanner}
                 disabled={promptPlanning || !hasRunnableIntents}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-[11px] font-medium text-cyan-200 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {promptPlanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                {promptPlanning ? '正在整理出图方案...' : hasRunnableIntents ? '生成/刷新出图方案' : '先完成 Prep 后生成方案'} </button>
+                {promptPlanning ? '正在整理出图方案...' : hasRunnableIntents ? '生成/刷新出图方案' : '先完成 Prep 后生成方案'} </Button>
               {!hasRunnableIntents && ( <div className="rounded-lg border border-amber-300/15 bg-amber-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-amber-100/75">
                   生成方案按钮不可用：请先回到生产准备页，完成图片解析并确认至少一条选择。 </div> )}
               {!promptPlanReady && ( <div className="rounded-lg border border-amber-300/15 bg-amber-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-amber-100/75">
@@ -481,22 +477,22 @@ export default function SandboxPage() {
               <div className="flex items-center gap-4">
                 <span className="text-[11px] text-white/50">生成图片数量</span>
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => adjustImageCount(-1)}
                     disabled={imageCount <= 1}
                     className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-white/40 transition hover:border-white/15 hover:text-white disabled:opacity-30"
                   >
-                    <Minus className="h-3 w-3" /> </button>
+                    <Minus className="h-3 w-3" /> </Button>
                   <span className="min-w-[20px] text-center text-sm font-semibold text-white">
                     {imageCount} </span>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => adjustImageCount(1)}
                     disabled={imageCount >= 10}
                     className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-white/40 transition hover:border-white/15 hover:text-white disabled:opacity-30"
                   >
-                    <Plus className="h-3 w-3" /> </button> </div>
+                    <Plus className="h-3 w-3" /> </Button> </div>
                 <span className="text-[9px] text-white/20">最多支持 10 个槽位；1 个槽位 = 1 张待生成图片</span> </div>
               {/* Asset Rows */}
               <div className="space-y-2">
@@ -524,7 +520,7 @@ export default function SandboxPage() {
                           <select
                             value={asset.sceneTag}
                             onChange={(e) => ensureTaskForSlot(asset, { sceneTag: e.target.value, detailRequirement: asset.detailRequirement || defaultDetailRequirement(e.target.value) }) }
-                            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus:border-cyan-400/30"
+                            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-cyan-400/30"
                           >
                             {SCENE_TAG_OPTIONS.map((tag) => <option key={tag} value={tag}>{tag}</option>)} </select> </label>
                         <label className="space-y-1">
@@ -532,7 +528,7 @@ export default function SandboxPage() {
                           <select
                             value={asset.templateId}
                             onChange={(e) => ensureTaskForSlot(asset, { templateId: e.target.value })}
-                            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus:border-cyan-400/30"
+                            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1.5 text-[10px] text-white/60 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-cyan-400/30"
                           >
                             {TEMPLATES.map((t) => ( <option key={t.id} value={t.id}>
                                 {t.name} </option> ))} </select> </label> </div>
@@ -544,31 +540,31 @@ export default function SandboxPage() {
                           value={asset.detailRequirement || ''}
                           onChange={(e) => ensureTaskForSlot(asset, { detailRequirement: e.target.value })}
                           placeholder="本槽位细节要求，例如：突出材质纹理 / 主体完整 / 更强场景氛围"
-                          className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[10px] text-white placeholder:text-white/15 outline-none focus:border-cyan-400/30"
+                          className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[10px] text-white placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-cyan-400/30"
                         />
                         <input
                           type="text"
                           value={asset.negativeRequirement || ''}
                           onChange={(e) => ensureTaskForSlot(asset, { negativeRequirement: e.target.value })}
                           placeholder="本槽位不希望出现的内容，可选"
-                          className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[10px] text-white placeholder:text-white/15 outline-none focus:border-cyan-400/30"
+                          className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[10px] text-white placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-cyan-400/30"
                         /> </div> </div>
-                    {!asset.id.startsWith('planned-') && ( <button
+                    {!asset.id.startsWith('planned-') && ( <Button
                         type="button"
                         onClick={() => handleRemoveTaskSlot(asset)}
                         aria-label={`删除${asset.name}，并减少一个出图槽位`}
                         title="删除该槽位"
                         className="shrink-0 text-white/15 hover:text-red-400/80"
                       >
-                        <Trash2 className="h-3.5 w-3.5" /> </button> )} </motion.div> ) })} </div>
+                        <Trash2 className="h-3.5 w-3.5" /> </Button> )} </motion.div> ) })} </div>
               {/* Add Asset */}
-              {imageCount < 10 && ( <button
+              {imageCount < 10 && ( <Button
                   type="button"
                   onClick={addNewAsset}
                   className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/[0.06] bg-white/[0.01] py-2.5 text-[11px] text-white/30 transition hover:border-white/10 hover:text-white/50"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  添加新任务 </button> )} </div> </SectionCard>
+                  添加新任务 </Button> )} </div> </SectionCard>
           {/* 4. Template Preview */}
           <SectionCard title={`模板参考（${imageCount} 个槽位）`}>
             <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${imageCount >= 5 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
@@ -585,12 +581,13 @@ export default function SandboxPage() {
             <div className="space-y-4">
               {/* Model Selection */}
               <div>
-                <label className="mb-1.5 block text-[11px] text-white/40">模型选择</label>
+                <label htmlFor="sandbox-model-select" className="mb-1.5 block text-[11px] text-white/40">模型选择</label>
                 <div className="relative">
                   <select
+                    id="sandbox-model-select"
                     value={selectedModel}
                     onChange={(e) => setSelectedModel(e.target.value)}
-                    className="w-full appearance-none rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] text-white outline-none transition focus:border-cyan-400/30"
+                    className="w-full appearance-none rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition focus:border-cyan-400/30"
                   >
                     {MODEL_OPTIONS.map((m) => ( <option key={m.id} value={m.id}>
                         {m.label} </option> ))} </select>
@@ -598,13 +595,13 @@ export default function SandboxPage() {
                 {currentModel && ( <p className="mt-1 text-[9px] text-white/25">{currentModel.description}</p> )} </div>
               {/* Advanced Settings (Collapsible) */}
               <div className="rounded-xl border border-white/[0.04] bg-white/[0.01]">
-                <button
+                <Button
                   type="button"
                   onClick={() => setAdvancedExpanded(!advancedExpanded)}
                   className="flex w-full items-center justify-between px-3 py-2.5"
                 >
                   <span className="text-[11px] text-white/40">高级设置</span>
-                  {advancedExpanded ? ( <ChevronUp className="h-3.5 w-3.5 text-white/20" /> ) : ( <ChevronDown className="h-3.5 w-3.5 text-white/20" /> )} </button>
+                  {advancedExpanded ? ( <ChevronUp className="h-3.5 w-3.5 text-white/20" /> ) : ( <ChevronDown className="h-3.5 w-3.5 text-white/20" /> )} </Button>
                 <AnimatePresence>
                   {advancedExpanded && ( <motion.div
                       initial={{ height: 0, opacity: 0 }}
@@ -616,48 +613,52 @@ export default function SandboxPage() {
                       <div className="space-y-3 border-t border-white/[0.03] px-3 py-3">
                         {/* Seed */}
                         <div>
-                          <label className="mb-1 block text-[10px] text-white/30">Seed</label>
+                          <label htmlFor="sandbox-seed-input" className="mb-1 block text-[10px] text-white/30">Seed</label>
                           <div className="flex items-center gap-2">
                             <input
+                              id="sandbox-seed-input"
                               type="number"
                               value={advancedParams.seed}
                               onChange={(e) => setAdvancedParams({ seed: Number(e.target.value) }) }
-                              className="flex-1 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] text-white outline-none focus:border-cyan-400/30"
+                              className="flex-1 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-cyan-400/30"
                             />
-                            <button
+                            <Button
                               type="button"
                               onClick={() => setAdvancedParams({ seed: Math.floor(Math.random() * 999999999) })}
                               className="rounded-lg border border-white/[0.06] bg-white/[0.03] p-1.5 text-white/30 hover:text-white/50"
                               title="Random seed"
                             >
-                              <Settings className="h-3 w-3" /> </button> </div> </div>
+                              <Settings className="h-3 w-3" /> </Button> </div> </div>
                         {/* 不希望出现的内容 */}
                         <div>
-                          <label className="mb-1 block text-[10px] text-white/30">不希望出现的内容</label>
+                          <label htmlFor="sandbox-negative-prompt" className="mb-1 block text-[10px] text-white/30">不希望出现的内容</label>
                           <input
+                            id="sandbox-negative-prompt"
                             type="text"
                             value={advancedParams.negativePrompt}
                             onChange={(e) => setAdvancedParams({ negativePrompt: e.target.value }) }
                             placeholder="可选，输入不希望出现的内容..."
-                            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/15 outline-none focus:border-cyan-400/30"
+                            className="w-full rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] text-white placeholder:text-white/15 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-cyan-400/30"
                           /> </div>
                         {/* 采样方式 */}
                         <div>
-                          <label className="mb-1 block text-[10px] text-white/30">采样方式</label>
+                          <label htmlFor="sandbox-sampling-select" className="mb-1 block text-[10px] text-white/30">采样方式</label>
                           <div className="relative">
                             <select
+                              id="sandbox-sampling-select"
                               value={advancedParams.sampling}
                               onChange={(e) => setAdvancedParams({ sampling: e.target.value }) }
-                              className="w-full appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] text-white outline-none"
+                              className="w-full appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
                             >
                               {SAMPLING_OPTIONS.map((s) => ( <option key={s} value={s}>{s}</option> ))} </select>
                             <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-white/20" /> </div> </div>
                         {/* 画面贴合强度 */}
                         <div>
                           <div className="mb-1 flex items-center justify-between">
-                            <label className="text-[10px] text-white/30">画面贴合强度</label>
+                            <label htmlFor="sandbox-cfg-scale" className="text-[10px] text-white/30">画面贴合强度</label>
                             <span className="text-[10px] tabular-nums text-white/40">{advancedParams.cfgScale}</span> </div>
                           <input
+                            id="sandbox-cfg-scale"
                             type="range"
                             min={1}
                             max={15}
@@ -669,9 +670,10 @@ export default function SandboxPage() {
                         {/* 生成精细度 */}
                         <div>
                           <div className="mb-1 flex items-center justify-between">
-                            <label className="text-[10px] text-white/30">生成精细度</label>
+                            <label htmlFor="sandbox-steps" className="text-[10px] text-white/30">生成精细度</label>
                             <span className="text-[10px] tabular-nums text-white/40">{advancedParams.steps}</span> </div>
                           <input
+                            id="sandbox-steps"
                             type="range"
                             min={10}
                             max={50}
@@ -681,16 +683,16 @@ export default function SandboxPage() {
                             className="h-1 w-full cursor-pointer appearance-none rounded-full bg-white/[0.06] accent-cyan-400"
                           /> </div>
                         {/* High Res Fix Toggle */}
-                        <label className="flex items-center justify-between rounded-lg border border-white/[0.03] bg-white/[0.01] px-2.5 py-2">
+                        <div className="flex items-center justify-between rounded-lg border border-white/[0.03] bg-white/[0.01] px-2.5 py-2">
                           <span className="text-[10px] text-white/30">高倍修复</span>
-                          <button
+                          <Button
                             type="button"
                             onClick={() => setAdvancedParams({ highResFix: !advancedParams.highResFix })}
                             className={`relative h-4 w-7 rounded-full transition-colors ${ advancedParams.highResFix ? 'bg-cyan-400/40' : 'bg-white/[0.08]' }`}
                           >
                             <span
                               className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform ${ advancedParams.highResFix ? 'left-[14px]' : 'left-0.5' }`}
-                            /> </button> </label> </div> </motion.div> )} </AnimatePresence> </div> </div> </SectionCard>
+                            /> </Button> </div> </div> </motion.div> )} </AnimatePresence> </div> </div> </SectionCard>
           {/* 6. Credits Estimation */}
           <SectionCard title="消耗预估">
             <div className="space-y-3">
@@ -721,7 +723,7 @@ export default function SandboxPage() {
                 {productionReadinessItems.map((item) => ( <div key={item.label} className="grid grid-cols-[72px_1fr] gap-2 text-[10px]">
                     <span className={item.ok ? 'text-emerald-200/75' : 'text-amber-100/70'}>{item.ok ? '✓' : '•'} {item.label}</span>
                     <span className="text-right leading-relaxed text-white/42">{item.detail}</span> </div> ))} </div>
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   if (!canStartProduction) { setExecutionPhase('idle')
@@ -735,7 +737,7 @@ export default function SandboxPage() {
                 className={`group inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-lg transition ${canStartProduction ? 'bg-gradient-to-r from-cyan-500 to-blue-500 shadow-cyan-500/10 hover:shadow-cyan-500/20' : 'border border-amber-300/20 bg-amber-300/10 text-amber-100/85 shadow-amber-500/5 hover:bg-amber-300/15'} disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 {executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                <span>{executing ? '正在出图...' : canStartProduction ? '开始生产' : '补齐生成条件'}</span> </button>
+                <span>{executing ? '正在出图...' : canStartProduction ? '开始生产' : '补齐生成条件'}</span> </Button>
               {!canStartProduction && !executing && ( <p className="text-center text-[9px] leading-relaxed text-amber-100/55">
                   当前按钮不会提交生产任务；只有策略输入、出图方案、出图槽位全部通过后才会变成“开始生产”。 </p> )}
               {executionNotice && ( <div className={`rounded-xl border px-3 py-2.5 text-[10px] leading-relaxed ${ executionPhase === 'ready' ? 'border-emerald-400/20 bg-emerald-400/[0.06] text-emerald-100/80' : executionPhase === 'failed' ? 'border-rose-400/20 bg-rose-400/[0.06] text-rose-100/80' : 'border-cyan-400/20 bg-cyan-400/[0.06] text-cyan-100/80' }`} aria-live="polite">
@@ -744,7 +746,7 @@ export default function SandboxPage() {
                     <span>{executionNotice}</span> </div>
                   {executionProgress != null && executionPhase === 'waiting' && ( <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
                       <div
-                        className="h-full rounded-full bg-cyan-300/70 transition-all duration-500"
+                        className="h-full rounded-full bg-cyan-300/70 transition-colors duration-500"
                         style={{ width: `${Math.max(8, executionProgress)}%` }}
                       /> </div> )}
                   {fanoutTasksState.length > 0 && ( <div className="mt-3 space-y-2">
@@ -761,7 +763,7 @@ export default function SandboxPage() {
                                   {productionTaskStatusLabel(task)} {Math.max(0, Math.min(100, Math.round(task.progress || 0)))}% </span> </div>
                               <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/[0.08]">
                                 <div
-                                  className={done ? 'h-full rounded-full bg-emerald-300/75 transition-all duration-500' : failed ? 'h-full rounded-full bg-rose-300/75 transition-all duration-500' : 'h-full rounded-full bg-cyan-300/70 transition-all duration-500'}
+                                  className={done ? 'h-full rounded-full bg-emerald-300/75 transition-colors duration-500' : failed ? 'h-full rounded-full bg-rose-300/75 transition-colors duration-500' : 'h-full rounded-full bg-cyan-300/70 transition-colors duration-500'}
                                   style={{ width: `${done ? 100 : Math.max(8, Math.min(100, Math.round(task.progress || 0)))}%` }}
                                 /> </div>
                               {task.error && <div className="mt-1 text-[9px] text-rose-100/65">{task.error}</div>} </div> ) })} </div> </div> )} </div> )} </div> </SectionCard> </div> </div>
@@ -772,13 +774,13 @@ export default function SandboxPage() {
         transition={{ delay: 0.2 }}
         className="mt-6 flex items-center justify-between gap-4"
       >
-        <button
+        <Button
           type="button"
           onClick={goBack}
           className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3 text-xs text-white/50 transition hover:border-white/10 hover:text-white/70"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
-          返回上一步 </button> </motion.div>
+          返回上一步 </Button> </motion.div>
       {/* Summary Info Bar */}
       <motion.div
         initial={{ opacity: 0 }}

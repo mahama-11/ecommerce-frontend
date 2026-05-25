@@ -24,6 +24,7 @@ import {
   pickOps,
   type OpsRecord,
 } from '@/mock/opsWorkbench'
+import { Button } from '@/components/ui/Button'
 
 type Locale = 'zh' | 'en'
 
@@ -354,7 +355,7 @@ export default function OpsWorkbenchPage() {
                 <Link
                   key={action.to}
                   to={action.to}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white/65 transition-colors hover:bg-white/[0.07] hover:text-white sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white/65 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white sm:w-auto"
                 >
                   <span>{pick(locale, action.label)}</span>
                   <ArrowRight className="h-4 w-4" />
@@ -398,7 +399,7 @@ export default function OpsWorkbenchPage() {
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder={locale === 'zh' ? '搜索任务、记录或结论...' : 'Search tasks, sessions, or insights...'}
-                    className="glass w-full rounded-xl py-3 pl-10 pr-4 text-sm text-white/80 placeholder-white/25 outline-none"
+                    className="glass w-full rounded-xl py-3 pl-10 pr-4 text-sm text-white/80 placeholder-white/25 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
                   />
                 </div>
               </div>
@@ -410,7 +411,7 @@ export default function OpsWorkbenchPage() {
                     return (
                       <article
                         key={item.id}
-                        className={`tool-card glass rounded-2xl p-5 transition-all ${
+                        className={`tool-card glass rounded-2xl p-5 transition-colors ${
                           selectedOpsRecord?.id === item.id ? 'border-brand-500/30 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]' : ''
                         }`}
                       >
@@ -427,20 +428,20 @@ export default function OpsWorkbenchPage() {
                         </div>
                         <p className="mt-3 text-sm leading-6 text-white/55">{pickOps(locale, item.desc)}</p>
                         <div className="mt-4 flex gap-2">
-                          <button
+                          <Button
                             onClick={() => setSelectedOpsId(item.id)}
                             className="inline-flex items-center gap-2 text-sm text-brand-300 hover:text-brand-200"
                           >
                             {locale === 'zh' ? '查看详情' : 'View Details'}
                             <ArrowRight className="h-4 w-4" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={() => handleOpsAction(item)}
                             disabled={item.status === 'done'}
-                            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-white/70 transition-colors hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs text-white/70 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {pickOps(locale, item.action)}
-                          </button>
+                          </Button>
                         </div>
                       </article>
                     )
@@ -511,7 +512,7 @@ export default function OpsWorkbenchPage() {
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder={locale === 'zh' ? '搜索我的模板库...' : 'Search my template library...'}
-                    className="glass w-full rounded-xl py-3 pl-10 pr-4 text-sm text-white/80 placeholder-white/25 outline-none"
+                    className="glass w-full rounded-xl py-3 pl-10 pr-4 text-sm text-white/80 placeholder-white/25 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
                   />
                 </div>
               </div>
@@ -556,7 +557,7 @@ export default function OpsWorkbenchPage() {
                     return (
                       <article
                         key={item.id}
-                        className={`tool-card glass rounded-2xl p-5 transition-all ${
+                        className={`tool-card glass rounded-2xl p-5 transition-colors ${
                           isSelected ? 'border-brand-500/30 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]' : ''
                         }`}
                       >
@@ -595,7 +596,7 @@ export default function OpsWorkbenchPage() {
                           </span>
                           <span>{new Date(item.savedAt).toLocaleDateString()}</span>
                         </div>
-                        <button
+                        <Button
                           onClick={() => {
                             setSelectedTemplateId(item.id)
                             setDrawerOpen(true)
@@ -604,7 +605,7 @@ export default function OpsWorkbenchPage() {
                         >
                           {locale === 'zh' ? '打开详情抽屉' : 'Open Detail Drawer'}
                           <ArrowRight className="h-4 w-4" />
-                        </button>
+                        </Button>
                       </article>
                     )
                   })}

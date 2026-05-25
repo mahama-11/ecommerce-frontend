@@ -3,6 +3,7 @@ import { ChevronRight, Sparkles, X } from 'lucide-react'
 import type { ActiveTemplateState, Locale, ToolTemplateOption } from '../types'
 import { copy } from '../utils'
 import { Z_INDEX } from '@/styles/zIndex'
+import { Button } from '@/components/ui/Button'
 
 type GenerationSettingsPanelProps = {
   locale: Locale
@@ -66,22 +67,22 @@ export function GenerationSettingsPanel({
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <button
+          <Button
             type="button"
             onClick={() => setPickerOpen(true)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-[#0a0d14] px-4 py-3 text-sm text-white/80 transition-colors hover:border-white/[0.16]"
+            className="inline-flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-[var(--ecom-surface)] px-4 py-3 text-sm text-white/80 transition-colors hover:border-white/[0.16]"
           >
             <span>{activeTemplate ? copy(locale, '切换模板方案', 'Change Template') : copy(locale, '选择模板方案', 'Select Template')}</span>
             <ChevronRight className="h-4 w-4 text-white/40" />
-          </button>
+          </Button>
           {activeTemplate ? (
-            <button
+            <Button
               type="button"
               onClick={onClearTemplatePlan}
               className="rounded-2xl border border-white/[0.08] px-4 py-3 text-sm text-white/55 transition-colors hover:border-white/20 hover:text-white/80"
             >
               {copy(locale, '清除模板', 'Clear')}
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>
@@ -143,7 +144,7 @@ export function GenerationSettingsPanel({
                 )
               : t('tool.textPlaceholder')
           }
-          className="w-full glass rounded-2xl px-4 py-3 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-brand-500/40 transition-colors"
+          className="w-full glass rounded-2xl px-4 py-3 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-brand-500/40 transition-colors"
         />
         <textarea
           rows={2}
@@ -154,11 +155,11 @@ export function GenerationSettingsPanel({
             '可选：不希望出现的内容，如模糊、杂乱背景、重复元素',
             'Optional: what should be avoided, such as blur, messy backgrounds, or duplicate elements',
           )}
-          className="w-full glass rounded-2xl px-4 py-3 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus:border-brand-500/30 transition-colors"
+          className="w-full glass rounded-2xl px-4 py-3 text-sm text-white placeholder-white/30 resize-none focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-brand-500/30 transition-colors"
         />
       </div>
 
-      <button
+      <Button
         onClick={onGenerate}
         disabled={creatingJob || uploadingSource}
         className="btn-primary flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-sm font-semibold disabled:opacity-70"
@@ -169,7 +170,7 @@ export function GenerationSettingsPanel({
           : uploadingSource
             ? copy(locale, '等待源图登记...', 'Waiting for source registration...')
             : t('tool.generate')}
-      </button>
+      </Button>
 
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-center text-sm leading-6 text-white/40">
         {t('tool.costLabel')} <span className="text-brand-400 font-medium">{t('tool.costCredits')}</span>
@@ -181,7 +182,7 @@ export function GenerationSettingsPanel({
 
       {pickerOpen ? (
         <div className={`fixed inset-0 ${Z_INDEX.modal} flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm`}>
-          <div className="w-full max-w-3xl rounded-[28px] border border-white/[0.08] bg-[#0c1018] p-5 shadow-2xl">
+          <div className="w-full max-w-3xl rounded-[28px] border border-white/[0.08] bg-[var(--ecom-surface)] p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <div className="text-base font-semibold text-white">
@@ -195,20 +196,20 @@ export function GenerationSettingsPanel({
                   )}
                 </div>
               </div>
-              <button
+              <Button
                 type="button"
                 onClick={() => setPickerOpen(false)}
                 className="rounded-full border border-white/[0.08] p-2 text-white/55 transition-colors hover:border-white/20 hover:text-white/80"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
             <div className="scrollbar-subtle mt-5 grid max-h-[65vh] gap-3 overflow-y-auto pr-1 sm:grid-cols-2">
               {templateOptions.map(item => {
                 const isActive = activeTemplate?.id === item.id
                 const isLoading = selectingTemplateID === item.id
                 return (
-                  <button
+                  <Button
                     key={item.id}
                     type="button"
                     onClick={() => {
@@ -219,7 +220,7 @@ export function GenerationSettingsPanel({
                     className={`rounded-2xl border p-4 text-left transition-colors ${
                       isActive
                         ? 'border-brand-500/40 bg-brand-500/10'
-                        : 'border-white/[0.06] bg-[#0a0d14] hover:border-white/[0.14]'
+                        : 'border-white/[0.06] bg-[var(--ecom-surface)] hover:border-white/[0.14]'
                     } ${selectingTemplateID ? 'opacity-80' : ''}`}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -233,7 +234,7 @@ export function GenerationSettingsPanel({
                       </span>
                     </div>
                     <div className="mt-2 line-clamp-3 text-xs leading-5 text-white/50">{item.summary}</div>
-                  </button>
+                  </Button>
                 )
               })}
             </div>

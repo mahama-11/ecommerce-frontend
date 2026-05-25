@@ -1,6 +1,7 @@
 import { CheckCircle2, Clock3, Image, Sparkles } from 'lucide-react'
 import type { GeneratedResult, Locale } from '../types'
 import { copy, resultStatusLabel } from '../utils'
+import { Button } from '@/components/ui/Button'
 
 type ResultPanelProps = {
   locale: Locale
@@ -42,7 +43,7 @@ export function ResultPanel({
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-[#0a0d14]">
+      <div className="relative overflow-hidden rounded-[28px] border border-white/[0.06] bg-[var(--ecom-surface)]">
         <div className="flex min-h-[360px] items-center justify-center p-5 sm:min-h-[440px]">
           {currentResult?.previewUrl ? (
             <img
@@ -66,7 +67,7 @@ export function ResultPanel({
           )}
         </div>
         {isProcessing ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#090b12]/48 backdrop-blur-md">
+          <div className="absolute inset-0 flex items-center justify-center bg-[var(--ecom-surface)]/48 backdrop-blur-md">
             <div className="rounded-3xl border border-white/[0.08] bg-black/30 px-6 py-5 text-center">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-brand-400/30 bg-brand-500/12">
                 <Sparkles className="h-6 w-6 animate-spin text-brand-300" />
@@ -94,7 +95,7 @@ export function ResultPanel({
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.06]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-brand-500 to-violet-500 transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-brand-500 to-violet-500 transition-colors duration-500"
               style={{ width: `${currentResult?.progress ?? 0}%` }}
             />
           </div>
@@ -120,18 +121,18 @@ export function ResultPanel({
           <a
             href={currentResult.previewUrl}
             download={`${toolSlug}-${currentResult.id}.png`}
-            className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm text-white/75 transition-colors hover:bg-white/[0.08]"
+            className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm text-white/75 transition-colors hover:bg-[var(--ecom-surface-hover)]"
           >
             {copy(locale, '下载结果', 'Download')}
           </a>
-          <button
+          <Button
             type="button"
             onClick={onGenerateAgain}
             disabled={isProcessing || !sourceAssetReady}
             className="rounded-2xl border border-white/[0.08] bg-transparent px-4 py-2 text-sm text-white/60 transition-colors hover:border-brand-400/30 hover:text-white disabled:opacity-40"
           >
             {copy(locale, '基于当前设置重新生成', 'Generate Again')}
-          </button>
+          </Button>
         </div>
       ) : null}
     </div>

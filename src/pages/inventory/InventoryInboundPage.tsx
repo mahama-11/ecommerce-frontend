@@ -87,7 +87,7 @@ export default function InventoryInboundPage() {
                 </tr>
               ) : (
                 inboundRecords.map(r => (
-                  <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.03]">
+                  <tr key={r.id} className="border-b border-white/[0.04] hover:bg-[var(--ecom-surface-hover)]">
                     <td className="px-5 py-3 font-mono text-xs text-cyan-400">{r.shipmentId}</td>
                     <td className="px-5 py-3 font-mono text-xs text-white/70">{r.sku}</td>
                     <td className="px-5 py-3 text-white/90">{r.title}</td>

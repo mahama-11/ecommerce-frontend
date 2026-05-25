@@ -6,6 +6,7 @@ import { getCommercialStatusLabel } from '@/i18n/helpers'
 import { commercialService } from '@/services/commercial'
 import type { PromotionCode, PromotionCodeResolve, PromotionConversion, PromotionOverview, PromotionProgram } from '@/types/commercial'
 import { useToastStore } from '@/store/toastStore'
+import { Button } from '@/components/ui/Button'
 
 function emptyOverview(): PromotionOverview {
   return {
@@ -126,15 +127,15 @@ export default function AccountPromotionPage() {
           <h1 className="text-3xl font-semibold tracking-tight text-slate-100">{t('account.promotion.title')}</h1>
           <p className="mt-2 text-sm text-slate-400">{t('account.promotion.subtitle')}</p>
         </motion.div>
-        <button
+        <Button
           type="button"
           onClick={handleEnsureCode}
           disabled={creating}
-          className="group inline-flex items-center justify-center gap-2 rounded-md btn-primary px-4 py-2 text-sm font-medium text-white shadow-md hover:shadow-lg transition-all active:scale-95 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="group inline-flex items-center justify-center gap-2 rounded-md btn-primary px-4 py-2 text-sm font-medium text-white shadow-md hover:shadow-lg transition-colors active:scale-95 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Ticket className="h-4 w-4" />}
           {activeCode ? t('account.common.actions.refreshInvite') : t('account.common.actions.generateInvite')}
-        </button>
+        </Button>
       </div>
 
       <motion.section variants={itemVariants} className="grid gap-6 lg:grid-cols-[1fr_300px]">
@@ -153,7 +154,7 @@ export default function AccountPromotionPage() {
                   {activeCode?.invite_url || activeCode?.signup_url || t('account.promotion.invite.noCode')}
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <button
+                  <Button
                     type="button"
                     onClick={handleCopy}
                     disabled={creating}
@@ -161,7 +162,7 @@ export default function AccountPromotionPage() {
                   >
                     <Copy className="h-4 w-4" />
                     {t('account.common.actions.copyLink')}
-                  </button>
+                  </Button>
                   {activeCode?.share_text ? (
                     <div className="text-sm text-slate-500">
                       {activeCode.share_text}
@@ -208,7 +209,7 @@ export default function AccountPromotionPage() {
           </div>
           <div className="flex-1 divide-y divide-white/5">
             {codes.length ? codes.map((item) => (
-              <motion.div variants={itemVariants} key={item.id} className="flex flex-col gap-2 px-6 py-4 transition-colors hover:bg-white/[0.03]">
+              <motion.div variants={itemVariants} key={item.id} className="flex flex-col gap-2 px-6 py-4 transition-colors hover:bg-[var(--ecom-surface-hover)]">
                 <div className="font-medium text-slate-100 font-mono truncate">{item.code}</div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-400">{getCommercialStatusLabel(t, item.status)}</span>
@@ -232,7 +233,7 @@ export default function AccountPromotionPage() {
                 { key: 'tracked', label: t('account.common.filters.tracked') },
                 { key: 'reversed', label: t('account.common.filters.reversed') },
               ].map(item => (
-                <button
+                <Button
                   key={item.key}
                   type="button"
                   onClick={() => setConversionStatus(item.key as typeof conversionStatus)}
@@ -243,13 +244,13 @@ export default function AccountPromotionPage() {
                   }`}
                 >
                   {item.label}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
           <div className="flex-1 divide-y divide-white/5">
             {visibleConversions.length ? visibleConversions.map((item) => (
-              <motion.div variants={itemVariants} key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-white/[0.03]">
+              <motion.div variants={itemVariants} key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-[var(--ecom-surface-hover)]">
                 <div className="min-w-0">
                   <div className="font-medium text-slate-100 truncate">{item.trigger_type}</div>
                   <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">

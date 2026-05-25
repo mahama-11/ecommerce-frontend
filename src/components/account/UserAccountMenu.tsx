@@ -20,6 +20,7 @@ import { Z_INDEX } from '@/styles/zIndex'
 import { commercialService } from '@/services/commercial'
 import { formatPackageName, getCurrentSubscription } from '@/utils/commercialDisplay'
 import type { CommercialOrderView } from '@/types/commercial'
+import { Button } from '@/components/ui/Button'
 
 type MenuAction = {
   label: string
@@ -80,6 +81,10 @@ export default function UserAccountMenu({
 
   useEffect(() => {
     if (!isAuthenticated) {
+      setOrders([])
+      return
+    }
+    if (import.meta.env.DEV && window.location.search.includes('dev=1')) {
       setOrders([])
       return
     }
@@ -174,10 +179,10 @@ export default function UserAccountMenu({
 
   return (
     <div ref={rootRef} className={`relative ${className}`}>
-      <button
+      <Button
         type="button"
         onClick={() => setOpen(prev => !prev)}
-        className={`glass-strong border border-white/10 text-left text-white hover:border-white/20 hover:bg-white/[0.06] flex items-center gap-3 rounded-2xl transition-colors ${
+        className={`glass-strong border border-white/10 text-left text-white hover:border-white/20 hover:bg-[var(--ecom-surface-hover)] flex items-center gap-3 rounded-2xl transition-colors ${
           compact ? 'px-3 py-2' : 'px-3.5 py-2.5'
         }`}
       >
@@ -191,16 +196,16 @@ export default function UserAccountMenu({
         {!compact && (
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold text-white">{name}</div>
-            <div className="truncate text-xs text-white/45">
+            <div className="truncate text-xs text-[var(--ecom-text-muted)]">
               {orgName} · {planLabel}
             </div>
           </div>
         )}
-      </button>
+      </Button>
 
       {open && (
-        <div className={`absolute right-0 top-[calc(100%+0.75rem)] ${Z_INDEX.popover} w-[min(92vw,22rem)] rounded-3xl border border-white/10 bg-[#0b0d14]/96 p-3 shadow-[0_28px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl`}>
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+        <div className={`absolute right-0 top-[calc(100%+0.75rem)] ${Z_INDEX.popover} w-[min(92vw,22rem)] rounded-3xl border border-white/10 bg-[var(--ecom-popover-bg)] p-3 shadow-[0_32px_100px_rgba(0,0,0,0.68)] ring-1 ring-cyan-300/10 backdrop-blur-2xl`}>
+          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.065] p-4">
             <div className="flex items-start gap-3">
               <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-brand-500/20 bg-brand-500/15 text-sm font-semibold text-brand-200">
                 {user.avatar_url ? (
@@ -211,9 +216,9 @@ export default function UserAccountMenu({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold text-white">{name}</div>
-                <div className="truncate text-xs text-white/45">{user.email}</div>
+                <div className="truncate text-xs text-[var(--ecom-text-muted)]">{user.email}</div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/55">
+                  <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] text-[var(--ecom-text-muted)]">
                     {orgName}
                   </span>
                   <span className="rounded-full border border-brand-500/20 bg-brand-500/10 px-2.5 py-1 text-[11px] text-brand-200">
@@ -221,7 +226,7 @@ export default function UserAccountMenu({
                   </span>
                 </div>
                 {access?.product_roles?.length ? (
-                  <div className="mt-2 truncate text-[11px] uppercase tracking-[0.18em] text-white/25">
+                  <div className="mt-2 truncate text-[11px] uppercase tracking-[0.18em] text-[var(--ecom-text-faint)]">
                     {access.product_roles.join(' · ')}
                   </div>
                 ) : null}
@@ -233,12 +238,12 @@ export default function UserAccountMenu({
             {actions.map(action => {
               const content = (
                 <>
-                  <div className={`rounded-xl p-2 ${action.danger ? 'bg-rose-500/10 text-rose-300' : 'bg-white/[0.04] text-white/65'}`}>
+                  <div className={`rounded-xl p-2 ${action.danger ? 'bg-rose-500/10 text-rose-300' : 'bg-white/[0.075] text-[var(--ecom-text-secondary)]'}`}>
                     <action.icon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className={`text-sm font-medium ${action.danger ? 'text-rose-200' : 'text-white/90'}`}>{action.label}</div>
-                    {action.meta ? <div className="mt-0.5 text-xs text-white/40">{action.meta}</div> : null}
+                    {action.meta ? <div className="mt-0.5 text-xs text-[var(--ecom-text-muted)]">{action.meta}</div> : null}
                   </div>
                 </>
               )
@@ -249,7 +254,7 @@ export default function UserAccountMenu({
                     key={action.label}
                     to={action.to}
                     onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-white/[0.05]"
+                    className="flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-[var(--ecom-surface-hover)]"
                   >
                     {content}
                   </Link>
@@ -257,17 +262,17 @@ export default function UserAccountMenu({
               }
 
               return (
-                <button
+                <Button
                   key={action.label}
                   type="button"
                   onClick={() => {
                     action.onClick?.()
                     setOpen(false)
                   }}
-                  className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+                  className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-[var(--ecom-surface-hover)]"
                 >
                   {content}
-                </button>
+                </Button>
               )
             })}
           </div>

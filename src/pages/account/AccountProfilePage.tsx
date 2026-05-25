@@ -10,6 +10,7 @@ import type { CommercialOrderView, WalletSummary } from '@/types/commercial'
 import { formatPackageName, getCurrentSubscription } from '@/utils/commercialDisplay'
 
 import { motion } from 'framer-motion'
+import { Button } from '@/components/ui/Button'
 
 type Locale = 'zh' | 'en'
 type PreferenceState = {
@@ -133,7 +134,7 @@ export default function AccountProfilePage() {
       </motion.div>
 
       <div className="space-y-6">
-        <motion.section variants={itemVariants} className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-all hover:border-white/10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+        <motion.section variants={itemVariants} className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-colors hover:border-white/10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
           <div className="border-b border-white/5 px-6 py-5">
             <h2 className="font-medium text-slate-100">{t('account.profile.plan.current')}</h2>
             <p className="mt-1 text-sm text-slate-400">
@@ -148,7 +149,7 @@ export default function AccountProfilePage() {
                 <input
                   value={state.fullName}
                   onChange={event => setField('fullName', event.target.value)}
-                  className="w-full rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder-zinc-500 focus:border-brand-500/50 focus:outline-none focus:ring-1 focus:ring-brand-500/50 transition-colors"
+                  className="w-full rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder-zinc-500 focus:border-brand-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:ring-1 focus:ring-brand-500/50 transition-colors"
                 />
               </label>
               
@@ -167,7 +168,7 @@ export default function AccountProfilePage() {
                   value={state.avatarUrl}
                   onChange={event => setField('avatarUrl', event.target.value)}
                   placeholder="https://"
-                  className="w-full rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder-zinc-500 focus:border-brand-500/50 focus:outline-none focus:ring-1 focus:ring-brand-500/50 transition-colors"
+                  className="w-full rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-100 placeholder-zinc-500 focus:border-brand-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:ring-1 focus:ring-brand-500/50 transition-colors"
                 />
               </label>
 
@@ -176,7 +177,7 @@ export default function AccountProfilePage() {
                 <select
                   value={state.defaultWorkspace}
                   onChange={event => setField('defaultWorkspace', event.target.value)}
-                  className="w-full rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-100 focus:border-brand-500/50 focus:outline-none focus:ring-1 focus:ring-brand-500/50 transition-colors"
+                  className="w-full rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-100 focus:border-brand-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:ring-1 focus:ring-brand-500/50 transition-colors"
                 >
                   <option value="/products/workbench/visual-tools/changing-model">{t('account.profile.details.modelSwap')}</option>
                   <option value="/aiChat/template">{t('account.profile.details.templateMarket')}</option>
@@ -190,7 +191,7 @@ export default function AccountProfilePage() {
                 <select
                   value={state.language}
                   onChange={event => setField('language', event.target.value as Locale)}
-                  className="w-full rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-100 focus:border-brand-500/50 focus:outline-none focus:ring-1 focus:ring-brand-500/50 transition-colors"
+                  className="w-full rounded-md border border-white/5 bg-white/5 px-3 py-2 text-sm text-slate-100 focus:border-brand-500/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:ring-1 focus:ring-brand-500/50 transition-colors"
                 >
                   <option value="zh">简体中文</option>
                   <option value="en">English</option>
@@ -200,18 +201,18 @@ export default function AccountProfilePage() {
           </div>
           
           <div className="flex items-center justify-end border-t border-white/5 bg-white/[0.01] px-6 py-4">
-            <button
+            <Button
               type="button"
               onClick={() => void handleSave()}
-              className="inline-flex items-center justify-center gap-2 rounded-md btn-primary px-4 py-2 text-sm font-medium text-white shadow-md hover:shadow-lg transition-all active:scale-95"
+              className="inline-flex items-center justify-center gap-2 rounded-md btn-primary px-4 py-2 text-sm font-medium text-white shadow-md hover:shadow-lg transition-colors active:scale-95"
             >
               <Save className="h-4 w-4" />
               {t('account.profile.details.save')}
-            </button>
+            </Button>
           </div>
         </motion.section>
 
-        <motion.section variants={itemVariants} className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-all hover:border-white/10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+        <motion.section variants={itemVariants} className="rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-colors hover:border-white/10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
           <div className="border-b border-white/5 px-6 py-5">
             <h2 className="font-medium text-slate-100">{t('account.profile.notifications.title')}</h2>
             <p className="mt-1 text-sm text-slate-400">Manage your email and delivery notifications.</p>
@@ -227,10 +228,10 @@ export default function AccountProfilePage() {
                       {value ? t('account.profile.notifications.enabled') : t('account.profile.notifications.disabled')}
                     </div>
                   </div>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setField(item.key, !value)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:ring-offset-2 focus:ring-offset-zinc-950 ${
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:ring-2 focus:ring-brand-500/50 focus:ring-offset-2 focus:ring-offset-zinc-950 ${
                       value ? 'btn-primary' : 'bg-white/10'
                     }`}
                   >
@@ -239,7 +240,7 @@ export default function AccountProfilePage() {
                         value ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
-                  </button>
+                  </Button>
                 </motion.div>
               )
             })}

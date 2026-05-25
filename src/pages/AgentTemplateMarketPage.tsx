@@ -15,9 +15,10 @@ import { addFavoriteTemplate,
   listCatalog, listCatalogFacets,
   listFavoriteTemplates, listRecommendations,
   removeFavoriteTemplate, saveUseTemplatePayload,
-  useTemplateNow, type CatalogFacetBucket,
+  useTemplateNow as executeTemplateNow, type CatalogFacetBucket,
   type TemplateCatalogFacets, type TemplateDetail,
   type TemplateListItem, } from '@/services/templateCenter'
+import { Button } from '@/components/ui/Button'
 type Locale = 'zh' | 'en'
 const PLATFORM_GROUPS = [ {
     key: 'amazon', emoji: '🛒',
@@ -34,7 +35,7 @@ const PLATFORM_GROUPS = [ {
     emoji: '🌐', zh: '独立站 / SEO',
     en: 'DTC / SEO', metrics: { zh: 'DTC', en: 'DTC' },
   }, ] as const
-const PLATFORM_FILTERS = ['all', ...PLATFORM_GROUPS.map(item => item.key)] as const
+type ActivePlatform = 'all' | (typeof PLATFORM_GROUPS)[number]['key']
 const MODALITY_FILTERS = [ { key: 'image', zh: '图片模板', en: 'Image' },
   { key: 'text', zh: '文本模板', en: 'Text' }, { key: 'workflow', zh: '工作流模板', en: 'Workflow' },
 ] as const
@@ -106,7 +107,7 @@ export default function AgentTemplateMarketPage() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
   const locale: Locale = (i18n.resolvedLanguage ?? i18n.language).startsWith('en') ? 'en' : 'zh'
-  const [activePlatform, setActivePlatform] = useState<(typeof PLATFORM_FILTERS)[number]>('all')
+  const [activePlatform, setActivePlatform] = useState<ActivePlatform>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeModality, setActiveModality] = useState<string | null>(null)
   const [activeSeries, setActiveSeries] = useState<string | null>(null)
@@ -220,7 +221,7 @@ export default function AgentTemplateMarketPage() {
       if (wasFavorited) {
         await removeFavoriteTemplate(templateId) } else {
         await addFavoriteTemplate(templateId) }
-    } catch (err) { setFavoriteIds(prev =>
+    } catch { setFavoriteIds(prev =>
         wasFavorited ? [...prev, templateId] : prev.filter(id => id !== templateId), )
     } finally { setFavoriteLoadingId(null)
     } }
@@ -236,16 +237,16 @@ export default function AgentTemplateMarketPage() {
     setCopying(true)
     try {
       await copyTemplateToMyTemplates(selectedTemplate.id)
-      showToast(copy(locale, '已复制到我的模板库，可前往“我的模板”继续使用', 'Copied to My Templates. You can continue from My Templates.'), 'success') } catch (err) {
+      showToast(copy(locale, '已复制到我的模板库，可前往“我的模板”继续使用', 'Copied to My Templates. You can continue from My Templates.'), 'success') } catch {
       // API error toast is shown by request interceptor
     } finally { setCopying(false)
     } }
   const handleUseNow = async (templateId: string) => { setUsingNowId(templateId)
     try {
-      const payload = await useTemplateNow(templateId)
+      const payload = await executeTemplateNow(templateId)
       saveUseTemplatePayload(payload)
       navigate(payload.targetRoute || '/chat', { state: { templateUsePayload: payload },
-      }) } catch (err) {
+      }) } catch {
       // Error handled by global toast
     } finally { setUsingNowId(null)
     } }
@@ -300,85 +301,85 @@ export default function AgentTemplateMarketPage() {
                 <LayoutGrid className="h-4 w-4 text-brand-400" />
                 <span>{copy(locale, '平台入口', 'Platform Entry')}</span> </div>
               <div className="space-y-2">
-                <button
+                <Button
                   onClick={() => { setActivePlatform('all')
                     setCurrentPage(1) }}
                   className={`w-full rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${ activePlatform === 'all'
-                      ? 'bg-brand-500/15 text-brand-400' : 'bg-white/[0.03] text-white/60 hover:bg-white/[0.06] hover:text-white'
+                      ? 'bg-brand-500/15 text-brand-400' : 'bg-white/[0.03] text-white/60 hover:bg-[var(--ecom-surface-hover)] hover:text-white'
                   }`}
                 >
-                  {copy(locale, '全部模板', 'All Templates')} </button>
-                {PLATFORM_GROUPS.map(item => ( <button
+                  {copy(locale, '全部模板', 'All Templates')} </Button>
+                {PLATFORM_GROUPS.map(item => ( <Button
                     key={item.key}
                     onClick={() => { setActivePlatform(item.key)
                       setCurrentPage(1) }}
                     className={`w-full rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${ activePlatform === item.key
-                        ? 'bg-brand-500/15 text-brand-400' : 'bg-white/[0.03] text-white/60 hover:bg-white/[0.06] hover:text-white'
+                        ? 'bg-brand-500/15 text-brand-400' : 'bg-white/[0.03] text-white/60 hover:bg-[var(--ecom-surface-hover)] hover:text-white'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate">
                         {item.emoji} {locale === 'zh' ? item.zh : item.en} </span>
                       <span className="text-[11px] text-white/30">{locale === 'zh' ? item.metrics.zh : item.metrics.en}</span> </div>
-                  </button> ))}
+                  </Button> ))}
               </div> </div>
             <div className="glass rounded-2xl p-4">
               <div className="mb-3 flex items-center gap-2 text-sm text-white/70">
                 <Filter className="h-4 w-4 text-brand-400" />
                 <span>{copy(locale, '模态筛选', 'Modality Filters')}</span> </div>
               <div className="flex flex-wrap gap-2">
-                {MODALITY_FILTERS.map(item => ( <button
+                {MODALITY_FILTERS.map(item => ( <Button
                     key={item.key}
                     onClick={() => { setActiveModality(prev => (prev === item.key ? null : item.key))
                       setCurrentPage(1) }}
                     className={`rounded-full border px-3 py-1 text-xs transition-colors ${ activeModality === item.key
-                        ? 'border-brand-500/30 bg-brand-500/15 text-brand-300' : 'border-white/[0.08] bg-white/[0.03] text-white/50 hover:bg-white/[0.06] hover:text-white'
+                        ? 'border-brand-500/30 bg-brand-500/15 text-brand-300' : 'border-white/[0.08] bg-white/[0.03] text-white/50 hover:bg-[var(--ecom-surface-hover)] hover:text-white'
                     }`}
                   >
-                    {copy(locale, item.zh, item.en)} </button>
+                    {copy(locale, item.zh, item.en)} </Button>
                 ))} </div>
-              {(activePlatform !== 'all' || activeModality || searchQuery) && ( <button
+              {(activePlatform !== 'all' || activeModality || searchQuery) && ( <Button
                   onClick={clearFilters}
                   className="mt-4 inline-flex items-center gap-2 text-xs text-white/40 hover:text-white/70"
                 >
                   <X className="h-3.5 w-3.5" />
-                  {copy(locale, '清空筛选', 'Clear Filters')} </button>
+                  {copy(locale, '清空筛选', 'Clear Filters')} </Button>
               )} </div>
             {facets?.series?.length ? ( <div className="glass rounded-2xl p-4">
                 <div className="mb-3 text-sm text-white/70">{copy(locale, '系列分类', 'Series')}</div>
                 <div className="space-y-2">
-                  {facets.series.slice(0, 8).map(item => ( <button
+                  {facets.series.slice(0, 8).map(item => ( <Button
                       key={item.key}
                       type="button"
                       onClick={() => { setActiveSeries(prev => (prev === item.key ? null : item.key))
                         setCurrentPage(1) }}
                       className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors ${ activeSeries === item.key
-                          ? 'bg-brand-500/15 text-brand-300' : 'bg-white/[0.03] text-white/60 hover:bg-white/[0.06] hover:text-white'
+                          ? 'bg-brand-500/15 text-brand-300' : 'bg-white/[0.03] text-white/60 hover:bg-[var(--ecom-surface-hover)] hover:text-white'
                       }`}
                     >
                       <span>{displayFacetLabel(locale, item)}</span>
-                      <span className="text-[11px] text-white/35">{item.count}</span> </button>
+                      <span className="text-[11px] text-white/35">{item.count}</span> </Button>
                   ))} </div>
               </div> ) : null}
             {facets?.capabilities?.length ? ( <div className="glass rounded-2xl p-4">
                 <div className="mb-3 text-sm text-white/70">{copy(locale, '能力分类', 'Capabilities')}</div>
                 <div className="flex flex-wrap gap-2">
-                  {facets.capabilities.slice(0, 10).map(item => ( <button
+                  {facets.capabilities.slice(0, 10).map(item => ( <Button
                       key={item.key}
                       type="button"
                       onClick={() => { setActiveCapability(prev => (prev === item.key ? null : item.key))
                         setCurrentPage(1) }}
                       className={`rounded-full border px-3 py-1 text-xs transition-colors ${ activeCapability === item.key
-                          ? 'border-brand-500/30 bg-brand-500/15 text-brand-300' : 'border-white/[0.08] bg-white/[0.03] text-white/50 hover:bg-white/[0.06] hover:text-white'
+                          ? 'border-brand-500/30 bg-brand-500/15 text-brand-300' : 'border-white/[0.08] bg-white/[0.03] text-white/50 hover:bg-[var(--ecom-surface-hover)] hover:text-white'
                       }`}
                     >
-                      {displayFacetLabel(locale, item)} · {item.count} </button>
+                      {displayFacetLabel(locale, item)} · {item.count} </Button>
                   ))} </div>
               </div> ) : null}
           </aside>
           <div className="space-y-6">
             {featuredTemplates.length > 0 && ( <div
-                className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[#080b12] aspect-[21/9] sm:aspect-[3/1] touch-pan-y"
+                className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-[var(--ecom-surface)] aspect-[21/9] sm:aspect-[3/1] touch-pan-y"
                 onTouchStart={handleTouchStart}
                 onTouchEnd={handleTouchEnd}
               >
@@ -403,30 +404,32 @@ export default function AgentTemplateMarketPage() {
                           {item.summary} </p>
                       </div>
                       <div className="flex gap-4">
-                        <button
+                        <Button
                           type="button"
                           onClick={() => { setSelectedTemplateId(item.id)
                             setDetailOpen(true) }}
                           className="rounded-xl bg-white px-5 py-2.5 text-sm font-medium text-black transition-colors hover:bg-white/90"
                         >
-                          {copy(locale, '查看详情', 'View Details')} </button>
-                        <button
+                          {copy(locale, '查看详情', 'View Details')} </Button>
+                        <Button
                           type="button"
                           disabled={usingNowId === item.id}
                           onClick={() => void handleUseNow(item.id)}
-                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/[0.08]"
+                          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--ecom-surface-hover)]"
                         >
-                          {usingNowId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : copy(locale, '立即使用', 'Use Now')} </button>
+                          {usingNowId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : copy(locale, '立即使用', 'Use Now')} </Button>
                       </div> </div>
                   </div> ))}
                 <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
-                  {featuredTemplates.map((_, index) => ( <button
+                  {featuredTemplates.map((_, index) => ( <Button
                       key={index}
                       onClick={() => setActiveBannerIndex(index)}
-                      className={`h-1.5 rounded-full transition-all ${ index === activeBannerIndex ? 'w-6 bg-white' : 'w-2 bg-white/30 hover:bg-white/50'
+                      className={`h-1.5 rounded-full transition-colors ${ index === activeBannerIndex ? 'w-6 bg-white' : 'w-2 bg-white/30 hover:bg-white/50'
                       }`}
                       aria-label={`Go to slide ${index + 1}`}
-                    /> ))}
+                    >
+                      <span className="sr-only">Go to slide {index + 1}</span>
+                    </Button> ))}
                 </div> </div>
             )}
             {recommendedTemplates.length > 0 && ( <div className="space-y-4">
@@ -435,11 +438,12 @@ export default function AgentTemplateMarketPage() {
                     {copy(locale, '为你推荐', 'Recommended for You')} </div>
                 </div>
                 <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-2 sm:grid sm:grid-cols-2 xl:grid-cols-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  {recommendedTemplates.map(item => ( <article
+                  {recommendedTemplates.map(item => ( <Button
                       key={item.id}
+                      type="button"
                       onClick={() => { setSelectedTemplateId(item.id)
                         setDetailOpen(true) }}
-                      className="group min-w-[280px] snap-start sm:min-w-0 cursor-pointer overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] transition-all hover:bg-white/[0.04] hover:border-white/[0.1]"
+                      className="group min-w-[280px] snap-start sm:min-w-0 cursor-pointer overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] text-left transition-colors hover:bg-[var(--ecom-surface-hover)] hover:border-white/[0.1]"
                     >
                       <div className="relative aspect-[4/3] overflow-hidden bg-black/20">
                         {item.coverAssetUrl ? ( <img
@@ -466,7 +470,7 @@ export default function AgentTemplateMarketPage() {
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-brand-400 opacity-0 transition-opacity group-hover:opacity-100">
                             {copy(locale, '查看详情', 'View More')} <ArrowRight className="h-3 w-3" /> </span>
                         </div> </div>
-                    </article> ))}
+                    </Button> ))}
                 </div> </div>
             )}
             <div className="glass-strong rounded-2xl p-4">
@@ -478,14 +482,14 @@ export default function AgentTemplateMarketPage() {
                     onChange={e => { setSearchQuery(e.target.value)
                       setCurrentPage(1) }}
                     placeholder={copy(locale, '搜索模板名称、平台、场景、任务类型...', 'Search by name, platform, scenario, or task...')}
-                    className="glass w-full rounded-xl py-3 pl-10 pr-4 text-sm text-white/80 placeholder-white/25 outline-none"
+                    className="glass w-full rounded-xl py-3 pl-10 pr-4 text-sm text-white/80 placeholder-white/25 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
                   /> </div>
                 <div className="min-w-[180px]">
                   <select
                     value={sortBy}
                     onChange={e => { setSortBy(e.target.value as typeof sortBy)
                       setCurrentPage(1) }}
-                    className="glass w-full rounded-xl px-3 py-3 text-sm text-white/80 outline-none"
+                    className="glass w-full rounded-xl px-3 py-3 text-sm text-white/80 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
                   >
                     <option value="recommended">{copy(locale, '推荐优先', 'Recommended')}</option>
                     <option value="newest">{copy(locale, '最新优先', 'Newest')}</option>
@@ -549,14 +553,23 @@ export default function AgentTemplateMarketPage() {
                 {paginatedTemplates.map(card => {
                 const isFavorite = favoriteIds.includes(card.id)
                 const isSelected = selectedTemplate?.id === card.id
-                return ( <article
+                return ( <div
                     key={card.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => { setSelectedTemplateId(card.id)
                       setDetailOpen(true) }}
-                    className={`tool-card glass rounded-2xl p-5 transition-all ${ isSelected ? 'border-brand-500/30 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]' : ''
+                    onKeyDown={event => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setSelectedTemplateId(card.id)
+                        setDetailOpen(true)
+                      }
+                    }}
+                    className={`tool-card glass rounded-2xl p-5 text-left transition-colors ${ isSelected ? 'border-brand-500/30 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]' : ''
                     }`}
                   >
-                    {card.coverAssetUrl && ( <div className="mb-4 overflow-hidden rounded-2xl border border-white/[0.06] bg-[#080b12]">
+                    {card.coverAssetUrl && ( <div className="mb-4 overflow-hidden rounded-2xl border border-white/[0.06] bg-[var(--ecom-surface)]">
                         <img
                           src={card.coverAssetUrl}
                           alt={card.name}
@@ -568,7 +581,7 @@ export default function AgentTemplateMarketPage() {
                       <div>
                         <div className="mb-2 text-xs text-white/35">{displayTerm(locale, primaryPlatform(card))}</div>
                         <h3 className="text-base font-semibold text-white">{card.name}</h3> </div>
-                      <button
+                      <Button
                         type="button"
                         onClick={e => { e.stopPropagation()
                           void toggleFavorite(card.id) }}
@@ -578,7 +591,7 @@ export default function AgentTemplateMarketPage() {
                         }`}
                       >
                         <Heart className={`h-3.5 w-3.5 ${isFavorite ? 'fill-current' : ''}`} />
-                        {card.favoriteCount} </button>
+                        {card.favoriteCount} </Button>
                     </div>
                     <p className="mb-4 line-clamp-3 text-sm leading-6 text-white/55">{card.summary}</p>
                     <div className="mb-4 flex flex-wrap gap-2">
@@ -591,14 +604,14 @@ export default function AgentTemplateMarketPage() {
                       <span>{copy(locale, '累计使用', 'Usage')}</span>
                       <span>{formatCount(card.useCount ?? 0)}</span> </div>
                     <div className="mt-5 grid grid-cols-2 gap-2">
-                      <button
+                      <Button
                         onClick={e => { e.stopPropagation()
                           setSelectedTemplateId(card.id)
                           setDetailOpen(true) }}
-                        className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/65 transition-colors hover:bg-white/[0.06] hover:text-white"
+                        className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/65 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white"
                       >
-                        {copy(locale, '预览模板', 'Preview')} </button>
-                      <button
+                        {copy(locale, '预览模板', 'Preview')} </Button>
+                      <Button
                         type="button"
                         onClick={e => { e.stopPropagation()
                           void handleUseNow(card.id) }}
@@ -606,26 +619,26 @@ export default function AgentTemplateMarketPage() {
                         className="btn-primary inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-white disabled:opacity-70 disabled:cursor-not-allowed"
                       >
                         {usingNowId === card.id ? copy(locale, '跳转中...', 'Opening...') : copy(locale, '立即使用', 'Use Now')}
-                        {usingNowId === card.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />} </button>
-                    </div> </article>
+                        {usingNowId === card.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />} </Button>
+                    </div> </div>
                 ) })}
               </div> )}
             {visibleTemplates.length > 0 && ( <div className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45">
                 <span>
                   {copy(locale, '第', 'Page')} <span className="text-white/80">{normalizedPage}</span> / {totalPages} </span>
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={normalizedPage === 1}
-                    className="rounded-xl border border-white/[0.08] px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-white/[0.06]"
+                    className="rounded-xl border border-white/[0.08] px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-[var(--ecom-surface-hover)]"
                   >
-                    {copy(locale, '上一页', 'Prev')} </button>
-                  <button
+                    {copy(locale, '上一页', 'Prev')} </Button>
+                  <Button
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={normalizedPage === totalPages}
-                    className="rounded-xl border border-white/[0.08] px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-white/[0.06]"
+                    className="rounded-xl border border-white/[0.08] px-3 py-1.5 disabled:cursor-not-allowed disabled:opacity-40 hover:bg-[var(--ecom-surface-hover)]"
                   >
-                    {copy(locale, '下一页', 'Next')} </button>
+                    {copy(locale, '下一页', 'Next')} </Button>
                 </div> </div>
             )} </div>
         </section>
@@ -641,10 +654,10 @@ export default function AgentTemplateMarketPage() {
                   <div className="mb-3 text-sm font-medium text-white/75">
                     {copy(locale, '示例素材', 'Examples')} </div>
                   <div className="grid gap-3">
-                    {selectedDetail.examples.slice(0, 3).map((example, idx) => ( <div key={(example as Record<string, unknown>).id as string ?? idx} className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#080b12]">
+                    {selectedDetail.examples.slice(0, 3).map((example, idx) => ( <div key={(example as Record<string, unknown>).id as string ?? idx} className="overflow-hidden rounded-2xl border border-white/[0.06] bg-[var(--ecom-surface)]">
                         {(example as Record<string, unknown>).previewAssetUrl ? ( <img
-                            src={(example as Record<string, unknown>).previewAssetUrl as string}
                             alt={((example as Record<string, unknown>).title as string) || selectedTemplate.name}
+                            src={(example as Record<string, unknown>).previewAssetUrl as string}
                             className="max-h-[22rem] w-full object-contain p-2"
                           /> ) : null}
                         <div className="p-3">
@@ -735,23 +748,24 @@ export default function AgentTemplateMarketPage() {
                     })} </div>
                 </div> )}
               <div className="space-y-2">
-                <button
+                <Button
                   onClick={() => void handleCopyTemplate()}
                   disabled={copying}
                   className="btn-primary w-full rounded-xl px-4 py-3 text-sm font-medium text-white"
                 >
                   {copying ? copy(locale, '复制中...', 'Copying...')
-                    : copy(locale, '复制到我的模板库', 'Copy to My Templates')} </button>
-                <button
+                    : copy(locale, '复制到我的模板库', 'Copy to My Templates')} </Button>
+                <Button
                   type="button"
                   onClick={() => void handleUseNow(selectedTemplate.id)}
                   disabled={usingNowId === selectedTemplate.id}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/70 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white"
                 >
                   {usingNowId === selectedTemplate.id ? copy(locale, '正在跳转执行...', 'Opening execution...')
                     : copy(locale, '立即在业务工具中使用', 'Use in Business Tool')}
-                  {usingNowId === selectedTemplate.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />} </button>
+                  {usingNowId === selectedTemplate.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />} </Button>
               </div> </>
           ) : null} </DetailDrawer>
       </div> </div>
   ) }
+

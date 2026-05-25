@@ -19,6 +19,7 @@ import { DESIGN_STATUS_STYLES,
   type Locale, type LocalizedText,
 } from '@/mock/designWorkbench'
 import { } from '@/mock/workflowBridge'
+import { Button } from '@/components/ui/Button'
 interface DesignConfig { titleKey: string
   icon: LucideIcon
   badge: LocalizedText
@@ -287,7 +288,7 @@ export default function DesignWorkbenchPage() {
               {config.actions.map(action => ( <Link
                   key={action.to}
                   to={action.to}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white/65 transition-colors hover:bg-white/[0.07] hover:text-white sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white/65 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white sm:w-auto"
                 >
                   <span>{copyLocalizedText(locale, action.label)}</span>
                   <ArrowRight className="h-4 w-4" /> </Link>
@@ -309,7 +310,7 @@ export default function DesignWorkbenchPage() {
                     onChange={e => { setSearchQuery(e.target.value)
                       setSelectedStage(0) }}
                     placeholder={locale === 'zh' ? '搜索阶段、动作或流程节点...' : 'Search stages, actions, or workflow nodes...'}
-                    className="glass w-full rounded-xl py-3 pl-10 pr-4 text-sm text-white/80 placeholder-white/25 outline-none"
+                    className="glass w-full rounded-xl py-3 pl-10 pr-4 text-sm text-white/80 placeholder-white/25 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
                   /> </div>
                 <div className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs text-white/45">
                   <Filter className="h-3.5 w-3.5 text-brand-400" />
@@ -318,44 +319,44 @@ export default function DesignWorkbenchPage() {
             <div className="flex gap-2">
               {[ { key: 'pipeline', zh: '流程视图', en: 'Pipeline' },
                 { key: 'detail', zh: '详情视图', en: 'Detail' }, ].map(item => (
-                <button
+                <Button
                   key={item.key}
                   onClick={() => setBoardMode(item.key as 'pipeline' | 'detail')}
                   className={`rounded-xl px-4 py-2 text-sm transition-colors ${ boardMode === item.key
-                      ? 'bg-brand-500/15 text-brand-300' : 'bg-white/[0.03] text-white/50 hover:bg-white/[0.05] hover:text-white'
+                      ? 'bg-brand-500/15 text-brand-300' : 'bg-white/[0.03] text-white/50 hover:bg-[var(--ecom-surface-hover)] hover:text-white'
                   }`}
                 >
-                  {locale === 'zh' ? item.zh : item.en} </button>
+                  {locale === 'zh' ? item.zh : item.en} </Button>
               ))} </div>
             <div className="flex flex-wrap gap-2">
-              {(['all', 'queued', 'running', 'review', 'done'] as const).map(status => ( <button
+              {(['all', 'queued', 'running', 'review', 'done'] as const).map(status => ( <Button
                   key={status}
                   onClick={() => setActiveStatus(status)}
                   className={`rounded-full px-3 py-1.5 text-xs transition-colors ${ activeStatus === status
-                      ? 'bg-brand-500/15 text-brand-300' : 'bg-white/[0.03] text-white/45 hover:bg-white/[0.05] hover:text-white'
+                      ? 'bg-brand-500/15 text-brand-300' : 'bg-white/[0.03] text-white/45 hover:bg-[var(--ecom-surface-hover)] hover:text-white'
                   }`}
                 >
                   {status === 'all' ? locale === 'zh' ? '全部状态' : 'All Status'
                     : locale === 'zh' ? DESIGN_STATUS_STYLES[status].zh
-                      : DESIGN_STATUS_STYLES[status].en} </button>
+                      : DESIGN_STATUS_STYLES[status].en} </Button>
               ))} </div>
             <div className="grid gap-4 lg:grid-cols-2">
               {visibleStages.map((stage, index) => ( <article
                   key={stage.title.zh}
-                  className={`tool-card glass rounded-2xl p-5 transition-all ${ activeStage?.title.zh === stage.title.zh ? 'border-brand-500/30 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]' : ''
+                  className={`tool-card glass rounded-2xl p-5 transition-colors ${ activeStage?.title.zh === stage.title.zh ? 'border-brand-500/30 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]' : ''
                   }`}
                 >
                   <h3 className="mb-3 text-lg font-semibold text-white">{copyLocalizedText(locale, stage.title)}</h3>
                   <p className="mb-5 text-sm leading-6 text-white/55">{copyLocalizedText(locale, stage.desc)}</p>
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-white/40">
                     {copyLocalizedText(locale, stage.meta)} </div>
-                  <button
+                  <Button
                     onClick={() => { setSelectedStage(index)
                       setBoardMode('detail') }}
                     className="mt-4 inline-flex items-center gap-2 text-sm text-brand-300 hover:text-brand-200"
                   >
                     {locale === 'zh' ? '查看节点' : 'Open Node'}
-                    <ArrowRight className="h-4 w-4" /> </button>
+                    <ArrowRight className="h-4 w-4" /> </Button>
                 </article> ))}
             </div>
             <div className="glass rounded-2xl p-5">
@@ -363,11 +364,11 @@ export default function DesignWorkbenchPage() {
                 {boardHeading} </div>
               <div className="mb-4 text-sm text-white/45">{boardHint}</div>
               <div className="mb-4">
-                <button
+                <Button
                   onClick={handleCreateTask}
                   className="rounded-xl border border-brand-500/25 bg-brand-500/10 px-4 py-2 text-sm text-brand-300 transition-colors hover:bg-brand-500/15"
                 >
-                  {locale === 'zh' ? '新增模拟任务' : 'Create Mock Task'} </button>
+                  {locale === 'zh' ? '新增模拟任务' : 'Create Mock Task'} </Button>
               </div>
               <div className="space-y-3">
                 {visibleTasks.length ? ( visibleTasks.map(task => {
@@ -382,13 +383,13 @@ export default function DesignWorkbenchPage() {
                           <span className={`rounded-full border px-2.5 py-1 text-xs ${statusCopy.className}`}>
                             {locale === 'zh' ? statusCopy.zh : statusCopy.en} </span>
                         </div>
-                        <button
+                        <Button
                           onClick={() => { setSelectedTaskId(task.id)
                             setTaskDrawerOpen(true) }}
                           className="mt-4 inline-flex items-center gap-2 text-sm text-brand-300 hover:text-brand-200"
                         >
                           {locale === 'zh' ? '查看任务详情' : 'Open Task Drawer'}
-                          <ArrowRight className="h-4 w-4" /> </button>
+                          <ArrowRight className="h-4 w-4" /> </Button>
                       </div> )
                   }) ) : (
                   <div className="rounded-xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-6 text-sm text-white/40">
@@ -401,11 +402,11 @@ export default function DesignWorkbenchPage() {
               <div className="space-y-3">
                 {mock.assets.map(item => {
                   const style = DESIGN_STATUS_STYLES[item.status]
-                  return ( <button
+                  return ( <Button
                       key={item.id}
                       onClick={() => setSelectedAssetId(item.id)}
                       className={`w-full rounded-xl border p-4 text-left transition-colors ${ selectedAsset?.id === item.id
-                          ? 'border-brand-500/30 bg-brand-500/10' : 'border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05]'
+                          ? 'border-brand-500/30 bg-brand-500/10' : 'border-white/[0.06] bg-white/[0.03] hover:bg-[var(--ecom-surface-hover)]'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -415,7 +416,7 @@ export default function DesignWorkbenchPage() {
                           <div className="mt-2 text-xs text-white/35">{copyLocalizedText(locale, item.meta)}</div> </div>
                         <span className={`rounded-full border px-2.5 py-1 text-xs ${style.className}`}>
                           {locale === 'zh' ? style.zh : style.en} </span>
-                      </div> </button>
+                      </div> </Button>
                   ) })}
               </div> </div>
           </div>
@@ -462,21 +463,21 @@ export default function DesignWorkbenchPage() {
                   <div className="mt-2 text-sm leading-6 text-white/50">{copyLocalizedText(locale, selectedAsset.desc)}</div>
                   <div className="mt-2 text-xs text-white/35">{copyLocalizedText(locale, selectedAsset.meta)}</div> </div>
                 <div className="mt-4 space-y-2">
-                  <button
+                  <Button
                     onClick={handleSyncAssetToLibrary}
-                    className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/75 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/75 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white"
                   >
-                    {locale === 'zh' ? '同步到图片素材库' : 'Sync to Image Library'} </button>
-                  <button
+                    {locale === 'zh' ? '同步到图片素材库' : 'Sync to Image Library'} </Button>
+                  <Button
                     onClick={handlePushToDelivery}
-                    className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/75 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/75 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white"
                   >
-                    {locale === 'zh' ? '加入下载中心交付包' : 'Add to Download Center'} </button>
-                  <button
+                    {locale === 'zh' ? '加入下载中心交付包' : 'Add to Download Center'} </Button>
+                  <Button
                     onClick={handleBridgeTemplate}
                     className="w-full rounded-xl border border-brand-500/25 bg-brand-500/10 px-4 py-3 text-sm text-brand-300 transition-colors hover:bg-brand-500/15"
                   >
-                    {locale === 'zh' ? '桥接为 Agent 模板' : 'Bridge as Agent Template'} </button>
+                    {locale === 'zh' ? '桥接为 Agent 模板' : 'Bridge as Agent Template'} </Button>
                 </div> </div>
             ) : null} </aside>
         </section> </div>
@@ -499,13 +500,13 @@ export default function DesignWorkbenchPage() {
               <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-sm leading-6 text-white/50">
                 {locale === 'zh' ? '这条任务现在已经和商品、产物、成员、团队时间线建立了基础关联，可继续替换成真实异步任务和导出回调。'
                   : 'This task is now linked with products, outputs, members, and the team timeline, and can be replaced with real async jobs and export callbacks later.'} </div>
-              <button
+              <Button
                 onClick={() => handleAdvanceTask(selectedTask.id, selectedTask.status)}
                 disabled={selectedTask.status === 'done'}
                 className="btn-primary w-full rounded-xl px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {selectedTask.status === 'done' ? locale === 'zh' ? '任务已完成' : 'Task Completed'
-                  : locale === 'zh' ? '推进到下一状态' : 'Advance to Next State'} </button>
+                  : locale === 'zh' ? '推进到下一状态' : 'Advance to Next State'} </Button>
             </div> </DetailDrawer>
       )} </div>
   ) }

@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 // ============================================================
 // 系统设置页面 (InventorySettingsPage)
 // 对应原 HTML settings 页面
@@ -68,12 +69,12 @@ export default function InventorySettingsPage() {
                 <div className="text-sm text-white/80">{t('inventory.settings.enableAlert')}</div>
                 <div className="mt-0.5 text-xs text-white/40">{t('inventory.settings.enableAlertHint')}</div>
               </div>
-              <button
+              <Button
                 onClick={() => setForm(f => ({ ...f, alertEnabled: !f.alertEnabled }))}
-                className={`relative h-6 w-11 rounded-full transition ${form.alertEnabled ? 'bg-[#ff9900]' : 'bg-white/10'}`}
+                className={`relative h-6 w-11 rounded-full transition ${form.alertEnabled ? 'bg-[var(--ecom-surface)]' : 'bg-white/10'}`}
               >
                 <div className={`absolute top-1 h-4 w-4 rounded-full bg-white transition ${form.alertEnabled ? 'left-6' : 'left-1'}`} />
-              </button>
+              </Button>
             </div>
 
             <div>
@@ -82,7 +83,7 @@ export default function InventorySettingsPage() {
                 type="email"
                 value={form.alertEmail}
                 onChange={e => setForm(f => ({ ...f, alertEmail: e.target.value }))}
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
               />
             </div>
           </div>
@@ -99,7 +100,7 @@ export default function InventorySettingsPage() {
                 min="1"
                 value={form.defaultSafeStockDays}
                 onChange={e => setForm(f => ({ ...f, defaultSafeStockDays: Number(e.target.value) }))}
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
               />
             </div>
             <div>
@@ -110,7 +111,7 @@ export default function InventorySettingsPage() {
                 min="0.5"
                 value={form.defaultReplenishFactor}
                 onChange={e => setForm(f => ({ ...f, defaultReplenishFactor: Number(e.target.value) }))}
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
               />
             </div>
             <div>
@@ -120,7 +121,7 @@ export default function InventorySettingsPage() {
                 min="1"
                 value={form.defaultLeadDays}
                 onChange={e => setForm(f => ({ ...f, defaultLeadDays: Number(e.target.value) }))}
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
               />
             </div>
           </div>
@@ -135,7 +136,7 @@ export default function InventorySettingsPage() {
               <select
                 value={form.currency}
                 onChange={e => setForm(f => ({ ...f, currency: e.target.value as 'CNY' | 'USD' }))}
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
               >
                 <option value="USD">USD ($)</option>
                 <option value="CNY">CNY (¥)</option>
@@ -146,7 +147,7 @@ export default function InventorySettingsPage() {
               <select
                 value={form.autoRefreshInterval}
                 onChange={e => setForm(f => ({ ...f, autoRefreshInterval: Number(e.target.value) }))}
-                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20"
+                className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
               >
                 <option value={0}>{t('inventory.settings.noAutoRefresh')}</option>
                 <option value={15}>15 {t('inventory.settings.minutes')}</option>
@@ -159,20 +160,20 @@ export default function InventorySettingsPage() {
 
         {/* 操作按钮 */}
         <div className="flex items-center gap-3 border-t border-white/[0.06] pt-6">
-          <button
+          <Button
             onClick={handleSave}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#ff9900] px-5 py-2.5 text-sm font-semibold text-[#111827] transition hover:bg-[#ffb84d]"
+            className="inline-flex items-center gap-2 rounded-xl bg-[var(--ecom-surface)] px-5 py-2.5 text-sm font-semibold text-[var(--ecom-text-primary)] transition hover:bg-[var(--ecom-surface)]"
           >
             <Save className="h-4 w-4" />
             {saved ? t('inventory.settings.saved') : t('inventory.settings.save')}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleReset}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.05] px-5 py-2.5 text-sm text-white/70 transition hover:bg-white/[0.09]"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.05] px-5 py-2.5 text-sm text-white/70 transition hover:bg-[var(--ecom-surface-hover)]"
           >
             <RotateCcw className="h-4 w-4" />
             {t('inventory.settings.reset')}
-          </button>
+          </Button>
           {saved && <span className="text-sm text-emerald-400">{t('inventory.settings.saveSuccess')}</span>}
         </div>
       </div>

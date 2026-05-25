@@ -13,6 +13,7 @@ import { createExportPackage } from '@/services/product'
 import { useToastStore } from '@/store/toastStore'
 import type { AssetVariant, VersionNode } from '@/types/production'
 import { isDevMode } from '@/mocks/productionDemo'
+import { Button } from '@/components/ui/Button'
 // ─── Mock Variant Images (placeholder URLs) ──────────────────
 const VARIANT_THUMBS = [ 'https://picsum.photos/seed/workshop1/400/400',
   'https://picsum.photos/seed/workshop2/400/400',
@@ -47,7 +48,7 @@ function VersionLineage({ nodes, activeId, onSelect,
         <div>
           <h3 className="text-sm font-semibold text-white">版本谱系</h3>
           <p className="text-[10px] text-white/25">Version Lineage</p> </div>
-        <button
+        <Button
           type="button"
           disabled={nodes.length === 0}
           onClick={onCompare}
@@ -55,7 +56,7 @@ function VersionLineage({ nodes, activeId, onSelect,
           className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/10 bg-cyan-400/[0.03] px-2 py-1 text-[10px] text-cyan-200/65 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ArrowUpRight className="h-3 w-3" />
-          对比模式 </button> </div>
+          对比模式 </Button> </div>
       {/* Timeline */}
       <div className="relative space-y-1 pl-4">
         {/* Vertical line */}
@@ -71,7 +72,7 @@ function VersionLineage({ nodes, activeId, onSelect,
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
               onClick={() => onSelect(node.id)}
-              className={`relative cursor-pointer rounded-xl border p-3 transition ${ isActive || isCurrent ? 'border-cyan-400/20 bg-cyan-400/[0.04]' : 'border-transparent bg-transparent hover:bg-white/[0.02]'
+              className={`relative cursor-pointer rounded-xl border p-3 transition ${ isActive || isCurrent ? 'border-cyan-400/20 bg-cyan-400/[0.04]' : 'border-transparent bg-transparent hover:bg-[var(--ecom-surface-hover)]'
               }`}
             >
               {/* Dot on timeline */}
@@ -96,7 +97,7 @@ function VersionLineage({ nodes, activeId, onSelect,
                     <span className="text-[9px] text-white/30">REF {node.refBias}%</span> </div> </div> </div>
             </motion.div> ) })} </div>
       {/* New branch button */}
-      <button
+      <Button
         type="button"
         disabled={nodes.length === 0}
         onClick={onBranch}
@@ -104,7 +105,7 @@ function VersionLineage({ nodes, activeId, onSelect,
         className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-cyan-400/20 bg-cyan-400/[0.04] py-2 text-[11px] text-cyan-200/70 transition hover:border-cyan-400/35 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Plus className="h-3.5 w-3.5" />
-        新建分支 </button> </div> )
+        新建分支 </Button> </div> )
 }
 // ─── Variant Card ────────────────────────────────────────────
 function VariantCard({ variant, index, isSelected,
@@ -126,18 +127,22 @@ function VariantCard({ variant, index, isSelected,
       }`}
     >
       {/* Checkbox */}
-      <button
+      <Button
         type="button"
         onClick={(e) => { e.stopPropagation()
           onToggle() }}
         className={`absolute right-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition ${ isSelected ? 'border-cyan-400/60 bg-cyan-400/20 text-cyan-400' : 'border-white/10 bg-black/30 text-transparent hover:border-white/20'
         }`}
       >
-        <Check className="h-3 w-3" /> </button>
+        <Check className="h-3 w-3" /> </Button>
       {/* Image */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-label={`选择变体 ${index + 1}`}
         className="relative aspect-square cursor-pointer overflow-hidden bg-white/[0.02]"
         onClick={onToggle}
+        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onToggle() }}
       >
         <img
           src={variant.thumbnailUrl}
@@ -154,20 +159,20 @@ function VariantCard({ variant, index, isSelected,
               className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/60 to-transparent pb-3"
             >
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   type="button"
                   onClick={(e) => { e.stopPropagation()
                     onZoom() }}
                   className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
                 >
-                  <Search className="h-3.5 w-3.5" /> </button>
-                <button
+                  <Search className="h-3.5 w-3.5" /> </Button>
+                <Button
                   type="button"
                   onClick={(e) => { e.stopPropagation()
                     onDownload() }}
                   className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
                 >
-                  <Download className="h-3.5 w-3.5" /> </button> </div> </motion.div>
+                  <Download className="h-3.5 w-3.5" /> </Button> </div> </motion.div>
           )} </AnimatePresence> </div>
       {/* Label */}
       <div className="px-2 py-1.5">
@@ -204,25 +209,25 @@ function VariantGrid({ variants, selectedIds, busy,
         <div className="flex items-center gap-2">
           {/* View mode */}
           <div className="flex items-center rounded-lg border border-white/[0.06] bg-white/[0.02] p-0.5">
-            <button
+            <Button
               type="button"
               onClick={() => setViewMode('grid')}
               className={`rounded p-1 transition ${viewMode === 'grid' ? 'bg-white/[0.06] text-white' : 'text-white/30 hover:text-white/50'}`}
             >
-              <Grid3X3 className="h-3.5 w-3.5" /> </button>
-            <button
+              <Grid3X3 className="h-3.5 w-3.5" /> </Button>
+            <Button
               type="button"
               onClick={() => setViewMode('list')}
               className={`rounded p-1 transition ${viewMode === 'list' ? 'bg-white/[0.06] text-white' : 'text-white/30 hover:text-white/50'}`}
             >
-              <List className="h-3.5 w-3.5" /> </button> </div>
+              <List className="h-3.5 w-3.5" /> </Button> </div>
           {/* Filter */}
           <div className="relative">
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               disabled={variants.length === 0}
-              className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none"
+              className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
             >
               <option>全部版本</option>
               {templateOptions.map((option) => <option key={`tpl-${option}`}>{option}</option>)}
@@ -234,7 +239,7 @@ function VariantGrid({ variants, selectedIds, busy,
               value={sort}
               onChange={(e) => setSort(e.target.value)}
               disabled={variants.length === 0}
-              className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none"
+              className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
             >
               <option>最新优先</option>
               <option>评分优先</option> </select>
@@ -267,39 +272,39 @@ function VariantGrid({ variants, selectedIds, busy,
               />
               <div className="min-w-0 flex-1">
                 <span className="text-[11px] text-white/60">{String(variant.metadata?.version_id ?? variant.id).slice(0, 18)} · {String(idx + 1).padStart(2, '0')}</span> </div>
-              <button
+              <Button
                 type="button"
                 onClick={() => onToggle(variant.id)}
                 className={`flex h-5 w-5 items-center justify-center rounded border ${ selectedIds.includes(variant.id) ? 'border-cyan-400/60 bg-cyan-400/20 text-cyan-400' : 'border-white/10 text-transparent'
                 }`}
               >
-                <Check className="h-3 w-3" /> </button> </div> ))}
+                <Check className="h-3 w-3" /> </Button> </div> ))}
         </div> )}
       {/* Selection counter */}
       <div className="flex items-center justify-between">
         <span className="text-[11px] text-white/30">
           已选择 {selectedIds.length} / {filteredVariants.length} 张图片 </span>
         <div className="flex items-center gap-3">
-          {selectedIds.length === 0 && variants.length > 0 && ( <button
+          {selectedIds.length === 0 && variants.length > 0 && ( <Button
               type="button"
               onClick={() => filteredVariants.forEach((variant) => onToggle(variant.id))}
               className="text-[11px] text-cyan-400/60 hover:text-cyan-400"
             >
-              全选真实资产 </button> )}
-          {selectedIds.length > 0 && ( <button
+              全选真实资产 </Button> )}
+          {selectedIds.length > 0 && ( <Button
               type="button"
               onClick={() => onToggle('__clear_all__')}
               className="text-[11px] text-cyan-400/60 hover:text-cyan-400"
             >
-              清空选择 </button> )}
-          <button
+              清空选择 </Button> )}
+          <Button
             type="button"
             disabled={selectedIds.length === 0 || busy}
             onClick={onFinalize}
             className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:bg-white/[0.05] disabled:text-white/30"
           >
             {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-            定稿回流 </button> </div> </div>
+            定稿回流 </Button> </div> </div>
     </div> ) }
 // ─── Weight Control (Right Panel) ────────────────────────────
 function WeightControl({ weightParams, hasVersions, activeVersionLabel,
@@ -345,7 +350,7 @@ function WeightControl({ weightParams, hasVersions, activeVersionLabel,
         <div className="relative">
           <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-violet-400 to-violet-500 transition-all duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-violet-400 to-violet-500 transition-colors duration-300"
               style={{ width: `${weightParams.skuBias}%` }}
             /> </div>
           <input
@@ -359,7 +364,7 @@ function WeightControl({ weightParams, hasVersions, activeVersionLabel,
           />
           {/* Thumb indicator */}
           <div
-            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white/30 bg-[#1a1d29] shadow-lg transition-all"
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white/30 bg-[var(--ecom-surface-raised)] shadow-lg transition-colors"
             style={{ left: `calc(${weightParams.skuBias}% - 8px)` }}
           /> </div>
         <div className="flex items-center justify-between text-[9px] text-white/20">
@@ -368,7 +373,7 @@ function WeightControl({ weightParams, hasVersions, activeVersionLabel,
           <span>100%</span> </div> </div>
       {/* Advanced Tuning (Collapsible) */}
       <div className="rounded-xl border border-white/[0.04] bg-white/[0.01]">
-        <button
+        <Button
           type="button"
           disabled={!hasVersions}
           onClick={onToggleAdvanced}
@@ -378,7 +383,7 @@ function WeightControl({ weightParams, hasVersions, activeVersionLabel,
             <h4 className="text-[11px] font-medium text-white/60">高级微调</h4>
             <span className="text-[9px] text-white/20">Advanced Tuning</span> </div>
           {advancedExpanded ? ( <ChevronUp className="h-3.5 w-3.5 text-white/20" /> ) : ( <ChevronDown className="h-3.5 w-3.5 text-white/20" />
-          )} </button>
+          )} </Button>
         <AnimatePresence>
           {advancedExpanded && ( <motion.div
               initial={{ height: 0, opacity: 0 }}
@@ -437,16 +442,16 @@ function WeightControl({ weightParams, hasVersions, activeVersionLabel,
         </AnimatePresence> </div>
       {/* Action Buttons */}
       <div className="grid grid-cols-3 gap-2">
-        <button
+        <Button
           type="button"
           disabled={!hasVersions || busy}
           onClick={onBatchDownload}
-          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3 transition hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3 transition hover:bg-[var(--ecom-surface-hover)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Download className="h-4 w-4 text-white/40" />
           <span className="text-[10px] text-white/40">批量下载</span>
-          <span className="text-[8px] text-white/20">Selected or all real assets</span> </button>
-        <button
+          <span className="text-[8px] text-white/20">Selected or all real assets</span> </Button>
+        <Button
           type="button"
           disabled={!hasVersions || busy}
           onClick={onRegenerate}
@@ -454,8 +459,8 @@ function WeightControl({ weightParams, hasVersions, activeVersionLabel,
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
           <span className="text-[10px] font-medium">重新生成</span>
-          <span className="text-[8px] text-white/70">Re-generate</span> </button>
-        <button
+          <span className="text-[8px] text-white/70">Re-generate</span> </Button>
+        <Button
           type="button"
           disabled={!hasVersions || busy}
           onClick={onSaveTemplate}
@@ -463,7 +468,7 @@ function WeightControl({ weightParams, hasVersions, activeVersionLabel,
         >
           <Save className="h-4 w-4 text-amber-200/50" />
           <span className="text-[10px] text-white/40">保存为模板</span>
-          <span className="text-[8px] text-white/20">结果保存</span> </button> </div> </div>
+          <span className="text-[8px] text-white/20">结果保存</span> </Button> </div> </div>
   ) }
 // ─── Compare Panel ─────────────────────────────────────────────
 function ComparePanel({ nodes, variants, onClose,
@@ -476,7 +481,7 @@ function ComparePanel({ nodes, variants, onClose,
         <div>
           <h3 className="text-sm font-semibold text-white">版本对比</h3>
           <p className="text-[10px] text-white/30">对比已有生成版本</p> </div>
-        <button type="button" onClick={onClose} className="rounded-lg bg-white/[0.06] px-2 py-1 text-[10px] text-white/50 hover:text-white">关闭</button> </div>
+        <Button type="button" onClick={onClose} className="rounded-lg bg-white/[0.06] px-2 py-1 text-[10px] text-white/50 hover:text-white">关闭</Button> </div>
       <div className="grid gap-3 md:grid-cols-2">
         {nodes.map((node) => ( <div key={node.id} className="rounded-xl border border-white/[0.06] bg-black/10 p-3">
             <div className="mb-2 flex items-center justify-between">
@@ -516,12 +521,13 @@ function ZoomModal({ variant, onClose, }: {
           alt=""
           className="max-h-[85vh] max-w-[85vw] rounded-xl object-contain"
         />
-        <button
+        <Button
           type="button"
           onClick={onClose}
+          aria-label="关闭图片预览"
           className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
         >
-          <X className="h-4 w-4" /> </button> </motion.div> </motion.div>
+          <X className="h-4 w-4" aria-hidden="true" /> </Button> </motion.div> </motion.div>
   ) }
 // ─── Main Component ──────────────────────────────────────────
 export default function WorkshopPage() {

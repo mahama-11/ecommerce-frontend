@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { TOOLS, getLocalizedTool } from '@/mock/data'
 import { listProducts } from '@/services/product'
 import type { ProductListItem } from '@/types/product'
+import { Button } from '@/components/ui/Button'
 
 export default function ProductVisualToolsPage() {
   const { t, i18n } = useTranslation()
@@ -96,13 +97,13 @@ export default function ProductVisualToolsPage() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="relative flex min-h-[calc(100vh-52px)] flex-col overflow-hidden bg-[#0a0a12] text-[#e8eaf0]"
+      className="relative flex min-h-[calc(100vh-52px)] flex-col overflow-hidden bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)]"
     >
       <div className="pointer-events-none fixed inset-0 opacity-60">
         <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
         <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" />
       </div>
-      <motion.div variants={itemVariants} className="relative z-10 mx-auto mt-6 w-[calc(100%-2.5rem)] max-w-[1600px] rounded-[32px] border border-white/10 bg-[#080b11]/92 px-6 py-6 shadow-[0_28px_90px_rgba(0,0,0,0.45)] ring-1 ring-cyan-300/5 backdrop-blur-xl">
+      <motion.div variants={itemVariants} className="relative z-10 mx-auto mt-6 w-[calc(100%-2.5rem)] max-w-[1600px] rounded-[32px] border border-white/10 bg-[var(--ecom-surface)] px-6 py-6 shadow-[0_28px_90px_rgba(0,0,0,0.45)] ring-1 ring-cyan-300/5 backdrop-blur-xl">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between max-w-[1600px] mx-auto">
           <div>
             <div className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-cyan-200/65">Visual Station · SKU-bound generation</div>
@@ -160,7 +161,7 @@ export default function ProductVisualToolsPage() {
       <div className="flex-1 flex overflow-hidden max-w-[1600px] w-full mx-auto relative p-6">
         <div className="flex-1 flex gap-6 overflow-hidden h-full flex-col xl:flex-row">
           {/* Main List */}
-          <motion.div variants={itemVariants} className="flex-1 overflow-auto rounded-[28px] border border-white/10 bg-[#080b11]/92 backdrop-blur-md shadow-2xl p-6 flex flex-col min-w-0">
+          <motion.div variants={itemVariants} className="flex-1 overflow-auto rounded-[28px] border border-white/10 bg-[var(--ecom-surface)] backdrop-blur-md shadow-2xl p-6 flex flex-col min-w-0">
             <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 mb-6">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="text-sm font-medium text-white">{t('product.visualTools.sourceStripTitle')}</div>
@@ -198,7 +199,7 @@ export default function ProductVisualToolsPage() {
                   <select
                     value={selectedProductID}
                     onChange={event => setSelectedProductID(event.target.value)}
-                    className="w-full max-w-md rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white/90 outline-none transition focus:border-brand-500/50"
+                    className="w-full max-w-md rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition focus:border-brand-500/50"
                   >
                     {products.map(item => (
                       <option key={item.id} value={item.id}>
@@ -236,14 +237,14 @@ export default function ProductVisualToolsPage() {
                       const localized = getLocalizedTool(tool, i18n.language)
                       const active = tool.slug === selectedToolSlug
                       return (
-                        <button
+                        <Button
                           key={tool.id}
                           type="button"
                           onClick={() => setSelectedToolSlug(tool.slug)}
-                          className={`rounded-xl border p-4 text-left transition-all ${
+                          className={`rounded-xl border p-4 text-left transition-colors ${
                             active
                               ? 'border-brand-500/40 bg-brand-500/10 shadow-[0_0_15px_rgba(var(--brand-500),0.15)]'
-                              : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'
+                              : 'border-white/10 bg-white/[0.02] hover:bg-[var(--ecom-surface-hover)]'
                           }`}
                         >
                           <div className="flex items-start gap-4">
@@ -255,7 +256,7 @@ export default function ProductVisualToolsPage() {
                               <div className="mt-1.5 text-xs text-white/40 leading-relaxed line-clamp-2">{localized.desc}</div>
                             </div>
                           </div>
-                        </button>
+                        </Button>
                       )
                     })}
                   </div>
@@ -266,7 +267,7 @@ export default function ProductVisualToolsPage() {
 
           {/* Right Sidebar */}
           <motion.div variants={itemVariants} className="xl:w-[360px] flex-shrink-0 flex flex-col gap-6 h-full overflow-y-auto">
-            <div className="rounded-[28px] border border-white/10 bg-[#080b11]/92 backdrop-blur-md p-6 shadow-xl">
+            <div className="rounded-[28px] border border-white/10 bg-[var(--ecom-surface)] backdrop-blur-md p-6 shadow-xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 mb-5">
                 <Sparkles className="h-3.5 w-3.5 text-cyan-200" />
                 <span>{t('product.visualTools.selectedTool')}</span>
@@ -301,23 +302,23 @@ export default function ProductVisualToolsPage() {
                 </div>
               </div>
 
-              <button
+              <Button
                 onClick={openWorkspace}
                 disabled={!selectedProduct || !selectedTool || selectedToolIsVideo}
                 className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-brand-400 disabled:cursor-not-allowed disabled:opacity-50 shadow-[0_0_20px_rgba(var(--brand-500),0.2)]"
               >
                 {selectedToolIsVideo ? t('product.visualTools.videoContractNeeded') : t('product.visualTools.startImageGeneration')}
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
                 disabled
                 className="mt-3 flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-amber-300/20 bg-amber-300/8 px-4 py-3 text-sm font-semibold text-amber-100/55"
                 title={t('product.visualTools.videoProviderNotWired')}
               >
                 <Video className="h-4 w-4" /> {t('product.visualTools.videoWorkspaceContractNeeded')}
-              </button>
+              </Button>
 
               {selectedProduct ? (
                 <div className="mt-4 grid gap-3">
@@ -337,7 +338,7 @@ export default function ProductVisualToolsPage() {
               ) : null}
             </div>
 
-            <div className="rounded-[28px] border border-white/10 bg-[#080b11]/92 backdrop-blur-md p-6 shadow-xl">
+            <div className="rounded-[28px] border border-white/10 bg-[var(--ecom-surface)] backdrop-blur-md p-6 shadow-xl">
               <div className="mb-4 flex items-center gap-2 text-white/90">
                 <Bot className="h-4 w-4 text-cyan-200" />
                 <h3 className="font-semibold">{t('product.visualTools.taskQueueTitle')}</h3>
@@ -355,7 +356,7 @@ export default function ProductVisualToolsPage() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-white/10 bg-[#080b11]/92 backdrop-blur-md p-6 shadow-xl">
+            <div className="rounded-[28px] border border-white/10 bg-[var(--ecom-surface)] backdrop-blur-md p-6 shadow-xl">
               <div className="flex items-center gap-2 text-white/90 mb-4">
                 <Bot className="h-4 w-4 text-cyan-200" />
                 <h3 className="font-semibold">{t('product.visualTools.workflowRule')}</h3>

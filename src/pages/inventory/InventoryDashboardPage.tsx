@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 // ============================================================
 // 库存总览页面 (InventoryDashboardPage)
 // 对应原 HTML overview 页面
@@ -27,7 +28,7 @@ function StatCard({
   const TrendIcon = trend && trend > 0 ? TrendingUp : TrendingDown
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.04] p-5 backdrop-blur-sm transition hover:bg-white/[0.07]">
+    <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.04] p-5 backdrop-blur-sm transition hover:bg-[var(--ecom-surface-hover)]">
       {loading ? (
         <div className="flex h-20 items-center justify-center">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/60" />
@@ -150,7 +151,7 @@ export default function InventoryDashboardPage() {
               placeholder="搜索 SKU 或商品名称..."
               value={filter.search}
               onChange={e => setFilter({ search: e.target.value })}
-              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 pl-10 text-sm text-white placeholder-white/30 outline-none focus:border-white/20 focus:bg-white/[0.07]"
+              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 pl-10 text-sm text-white placeholder-white/30 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20 focus:bg-white/[0.07]"
             />
             <Package className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
           </div>
@@ -158,7 +159,7 @@ export default function InventoryDashboardPage() {
           <select
             value={filter.status}
             onChange={e => setFilter({ status: e.target.value as any })}
-            className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 outline-none focus:border-white/20"
+            className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
           >
             <option value="all">全部状态</option>
             <option value="in_stock">有货</option>
@@ -170,7 +171,7 @@ export default function InventoryDashboardPage() {
           <select
             value={filter.platform}
             onChange={e => setFilter({ platform: e.target.value as any })}
-            className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 outline-none focus:border-white/20"
+            className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
           >
             <option value="all">全部平台</option>
             <option value="amazon">Amazon</option>
@@ -178,12 +179,12 @@ export default function InventoryDashboardPage() {
             <option value="lazada">Lazada</option>
           </select>
 
-          <button
+          <Button
             onClick={() => { void loadProducts() }}
             className="rounded-xl bg-brand-400/15 px-4 py-2 text-sm font-medium text-brand-100 transition hover:bg-brand-400/25"
           >
             刷新
-          </button>
+          </Button>
         </div>
 
         {/* 表格 */}
@@ -221,7 +222,7 @@ export default function InventoryDashboardPage() {
                 products.map(product => (
                   <tr
                     key={product.id}
-                    className="border-b border-white/[0.04] transition hover:bg-white/[0.03]"
+                    className="border-b border-white/[0.04] transition hover:bg-[var(--ecom-surface-hover)]"
                   >
                     <td className="px-5 py-3 font-mono text-xs text-cyan-400">{product.sku}</td>
                     <td className="px-5 py-3 text-white/90">{product.title}</td>
@@ -248,20 +249,20 @@ export default function InventoryDashboardPage() {
               共 {totalProducts} 条，第 {filter.page}/{Math.ceil(totalProducts / filter.pageSize)} 页
             </span>
             <div className="flex gap-2">
-              <button
+              <Button
                 onClick={() => setFilter({ page: Math.max(1, filter.page - 1) })}
                 disabled={filter.page <= 1}
-                className="rounded-lg px-3 py-1 text-xs transition hover:bg-white/[0.07] disabled:opacity-30"
+                className="rounded-lg px-3 py-1 text-xs transition hover:bg-[var(--ecom-surface-hover)] disabled:opacity-30"
               >
                 上一页
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setFilter({ page: filter.page + 1 })}
                 disabled={filter.page >= Math.ceil(totalProducts / filter.pageSize)}
-                className="rounded-lg px-3 py-1 text-xs transition hover:bg-white/[0.07] disabled:opacity-30"
+                className="rounded-lg px-3 py-1 text-xs transition hover:bg-[var(--ecom-surface-hover)] disabled:opacity-30"
               >
                 下一页
-              </button>
+              </Button>
             </div>
           </div>
         )}

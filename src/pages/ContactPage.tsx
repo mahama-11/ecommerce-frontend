@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, Building2, Headphones, Mail, MessageSquare, Sparkles } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 
 type Locale = 'zh' | 'en'
 
@@ -60,13 +61,13 @@ export default function ContactPage() {
 
         <section className="grid gap-4 md:grid-cols-3">
           {CONTACT_TYPES.map(item => (
-            <button
+            <Button
               key={item.key}
               onClick={() => setActiveType(item.key)}
               className={`rounded-2xl border p-6 text-left transition-colors ${
                 activeType === item.key
                   ? 'border-brand-500/25 bg-brand-500/10'
-                  : 'border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05]'
+                  : 'border-white/[0.06] bg-white/[0.03] hover:bg-[var(--ecom-surface-hover)]'
               }`}
             >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.08] bg-gradient-to-br from-brand-500/20 to-accent-500/20">
@@ -74,7 +75,7 @@ export default function ContactPage() {
               </div>
               <div className="text-lg font-semibold text-white">{text(locale, item.title)}</div>
               <div className="mt-3 text-sm leading-6 text-white/55">{text(locale, item.desc)}</div>
-            </button>
+            </Button>
           ))}
         </section>
 
@@ -87,34 +88,34 @@ export default function ContactPage() {
               <input
                 readOnly
                 value={locale === 'zh' ? '你的姓名' : 'Your Name'}
-                className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none"
+                className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
               />
               <input
                 readOnly
                 value={locale === 'zh' ? '公司 / 团队名' : 'Company / Team'}
-                className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none"
+                className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
               />
               <input
                 readOnly
                 value={locale === 'zh' ? '联系邮箱' : 'Contact Email'}
-                className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none"
+                className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
               />
               <input
                 readOnly
                 value={text(locale, active.title)}
-                className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none"
+                className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
               />
               <textarea
                 readOnly
                 value={locale === 'zh' ? '请描述你的需求、遇到的问题或合作方向...' : 'Describe your request, issue, or partnership direction...'}
-                className="min-h-36 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none sm:col-span-2"
+                className="min-h-36 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 sm:col-span-2"
               />
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
-              <button className="btn-primary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white">
+              <Button className="btn-primary inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white">
                 <span>{locale === 'zh' ? '提交需求' : 'Submit request'}</span>
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Button>
               <Link to="/pricing" className="btn-outline inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold">
                 <span>{locale === 'zh' ? '先看定价' : 'View Pricing First'}</span>
               </Link>

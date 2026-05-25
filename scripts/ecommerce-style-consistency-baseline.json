@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "policy": "No new style drift. Historical page-local styling is allowed only while it is burned down; counts may decrease but not increase.",
+  "rules": [
+    {
+      "key": "rawHexUtility",
+      "name": "raw hex color utility"
+    },
+    {
+      "key": "bareButton",
+      "name": "bare button element"
+    },
+    {
+      "key": "adHocWhiteHover",
+      "name": "ad-hoc white hover surface"
+    },
+    {
+      "key": "adHocHeaderBg",
+      "name": "ad-hoc header background"
+    },
+    {
+      "key": "randomDarkHex",
+      "name": "random dark hex utility"
+    }
+  ],
+  "scan": {},
+  "totals": {
+    "files": 0,
+    "totals": {
+      "rawHexUtility": 0,
+      "bareButton": 0,
+      "adHocWhiteHover": 0,
+      "adHocHeaderBg": 0,
+      "randomDarkHex": 0
+    }
+  }
+}

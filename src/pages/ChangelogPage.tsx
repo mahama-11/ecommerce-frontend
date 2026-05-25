@@ -125,7 +125,7 @@ export default function ChangelogPage() {
                   { label: { zh: 'API 文档', en: 'API Docs' }, to: '/api-docs' },
                   { label: { zh: '关于我们', en: 'About Us' }, to: '/aboutus' },
                 ].map(item => (
-                  <Link key={item.to} to={item.to} className="block rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/55 transition-colors hover:bg-white/[0.05] hover:text-white">
+                  <Link key={item.to} to={item.to} className="block rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/55 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white">
                     {text(locale, item.label)}
                   </Link>
                 ))}

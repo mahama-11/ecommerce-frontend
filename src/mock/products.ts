@@ -1,17 +1,17 @@
-import type { ProductListItem, ProductStatus, Product, ListingVersion, ProfitSnapshot, ExportTask } from '@/types/product'
+import type { ProductListItem, ProductStatus, Product, ListingVersion, ProfitSnapshot, ExportTask, ProductAsset, ProductActivity, AssetRole } from '@/types/product'
 
 const NOW = new Date().toISOString()
 
 const MOCK_ASSETS_BASE = 'https://picsum.photos'
 
-function randomAsset(id: string, role: string, primary = false) {
+function randomAsset(id: string, role: AssetRole, primary = false): ProductAsset {
   const width = Math.floor(Math.random() * 400) + 800
   const height = Math.floor(Math.random() * 400) + 800
   return {
     id: `asset-${id}`,
     assetId: `asset-${id}`,
     assetType: 'image' as const,
-    assetRole: role as any,
+    assetRole: role,
     isPrimary: primary,
     thumbnailUrl: `${MOCK_ASSETS_BASE}/200/200?random=${id}`,
     originalUrl: `${MOCK_ASSETS_BASE}/${width}/${height}?random=${id}`,
@@ -195,11 +195,11 @@ export function listProductsMock(params: {
 
 export function getProductMock(id: string): {
   product: Product
-  assets: any[]
+  assets: ProductAsset[]
   listingVersions: ListingVersion[]
   profitSnapshots: ProfitSnapshot[]
   exportTasks: ExportTask[]
-  activities: any[]
+  activities: ProductActivity[]
 } | null {
   const listItem = PRODUCT_LIST_ITEMS.find(p => p.id === id)
   if (!listItem) return null

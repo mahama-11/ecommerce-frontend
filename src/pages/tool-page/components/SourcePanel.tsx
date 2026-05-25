@@ -2,6 +2,7 @@ import { Upload } from 'lucide-react'
 import type { SourceAssetSummary } from '@/services/imageRuntime'
 import type { AssetRequirement, Locale } from '../types'
 import { copy, formatAssetLabel } from '../utils'
+import { Button } from '@/components/ui/Button'
 
 type SourceGuide = {
   title: string
@@ -36,7 +37,7 @@ export function SourcePanel({
         <span>{sourceGuide.title}</span>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-white/[0.06] bg-[#0a0d14]">
+      <div className="overflow-hidden rounded-3xl border border-white/[0.06] bg-[var(--ecom-surface)]">
         <div className="flex min-h-[320px] items-center justify-center p-4 sm:p-6">
           {sourcePreviewUrl ? (
             <img
@@ -45,7 +46,7 @@ export function SourcePanel({
               className="max-h-[420px] w-full object-contain"
             />
           ) : (
-            <button
+            <Button
               type="button"
               onClick={onSelectFile}
               className="flex h-full w-full flex-col items-center justify-center rounded-[24px] border-2 border-dashed border-white/10 px-6 py-10 text-center transition-colors hover:border-brand-500/30"
@@ -57,7 +58,7 @@ export function SourcePanel({
               <div className="mt-2 max-w-sm text-sm leading-6 text-white/45">
                 {sourceGuide.helper}
               </div>
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -111,21 +112,21 @@ export function SourcePanel({
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <button
+          <Button
             type="button"
             onClick={onSelectFile}
-            className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm text-white/75 transition-colors hover:bg-white/[0.08]"
+            className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm text-white/75 transition-colors hover:bg-[var(--ecom-surface-hover)]"
           >
             {sourcePreviewUrl ? copy(locale, '重新上传', 'Replace Image') : copy(locale, '选择图片', 'Select Image')}
-          </button>
+          </Button>
           {sourcePreviewUrl ? (
-            <button
+            <Button
               type="button"
               onClick={onClearSource}
               className="rounded-2xl border border-white/[0.08] bg-transparent px-4 py-2 text-sm text-white/55 transition-colors hover:border-rose-400/25 hover:text-rose-300"
             >
               {copy(locale, '移除图片', 'Remove Image')}
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>

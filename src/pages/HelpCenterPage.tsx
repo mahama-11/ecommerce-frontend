@@ -85,7 +85,7 @@ export default function HelpCenterPage() {
                 <input
                   readOnly
                   value={locale === 'zh' ? '例如：如何复制模板到我的模板库' : 'Example: how to copy a template into my library'}
-                  className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3 pl-10 pr-4 text-sm text-white/55 outline-none"
+                  className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3 pl-10 pr-4 text-sm text-white/55 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
                 />
               </div>
             </div>
@@ -139,7 +139,7 @@ export default function HelpCenterPage() {
                   { label: { zh: '知识库对话', en: 'Knowledge Chat' }, to: '/chat/doc' },
                   { label: { zh: '下载中心', en: 'Download Center' }, to: '/downloadCenter' },
                 ].map(item => (
-                  <Link key={item.to} to={item.to} className="block rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/55 transition-colors hover:bg-white/[0.05] hover:text-white">
+                  <Link key={item.to} to={item.to} className="block rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/55 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white">
                     {text(locale, item.label)}
                   </Link>
                 ))}

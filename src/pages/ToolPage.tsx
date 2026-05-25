@@ -13,7 +13,7 @@ import { cancelImageJob,
   type SourceAssetSummary, } from '@/services/imageRuntime'
 import { clearUseTemplatePayload,
   listCatalog, loadUseTemplatePayload,
-  type TemplateUseResponse, useTemplateNow,
+  type TemplateUseResponse, useTemplateNow as executeTemplateNow,
 } from '@/services/templateCenter'
 import { getProduct } from '@/services/product'
 import type { Product } from '@/types/product'
@@ -26,6 +26,7 @@ import { copy,
   toolToSceneType, formatAssetLabel,
 } from './tool-page/utils'
 import { Z_INDEX } from '@/styles/zIndex'
+import { Button } from '@/components/ui/Button'
 type ToolPageLocationState = { templateUsePayload?: TemplateUseResponse
 }
 type ToolContentProps = { tool: ToolDef
@@ -279,7 +280,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
         if (canceled) return
         setResults([])
         for (const job of jobs) {
-          // eslint-disable-next-line no-await-in-loop
+           
           await applyJobSummary(job) }
         const activeJob = jobs.find(job => !isTerminalStatus(job.status)) || jobs[0]
         if (activeJob) { setActiveJobID(activeJob.job_id)
@@ -310,7 +311,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                 `${localizedTool.name} generation failed`, job.last_error_message || '请检查提示词、源图或稍后重试',
                 job.last_error_message || 'Check the prompt, source image, or try again later', )
             } }
-        } } catch (error) {
+        } } catch {
         if (!canceled) {
           // Toast will be shown globally
         } }
@@ -356,7 +357,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
       saveWorkflowEvent( '源图已完成登记',
         'Source image registered', `${file.name} 已同步到业务资产层，可直接发起生成任务`,
         `${file.name} is registered and ready for generation`, )
-    } catch (error) {
+    } catch {
       // Global toast handles API errors
       setSourceAsset(null) } finally {
       setUploadingSource(false) }
@@ -387,7 +388,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
       saveWorkflowEvent( `${localizedTool.name} 任务已创建`,
         `${localizedTool.name} job created`, `任务 ${job.job_id.slice(-6)} 已提交到平台 runtime，正在排队处理`,
         `Job ${job.job_id.slice(-6)} has been queued in platform runtime`, )
-    } catch (error) {
+    } catch {
       // Global toast handles API errors
     } finally { setCreatingJob(false)
     } }
@@ -410,12 +411,12 @@ function ToolContent({ tool, productId }: ToolContentProps) {
     if (selectingTemplateID) return
     setSelectingTemplateID(template.id)
     try {
-      const payload = await useTemplateNow(template.id)
-      applyTemplatePayload(payload, { replacePrompt: true }) } catch (error) {
+      const payload = await executeTemplateNow(template.id)
+      applyTemplatePayload(payload, { replacePrompt: true }) } catch {
       // API error toast
     } finally { setSelectingTemplateID(null)
     } }
-  return ( <div className="min-h-screen bg-[#060608] flex flex-col relative overflow-hidden">
+  return ( <div className="min-h-screen bg-[var(--ecom-surface)] flex flex-col relative overflow-hidden">
       <input
         ref={fileInputRef}
         type="file"
@@ -482,10 +483,10 @@ function ToolContent({ tool, productId }: ToolContentProps) {
         </div>
         {!hasValidCanvas ? ( <div className="w-full max-w-4xl mx-auto flex flex-col items-center z-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
             {/* Upload Dropzone */}
-            <button
+            <Button
               onClick={handleSelectFile}
               disabled={uploadingSource}
-              className={`relative w-full max-w-2xl aspect-[16/9] rounded-[32px] border-2 border-dashed transition-all duration-500 group flex flex-col items-center justify-center backdrop-blur-xl overflow-hidden ${ uploadingSource
+              className={`relative w-full max-w-2xl aspect-[16/9] rounded-[32px] border-2 border-dashed transition-colors duration-500 group flex flex-col items-center justify-center backdrop-blur-xl overflow-hidden ${ uploadingSource
                   ? 'border-brand-500/50 bg-brand-500/5 cursor-wait' : 'border-white/10 hover:border-brand-500/40 hover:bg-brand-500/5 hover:shadow-[0_0_40px_rgba(var(--brand-500),0.15)] bg-white/[0.02]'
               }`}
             >
@@ -501,7 +502,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                     <Loader2 size={48} className="text-brand-400 animate-spin" />
                     <h3 className="text-xl font-bold text-white tracking-wide">{copy(locale, '正在解析源图...', 'Analyzing source...')}</h3> </div>
                 ) : ( <>
-                    <div className="w-24 h-24 rounded-[24px] bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-brand-500/20 group-hover:border-brand-500/30 group-hover:text-brand-300 transition-all duration-500 shadow-2xl relative">
+                    <div className="w-24 h-24 rounded-[24px] bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-brand-500/20 group-hover:border-brand-500/30 group-hover:text-brand-300 transition-colors duration-500 shadow-2xl relative">
                       <div className="absolute inset-0 bg-brand-400/20 rounded-[24px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       <Upload className="text-white/50 group-hover:text-brand-400 transition-colors relative z-10" size={40} strokeWidth={1.5} /> </div>
                     <h3 className="text-2xl font-black text-white/90 mb-3 tracking-tight">{sourceGuide.title}</h3>
@@ -512,7 +513,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                           {item.label} {item.required ? '*' : ''} </span>
                       ))} </div>
                   </> )}
-              </div> </button>
+              </div> </Button>
             {/* Inspiration Gallery (Zero Cold-Start) */}
             {templateOptions.length > 0 && ( <div className="mt-16 w-full max-w-4xl relative">
                 <div className="flex items-center justify-center gap-4 mb-8 opacity-60">
@@ -528,15 +529,19 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                     {[0, 1].map((setIndex) => ( <div key={setIndex} className="flex gap-5 px-2.5">
                         {templateOptions.map(item => ( <div
                             key={`${setIndex}-${item.id}`}
-                            className={`flex-none w-36 h-36 rounded-2xl bg-black/40 border overflow-hidden cursor-pointer group relative shadow-xl transition-all duration-500 ${ activeTemplate?.id === item.id
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`${copy(locale, '应用模板', 'Apply template')} ${item.name}`}
+                            className={`flex-none w-36 h-36 rounded-2xl bg-black/40 border overflow-hidden cursor-pointer group relative shadow-xl transition-colors duration-500 ${ activeTemplate?.id === item.id
                                 ? 'border-brand-500 shadow-[0_0_30px_rgba(var(--brand-500),0.5)] -translate-y-2' : 'border-white/10 hover:shadow-[0_0_30px_rgba(var(--brand-500),0.3)] hover:border-brand-500/40 hover:-translate-y-2'
                             }`}
                             onClick={() => { void handleSelectTemplatePlan(item)
                             }}
+                            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') void handleSelectTemplatePlan(item) }}
                           >
                             <img
                               src={item.coverAssetUrl || `https://picsum.photos/seed/${item.id}/300`}
-                              className={`w-full h-full object-cover transition-all duration-700 ${ activeTemplate?.id === item.id ? 'opacity-100 scale-110' : 'opacity-60 group-hover:opacity-100 group-hover:scale-110'
+                              className={`w-full h-full object-cover transition-colors duration-700 ${ activeTemplate?.id === item.id ? 'opacity-100 scale-110' : 'opacity-60 group-hover:opacity-100 group-hover:scale-110'
                               }`}
                               alt={item.name}
                             />
@@ -560,14 +565,14 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                   <img
                     src={sourcePreviewUrl}
                     alt="Source"
-                    className={`w-full h-full object-contain transition-all duration-1000 ${isProcessing ? 'opacity-40 blur-md scale-105' : 'opacity-100'}`}
+                    className={`w-full h-full object-contain transition-colors duration-1000 ${isProcessing ? 'opacity-40 blur-md scale-105' : 'opacity-100'}`}
                   />
-                  {!isProcessing && ( <button
+                  {!isProcessing && ( <Button
                       onClick={handleClearSource}
-                      className="absolute top-4 right-4 bg-black/60 text-white/80 hover:text-white hover:bg-rose-500/80 hover:shadow-[0_0_20px_rgba(244,63,94,0.5)] border border-white/10 backdrop-blur-md rounded-full p-2.5 opacity-0 group-hover/source:opacity-100 transition-all duration-300 z-50 transform hover:scale-110"
+                      className="absolute top-4 right-4 bg-black/60 text-white/80 hover:text-white hover:bg-rose-500/80 hover:shadow-[0_0_20px_rgba(244,63,94,0.5)] border border-white/10 backdrop-blur-md rounded-full p-2.5 opacity-0 group-hover/source:opacity-100 transition-colors duration-300 z-50 transform hover:scale-110"
                       title={copy(locale, '清除当前图片', 'Clear image')}
                     >
-                      <X size={18} strokeWidth={2.5} /> </button>
+                      <X size={18} strokeWidth={2.5} /> </Button>
                   )} </div>
               )}
               {/* Display Result Image */}
@@ -577,12 +582,12 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                     alt="Result"
                     className="w-full h-full object-contain animate-in fade-in duration-1000"
                   />
-                  {!isProcessing && ( <button
+                  {!isProcessing && ( <Button
                       onClick={handleClearSource}
-                      className="absolute top-4 right-4 bg-black/60 text-white/80 hover:text-white hover:bg-rose-500/80 hover:shadow-[0_0_20px_rgba(244,63,94,0.5)] border border-white/10 backdrop-blur-md rounded-full p-2.5 opacity-0 group-hover/result:opacity-100 transition-all duration-300 z-50 transform hover:scale-110"
+                      className="absolute top-4 right-4 bg-black/60 text-white/80 hover:text-white hover:bg-rose-500/80 hover:shadow-[0_0_20px_rgba(244,63,94,0.5)] border border-white/10 backdrop-blur-md rounded-full p-2.5 opacity-0 group-hover/result:opacity-100 transition-colors duration-300 z-50 transform hover:scale-110"
                       title={copy(locale, '清除当前图片', 'Clear image')}
                     >
-                      <X size={18} strokeWidth={2.5} /> </button>
+                      <X size={18} strokeWidth={2.5} /> </Button>
                   )} </div>
               )}
               {/* Immersive Processing Overlay */}
@@ -605,19 +610,19 @@ function ToolContent({ tool, productId }: ToolContentProps) {
             </div> </div>
         )} </main>
       {/* Floating Prompt Bar (Bottom Action Island) */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50 transition-all duration-700 translate-y-0 opacity-100">
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50 transition-colors duration-700 translate-y-0 opacity-100">
         <div className="glass-strong rounded-full p-2 pl-6 pr-2 flex items-center gap-3 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-3xl relative">
           {/* Upload/Replace Button */}
-          <button
+          <Button
             onClick={handleSelectFile}
             className="p-2.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors relative group shrink-0"
             title={copy(locale, '重新上传源图', 'Replace source image')}
           >
             <ImageIcon size={22} />
-            {currentSourceAsset && <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#1a1b1e]"></div>} </button>
+            {currentSourceAsset && <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[var(--ecom-border)]"></div>} </Button>
           <div className="h-6 w-px bg-white/10 shrink-0"></div>
           {/* Visual Parameters: Template Trigger */}
-          <button
+          <Button
             onClick={() => { setPickerOpen(true)
               void loadTemplateOptions(!templateOptionsLoaded || templateOptions.length === 0) }}
             className="px-4 py-2.5 rounded-full hover:bg-white/10 text-brand-400 transition-colors flex items-center gap-2 shrink-0 border border-transparent hover:border-brand-500/30"
@@ -625,67 +630,67 @@ function ToolContent({ tool, productId }: ToolContentProps) {
             <Sparkles size={18} />
             <span className="text-sm font-bold max-w-[120px] truncate hidden sm:inline-block">
               {activeTemplate ? activeTemplate.name : copy(locale, '默认风格', 'Default Style')} </span>
-            <ChevronRight size={14} className="opacity-50" /> </button>
+            <ChevronRight size={14} className="opacity-50" /> </Button>
           <div className="h-6 w-px bg-white/10 shrink-0"></div>
           {/* Prompt Input */}
           <input
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             placeholder={copy(locale, '描述你想要的细节，或直接点击生成...', 'Describe details, or just generate...')}
-            className="flex-1 bg-transparent border-none text-white text-base font-medium focus:ring-0 placeholder-white/30 h-12 outline-none min-w-[200px]"
+            className="flex-1 bg-transparent border-none text-white text-base font-medium focus:ring-0 placeholder-white/30 h-12 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 min-w-[200px]"
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault()
                 void handleGenerate() }
             }}
           />
           {/* Generate CTA */}
-          <button
+          <Button
             onClick={handleGenerate}
             disabled={creatingJob || uploadingSource || !currentSourceAsset || !selectedProduct || productLoading}
-            className="h-14 px-8 rounded-full bg-brand-500 text-white font-black text-sm flex items-center gap-2.5 hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-[0_0_20px_rgba(var(--brand-500),0.3)] hover:shadow-[0_0_40px_rgba(var(--brand-500),0.6)] shrink-0"
+            className="h-14 px-8 rounded-full bg-brand-500 text-white font-black text-sm flex items-center gap-2.5 hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300 shadow-[0_0_20px_rgba(var(--brand-500),0.3)] hover:shadow-[0_0_40px_rgba(var(--brand-500),0.6)] shrink-0"
           >
             {creatingJob ? <Loader2 size={20} className="animate-spin" /> : <Wand2 size={20} />}
-            {creatingJob ? copy(locale, '生成中...', 'Generating...') : copy(locale, '魔法生成', 'Generate')} </button>
-          {pollingJobID && ( <button
+            {creatingJob ? copy(locale, '生成中...', 'Generating...') : copy(locale, '魔法生成', 'Generate')} </Button>
+          {pollingJobID && ( <Button
               onClick={() => { void handleCancelJob() }}
               disabled={cancelingJob}
-              className="h-14 px-6 rounded-full border border-white/15 bg-white/5 text-white font-bold text-sm flex items-center gap-2 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shrink-0"
+              className="h-14 px-6 rounded-full border border-white/15 bg-white/5 text-white font-bold text-sm flex items-center gap-2 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300 shrink-0"
             >
               {cancelingJob ? <Loader2 size={18} className="animate-spin" /> : <X size={18} />}
-              {cancelingJob ? copy(locale, '取消中...', 'Canceling...') : copy(locale, '取消任务', 'Cancel Job')} </button>
+              {cancelingJob ? copy(locale, '取消中...', 'Canceling...') : copy(locale, '取消任务', 'Cancel Job')} </Button>
           )} </div>
       </div>
       {/* History Drawer (Right Side Filmstrip) */}
-      <div className={`absolute top-1/2 right-6 -translate-y-1/2 z-40 transition-all duration-700 ${(results.filter(r => r.status !== 'failed').length > 0) ? 'translate-x-0 opacity-100' : 'translate-x-24 opacity-0 pointer-events-none'}`}>
+      <div className={`absolute top-1/2 right-6 -translate-y-1/2 z-40 transition-colors duration-700 ${(results.filter(r => r.status !== 'failed').length > 0) ? 'translate-x-0 opacity-100' : 'translate-x-24 opacity-0 pointer-events-none'}`}>
         <div className="glass-strong rounded-[24px] p-3 border border-white/10 flex flex-col gap-3 shadow-2xl backdrop-blur-2xl">
            <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] text-center pb-2 border-b border-white/5">
              {copy(locale, '历史记录', 'History')} </div>
            <div className="flex flex-col gap-3 max-h-[50vh] overflow-y-auto scrollbar-hide pt-1 pb-1">
-             {results.filter(r => r.status !== 'failed').map(res => ( <button
+             {results.filter(r => r.status !== 'failed').map(res => ( <Button
                   key={res.id}
                   onClick={() => { resetSourceState()
                     setActiveJobID(res.id) }}
-                  className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-300 ${ res.id === currentResult?.id
+                  className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors duration-300 ${ res.id === currentResult?.id
                       ? 'border-brand-400 scale-110 shadow-[0_0_20px_rgba(var(--brand-500),0.5)] z-10' : 'border-white/10 hover:border-white/30 opacity-50 hover:opacity-100'
                   }`}
                 >
                   {res.previewUrl ? ( <img src={res.previewUrl} className="w-full h-full object-cover" alt="History" />
                   ) : ( <div className="w-full h-full flex items-center justify-center bg-white/5">
                         <Loader2 size={16} className="text-brand-400 animate-spin" /> </div>
-                  )} </button>
+                  )} </Button>
              ))} </div>
         </div> </div>
       {/* Template Picker Modal (Visual Parameters) */}
       {pickerOpen && ( <div className={`fixed inset-0 ${Z_INDEX.modal} flex items-center justify-center bg-black/80 px-4 backdrop-blur-md animate-in fade-in duration-300`}>
-          <div className="w-full max-w-4xl rounded-[32px] border border-white/10 bg-[#0a0d14] p-8 shadow-2xl animate-in zoom-in-95 duration-300">
+          <div className="w-full max-w-4xl rounded-[32px] border border-white/10 bg-[var(--ecom-surface)] p-8 shadow-2xl animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h3 className="text-2xl font-black text-white">{copy(locale, '选择模特与风格', 'Choose Style Template')}</h3>
                 <p className="text-sm font-medium text-white/40 mt-2">
                   {copy(locale, '点击直接应用，省去繁琐提示词。', 'Click to apply instantly, skip complex prompts.')} </p>
               </div>
-              <button onClick={() => setPickerOpen(false)} className="rounded-full bg-white/5 p-3 hover:bg-white/10 text-white/60 hover:text-white transition-colors">
-                <X size={20} /> </button>
+              <Button onClick={() => setPickerOpen(false)} className="rounded-full bg-white/5 p-3 hover:bg-white/10 text-white/60 hover:text-white transition-colors">
+                <X size={20} /> </Button>
             </div>
             <div className="relative mb-6">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
@@ -694,19 +699,19 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                 value={templateSearchTerm}
                 onChange={(e) => setTemplateSearchTerm(e.target.value)}
                 placeholder={copy(locale, '搜索模板名称...', 'Search templates...')}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus:border-brand-500/50 transition-colors"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-brand-500/50 transition-colors"
               /> </div>
             {templateOptionsLoading ? ( <div className="flex min-h-[240px] items-center justify-center text-white/60">
                 <Loader2 size={20} className="mr-3 animate-spin" />
                 {copy(locale, '正在加载模板...', 'Loading templates...')} </div>
             ) : templateOptionsError ? ( <div className="flex min-h-[240px] flex-col items-center justify-center text-center">
                 <p className="text-sm text-white/60">{templateOptionsError}</p>
-                <button
+                <Button
                   type="button"
                   onClick={() => void loadTemplateOptions(true)}
                   className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
                 >
-                  {copy(locale, '重试加载', 'Retry')} </button>
+                  {copy(locale, '重试加载', 'Retry')} </Button>
               </div> ) : templateOptions
               .filter(item => item.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
                 item.summary.toLowerCase().includes(templateSearchTerm.toLowerCase()) ).length === 0 ? (
@@ -717,11 +722,11 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                   item.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) || item.summary.toLowerCase().includes(templateSearchTerm.toLowerCase())
                 ) .map(item => {
                 const isActive = activeTemplate?.id === item.id
-                return ( <button
+                return ( <Button
                     key={item.id}
                     onClick={() => { void handleSelectTemplatePlan(item)
                       setPickerOpen(false) }}
-                    className={`group relative aspect-[3/4] rounded-2xl border-2 overflow-hidden text-left transition-all duration-300 ${ isActive ? 'border-brand-500 shadow-[0_0_30px_rgba(var(--brand-500),0.3)] scale-[1.02] z-10' : 'border-white/5 hover:border-white/20'
+                    className={`group relative aspect-[3/4] rounded-2xl border-2 overflow-hidden text-left transition-colors duration-300 ${ isActive ? 'border-brand-500 shadow-[0_0_30px_rgba(var(--brand-500),0.3)] scale-[1.02] z-10' : 'border-white/5 hover:border-white/20'
                     }`}
                   >
                     <img src={item.coverAssetUrl || `https://picsum.photos/seed/${item.id}/300/400`} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt={item.name} />
@@ -730,7 +735,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                       <div className="text-[10px] text-white/60 line-clamp-2 mt-1">{item.summary}</div> </div>
                     {isActive && ( <div className="absolute top-3 right-3 bg-brand-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
                         {copy(locale, '已选', 'Selected')} </div>
-                    )} </button>
+                    )} </Button>
                 ) })}
             </div> )}
           </div> </div>

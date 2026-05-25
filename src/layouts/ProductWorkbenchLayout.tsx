@@ -3,6 +3,8 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Globe, Home, LogIn } from 'lucide-react'
 import UserAccountMenu from '@/components/account/UserAccountMenu'
+import { Button, ButtonLink } from '@/components/ui/Button'
+import { EcomCommandDialog, EcomHeader, EcomNavPill, EcomShell } from '@/components/ui/EcomShell'
 import { useAuth } from '@/hooks/useAuth'
 import { getAuthAwareLoginPath } from '@/utils/authNavigation'
 
@@ -49,65 +51,56 @@ export default function ProductWorkbenchLayout() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-[#e8eaf0]">
-      <div className="pointer-events-none fixed inset-0 opacity-60">
-        <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
-        <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" />
-      </div>
-      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#080b11]/88 backdrop-blur-xl">
-        <div className="mx-auto flex h-[52px] max-w-[1400px] items-center justify-between gap-4 px-5">
+    <EcomShell>
+      <EcomHeader>
           <div className="flex min-w-0 items-center gap-2">
-            <Link to="/" className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs text-white/48 transition hover:bg-white/[0.04] hover:text-white/82" title={t('productCenter.shell.backHome')}>
+            <ButtonLink to="/" variant="ghost" size="sm" title={t('productCenter.shell.backHome')}>
               <Home className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t('productCenter.shell.home')}</span>
-            </Link>
+            </ButtonLink>
             <Link to="/products" className="whitespace-nowrap font-semibold tracking-tight text-white">Product Center</Link>
             <nav className="ml-2 flex min-w-0 items-center gap-1 overflow-x-auto">
               {navItems.map(item => {
                 const active = item.match(pathname)
                 return (
-                  <NavLink
-                    key={item.labelKey}
-                    to={item.to}
-                    className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition ${active ? 'bg-white/[0.07] text-white' : 'text-white/58 hover:bg-white/[0.04] hover:text-white'}`}
-                  >
-                    {t(item.labelKey)}
+                  <NavLink key={item.labelKey} to={item.to}>
+                    <EcomNavPill active={active}>{t(item.labelKey)}</EcomNavPill>
                   </NavLink>
                 )
               })}
             </nav>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
+            <Button
               onClick={toggleLang}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/[0.08] bg-[#080b11] px-2.5 py-1 text-xs text-white/48 transition hover:border-white/15 hover:text-white/80"
+              variant="quiet"
+              size="sm"
               title={t('productCenter.shell.switchLanguage')}
             >
               <Globe className="h-3.5 w-3.5" />
               <span>{languageLabel}</span>
-            </button>
-            <button onClick={() => setCommandOpen(true)} className="inline-flex items-center gap-1 rounded-lg border border-white/[0.08] bg-[#080b11] px-2.5 py-1 text-xs text-white/45 transition hover:border-white/15 hover:text-white/70">
+            </Button>
+            <Button onClick={() => setCommandOpen(true)} variant="quiet" size="sm">
               <kbd className="rounded bg-white/[0.07] px-1">⌘</kbd><span>K</span>
-            </button>
+            </Button>
             {isAuthenticated ? (
               <UserAccountMenu compact />
             ) : (
-              <Link to={loginPath} className="inline-flex items-center gap-1 rounded-lg border border-brand-400/20 bg-brand-400/10 px-2.5 py-1 text-xs font-semibold text-brand-100 transition hover:border-brand-300/40 hover:bg-brand-400/15">
+              <ButtonLink to={loginPath} variant="secondary" size="sm">
                 <LogIn className="h-3.5 w-3.5" />
                 <span>{t('common.login')}</span>
-              </Link>
+              </ButtonLink>
             )}
           </div>
-        </div>
-      </header>
+      </EcomHeader>
       <main className="relative min-h-[calc(100vh-52px)]">
         <Outlet />
       </main>
       {commandOpen ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/55 px-4 pt-[12vh] backdrop-blur-md" onMouseDown={() => setCommandOpen(false)}>
-          <div className="w-full max-w-xl overflow-hidden rounded-[28px] border border-white/10 bg-[#0b0d14]/95 shadow-[0_32px_120px_rgba(0,0,0,0.65)]" onMouseDown={event => event.stopPropagation()}>
-            <div className="border-b border-white/[0.06] px-5 py-4">
+        <div onMouseDown={() => setCommandOpen(false)}>
+          <EcomCommandDialog>
+            <div onMouseDown={event => event.stopPropagation()}>
+            <div className="border-b border-[var(--ecom-border)] px-5 py-4">
               <div className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-100/55">Command Palette</div>
               <div className="mt-2 text-xl font-semibold text-white">{t('productCenter.shell.commandTitle')}</div>
             </div>
@@ -117,7 +110,7 @@ export default function ProductWorkbenchLayout() {
                   key={command.to}
                   to={command.to}
                   onClick={() => setCommandOpen(false)}
-                  className="group flex items-center justify-between rounded-2xl px-4 py-3 transition hover:bg-white/[0.06]"
+                  className="group flex items-center justify-between rounded-2xl px-4 py-3 transition hover:bg-[var(--ecom-surface-hover)]"
                 >
                   <span>
                     <span className="block text-sm font-semibold text-white/88">{t(command.labelKey)}</span>
@@ -127,9 +120,10 @@ export default function ProductWorkbenchLayout() {
                 </Link>
               ))}
             </div>
-          </div>
+            </div>
+          </EcomCommandDialog>
         </div>
       ) : null}
-    </div>
+    </EcomShell>
   )
 }

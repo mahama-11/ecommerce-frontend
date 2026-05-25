@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 /* eslint-disable react-hooks/immutability, react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -100,7 +101,7 @@ function UploadZone({ title, icon: Icon, iconColor,
         onDrop={onDrop}
         onDragOver={(e) => e.preventDefault()}
         onClick={() => inputRef.current?.click()}
-        className={`min-h-[132px] cursor-pointer rounded-lg border border-dashed border-white/[0.08] text-center transition hover:border-white/20 hover:bg-white/[0.01] ${sources.length > 0 ? 'p-2' : 'flex flex-col items-center justify-center'}`}
+        className={`min-h-[132px] cursor-pointer rounded-lg border border-dashed border-white/[0.08] text-center transition hover:border-white/20 hover:bg-[var(--ecom-surface-hover)] ${sources.length > 0 ? 'p-2' : 'flex flex-col items-center justify-center'}`}
       >
         {sources.length > 0 ? ( <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {sources.map((src) => {
@@ -115,13 +116,13 @@ function UploadZone({ title, icon: Icon, iconColor,
                     className="h-full w-full object-cover"
                   /> ) : ( <div className="flex h-full w-full items-center justify-center px-2 text-center text-[10px] text-white/40">
                     {src.name || '图片待就绪'} </div> )}
-                <button
+                <Button
                   type="button"
                   onClick={(e) => { e.stopPropagation()
                     onRemove(src.id) }}
                   className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white/70 opacity-0 transition group-hover:opacity-100 hover:text-white"
                 >
-                  <X className="h-3 w-3" /> </button>
+                  <X className="h-3 w-3" /> </Button>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1">
                   <span className="line-clamp-1 text-[9px] text-white/65">
                     {src.name || src.type} </span> </div> </div>
@@ -179,12 +180,12 @@ function DecisionStepCard({ step, isCurrent, onSelectOption,
       {(isCurrent || step.status === 'completed') && step.options.length > 0 && ( <div className="grid grid-cols-2 gap-1.5">
           {step.options.map((option) => {
             const isSelected = option.id === step.selectedOptionId
-            return ( <button
+            return ( <Button
                 key={option.id}
                 type="button"
                 onClick={() => onSelectOption(step.id, option.id)}
                 className={`group relative flex flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left transition ${ isSelected ? 'border-violet-400/40 bg-violet-400/[0.08]' : isCurrent
-                      ? 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]' : 'border-white/[0.04] bg-white/[0.01] hover:border-white/[0.10] hover:bg-white/[0.03]' }`}
+                      ? 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-[var(--ecom-surface-hover)]' : 'border-white/[0.04] bg-white/[0.01] hover:border-white/[0.10] hover:bg-[var(--ecom-surface-hover)]' }`}
               >
                 {option.icon && ( <span className="text-sm">{option.icon}</span> )}
                 <span className={`text-[11px] font-medium ${ isSelected ? 'text-violet-300' : 'text-white/60' }`}>
@@ -194,7 +195,7 @@ function DecisionStepCard({ step, isCurrent, onSelectOption,
                     {Math.round(option.confidence * 100)}% </span> )}
                 {/* Selected indicator */}
                 {isSelected && ( <div className="absolute right-1.5 top-1.5">
-                    <CheckCircle2 className="h-3 w-3 text-violet-400" /> </div> )} </button>
+                    <CheckCircle2 className="h-3 w-3 text-violet-400" /> </div> )} </Button>
             ) })} </div> )}
       {/* Pending placeholder */}
       {step.status === 'pending' && step.options.length === 0 && ( <div className="flex items-center justify-center py-4">
@@ -498,13 +499,13 @@ export default function PrepHubPage() {
             {t('production.prep.title')} </h1>
           <p className="mt-1 text-sm text-white/50">
             {t('production.prep.subtitle')} </p> </div>
-        {prepCanEnterSandbox && ( <button
+        {prepCanEnterSandbox && ( <Button
             type="button"
             onClick={goToSandbox}
             className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-600"
           >
             {t('production.nav.sandbox')}
-            <ArrowRight className="h-3.5 w-3.5" /> </button> )} </motion.div>
+            <ArrowRight className="h-3.5 w-3.5" /> </Button> )} </motion.div>
       {/* ═══ 3-Column Layout ═══ */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         {/* ─── Left: Dual-Track Parsing (SKU + Reference) (5 cols) ─── */}
@@ -555,20 +556,20 @@ export default function PrepHubPage() {
                 value={understandingProvider}
                 onChange={(event) => setUnderstandingProvider(event.target.value as ImageUnderstandingProviderCode)}
                 disabled={isParsing}
-                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-[11px] text-white/70 outline-none transition focus:border-cyan-300/30 disabled:opacity-40"
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-[11px] text-white/70 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition focus:border-cyan-300/30 disabled:opacity-40"
               >
                 <option value="comfyui_bridge">稳定识别（推荐）</option>
                 <option value="gemini_visual_understanding">增强识别</option> </select>
               <p className="mt-1.5 text-[9px] leading-relaxed text-cyan-100/45">
                 选择不同的识别侧重，可以对比图片的光影、材质和构图判断。 </p> </div>
-            <button
+            <Button
               type="button"
               onClick={startParsing}
               disabled={!dualTrackReady || isParsing}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:bg-white/[0.06] disabled:text-white/35"
             >
               {isParsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
-              {isParsing ? '正在解析...' : '开始解析'} </button>
+              {isParsing ? '正在解析...' : '开始解析'} </Button>
             {!dualTrackReady && ( <p className="mt-2 text-center text-[10px] text-amber-100/55">{dualTrackBlocker}</p> )} </div>
           {/* Parsing status */}
           {isParsing && ( <div className="relative overflow-hidden rounded-xl border border-cyan-300/25 bg-cyan-400/[0.08] px-4 py-3 shadow-[0_0_28px_rgba(34,211,238,0.12)]">
@@ -630,7 +631,7 @@ export default function PrepHubPage() {
                     已确认 {decisionProgress.answered} / {decisionProgress.total}，还剩 {decisionProgress.remaining} 项 </span> </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-400 to-cyan-300 transition-all duration-300"
+                    className="h-full rounded-full bg-gradient-to-r from-violet-400 to-cyan-300 transition-colors duration-300"
                     style={{ width: `${decisionProgress.percent}%` }}
                   /> </div>
                 <p className="mt-2 text-[10px] leading-relaxed text-white/35">
@@ -655,24 +656,24 @@ export default function PrepHubPage() {
                     /> )} </motion.div> </AnimatePresence>
               {/* Step navigation */}
               <div className="flex items-center justify-between pt-1">
-                <button
+                <Button
                   type="button"
                   disabled={currentStepIndex === 0}
                   onClick={() => setCurrentStepIndex((i) => i - 1)}
-                  className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-white/[0.04] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
+                  className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
                 >
                   <ChevronLeft className="h-3 w-3" />
-                  上一项 </button>
+                  上一项 </Button>
                 <span className="text-[10px] tabular-nums text-white/20">
                   {currentStepIndex + 1} / {steps.length} </span>
-                <button
+                <Button
                   type="button"
                   disabled={currentStepIndex >= steps.length - 1}
                   onClick={() => setCurrentStepIndex((i) => i + 1)}
-                  className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-white/[0.04] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
+                  className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
                 >
                   下一项
-                  <ChevronRight className="h-3 w-3" /> </button> </div>
+                  <ChevronRight className="h-3 w-3" /> </Button> </div>
               {/* Selection summary */}
               {decisionTree?.overallConfidence != null && ( <div className="flex items-center gap-3 rounded-lg bg-white/[0.02] px-3 py-2.5">
                   <Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-400/60" />
@@ -749,7 +750,7 @@ export default function PrepHubPage() {
               {globalDriftBias}% </span> </div>
           <div className="relative h-2.5 rounded-full bg-gradient-to-r from-cyan-400/30 via-white/10 to-amber-400/30">
             <div
-              className="absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.15)] transition-all duration-100"
+              className="absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.15)] transition-colors duration-100"
               style={{ left: `${globalDriftBias}%`, backgroundColor: globalDriftBias < 35
                     ? 'rgb(34 211 238)' : globalDriftBias > 65 ? 'rgb(251 191 36)' : 'rgb(255 255 255)',
               }}
@@ -778,18 +779,18 @@ export default function PrepHubPage() {
       {parsing?.status === 'succeeded' && ( <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`sticky bottom-4 z-20 mt-5 rounded-2xl border p-4 shadow-[0_18px_60px_rgba(16,185,129,0.16)] backdrop-blur ${prepCanEnterSandbox ? 'border-emerald-300/20 bg-[#07120f]/95' : 'border-amber-300/20 bg-[#141006]/95'}`}
+          className={`sticky bottom-4 z-20 mt-5 rounded-2xl border p-4 shadow-[0_18px_60px_rgba(16,185,129,0.16)] backdrop-blur ${prepCanEnterSandbox ? 'border-emerald-300/20 bg-[var(--ecom-surface)]' : 'border-amber-300/20 bg-[var(--ecom-surface-raised)]'}`}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className={`text-sm font-semibold ${prepCanEnterSandbox ? 'text-emerald-100' : 'text-amber-100'}`}>{prepCanEnterSandbox ? '生产准备已完成' : '生产准备还差一步'}</p>
               <p className={`mt-1 text-[11px] ${prepCanEnterSandbox ? 'text-emerald-100/55' : 'text-amber-100/65'}`}>{prepCanEnterSandbox ? '下一步进入策略配置：确认生成数量、模板预览和执行参数。' : prepNextStepHint}</p> </div>
-            <button
+            <Button
               type="button"
               onClick={goToSandbox}
               aria-disabled={!prepCanEnterSandbox}
               className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${prepCanEnterSandbox ? 'bg-emerald-400 text-slate-950 hover:bg-emerald-300' : 'border border-amber-300/20 bg-amber-300/10 text-amber-100 hover:bg-amber-300/15'}`}
             >
               {prepCanEnterSandbox ? '进入策略配置' : '查看下一步'}
-              <ArrowRight className="h-3.5 w-3.5" /> </button> </div> </motion.div>
+              <ArrowRight className="h-3.5 w-3.5" /> </Button> </div> </motion.div>
       )} </div> ) }

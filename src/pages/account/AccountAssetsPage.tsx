@@ -106,7 +106,7 @@ export default function AccountAssetsPage() {
 
       <motion.section variants={itemVariants} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {quickCards.map(item => (
-          <Link key={item.to} to={item.to} className="group relative flex flex-col justify-between rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl p-6 shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-all hover:border-white/10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+          <Link key={item.to} to={item.to} className="group relative flex flex-col justify-between rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl p-6 shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-colors hover:border-white/10 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="font-medium text-slate-100 transition-colors group-hover:text-white">{item.title}</h3>
@@ -116,7 +116,7 @@ export default function AccountAssetsPage() {
                 <item.icon className="h-5 w-5" />
               </div>
             </div>
-            <div className="mt-6 flex items-center gap-1 text-sm font-medium text-slate-400 opacity-0 transition-all group-hover:text-slate-300 group-hover:opacity-100">
+            <div className="mt-6 flex items-center gap-1 text-sm font-medium text-slate-400 opacity-0 transition-colors group-hover:text-slate-300 group-hover:opacity-100">
               {t('common.startUsing')}
               <ArrowRight className="h-4 w-4" />
             </div>
@@ -169,7 +169,7 @@ export default function AccountAssetsPage() {
           </div>
           <div className="divide-y divide-white/5">
             {orders.slice(0, 4).length ? orders.slice(0, 4).map(item => (
-              <motion.div variants={itemVariants} key={item.order?.id} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
+              <motion.div variants={itemVariants} key={item.order?.id} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-[var(--ecom-surface-hover)]">
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium text-slate-100">{formatPackageName(item.order?.package_code, locale)}</div>
                   <div className="mt-1 truncate text-xs text-slate-500">{item.order?.created_at ? new Date(item.order.created_at).toLocaleString() : ''}</div>
@@ -193,7 +193,7 @@ export default function AccountAssetsPage() {
         </div>
         <div className="divide-y divide-white/5">
           {history.length ? history.map(item => (
-            <div key={item.id} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-white/[0.03]">
+            <div key={item.id} className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-[var(--ecom-surface-hover)]">
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium text-slate-100">{getWalletHistoryTitleLabel(t, item)}</div>
                 <div className="mt-1 truncate text-xs text-slate-500">{getWalletHistoryAssetSummary(t, item)}</div>

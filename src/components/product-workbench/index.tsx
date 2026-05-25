@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle, ArrowRight, CheckCircle2, CircleDashed, LockKeyhole, RadioTower, Route, ShieldAlert, Sparkles, Trash2, XCircle } from 'lucide-react'
 import type { CapabilityState, MissionStage, MissionWorkUnit, ProductionStageSummary } from '@/pages/product/utils/productMission'
+import { Button } from '@/components/ui/Button'
 
 const STATE_CLASS: Record<CapabilityState, string> = {
   available: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
@@ -64,7 +65,7 @@ export function ProductionRail({
   const { t } = useTranslation()
   const total = stages.reduce((sum, stage) => sum + stage.count, 0)
   return (
-    <section className="rounded-[28px] border border-white/10 bg-[#080b11]/95 p-4 shadow-[0_28px_90px_rgba(0,0,0,0.42)] ring-1 ring-cyan-300/5">
+    <section className="rounded-[28px] border border-white/10 bg-[var(--ecom-surface)]/95 p-4 shadow-[0_28px_90px_rgba(0,0,0,0.42)] ring-1 ring-cyan-300/5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.26em] text-cyan-200/70">
@@ -72,23 +73,23 @@ export function ProductionRail({
           </div>
           <h2 className="mt-1 text-xl font-semibold text-white">{t('product.list.missionControl.stageSystem')}</h2>
         </div>
-        <button
+        <Button
           onClick={() => onStageChange('all')}
           aria-pressed={activeStage === 'all'}
           className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition ${activeStage === 'all' ? 'border-cyan-300/50 bg-cyan-300/15 text-cyan-100' : 'border-white/10 bg-white/5 text-white/55 hover:text-white'}`}
         >
           {t('product.list.missionControl.allQueue', { count: total })}
-        </button>
+        </Button>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-7">
         {stages.map((stage, index) => {
           const active = activeStage === stage.stage
           return (
-            <button
+            <Button
               key={stage.stage}
               onClick={() => onStageChange(stage.stage)}
               aria-pressed={active}
-              className={`group relative min-h-[132px] overflow-hidden rounded-2xl border p-3 text-left transition ${active ? 'border-cyan-300/50 bg-cyan-300/[0.12] shadow-[0_0_34px_rgba(103,232,249,0.12)]' : 'border-white/10 bg-white/[0.035] hover:border-white/20 hover:bg-white/[0.06]'}`}
+              className={`group relative min-h-[132px] overflow-hidden rounded-2xl border p-3 text-left transition ${active ? 'border-cyan-300/50 bg-cyan-300/[0.12] shadow-[0_0_34px_rgba(103,232,249,0.12)]' : 'border-white/10 bg-white/[0.035] hover:border-white/20 hover:bg-[var(--ecom-surface-hover)]'}`}
             >
               <div className="absolute -right-8 -top-10 h-24 w-24 rounded-full bg-cyan-300/10 blur-2xl transition group-hover:bg-cyan-300/20" />
               <div className="relative flex h-full flex-col justify-between gap-4">
@@ -108,7 +109,7 @@ export function ProductionRail({
                   </div>
                 </div>
               </div>
-            </button>
+            </Button>
           )
         })}
       </div>
@@ -172,7 +173,7 @@ export function SkuWorkUnitCard({
       aria-label={t('product.list.missionControl.cardFocusLabel', { sku: product.skuCode, title: product.title })}
       onClick={onFocus}
       onKeyDown={handleKeyboardFocus}
-      className={`group rounded-3xl border bg-[#0b0f16]/90 p-4 transition hover:border-cyan-200/30 hover:bg-[#101722] ${focused ? 'border-cyan-300/50 shadow-[0_0_35px_rgba(103,232,249,0.10)]' : 'border-white/10'} ${selected ? 'ring-1 ring-emerald-300/40' : ''}`}
+      className={`group rounded-3xl border bg-[var(--ecom-surface)]/90 p-4 transition hover:border-cyan-200/30 hover:bg-[var(--ecom-surface)] ${focused ? 'border-cyan-300/50 shadow-[0_0_35px_rgba(103,232,249,0.10)]' : 'border-white/10'} ${selected ? 'ring-1 ring-emerald-300/40' : ''}`}
     >
       <div className="flex items-start gap-3">
         <input
@@ -212,7 +213,7 @@ export function SkuWorkUnitCard({
         </div>
         <div className="flex items-center gap-2">
           {onDelete ? (
-            <button
+            <Button
               type="button"
               disabled={deleting}
               onClick={event => {
@@ -223,7 +224,7 @@ export function SkuWorkUnitCard({
             >
               <Trash2 className="h-3.5 w-3.5" />
               {deleting ? t('product.list.missionControl.deleting') : t('product.list.missionControl.delete')}
-            </button>
+            </Button>
           ) : null}
           <Link
             to={unit.nextBestAction.href}
@@ -273,14 +274,14 @@ export function MissionDossier({ unit }: { unit: MissionWorkUnit | null }) {
   const { t } = useTranslation()
   if (!unit) {
     return (
-      <aside className="rounded-[28px] border border-white/10 bg-[#080b11]/95 p-6 text-white/55">
+      <aside className="rounded-[28px] border border-white/10 bg-[var(--ecom-surface)]/95 p-6 text-white/55">
         {t('product.list.missionControl.selectDossierPrompt')}
       </aside>
     )
   }
   const { product } = unit
   return (
-    <aside className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[28px] border border-white/10 bg-[#080b11]/95 p-5 shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
+    <aside className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto rounded-[28px] border border-white/10 bg-[var(--ecom-surface)]/95 p-5 shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
       <div className="mb-5 flex items-start justify-between gap-3">
         <div>
           <div className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-200/65">{t('product.list.missionControl.dossier')}</div>
