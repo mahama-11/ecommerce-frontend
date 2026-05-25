@@ -13,3 +13,4 @@ reports/frontend-quality/lighthouse-raw.json
 reports/frontend-quality/playwright-report.json
 storybook-static/
 test-results/
+artifacts/
