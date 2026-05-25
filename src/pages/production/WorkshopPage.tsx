@@ -42,9 +42,9 @@ function VersionLineage({ nodes, activeId, onSelect,
   onSelect: (id: string) => void
   onCompare: () => void
   onBranch: () => void }) {
-  return ( <div className="space-y-0">
+  return ( <div className="flex max-h-[calc(100vh-10rem)] min-h-0 flex-col">
       {/* Header */}
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex shrink-0 items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-white">版本谱系</h3>
           <p className="text-[10px] text-white/25">Version Lineage</p> </div>
@@ -58,7 +58,7 @@ function VersionLineage({ nodes, activeId, onSelect,
           <ArrowUpRight className="h-3 w-3" />
           对比模式 </Button> </div>
       {/* Timeline */}
-      <div className="relative space-y-1 pl-4">
+      <div className="relative min-h-0 flex-1 space-y-1 overflow-y-auto pl-4 pr-1 scrollbar-thin">
         {/* Vertical line */}
         {nodes.length > 0 && <div className="absolute left-[11px] top-2 bottom-2 w-px bg-white/[0.06]" />}
         {nodes.length === 0 && ( <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-3 py-4 text-[11px] leading-relaxed text-amber-200/70">
@@ -102,7 +102,7 @@ function VersionLineage({ nodes, activeId, onSelect,
         disabled={nodes.length === 0}
         onClick={onBranch}
         title="基于当前版本继续生成一个新分支。"
-        className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-cyan-400/20 bg-cyan-400/[0.04] py-2 text-[11px] text-cyan-200/70 transition hover:border-cyan-400/35 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+        className="mt-3 flex w-full shrink-0 items-center justify-center gap-1 rounded-xl border border-dashed border-cyan-400/20 bg-cyan-400/[0.04] py-2 text-[11px] text-cyan-200/70 transition hover:border-cyan-400/35 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Plus className="h-3.5 w-3.5" />
         新建分支 </Button> </div> )
@@ -126,15 +126,18 @@ function VariantCard({ variant, index, isSelected,
       className={`group relative overflow-hidden rounded-xl border transition ${ isSelected ? 'border-cyan-400/30 bg-cyan-400/[0.02]' : 'border-white/[0.05] bg-white/[0.01] hover:border-white/10'
       }`}
     >
-      {/* Checkbox */}
+      {/* Selection action */}
       <Button
         type="button"
+        aria-pressed={isSelected}
+        aria-label={`${isSelected ? '取消选择' : '选择'}生成结果 ${index + 1}`}
         onClick={(e) => { e.stopPropagation()
           onToggle() }}
-        className={`absolute right-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition ${ isSelected ? 'border-cyan-400/60 bg-cyan-400/20 text-cyan-400' : 'border-white/10 bg-black/30 text-transparent hover:border-white/20'
+        className={`absolute right-2 top-2 z-10 h-7 rounded-full px-2 text-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-md transition ${ isSelected ? 'border border-cyan-300/50 bg-cyan-300/20 text-cyan-100' : 'border border-white/12 bg-black/45 text-white/70 hover:border-cyan-300/35 hover:text-cyan-100'
         }`}
       >
-        <Check className="h-3 w-3" /> </Button>
+        {isSelected ? <Check className="h-3 w-3" /> : null}
+        <span>{isSelected ? '已选' : '选择'}</span> </Button>
       {/* Image */}
       <div
         role="button"
@@ -274,11 +277,14 @@ function VariantGrid({ variants, selectedIds, busy,
                 <span className="text-[11px] text-white/60">{String(variant.metadata?.version_id ?? variant.id).slice(0, 18)} · {String(idx + 1).padStart(2, '0')}</span> </div>
               <Button
                 type="button"
+                aria-pressed={selectedIds.includes(variant.id)}
+                aria-label={`${selectedIds.includes(variant.id) ? '取消选择' : '选择'}生成结果 ${idx + 1}`}
                 onClick={() => onToggle(variant.id)}
-                className={`flex h-5 w-5 items-center justify-center rounded border ${ selectedIds.includes(variant.id) ? 'border-cyan-400/60 bg-cyan-400/20 text-cyan-400' : 'border-white/10 text-transparent'
+                className={`h-7 rounded-full px-2 text-[10px] ${ selectedIds.includes(variant.id) ? 'border border-cyan-300/50 bg-cyan-300/20 text-cyan-100' : 'border border-white/12 bg-white/[0.03] text-white/55 hover:border-cyan-300/35 hover:text-cyan-100'
                 }`}
               >
-                <Check className="h-3 w-3" /> </Button> </div> ))}
+                {selectedIds.includes(variant.id) ? <Check className="h-3 w-3" /> : null}
+                <span>{selectedIds.includes(variant.id) ? '已选' : '选择'}</span> </Button> </div> ))}
         </div> )}
       {/* Selection counter */}
       <div className="flex items-center justify-between">
@@ -476,27 +482,51 @@ function ComparePanel({ nodes, variants, onClose,
   variants: AssetVariant[]
   onClose: () => void }) {
   if (nodes.length === 0) return null
-  return ( <div className="mt-4 rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.03] p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-white">版本对比</h3>
-          <p className="text-[10px] text-white/30">对比已有生成版本</p> </div>
-        <Button type="button" onClick={onClose} className="rounded-lg bg-white/[0.06] px-2 py-1 text-[10px] text-white/50 hover:text-white">关闭</Button> </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        {nodes.map((node) => ( <div key={node.id} className="rounded-xl border border-white/[0.06] bg-black/10 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-semibold text-cyan-200">{node.label}</span>
-              <span className="text-[9px] text-white/25">{fmtDate(node.timestamp)}</span> </div>
-            <p className="text-[10px] leading-relaxed text-white/45">{node.description}</p>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {variants.filter((variant) => String(variant.metadata?.generation_group_id ?? '') === node.id).slice(0, 6).map((variant) => ( <img key={variant.id} src={variant.thumbnailUrl} alt={node.label} className="aspect-square rounded-lg border border-white/[0.06] object-cover" /> ))} </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
-              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">SKU Bias <b className="text-cyan-300">{node.skuBias}%</b></div>
-              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">REF Bias <b className="text-violet-300">{node.refBias}%</b></div>
-              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">Style <b className="text-white/70">{node.weightParams.styleStrength.toFixed(2)}</b></div>
-              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">Creative <b className="text-white/70">{node.weightParams.creativeFreedom.toFixed(2)}</b></div> </div>
-            <p className="mt-3 break-all text-[9px] text-white/20">{node.id}</p> </div> ))} </div>
-    </div> ) }
+  return ( <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-[8vh] backdrop-blur-md"
+      onClick={onClose}
+    >
+      <motion.section
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 12, scale: 0.98 }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="workshop-compare-title"
+        className="w-full max-w-6xl overflow-hidden rounded-3xl border border-cyan-300/15 bg-[var(--ecom-surface-raised)] shadow-[0_32px_120px_rgba(0,0,0,0.65)] ring-1 ring-cyan-300/10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/[0.08] bg-[var(--ecom-surface-raised)]/95 px-5 py-4 backdrop-blur-xl">
+          <div>
+            <h3 id="workshop-compare-title" className="text-base font-semibold text-white">版本对比</h3>
+            <p className="mt-1 text-xs text-white/45">以弹窗横向比较已选版本，避免把对比内容堆在页面底部。</p> </div>
+          <Button type="button" onClick={onClose} aria-label="关闭版本对比" className="h-8 rounded-full bg-white/[0.06] px-3 text-xs text-white/60 hover:text-white">
+            <X className="h-3.5 w-3.5" />
+            关闭 </Button> </div>
+        <div className="max-h-[72vh] overflow-y-auto p-5 scrollbar-thin">
+          <div className="grid gap-4 md:grid-cols-2">
+            {nodes.map((node) => {
+              const nodeVariants = variants.filter((variant) => String(variant.metadata?.generation_group_id ?? '') === node.id).slice(0, 6)
+              return ( <div key={node.id} className="rounded-2xl border border-white/[0.08] bg-black/15 p-4">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <span className="text-sm font-semibold text-cyan-100">{node.label}</span>
+                    <p className="mt-1 text-[10px] text-white/30">{fmtDate(node.timestamp)}</p> </div>
+                  <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] text-white/45">{nodeVariants.length} 张结果</span> </div>
+                <p className="text-[11px] leading-relaxed text-white/50">{node.description}</p>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {nodeVariants.length > 0 ? nodeVariants.map((variant) => ( <img key={variant.id} src={variant.thumbnailUrl} alt={node.label} className="aspect-square rounded-xl border border-white/[0.08] object-cover" /> )) : ( <div className="col-span-3 rounded-xl border border-amber-300/15 bg-amber-300/[0.04] p-4 text-center text-[11px] text-amber-100/70">该版本没有可对比的图片结果</div> )} </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="rounded-xl bg-white/[0.04] p-2 text-white/50">SKU Bias <b className="text-cyan-200">{node.skuBias}%</b></div>
+                  <div className="rounded-xl bg-white/[0.04] p-2 text-white/50">REF Bias <b className="text-violet-200">{node.refBias}%</b></div>
+                  <div className="rounded-xl bg-white/[0.04] p-2 text-white/50">Style <b className="text-white/75">{node.weightParams.styleStrength.toFixed(2)}</b></div>
+                  <div className="rounded-xl bg-white/[0.04] p-2 text-white/50">Creative <b className="text-white/75">{node.weightParams.creativeFreedom.toFixed(2)}</b></div> </div>
+                <p className="mt-3 break-all text-[9px] text-white/20">{node.id}</p> </div> ) })} </div> </div>
+      </motion.section>
+    </motion.div> ) }
 // ─── Zoom Modal ──────────────────────────────────────────────
 function ZoomModal({ variant, onClose, }: {
   variant: AssetVariant | null
@@ -671,7 +701,7 @@ export default function WorkshopPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="min-h-0 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
+            className="sticky top-6 min-h-0 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
           >
             <VersionLineage
               nodes={versionNodes}
@@ -717,7 +747,9 @@ export default function WorkshopPage() {
               onRegenerate={handleRegenerate}
               onSaveTemplate={handleSaveTemplate}
             /> </motion.div> </div> </div>
-      {isComparing && ( <ComparePanel nodes={compareNodes} variants={variants} onClose={() => setIsComparing(false)} /> )}
+      <AnimatePresence>
+        {isComparing && ( <ComparePanel nodes={compareNodes} variants={variants} onClose={() => setIsComparing(false)} /> )}
+      </AnimatePresence>
       {/* Zoom Modal */}
       <AnimatePresence>
         {zoomVariant && ( <ZoomModal variant={zoomVariant} onClose={() => setZoomVariant(null)} /> )} </AnimatePresence>
