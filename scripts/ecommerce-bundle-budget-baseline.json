@@ -1,0 +1,135 @@
+{
+  "generated_at": "2026-05-25T07:03:22.849Z",
+  "policy": "Bundle size should not silently grow; use this baseline for review and future budgets.",
+  "totals": {
+    "assets": 136,
+    "js_gzip_bytes": 607342,
+    "css_gzip_bytes": 25268
+  },
+  "largest_assets": [
+    {
+      "file": "dist/assets/xlsx-pX7KRfks.js",
+      "bytes": 424762,
+      "gzip_bytes": 140360,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/index-DU7IQ5pN.js",
+      "bytes": 387834,
+      "gzip_bytes": 125441,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/proxy-6Ku4TkJD.js",
+      "bytes": 120569,
+      "gzip_bytes": 38811,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/chunk-5KNZJZUH-DTdAFeX4.js",
+      "bytes": 94191,
+      "gzip_bytes": 30866,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/index-g4UQOU4H.css",
+      "bytes": 205312,
+      "gzip_bytes": 25268,
+      "type": "css"
+    },
+    {
+      "file": "dist/assets/production-CHtcruhE.js",
+      "bytes": 58497,
+      "gzip_bytes": 19376,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/SandboxPage-COdMH3Ko.js",
+      "bytes": 51934,
+      "gzip_bytes": 15272,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/DesignWorkbenchPage-4hV-ZT64.js",
+      "bytes": 38934,
+      "gzip_bytes": 12255,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/ToolPage-c18HT8UW.js",
+      "bytes": 38004,
+      "gzip_bytes": 11870,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/AssetCommercePage-DdG1DI3g.js",
+      "bytes": 36929,
+      "gzip_bytes": 11292,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/PrepHubPage-BlGFYbHN.js",
+      "bytes": 36726,
+      "gzip_bytes": 10930,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/AgentTemplateMarketPage-BMr6s4gM.js",
+      "bytes": 35351,
+      "gzip_bytes": 9737,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/ProductListPage-BuwqMdBX.js",
+      "bytes": 32378,
+      "gzip_bytes": 9274,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/OpsWorkbenchPage-BCAdQMrM.js",
+      "bytes": 27743,
+      "gzip_bytes": 8736,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/WorkshopPage-D8vbfFXq.js",
+      "bytes": 30247,
+      "gzip_bytes": 7643,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/ProductDetailPage-S31BzjZm.js",
+      "bytes": 28711,
+      "gzip_bytes": 6917,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/ChatWorkspacePage-B4WIsDv6.js",
+      "bytes": 19090,
+      "gzip_bytes": 6824,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/AccountDownloadsPage-DxjJLqdD.js",
+      "bytes": 24145,
+      "gzip_bytes": 6024,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/BatchListingPage-Bd5YJzcr.js",
+      "bytes": 19647,
+      "gzip_bytes": 5962,
+      "type": "js"
+    },
+    {
+      "file": "dist/assets/SolutionDetailPage-CmES_0h_.js",
+      "bytes": 10358,
+      "gzip_bytes": 4563,
+      "type": "js"
+    }
+  ],
+  "budgets": {
+    "max_initial_js_gzip": 358400,
+    "max_chunk_js_gzip": 204800
+  }
+}

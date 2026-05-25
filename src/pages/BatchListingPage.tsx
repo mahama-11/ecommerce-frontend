@@ -151,7 +151,7 @@ function SelectField({ label, value, onChange, options, inline = false }: { labe
         <select
           value={value}
           onChange={e => onChange(e.target.value)}
-          className="w-full appearance-none rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 pr-8 text-sm text-white/90 outline-none transition-all hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+          className="w-full appearance-none rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 pr-8 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
         >
           {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -169,7 +169,7 @@ function InputField({ label, value, onChange, placeholder }: { label: string, va
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
       />
     </div>
   )
@@ -184,7 +184,7 @@ function TextareaField({ label, value, onChange, placeholder, rows, hint }: { la
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows || 3}
-        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 resize-y custom-scrollbar"
+        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 resize-y custom-scrollbar"
       />
       {hint && <div className="text-[11px] text-white/40">{hint}</div>}
     </div>
@@ -194,7 +194,7 @@ function TextareaField({ label, value, onChange, placeholder, rows, hint }: { la
 function CustomCheckbox({ checked, indeterminate, onChange, label }: { checked: boolean, indeterminate?: boolean, onChange: (v: boolean) => void, label?: string }) {
   return (
     <label className="group flex cursor-pointer items-center gap-2 w-fit">
-      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-all ${checked || indeterminate ? 'border-brand-500 bg-brand-500' : 'border-white/20 bg-white/5 group-hover:border-white/40'}`}>
+      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors ${checked || indeterminate ? 'border-brand-500 bg-brand-500' : 'border-white/20 bg-white/5 group-hover:border-white/40'}`}>
         {checked && (
           <svg viewBox="0 0 14 14" fill="none" className="h-3 w-3 text-white">
             <path d="M3 7.5L5.5 10L11 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -555,7 +555,7 @@ export default function BatchListingPage() {
               <p className="mt-1 text-sm text-white/45">先选择要套用 DIY 模板的 SKU，再在下方配置模板并预览生成版本。</p>
             </div>
             <div className="flex min-w-0 flex-1 gap-2 lg:max-w-xl">
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索 SKU / 标题" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs text-white outline-none" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索 SKU / 标题" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-2 text-xs text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0" />
               <Button onClick={toggleAllFiltered} className="rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2 text-xs text-white/65">{isAllFilteredSelected ? '取消全选' : '全选'}</Button>
               <Button onClick={clearSelection} className="rounded-xl border border-white/10 bg-white/[0.025] px-3 py-2 text-xs text-white/45 hover:text-white">清空</Button>
             </div>
@@ -563,13 +563,13 @@ export default function BatchListingPage() {
           <div className="mb-3 text-xs text-white/38">已选 {selectedProducts.length} / 可见 {filteredProducts.length}</div>
           <div className="grid max-h-[260px] gap-2 overflow-y-auto pr-1 custom-scrollbar md:grid-cols-2 xl:grid-cols-4">
             {filteredProducts.map(product => (
-              <label key={product.id} className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-3 transition ${selectedProductIDs.includes(product.id) ? 'border-cyan-300/35 bg-cyan-300/[0.08]' : 'border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.045]'}`}>
-                <CustomCheckbox checked={selectedProductIDs.includes(product.id)} onChange={() => toggleProduct(product.id)} />
+              <div key={product.id} className={`flex items-center gap-3 rounded-2xl border p-3 transition ${selectedProductIDs.includes(product.id) ? 'border-cyan-300/35 bg-cyan-300/[0.08]' : 'border-white/[0.06] bg-white/[0.025] hover:bg-[var(--ecom-surface-hover)]'}`}>
+                <CustomCheckbox checked={selectedProductIDs.includes(product.id)} onChange={() => toggleProduct(product.id)} label={`选择 ${product.skuCode}`} />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold text-white/78">{product.title}</div>
                   <div className="font-mono text-[11px] text-white/38">{product.skuCode}</div>
                 </div>
-              </label>
+              </div>
             ))}
           </div>
         </section>
@@ -580,7 +580,7 @@ export default function BatchListingPage() {
               <div className="mb-4 flex items-center justify-between"><div className="text-xs font-bold uppercase tracking-[0.22em] text-white/38">已选 SKU 池 — {selectedProducts.length} 个</div><Button onClick={clearSelection} className="text-xs text-white/35 hover:text-white">清空</Button></div>
               {selectedProducts.length ? <div className="grid gap-3 md:grid-cols-2">{selectedProducts.map(product => {
                 const active = product.id === previewProductID
-                return <Button key={product.id} onClick={() => setPreviewProductID(product.id)} className={`rounded-2xl border p-4 text-left transition ${active ? 'border-cyan-300/38 bg-cyan-300/[0.08]' : 'border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.045]'}`}><div className="font-mono text-xs text-cyan-100/70">{product.skuCode}</div><div className="mt-1 truncate text-sm font-semibold text-white/88">{product.title}</div><div className="mt-3 flex gap-2"><span className={`rounded-full border px-2 py-0.5 text-[11px] ${product.assetStatus === 'ready' ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-200' : 'border-rose-300/25 bg-rose-300/10 text-rose-200'}`}>{product.assetStatus === 'ready' ? 'Assets Ready' : '缺素材'}</span><span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/45">{product.categoryId || 'Uncategorized'}</span></div></Button>
+                return <Button key={product.id} onClick={() => setPreviewProductID(product.id)} className={`rounded-2xl border p-4 text-left transition ${active ? 'border-cyan-300/38 bg-cyan-300/[0.08]' : 'border-white/[0.07] bg-white/[0.025] hover:bg-[var(--ecom-surface-hover)]'}`}><div className="font-mono text-xs text-cyan-100/70">{product.skuCode}</div><div className="mt-1 truncate text-sm font-semibold text-white/88">{product.title}</div><div className="mt-3 flex gap-2"><span className={`rounded-full border px-2 py-0.5 text-[11px] ${product.assetStatus === 'ready' ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-200' : 'border-rose-300/25 bg-rose-300/10 text-rose-200'}`}>{product.assetStatus === 'ready' ? 'Assets Ready' : '缺素材'}</span><span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/45">{product.categoryId || 'Uncategorized'}</span></div></Button>
               })}</div> : <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-sm text-white/42">请先从下方商品池选择 SKU。</div>}
             </section>
 

@@ -185,7 +185,7 @@ function userFacingText(input: unknown): string {
         const elements = Array.isArray((parsed as Record<string, unknown>).deconstruction_elements) ? ((parsed as Record<string, unknown>).deconstruction_elements as unknown[]) : []
         return elements.length > 0 ? `已返回 ${elements.length} 条图片解析结果` : '图片解析结果已返回，暂未提取到可展示元素' } } catch {
       return '图片解析结果已返回，暂不直接展示原始 JSON' } }
-  if (/^[\[{]/.test(withoutFence)) {
+  if (/^[{[]/.test(withoutFence)) {
     try {
       const parsed = JSON.parse(withoutFence)
       const readable = readableObjectText(parsed)
@@ -696,7 +696,9 @@ export async function createInpaintTask(_productId: string, req: CreateInpaintTa
     await delay(1500)
     return mockInpaintTask(req.variantId, req.regions, req.prompt) }
   contractNeeded('局部重绘功能暂未开放，本次没有创建生产任务。') }
-export async function getInpaintTask(_productId: string, _taskId: string): Promise<InpaintTask> {
+export async function getInpaintTask(productId: string, taskId: string): Promise<InpaintTask> {
+  void productId
+  void taskId
   if (isDevMode()) {
     await delay(300)
     return mockInpaintTask('var-1', [{ x: 100, y: 100, width: 200, height: 150 }], 'demo inpaint') }

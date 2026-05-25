@@ -199,7 +199,7 @@ export default function ProductVisualToolsPage() {
                   <select
                     value={selectedProductID}
                     onChange={event => setSelectedProductID(event.target.value)}
-                    className="w-full max-w-md rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white/90 outline-none transition focus:border-brand-500/50"
+                    className="w-full max-w-md rounded-xl border border-white/10 bg-black/20 px-4 py-2.5 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition focus:border-brand-500/50"
                   >
                     {products.map(item => (
                       <option key={item.id} value={item.id}>
@@ -241,10 +241,10 @@ export default function ProductVisualToolsPage() {
                           key={tool.id}
                           type="button"
                           onClick={() => setSelectedToolSlug(tool.slug)}
-                          className={`rounded-xl border p-4 text-left transition-all ${
+                          className={`rounded-xl border p-4 text-left transition-colors ${
                             active
                               ? 'border-brand-500/40 bg-brand-500/10 shadow-[0_0_15px_rgba(var(--brand-500),0.15)]'
-                              : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'
+                              : 'border-white/10 bg-white/[0.02] hover:bg-[var(--ecom-surface-hover)]'
                           }`}
                         >
                           <div className="flex items-start gap-4">

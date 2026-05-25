@@ -20,6 +20,7 @@ import {
   loadUseTemplatePayload,
 } from '@/services/templateCenter'
 import type { WorkflowEvent } from '@/mock/workflowBridge'
+import { Button } from '@/components/ui/Button'
 
 type Locale = 'zh' | 'en'
 
@@ -383,7 +384,7 @@ export default function ChatWorkspacePage() {
                 <Link
                   key={action.to}
                   to={action.to}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white/65 transition-colors hover:bg-white/[0.07] hover:text-white"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white/65 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white"
                 >
                   <span>{copy(locale, action.zh, action.en)}</span>
                   <ArrowRight className="h-4 w-4" />
@@ -426,13 +427,13 @@ export default function ChatWorkspacePage() {
               )}
               <div className="space-y-3">
                 {config.assets.map(item => (
-                  <button
+                  <Button
                     key={item.meta}
                     onClick={() => toggleAsset(item.meta)}
                     className={`w-full rounded-xl border p-3 text-left transition-colors ${
                       selectedAssets.includes(item.meta)
                         ? 'border-brand-500/25 bg-brand-500/10'
-                        : 'border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.05]'
+                        : 'border-white/[0.06] bg-white/[0.03] hover:bg-[var(--ecom-surface-hover)]'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -444,13 +445,13 @@ export default function ChatWorkspacePage() {
                         <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-400" />
                       )}
                     </div>
-                  </button>
+                  </Button>
                 ))}
               </div>
-              <button className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-brand-500/30 bg-brand-500/8 px-4 py-3 text-sm text-brand-300">
+              <Button className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-brand-500/30 bg-brand-500/8 px-4 py-3 text-sm text-brand-300">
                 <Paperclip className="h-4 w-4" />
                 {copy(locale, '继续挂载资料', 'Attach More Context')}
-              </button>
+              </Button>
             </div>
 
             <div className="glass rounded-2xl p-5">
@@ -460,13 +461,13 @@ export default function ChatWorkspacePage() {
               </div>
               <div className="space-y-2">
                 {promptChips.map(item => (
-                  <button
+                  <Button
                     key={item}
                     onClick={() => handlePromptSelect(item)}
-                    className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-left text-sm text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white"
+                    className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-left text-sm text-white/55 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white"
                   >
                     {item}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -519,16 +520,16 @@ export default function ChatWorkspacePage() {
                 <input
                   value={inputValue}
                   onChange={e => setInputValue(e.target.value)}
-                  className="glass min-w-0 flex-1 rounded-xl px-4 py-3 text-sm text-white/80 outline-none"
+                  className="glass min-w-0 flex-1 rounded-xl px-4 py-3 text-sm text-white/80 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
                 />
-                <button
+                <Button
                   onClick={handleSend}
                   disabled={isSending}
                   className="btn-primary inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium text-white"
                 >
                   <Send className="h-4 w-4" />
                   {isSending ? copy(locale, '发送中...', 'Sending...') : copy(locale, '发送', 'Send')}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -553,17 +554,17 @@ export default function ChatWorkspacePage() {
                     en: 'Sync to Knowledge / Brand Library',
                   },
                 ].map((item, index) => (
-                  <button
+                  <Button
                     key={item.zh}
                     onClick={() => setActiveAction(index)}
                     className={`w-full rounded-xl border p-3 text-left text-sm transition-colors ${
                       activeAction === index
                         ? 'border-brand-500/25 bg-brand-500/10 text-brand-300'
-                        : 'border-white/[0.06] bg-white/[0.03] text-white/55 hover:bg-white/[0.05]'
+                        : 'border-white/[0.06] bg-white/[0.03] text-white/55 hover:bg-[var(--ecom-surface-hover)]'
                     }`}
                   >
                     {copy(locale, item.zh, item.en)}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -575,14 +576,14 @@ export default function ChatWorkspacePage() {
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-sm leading-6 text-white/50">
                 {copy(locale, actionDescriptions[activeAction].zh, actionDescriptions[activeAction].en)}
               </div>
-              <button
+              <Button
                 onClick={handleSaveAction}
-                className="mt-4 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/70 transition-colors hover:bg-white/[0.06] hover:text-white"
+                className="mt-4 w-full rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 text-sm text-white/70 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white"
               >
                 {saveStatus === 'saved'
                   ? copy(locale, '已保存当前动作', 'Current Action Saved')
                   : copy(locale, '保存当前动作配置', 'Save Current Action')}
-              </button>
+              </Button>
             </div>
 
             <div className="glass rounded-2xl p-5">

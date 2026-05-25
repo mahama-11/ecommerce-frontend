@@ -3,10 +3,20 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { dirname, join, relative } from 'node:path'
 
 const root = process.cwd()
-const args = new Set(process.argv.slice(2))
+const rawArgs = process.argv.slice(2)
+const args = new Set(rawArgs)
 const writeBaseline = args.has('--write-baseline')
 const baselineRel = 'scripts/ecommerce-style-consistency-baseline.json'
 const baselinePath = join(root, baselineRel)
+
+function argValue(name) {
+  const idx = rawArgs.indexOf(name)
+  if (idx >= 0 && rawArgs[idx + 1]) return rawArgs[idx + 1]
+  const prefixed = rawArgs.find(arg => arg.startsWith(`${name}=`))
+  return prefixed ? prefixed.slice(name.length + 1) : null
+}
+
+const reportRel = argValue('--report')
 
 const requiredFiles = [
   'src/components/ui/Button.tsx',
@@ -169,6 +179,11 @@ const result = {
   currentTotals: sumCounts(currentScan),
   baselineTotals: baseline?.totals ?? null,
   failures,
+}
+if (reportRel) {
+  const reportPath = join(root, reportRel)
+  mkdirSync(dirname(reportPath), { recursive: true })
+  writeFileSync(reportPath, JSON.stringify(result, null, 2) + '\n')
 }
 console.log(JSON.stringify(result, null, 2))
 process.exit(failures.length ? 1 : 0)

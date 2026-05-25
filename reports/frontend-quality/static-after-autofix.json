@@ -1,0 +1,932 @@
+{
+  "status": "PASS",
+  "policy": "Static frontend quality issues cannot increase; use shared UI/API layers and accessible semantics.",
+  "baseline": "scripts/ecommerce-static-quality-baseline.json",
+  "current": {
+    "totals": {
+      "files": 45,
+      "errors": 95,
+      "warnings": 160,
+      "findings": 255
+    },
+    "by_code": {
+      "a11y.img_missing_alt": {
+        "errors": 1,
+        "warnings": 0,
+        "total": 1
+      },
+      "a11y.input_missing_name": {
+        "errors": 0,
+        "warnings": 71,
+        "total": 71
+      },
+      "a11y.interactive_nonsemantic": {
+        "errors": 9,
+        "warnings": 0,
+        "total": 9
+      },
+      "focus.outline_none_without_replacement": {
+        "errors": 85,
+        "warnings": 0,
+        "total": 85
+      },
+      "motion.transition_all": {
+        "errors": 0,
+        "warnings": 72,
+        "total": 72
+      },
+      "motion.transition_all_css": {
+        "errors": 0,
+        "warnings": 4,
+        "total": 4
+      },
+      "style.inline_visual_style": {
+        "errors": 0,
+        "warnings": 12,
+        "total": 12
+      },
+      "theme.missing_color_scheme_dark": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      }
+    },
+    "by_file": {
+      "src/components/DetailDrawer.tsx": {
+        "errors": 2,
+        "warnings": 1,
+        "total": 3
+      },
+      "src/components/pricing/PricingPlanGrid.tsx": {
+        "errors": 0,
+        "warnings": 3,
+        "total": 3
+      },
+      "src/components/product-workbench/index.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/components/Toast.tsx": {
+        "errors": 0,
+        "warnings": 2,
+        "total": 2
+      },
+      "src/index.css": {
+        "errors": 0,
+        "warnings": 5,
+        "total": 5
+      },
+      "src/layouts/AccountLayout.tsx": {
+        "errors": 0,
+        "warnings": 2,
+        "total": 2
+      },
+      "src/layouts/ConsoleLayout.tsx": {
+        "errors": 2,
+        "warnings": 2,
+        "total": 4
+      },
+      "src/layouts/PortalLayout.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/account/AccountAssetsPage.tsx": {
+        "errors": 0,
+        "warnings": 2,
+        "total": 2
+      },
+      "src/pages/account/AccountBillingPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/account/AccountCommissionPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/account/AccountDownloadsPage.tsx": {
+        "errors": 3,
+        "warnings": 4,
+        "total": 7
+      },
+      "src/pages/account/AccountProfilePage.tsx": {
+        "errors": 5,
+        "warnings": 6,
+        "total": 11
+      },
+      "src/pages/account/AccountPromotionPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/account/AccountTemplatesPage.tsx": {
+        "errors": 2,
+        "warnings": 3,
+        "total": 5
+      },
+      "src/pages/AgentTemplateMarketPage.tsx": {
+        "errors": 3,
+        "warnings": 4,
+        "total": 7
+      },
+      "src/pages/AssetCommercePage.tsx": {
+        "errors": 1,
+        "warnings": 2,
+        "total": 3
+      },
+      "src/pages/auth/ForgotPasswordPage.tsx": {
+        "errors": 1,
+        "warnings": 1,
+        "total": 2
+      },
+      "src/pages/auth/LoginPage.tsx": {
+        "errors": 2,
+        "warnings": 2,
+        "total": 4
+      },
+      "src/pages/auth/RegisterPage.tsx": {
+        "errors": 4,
+        "warnings": 4,
+        "total": 8
+      },
+      "src/pages/BatchListingPage.tsx": {
+        "errors": 4,
+        "warnings": 7,
+        "total": 11
+      },
+      "src/pages/BlogPage.tsx": {
+        "errors": 1,
+        "warnings": 1,
+        "total": 2
+      },
+      "src/pages/ChatWorkspacePage.tsx": {
+        "errors": 1,
+        "warnings": 1,
+        "total": 2
+      },
+      "src/pages/ContactPage.tsx": {
+        "errors": 5,
+        "warnings": 4,
+        "total": 9
+      },
+      "src/pages/DesignWorkbenchPage.tsx": {
+        "errors": 1,
+        "warnings": 2,
+        "total": 3
+      },
+      "src/pages/HelpCenterPage.tsx": {
+        "errors": 1,
+        "warnings": 1,
+        "total": 2
+      },
+      "src/pages/inventory/InventoryAnalysisPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/inventory/InventoryDashboardPage.tsx": {
+        "errors": 3,
+        "warnings": 1,
+        "total": 4
+      },
+      "src/pages/inventory/InventoryProductManagePage.tsx": {
+        "errors": 2,
+        "warnings": 1,
+        "total": 3
+      },
+      "src/pages/inventory/InventoryReplenishmentPage.tsx": {
+        "errors": 6,
+        "warnings": 4,
+        "total": 10
+      },
+      "src/pages/inventory/InventorySettingsPage.tsx": {
+        "errors": 6,
+        "warnings": 4,
+        "total": 10
+      },
+      "src/pages/OpsWorkbenchPage.tsx": {
+        "errors": 2,
+        "warnings": 4,
+        "total": 6
+      },
+      "src/pages/PricingPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/product/components/ProductAIPipelinePanel.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/product/components/ProductDetailTabs.tsx": {
+        "errors": 3,
+        "warnings": 13,
+        "total": 16
+      },
+      "src/pages/product/ProductDetailPage.tsx": {
+        "errors": 5,
+        "warnings": 8,
+        "total": 13
+      },
+      "src/pages/product/ProductListPage.tsx": {
+        "errors": 12,
+        "warnings": 9,
+        "total": 21
+      },
+      "src/pages/production/PrepHubPage.tsx": {
+        "errors": 1,
+        "warnings": 6,
+        "total": 7
+      },
+      "src/pages/production/SandboxPage.tsx": {
+        "errors": 8,
+        "warnings": 12,
+        "total": 20
+      },
+      "src/pages/production/WorkshopPage.tsx": {
+        "errors": 3,
+        "warnings": 8,
+        "total": 11
+      },
+      "src/pages/ProductVisualToolsPage.tsx": {
+        "errors": 1,
+        "warnings": 1,
+        "total": 2
+      },
+      "src/pages/tool-page/components/GenerationSettingsPanel.tsx": {
+        "errors": 2,
+        "warnings": 0,
+        "total": 2
+      },
+      "src/pages/tool-page/components/RecentActivityPanel.tsx": {
+        "errors": 0,
+        "warnings": 2,
+        "total": 2
+      },
+      "src/pages/tool-page/components/ResultPanel.tsx": {
+        "errors": 0,
+        "warnings": 2,
+        "total": 2
+      },
+      "src/pages/ToolPage.tsx": {
+        "errors": 3,
+        "warnings": 18,
+        "total": 21
+      }
+    },
+    "top_findings": [
+      {
+        "code": "a11y.interactive_nonsemantic",
+        "severity": "error",
+        "file": "src/components/DetailDrawer.tsx",
+        "line": 54,
+        "message": "Clickable div/span needs semantic button/link or role plus keyboard handler.",
+        "evidence": "<div\n      className={`fixed inset-0 ${Z_INDEX.drawer} flex justify-end bg-black/50 backdrop-blur-sm transition-all duration-200 ${\n        visible ? 'opacity-100' : 'opacity-0'\n      }`}\n      onClick={onClose}\n    >"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/components/DetailDrawer.tsx",
+        "line": 55,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.interactive_nonsemantic",
+        "severity": "error",
+        "file": "src/components/DetailDrawer.tsx",
+        "line": 60,
+        "message": "Clickable div/span needs semantic button/link or role plus keyboard handler.",
+        "evidence": "<div\n        className={`flex h-full w-full max-w-md flex-col overflow-hidden border-l border-white/[0.08] bg-[var(--ecom-surface)]/95 p-5 shadow-2xl transition-transform duration-220 ease-out ${\n          visible ? 'translate-x-0' : 'trans"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/components/pricing/PricingPlanGrid.tsx",
+        "line": 163,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/components/pricing/PricingPlanGrid.tsx",
+        "line": 197,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/components/pricing/PricingPlanGrid.tsx",
+        "line": 206,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/components/product-workbench/index.tsx",
+        "line": 179,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"checkbox\"\n          checked={selected}\n          onChange={event =>"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/components/Toast.tsx",
+        "line": 23,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/components/Toast.tsx",
+        "line": 27,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "theme.missing_color_scheme_dark",
+        "severity": "warning",
+        "file": "src/index.css",
+        "line": 1,
+        "message": "Dark product theme should declare color-scheme: dark for native controls/scrollbars.",
+        "evidence": ""
+      },
+      {
+        "code": "motion.transition_all_css",
+        "severity": "warning",
+        "file": "src/index.css",
+        "line": 142,
+        "message": "Avoid transition: all in CSS.",
+        "evidence": "transition: all"
+      },
+      {
+        "code": "motion.transition_all_css",
+        "severity": "warning",
+        "file": "src/index.css",
+        "line": 152,
+        "message": "Avoid transition: all in CSS.",
+        "evidence": "transition: all"
+      },
+      {
+        "code": "motion.transition_all_css",
+        "severity": "warning",
+        "file": "src/index.css",
+        "line": 179,
+        "message": "Avoid transition: all in CSS.",
+        "evidence": "transition: all"
+      },
+      {
+        "code": "motion.transition_all_css",
+        "severity": "warning",
+        "file": "src/index.css",
+        "line": 224,
+        "message": "Avoid transition: all in CSS.",
+        "evidence": "transition: all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/layouts/AccountLayout.tsx",
+        "line": 43,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/layouts/AccountLayout.tsx",
+        "line": 67,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/layouts/ConsoleLayout.tsx",
+        "line": 79,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/layouts/ConsoleLayout.tsx",
+        "line": 96,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n              type=\"text\"\n              placeholder={t('common.search')}\n              className=\"w-full bg-transparent text-sm text-white/80 placeholder-white/30 outline-none\"\n            />"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/layouts/ConsoleLayout.tsx",
+        "line": 99,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "a11y.interactive_nonsemantic",
+        "severity": "error",
+        "file": "src/layouts/ConsoleLayout.tsx",
+        "line": 201,
+        "message": "Clickable div/span needs semantic button/link or role plus keyboard handler.",
+        "evidence": "<div\n          className={`fixed inset-0 ${Z_INDEX.pageOverlay} bg-black/60 lg:hidden`}\n          onClick={() =>"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/layouts/PortalLayout.tsx",
+        "line": 125,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountAssetsPage.tsx",
+        "line": 109,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountAssetsPage.tsx",
+        "line": 119,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountBillingPage.tsx",
+        "line": 90,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountCommissionPage.tsx",
+        "line": 147,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountDownloadsPage.tsx",
+        "line": 28,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n        className=\"w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-cyan-300/40 focus:bg-white/[0.06]\"\n        {...props}\n      />"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/account/AccountDownloadsPage.tsx",
+        "line": 29,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/account/AccountDownloadsPage.tsx",
+        "line": 41,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountDownloadsPage.tsx",
+        "line": 155,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountDownloadsPage.tsx",
+        "line": 259,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  type=\"checkbox\"\n                  checked={downloadableOnly}\n                  onChange={event =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/account/AccountDownloadsPage.tsx",
+        "line": 263,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountDownloadsPage.tsx",
+        "line": 263,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 137,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 149,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  value={state.fullName}\n                  onChange={event =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 152,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 158,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  disabled\n                  value={user?.email || ''}\n                  className=\"w-full rounded-md border border-white/5 bg-white/[0.03] px-3 py-2 text-sm text-slate-500 cursor-not-allowed\"\n                />"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 167,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  value={state.avatarUrl}\n                  onChange={event =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 171,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 180,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 194,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 207,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 215,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 234,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountPromotionPage.tsx",
+        "line": 134,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountTemplatesPage.tsx",
+        "line": 87,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/account/AccountTemplatesPage.tsx",
+        "line": 98,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountTemplatesPage.tsx",
+        "line": 105,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input value={draftTitle} onChange={(event) =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/account/AccountTemplatesPage.tsx",
+        "line": 105,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/account/AccountTemplatesPage.tsx",
+        "line": 106,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/AgentTemplateMarketPage.tsx",
+        "line": 427,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/AgentTemplateMarketPage.tsx",
+        "line": 445,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/AgentTemplateMarketPage.tsx",
+        "line": 479,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    value={searchQuery}\n                    onChange={e =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/AgentTemplateMarketPage.tsx",
+        "line": 484,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/AgentTemplateMarketPage.tsx",
+        "line": 491,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/AgentTemplateMarketPage.tsx",
+        "line": 559,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.img_missing_alt",
+        "severity": "error",
+        "file": "src/pages/AgentTemplateMarketPage.tsx",
+        "line": 648,
+        "message": "Images must include alt text, or alt=\"\" when decorative.",
+        "evidence": "<img\n                            src={(example as Record<string, unknown>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/AssetCommercePage.tsx",
+        "line": 383,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    value={searchQuery}\n                    onChange={e =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/AssetCommercePage.tsx",
+        "line": 388,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/AssetCommercePage.tsx",
+        "line": 414,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/ForgotPasswordPage.tsx",
+        "line": 16,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"email\"\n          value={email}\n          onChange={e =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/auth/ForgotPasswordPage.tsx",
+        "line": 21,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/LoginPage.tsx",
+        "line": 41,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"email\"\n          value={email}\n          onChange={e =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/auth/LoginPage.tsx",
+        "line": 48,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/LoginPage.tsx",
+        "line": 50,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"password\"\n          value={password}\n          onChange={e =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/auth/LoginPage.tsx",
+        "line": 57,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 49,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"text\"\n          value={fullName}\n          onChange={e =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 57,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 59,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"email\"\n          value={email}\n          onChange={e =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 66,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 68,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"password\"\n          value={password}\n          onChange={e =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 76,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 78,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"text\"\n          value={organizationName}\n          onChange={e =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 84,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/BatchListingPage.tsx",
+        "line": 154,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/BatchListingPage.tsx",
+        "line": 154,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/BatchListingPage.tsx",
+        "line": 168,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n        value={value}\n        onChange={e =>"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/BatchListingPage.tsx",
+        "line": 172,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/BatchListingPage.tsx",
+        "line": 172,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      },
+      {
+        "code": "focus.outline_none_without_replacement",
+        "severity": "error",
+        "file": "src/pages/BatchListingPage.tsx",
+        "line": 187,
+        "message": "Do not remove outlines without a focus-visible replacement.",
+        "evidence": "outline-none"
+      },
+      {
+        "code": "motion.transition_all",
+        "severity": "warning",
+        "file": "src/pages/BatchListingPage.tsx",
+        "line": 187,
+        "message": "Avoid transition-all; list transform/opacity/color properties explicitly.",
+        "evidence": "transition-all"
+      }
+    ]
+  },
+  "baseline_totals": {
+    "files": 45,
+    "errors": 95,
+    "warnings": 160,
+    "findings": 255
+  },
+  "failures": [],
+  "warnings": []
+}

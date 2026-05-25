@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 /* eslint-disable react-hooks/immutability, react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -14,7 +15,6 @@ import { MOCK_SOURCES } from '@/mocks/productionDemo'
 import { useToastStore } from '@/store/toastStore'
 import type { DualTrackParsing, LlmDecisionTreeResult, DecisionStep,
   ParsedAttribute, ImageUnderstandingProviderCode, } from '@/types/production'
-import { Button } from '@/components/ui/Button'
 // ─── Polling helper ──────────────────────────────────────────
 function usePolling<T>( fetcher: () => Promise<T>, shouldPoll: (data: T) => boolean, intervalMs = 2000,
   maxDurationMs = 180000, ) {
@@ -101,7 +101,7 @@ function UploadZone({ title, icon: Icon, iconColor,
         onDrop={onDrop}
         onDragOver={(e) => e.preventDefault()}
         onClick={() => inputRef.current?.click()}
-        className={`min-h-[132px] cursor-pointer rounded-lg border border-dashed border-white/[0.08] text-center transition hover:border-white/20 hover:bg-white/[0.01] ${sources.length > 0 ? 'p-2' : 'flex flex-col items-center justify-center'}`}
+        className={`min-h-[132px] cursor-pointer rounded-lg border border-dashed border-white/[0.08] text-center transition hover:border-white/20 hover:bg-[var(--ecom-surface-hover)] ${sources.length > 0 ? 'p-2' : 'flex flex-col items-center justify-center'}`}
       >
         {sources.length > 0 ? ( <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {sources.map((src) => {
@@ -185,7 +185,7 @@ function DecisionStepCard({ step, isCurrent, onSelectOption,
                 type="button"
                 onClick={() => onSelectOption(step.id, option.id)}
                 className={`group relative flex flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left transition ${ isSelected ? 'border-violet-400/40 bg-violet-400/[0.08]' : isCurrent
-                      ? 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]' : 'border-white/[0.04] bg-white/[0.01] hover:border-white/[0.10] hover:bg-white/[0.03]' }`}
+                      ? 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-[var(--ecom-surface-hover)]' : 'border-white/[0.04] bg-white/[0.01] hover:border-white/[0.10] hover:bg-[var(--ecom-surface-hover)]' }`}
               >
                 {option.icon && ( <span className="text-sm">{option.icon}</span> )}
                 <span className={`text-[11px] font-medium ${ isSelected ? 'text-violet-300' : 'text-white/60' }`}>
@@ -556,7 +556,7 @@ export default function PrepHubPage() {
                 value={understandingProvider}
                 onChange={(event) => setUnderstandingProvider(event.target.value as ImageUnderstandingProviderCode)}
                 disabled={isParsing}
-                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-[11px] text-white/70 outline-none transition focus:border-cyan-300/30 disabled:opacity-40"
+                className="w-full rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-[11px] text-white/70 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition focus:border-cyan-300/30 disabled:opacity-40"
               >
                 <option value="comfyui_bridge">稳定识别（推荐）</option>
                 <option value="gemini_visual_understanding">增强识别</option> </select>
@@ -631,7 +631,7 @@ export default function PrepHubPage() {
                     已确认 {decisionProgress.answered} / {decisionProgress.total}，还剩 {decisionProgress.remaining} 项 </span> </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-400 to-cyan-300 transition-all duration-300"
+                    className="h-full rounded-full bg-gradient-to-r from-violet-400 to-cyan-300 transition-colors duration-300"
                     style={{ width: `${decisionProgress.percent}%` }}
                   /> </div>
                 <p className="mt-2 text-[10px] leading-relaxed text-white/35">
@@ -660,7 +660,7 @@ export default function PrepHubPage() {
                   type="button"
                   disabled={currentStepIndex === 0}
                   onClick={() => setCurrentStepIndex((i) => i - 1)}
-                  className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-white/[0.04] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
+                  className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
                 >
                   <ChevronLeft className="h-3 w-3" />
                   上一项 </Button>
@@ -670,7 +670,7 @@ export default function PrepHubPage() {
                   type="button"
                   disabled={currentStepIndex >= steps.length - 1}
                   onClick={() => setCurrentStepIndex((i) => i + 1)}
-                  className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-white/[0.04] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
+                  className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
                 >
                   下一项
                   <ChevronRight className="h-3 w-3" /> </Button> </div>
@@ -750,7 +750,7 @@ export default function PrepHubPage() {
               {globalDriftBias}% </span> </div>
           <div className="relative h-2.5 rounded-full bg-gradient-to-r from-cyan-400/30 via-white/10 to-amber-400/30">
             <div
-              className="absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.15)] transition-all duration-100"
+              className="absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/40 shadow-[0_0_10px_rgba(255,255,255,0.15)] transition-colors duration-100"
               style={{ left: `${globalDriftBias}%`, backgroundColor: globalDriftBias < 35
                     ? 'rgb(34 211 238)' : globalDriftBias > 65 ? 'rgb(251 191 36)' : 'rgb(255 255 255)',
               }}

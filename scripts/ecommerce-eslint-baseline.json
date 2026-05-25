@@ -1,0 +1,886 @@
+{
+  "generated_at": "2026-05-25T08:58:55.635Z",
+  "policy": "Existing ESLint debt is recorded as a ceiling; future frontend increments must not increase errors or rule-level debt.",
+  "totals": {
+    "files": 30,
+    "errors": 111,
+    "warnings": 9,
+    "findings": 120
+  },
+  "by_rule": {
+    "@typescript-eslint/no-explicit-any": {
+      "errors": 11,
+      "warnings": 0,
+      "total": 11
+    },
+    "jsx-a11y/click-events-have-key-events": {
+      "errors": 1,
+      "warnings": 0,
+      "total": 1
+    },
+    "jsx-a11y/no-autofocus": {
+      "errors": 1,
+      "warnings": 0,
+      "total": 1
+    },
+    "jsx-a11y/no-noninteractive-element-interactions": {
+      "errors": 1,
+      "warnings": 0,
+      "total": 1
+    },
+    "jsx-a11y/no-noninteractive-element-to-interactive-role": {
+      "errors": 1,
+      "warnings": 0,
+      "total": 1
+    },
+    "jsx-a11y/no-static-element-interactions": {
+      "errors": 3,
+      "warnings": 0,
+      "total": 3
+    },
+    "react-hooks/exhaustive-deps": {
+      "errors": 0,
+      "warnings": 9,
+      "total": 9
+    },
+    "react-hooks/preserve-manual-memoization": {
+      "errors": 1,
+      "warnings": 0,
+      "total": 1
+    },
+    "react-hooks/purity": {
+      "errors": 2,
+      "warnings": 0,
+      "total": 2
+    },
+    "react-hooks/rules-of-hooks": {
+      "errors": 1,
+      "warnings": 0,
+      "total": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "errors": 28,
+      "warnings": 0,
+      "total": 28
+    },
+    "react-refresh/only-export-components": {
+      "errors": 61,
+      "warnings": 0,
+      "total": 61
+    }
+  },
+  "by_file": {
+    "src/components/account/UserAccountMenu.tsx": {
+      "errors": 3,
+      "warnings": 0,
+      "rules": {
+        "react-refresh/only-export-components": {
+          "errors": 2,
+          "warnings": 0,
+          "total": 2
+        },
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/components/DetailDrawer.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/components/pricing/PricingPlanGrid.tsx": {
+      "errors": 3,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 2,
+          "warnings": 0,
+          "total": 2
+        },
+        "react-refresh/only-export-components": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/components/product-workbench/index.tsx": {
+      "errors": 2,
+      "warnings": 0,
+      "rules": {
+        "react-refresh/only-export-components": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        },
+        "jsx-a11y/no-noninteractive-element-to-interactive-role": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/layouts/ProductionLayout.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/layouts/ProductWorkbenchLayout.tsx": {
+      "errors": 2,
+      "warnings": 0,
+      "rules": {
+        "jsx-a11y/no-static-element-interactions": {
+          "errors": 2,
+          "warnings": 0,
+          "total": 2
+        }
+      }
+    },
+    "src/pages/account/AccountBillingPage.tsx": {
+      "errors": 0,
+      "warnings": 1,
+      "rules": {
+        "react-hooks/exhaustive-deps": {
+          "errors": 0,
+          "warnings": 1,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/account/AccountCommissionPage.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/account/AccountDownloadsPage.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/account/AccountProfilePage.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/account/AccountPromotionPage.tsx": {
+      "errors": 2,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 2,
+          "warnings": 0,
+          "total": 2
+        }
+      }
+    },
+    "src/pages/account/AccountTemplatesPage.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/rules-of-hooks": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/AgentTemplateMarketPage.tsx": {
+      "errors": 5,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 4,
+          "warnings": 0,
+          "total": 4
+        },
+        "react-hooks/preserve-manual-memoization": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/AssetCommercePage.tsx": {
+      "errors": 1,
+      "warnings": 1,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        },
+        "react-hooks/exhaustive-deps": {
+          "errors": 0,
+          "warnings": 1,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/BatchListingPage.tsx": {
+      "errors": 2,
+      "warnings": 2,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 2,
+          "warnings": 0,
+          "total": 2
+        },
+        "react-hooks/exhaustive-deps": {
+          "errors": 0,
+          "warnings": 2,
+          "total": 2
+        }
+      }
+    },
+    "src/pages/ChatWorkspacePage.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/DesignWorkbenchPage.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/inventory/InventoryDashboardPage.tsx": {
+      "errors": 2,
+      "warnings": 0,
+      "rules": {
+        "@typescript-eslint/no-explicit-any": {
+          "errors": 2,
+          "warnings": 0,
+          "total": 2
+        }
+      }
+    },
+    "src/pages/inventory/InventoryProductManagePage.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "@typescript-eslint/no-explicit-any": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/inventory/InventorySettingsPage.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/OpsWorkbenchPage.tsx": {
+      "errors": 2,
+      "warnings": 1,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        },
+        "react-hooks/exhaustive-deps": {
+          "errors": 0,
+          "warnings": 1,
+          "total": 1
+        },
+        "react-hooks/purity": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/product/components/ProductDetailTabs.tsx": {
+      "errors": 2,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        },
+        "@typescript-eslint/no-explicit-any": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/product/ProductDetailPage.tsx": {
+      "errors": 0,
+      "warnings": 1,
+      "rules": {
+        "react-hooks/exhaustive-deps": {
+          "errors": 0,
+          "warnings": 1,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/product/ProductListPage.tsx": {
+      "errors": 4,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 2,
+          "warnings": 0,
+          "total": 2
+        },
+        "jsx-a11y/no-autofocus": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        },
+        "jsx-a11y/no-noninteractive-element-interactions": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/production/PrepHubPage.tsx": {
+      "errors": 2,
+      "warnings": 2,
+      "rules": {
+        "jsx-a11y/click-events-have-key-events": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        },
+        "jsx-a11y/no-static-element-interactions": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        },
+        "react-hooks/exhaustive-deps": {
+          "errors": 0,
+          "warnings": 2,
+          "total": 2
+        }
+      }
+    },
+    "src/pages/production/SandboxPage.tsx": {
+      "errors": 1,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/purity": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/ProductVisualToolsPage.tsx": {
+      "errors": 2,
+      "warnings": 0,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        },
+        "@typescript-eslint/no-explicit-any": {
+          "errors": 1,
+          "warnings": 0,
+          "total": 1
+        }
+      }
+    },
+    "src/pages/ToolPage.tsx": {
+      "errors": 3,
+      "warnings": 1,
+      "rules": {
+        "react-hooks/set-state-in-effect": {
+          "errors": 3,
+          "warnings": 0,
+          "total": 3
+        },
+        "react-hooks/exhaustive-deps": {
+          "errors": 0,
+          "warnings": 1,
+          "total": 1
+        }
+      }
+    },
+    "src/router/index.tsx": {
+      "errors": 61,
+      "warnings": 0,
+      "rules": {
+        "react-refresh/only-export-components": {
+          "errors": 57,
+          "warnings": 0,
+          "total": 57
+        },
+        "@typescript-eslint/no-explicit-any": {
+          "errors": 4,
+          "warnings": 0,
+          "total": 4
+        }
+      }
+    },
+    "src/services/product.ts": {
+      "errors": 2,
+      "warnings": 0,
+      "rules": {
+        "@typescript-eslint/no-explicit-any": {
+          "errors": 2,
+          "warnings": 0,
+          "total": 2
+        }
+      }
+    }
+  },
+  "top_findings": [
+    {
+      "file": "src/components/DetailDrawer.tsx",
+      "line": 31,
+      "column": 7,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/components/DetailDrawer.tsx:31:7\n  29 |       const previousTop = document.body.style.top\n  30 |       const previousWidth = document.body.style.width\n> 31 |       setMounted(true)\n     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect\n  32 |       document.body.style.overflow = 'hidden'\n  33 |       document.body.style.position = 'fixed'\n  34 |       document.body.style.top = `-${scrollY}px`"
+    },
+    {
+      "file": "src/components/account/UserAccountMenu.tsx",
+      "line": 41,
+      "column": 17,
+      "severity": "error",
+      "rule_id": "react-refresh/only-export-components",
+      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components."
+    },
+    {
+      "file": "src/components/account/UserAccountMenu.tsx",
+      "line": 45,
+      "column": 17,
+      "severity": "error",
+      "rule_id": "react-refresh/only-export-components",
+      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components."
+    },
+    {
+      "file": "src/components/account/UserAccountMenu.tsx",
+      "line": 84,
+      "column": 7,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/components/account/UserAccountMenu.tsx:84:7\n  82 |   useEffect(() => {\n  83 |     if (!isAuthenticated) {\n> 84 |       setOrders([])\n     |       ^^^^^^^^^ Avoid calling setState() directly within an effect\n  85 |       return\n  86 |     }\n  87 |     let cancelled = false"
+    },
+    {
+      "file": "src/components/pricing/PricingPlanGrid.tsx",
+      "line": 49,
+      "column": 5,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/components/pricing/PricingPlanGrid.tsx:49:5\n  47 |   useEffect(() => {\n  48 |     let cancelled = false\n> 49 |     setLoading(true)\n     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect\n  50 |     setLoadFailed(false)\n  51 |     commercialService.getOfferings()\n  52 |       .then(result => {"
+    },
+    {
+      "file": "src/components/pricing/PricingPlanGrid.tsx",
+      "line": 69,
+      "column": 7,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/components/pricing/PricingPlanGrid.tsx:69:7\n  67 |   useEffect(() => {\n  68 |     if (!isAuthenticated) {\n> 69 |       setOrders([])\n     |       ^^^^^^^^^ Avoid calling setState() directly within an effect\n  70 |       return\n  71 |     }\n  72 |     let cancelled = false"
+    },
+    {
+      "file": "src/components/pricing/PricingPlanGrid.tsx",
+      "line": 224,
+      "column": 17,
+      "severity": "error",
+      "rule_id": "react-refresh/only-export-components",
+      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components."
+    },
+    {
+      "file": "src/components/product-workbench/index.tsx",
+      "line": 26,
+      "column": 17,
+      "severity": "error",
+      "rule_id": "react-refresh/only-export-components",
+      "message": "Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components."
+    },
+    {
+      "file": "src/components/product-workbench/index.tsx",
+      "line": 170,
+      "column": 7,
+      "severity": "error",
+      "rule_id": "jsx-a11y/no-noninteractive-element-to-interactive-role",
+      "message": "Non-interactive elements should not be assigned interactive roles."
+    },
+    {
+      "file": "src/layouts/ProductWorkbenchLayout.tsx",
+      "line": 100,
+      "column": 9,
+      "severity": "error",
+      "rule_id": "jsx-a11y/no-static-element-interactions",
+      "message": "Avoid non-native interactive elements. If using native HTML is not possible, add an appropriate role and support for tabbing, mouse, keyboard, and touch inputs to an interactive content element."
+    },
+    {
+      "file": "src/layouts/ProductWorkbenchLayout.tsx",
+      "line": 102,
+      "column": 13,
+      "severity": "error",
+      "rule_id": "jsx-a11y/no-static-element-interactions",
+      "message": "Avoid non-native interactive elements. If using native HTML is not possible, add an appropriate role and support for tabbing, mouse, keyboard, and touch inputs to an interactive content element."
+    },
+    {
+      "file": "src/layouts/ProductionLayout.tsx",
+      "line": 57,
+      "column": 7,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/layouts/ProductionLayout.tsx:57:7\n  55 |   useEffect(() => {\n  56 |     if (!id) {\n> 57 |       setProductTitle('')\n     |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  58 |       return\n  59 |     }\n  60 |     let cancelled = false"
+    },
+    {
+      "file": "src/pages/AgentTemplateMarketPage.tsx",
+      "line": 150,
+      "column": 5,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/AgentTemplateMarketPage.tsx:150:5\n  148 |   useEffect(() => {\n  149 |     let cancelled = false\n> 150 |     setLoading(true)\n      |     ^^^^^^^^^^ Avoid calling setState() directly within an effect\n  151 |     void Promise.all([ listCatalog({\n  152 |         locale, keyword: searchQuery.trim() || undefined,\n  153 |         modality: activeModality ?? undefined, series: activeSeries ?? undefined,"
+    },
+    {
+      "file": "src/pages/AgentTemplateMarketPage.tsx",
+      "line": 178,
+      "column": 32,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/AgentTemplateMarketPage.tsx:178:32\n  176 |     } }, [activeCapability, activeModality, activePlatform, activeSeries, locale, searchQuery, sortBy])\n  177 |   useEffect(() => {\n> 178 |     if (!selectedTemplateId) { setSelectedDetail(null)\n      |                                ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  179 |       return\n  180 |     }\n  181 |     const requestVersion = ++detailRequestVersionRef.current"
+    },
+    {
+      "file": "src/pages/AgentTemplateMarketPage.tsx",
+      "line": 195,
+      "column": 29,
+      "severity": "error",
+      "rule_id": "react-hooks/preserve-manual-memoization",
+      "message": "Compilation Skipped: Existing memoization could not be preserved\n\nReact Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This value was memoized in source but not in compilation output.\n\n/root/work/v/ecommerce-frontend/src/pages/AgentTemplateMarketPage.tsx:195:29\n  193 |   const totalCatalogCount = useMemo( () => (globalFacets?.modalities ?? []).reduce((sum, item) => sum + item.count, 0),\n  194 |     [globalFacets], )\n> 195 |   const featuredTemplates = useMemo(() => {\n      |                             ^^^^^^^^^^^^^^^\n> 196 |     const featured = recommendations.filter(r => r.isFeatured)\n      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n> 197 |     return featured.length > 0 ? featured.slice(0, 3) : recommendations.slice(0, 3) }, [recommendations])\n      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Could not preserve existing memoization\n  198 |   const recommendedTemplates = useMemo(() => {\n  199 |     return recommendations.filter(r => !featuredTemplates.find(f => f.id === r.id)).slice(0, 4) }, [recommendations, featuredTemplates])\n  200 |   useEffect(() => {"
+    },
+    {
+      "file": "src/pages/AgentTemplateMarketPage.tsx",
+      "line": 205,
+      "column": 21,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/AgentTemplateMarketPage.tsx:205:21\n  203 |     }, 5000)\n  204 |     return () => clearInterval(timer) }, [featuredTemplates.length])\n> 205 |   useEffect(() => { setCurrentPage(1)\n      |                     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  206 |   }, [activeCapability, activeModality, activePlatform, activeSeries, searchQuery, sortBy])\n  207 |   const totalPages = Math.max(1, Math.ceil(visibleTemplates.length / pageSize))\n  208 |   const normalizedPage = Math.min(currentPage, totalPages)"
+    },
+    {
+      "file": "src/pages/AgentTemplateMarketPage.tsx",
+      "line": 213,
+      "column": 75,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/AgentTemplateMarketPage.tsx:213:75\n  211 |     paginatedTemplates[0] ?? visibleTemplates[0]\n  212 |   useEffect(() => {\n> 213 |     if (selectedTemplate && selectedTemplate.id !== selectedTemplateId) { setSelectedTemplateId(selectedTemplate.id)\n      |                                                                           ^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  214 |     } }, [selectedTemplate, selectedTemplateId])\n  215 |   const toggleFavorite = async (templateId: string) => {\n  216 |     const wasFavorited = favoriteIds.includes(templateId)"
+    },
+    {
+      "file": "src/pages/AssetCommercePage.tsx",
+      "line": 194,
+      "column": 21,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/AssetCommercePage.tsx:194:21\n  192 |   const [drawerSubtitle, setDrawerSubtitle] = useState('')\n  193 |   const [drawerNotes, setDrawerNotes] = useState<string[]>([])\n> 194 |   useEffect(() => { setSearchQuery('')\n      |                     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  195 |     setSelectedIndex(0)\n  196 |     setViewMode('overview')\n  197 |     setStatusFilter('all')"
+    },
+    {
+      "file": "src/pages/AssetCommercePage.tsx",
+      "line": 291,
+      "column": 6,
+      "severity": "warning",
+      "rule_id": "react-hooks/exhaustive-deps",
+      "message": "React Hook useMemo has a missing dependency: 'getStatusText'. Either include it or remove the dependency array."
+    },
+    {
+      "file": "src/pages/BatchListingPage.tsx",
+      "line": 293,
+      "column": 10,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/BatchListingPage.tsx:293:10\n  291 |\n  292 |   useEffect(() => {\n> 293 |     void loadProducts()\n      |          ^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  294 |   }, [contextProductIDs.join(',')])\n  295 |\n  296 |   const filteredProducts = useMemo(() => {"
+    },
+    {
+      "file": "src/pages/BatchListingPage.tsx",
+      "line": 294,
+      "column": 6,
+      "severity": "warning",
+      "rule_id": "react-hooks/exhaustive-deps",
+      "message": "React Hook useEffect has a missing dependency: 'loadProducts'. Either include it or remove the dependency array."
+    },
+    {
+      "file": "src/pages/BatchListingPage.tsx",
+      "line": 294,
+      "column": 7,
+      "severity": "warning",
+      "rule_id": "react-hooks/exhaustive-deps",
+      "message": "React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked."
+    },
+    {
+      "file": "src/pages/BatchListingPage.tsx",
+      "line": 320,
+      "column": 7,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/BatchListingPage.tsx:320:7\n  318 |   useEffect(() => {\n  319 |     if (selectedProducts.length === 0) {\n> 320 |       setPreviewProductID('')\n      |       ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  321 |       return\n  322 |     }\n  323 |     if (selectedProducts.some(item => item.id === previewProductID)) {"
+    },
+    {
+      "file": "src/pages/ChatWorkspacePage.tsx",
+      "line": 196,
+      "column": 7,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/ChatWorkspacePage.tsx:196:7\n  194 |         : ''\n  195 |     if (templateName) {\n> 196 |       setInputValue(\n      |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  197 |         l3Default ||\n  198 |           copy(\n  199 |             locale,"
+    },
+    {
+      "file": "src/pages/DesignWorkbenchPage.tsx",
+      "line": 169,
+      "column": 5,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/DesignWorkbenchPage.tsx:169:5\n  167 |   useEffect(() => {\n  168 |     const nextMock = getDesignWorkbenchMock(pathname)\n> 169 |     setTasks(nextMock.tasks)\n      |     ^^^^^^^^ Avoid calling setState() directly within an effect\n  170 |     setSearchQuery('')\n  171 |     setSelectedStage(0)\n  172 |     setBoardMode('pipeline')"
+    },
+    {
+      "file": "src/pages/OpsWorkbenchPage.tsx",
+      "line": 252,
+      "column": 5,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/OpsWorkbenchPage.tsx:252:5\n  250 |\n  251 |   useEffect(() => {\n> 252 |     setSearchQuery('')\n      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  253 |     void productWorkspaceRepository.listWorkflowEvents().then(events => {\n  254 |       setWorkflowEvents(events.slice(0, 4))\n  255 |     })"
+    },
+    {
+      "file": "src/pages/OpsWorkbenchPage.tsx",
+      "line": 269,
+      "column": 6,
+      "severity": "warning",
+      "rule_id": "react-hooks/exhaustive-deps",
+      "message": "React Hook useEffect has a missing dependency: 'locale'. Either include it or remove the dependency array."
+    },
+    {
+      "file": "src/pages/OpsWorkbenchPage.tsx",
+      "line": 316,
+      "column": 31,
+      "severity": "error",
+      "rule_id": "react-hooks/purity",
+      "message": "Error: Cannot call impure function during render\n\n`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).\n\n/root/work/v/ecommerce-frontend/src/pages/OpsWorkbenchPage.tsx:316:31\n  314 |     )\n  315 |     void productWorkspaceRepository.saveWorkflowEvent({\n> 316 |       id: `ops-${record.id}-${Date.now()}`,\n      |                               ^^^^^^^^^^ Cannot call impure function\n  317 |       module: 'template',\n  318 |       title: {\n  319 |         zh: `${record.title.zh} 已推进`,"
+    },
+    {
+      "file": "src/pages/ProductVisualToolsPage.tsx",
+      "line": 24,
+      "column": 5,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/ProductVisualToolsPage.tsx:24:5\n  22 |\n  23 |   useEffect(() => {\n> 24 |     setSelectedToolSlug(toolSlug ?? TOOLS[0]?.slug ?? '')\n     |     ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  25 |   }, [toolSlug])\n  26 |\n  27 |   useEffect(() => {"
+    },
+    {
+      "file": "src/pages/ProductVisualToolsPage.tsx",
+      "line": 233,
+      "column": 108,
+      "severity": "error",
+      "rule_id": "@typescript-eslint/no-explicit-any",
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "file": "src/pages/ToolPage.tsx",
+      "line": 105,
+      "column": 5,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/ToolPage.tsx:105:5\n  103 |     resultPreviewByAssetIDRef.current = {}\n  104 |     notifiedJobIDsRef.current.clear()\n> 105 |     resetSourceState({ clearPrompt: true, clearResults: true })\n      |     ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  106 |     setNegativePrompt('')\n  107 |     setActiveTemplate(null)\n  108 |     setTemplateOptions([])"
+    },
+    {
+      "file": "src/pages/ToolPage.tsx",
+      "line": 198,
+      "column": 6,
+      "severity": "warning",
+      "rule_id": "react-hooks/exhaustive-deps",
+      "message": "React Hook useCallback has missing dependencies: 'templateOptionsError' and 'templateOptionsLoaded'. Either include them or remove the dependency array."
+    },
+    {
+      "file": "src/pages/ToolPage.tsx",
+      "line": 219,
+      "column": 5,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/ToolPage.tsx:219:5\n  217 |     } }, [applyTemplatePayload, location.pathname, location.search, location.state, navigate, tool.slug])\n  218 |   useEffect(() => { templateOptionsRequestKeyRef.current = ''\n> 219 |     setTemplateOptions([])\n      |     ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  220 |     setTemplateOptionsLoaded(false)\n  221 |     setTemplateOptionsError('')\n  222 |     void loadTemplateOptions(true) }, [loadTemplateOptions])"
+    },
+    {
+      "file": "src/pages/ToolPage.tsx",
+      "line": 225,
+      "column": 96,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/ToolPage.tsx:225:96\n  223 |   useEffect(() => {\n  224 |     if (!pickerOpen) return\n> 225 |     if (!templateOptionsLoaded || templateOptions.length === 0 || templateOptionsError) { void loadTemplateOptions(true)\n      |                                                                                                ^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  226 |     } }, [loadTemplateOptions, pickerOpen, templateOptions.length, templateOptionsError, templateOptionsLoaded])\n  227 |   useEffect(() => {\n  228 |     return () => { resultObjectURLsRef.current.forEach(url => URL.revokeObjectURL(url))"
+    },
+    {
+      "file": "src/pages/account/AccountBillingPage.tsx",
+      "line": 78,
+      "column": 5,
+      "severity": "warning",
+      "rule_id": "react-hooks/exhaustive-deps",
+      "message": "React Hook useMemo has a missing dependency: 'quota?.remaining'. Either include it or remove the dependency array."
+    },
+    {
+      "file": "src/pages/account/AccountCommissionPage.tsx",
+      "line": 89,
+      "column": 10,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/account/AccountCommissionPage.tsx:89:10\n  87 |\n  88 |   useEffect(() => {\n> 89 |     void fetchData()\n     |          ^^^^^^^^^ Avoid calling setState() directly within an effect\n  90 |   }, [fetchData])\n  91 |\n  92 |   const stats = useMemo("
+    },
+    {
+      "file": "src/pages/account/AccountDownloadsPage.tsx",
+      "line": 77,
+      "column": 10,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/account/AccountDownloadsPage.tsx:77:10\n  75 |\n  76 |   useEffect(() => {\n> 77 |     void loadDownloads()\n     |          ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  78 |   }, [loadDownloads])\n  79 |\n  80 |   async function handleDownload(item: DownloadRecord) {"
+    },
+    {
+      "file": "src/pages/account/AccountProfilePage.tsx",
+      "line": 73,
+      "column": 5,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/account/AccountProfilePage.tsx:73:5\n  71 |   useEffect(() => {\n  72 |     const stored = loadStoredPreferences()\n> 73 |     setState({\n     |     ^^^^^^^^ Avoid calling setState() directly within an effect\n  74 |       fullName: user?.full_name || '',\n  75 |       avatarUrl: user?.avatar_url || '',\n  76 |       language: (stored.language as Locale | undefined) || locale,"
+    },
+    {
+      "file": "src/pages/account/AccountPromotionPage.tsx",
+      "line": 69,
+      "column": 10,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/account/AccountPromotionPage.tsx:69:10\n  67 |\n  68 |   useEffect(() => {\n> 69 |     void fetchData()\n     |          ^^^^^^^^^ Avoid calling setState() directly within an effect\n  70 |   }, [fetchData])\n  71 |\n  72 |   const activeCode = overview.codes[0] || codes[0]"
+    },
+    {
+      "file": "src/pages/account/AccountPromotionPage.tsx",
+      "line": 77,
+      "column": 7,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/account/AccountPromotionPage.tsx:77:7\n  75 |   useEffect(() => {\n  76 |     if (!activeCode?.code) {\n> 77 |       setResolvedCode(null)\n     |       ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  78 |       return\n  79 |     }\n  80 |     commercialService.resolvePromotionCode(activeCode.code).then(setResolvedCode).catch(() => setResolvedCode(null))"
+    },
+    {
+      "file": "src/pages/account/AccountTemplatesPage.tsx",
+      "line": 151,
+      "column": 47,
+      "severity": "error",
+      "rule_id": "react-hooks/rules-of-hooks",
+      "message": "React Hook \"useTemplate\" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function."
+    },
+    {
+      "file": "src/pages/inventory/InventoryDashboardPage.tsx",
+      "line": 161,
+      "column": 66,
+      "severity": "error",
+      "rule_id": "@typescript-eslint/no-explicit-any",
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "file": "src/pages/inventory/InventoryDashboardPage.tsx",
+      "line": 173,
+      "column": 68,
+      "severity": "error",
+      "rule_id": "@typescript-eslint/no-explicit-any",
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "file": "src/pages/inventory/InventoryProductManagePage.tsx",
+      "line": 83,
+      "column": 94,
+      "severity": "error",
+      "rule_id": "@typescript-eslint/no-explicit-any",
+      "message": "Unexpected any. Specify a different type."
+    },
+    {
+      "file": "src/pages/inventory/InventorySettingsPage.tsx",
+      "line": 33,
+      "column": 19,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/inventory/InventorySettingsPage.tsx:33:19\n  31 |\n  32 |   useEffect(() => {\n> 33 |     if (settings) setForm(settings)\n     |                   ^^^^^^^ Avoid calling setState() directly within an effect\n  34 |   }, [settings])\n  35 |\n  36 |   const handleSave = async () => {"
+    },
+    {
+      "file": "src/pages/product/ProductDetailPage.tsx",
+      "line": 146,
+      "column": 10,
+      "severity": "warning",
+      "rule_id": "react-hooks/exhaustive-deps",
+      "message": "React Hook useEffect has a missing dependency: 'loadProductWorkspace'. Either include it or remove the dependency array."
+    },
+    {
+      "file": "src/pages/product/ProductListPage.tsx",
+      "line": 130,
+      "column": 5,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/product/ProductListPage.tsx:130:5\n  128 |\n  129 |   useEffect(() => {\n> 130 |     setCurrentPage(1)\n      |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  131 |   }, [activeStage, keyword])\n  132 |\n  133 |   useEffect(() => {"
+    },
+    {
+      "file": "src/pages/product/ProductListPage.tsx",
+      "line": 292,
+      "column": 35,
+      "severity": "error",
+      "rule_id": "react-hooks/set-state-in-effect",
+      "message": "Error: Calling setState synchronously within an effect can trigger cascading renders\n\nEffects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:\n* Update external systems with the latest state from React.\n* Subscribe for updates from some external system, calling setState in a callback function when external state changes.\n\nCalling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).\n\n/root/work/v/ecommerce-frontend/src/pages/product/ProductListPage.tsx:292:35\n  290 |\n  291 |   useEffect(() => {\n> 292 |     if (currentPage > totalPages) setCurrentPage(totalPages)\n      |                                   ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect\n  293 |   }, [currentPage, totalPages])\n  294 |\n  295 |   const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } }"
+    },
+    {
+      "file": "src/pages/product/ProductListPage.tsx",
+      "line": 424,
+      "column": 144,
+      "severity": "error",
+      "rule_id": "jsx-a11y/no-autofocus",
+      "message": "The autoFocus prop should not be used, as it can reduce usability and accessibility for users."
+    },
+    {
+      "file": "src/pages/product/ProductListPage.tsx",
+      "line": 432,
+      "column": 11,
+      "severity": "error",
+      "rule_id": "jsx-a11y/no-noninteractive-element-interactions",
+      "message": "Non-interactive elements should not be assigned mouse or keyboard event listeners."
+    }
+  ]
+}

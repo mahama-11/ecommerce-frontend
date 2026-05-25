@@ -15,6 +15,7 @@ import { NAV_TOOL_GROUPS, getLocalizedTool } from '@/mock/data'
 import UserAccountMenu from '@/components/account/UserAccountMenu'
 import { useAuth } from '@/hooks/useAuth'
 import { Z_INDEX } from '@/styles/zIndex'
+import { Button } from '@/components/ui/Button'
 
 export default function ConsoleLayout() {
   const { t, i18n } = useTranslation()
@@ -75,7 +76,7 @@ export default function ConsoleLayout() {
 
     return (
     <aside
-      className={`fixed inset-y-0 left-0 ${Z_INDEX.sidebar} flex flex-col border-r border-white/[0.06] bg-[#0b0d14]/94 backdrop-blur-xl transition-all duration-300 ${
+      className={`fixed inset-y-0 left-0 ${Z_INDEX.sidebar} flex flex-col border-r border-white/[0.06] bg-[var(--ecom-popover-bg)] backdrop-blur-xl transition-colors duration-300 ${
         isMobile
           ? `w-[min(85vw,18rem)] ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden`
           : `${desktopCollapsed ? 'w-20' : 'w-64'} hidden lg:flex`
@@ -95,7 +96,7 @@ export default function ConsoleLayout() {
             <input
               type="text"
               placeholder={t('common.search')}
-              className="w-full bg-transparent text-sm text-white/80 placeholder-white/30 outline-none"
+              className="w-full bg-transparent text-sm text-white/80 placeholder-white/30 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
             />
           )}
         </div>
@@ -121,7 +122,7 @@ export default function ConsoleLayout() {
                 const isCollapsed = collapsed[sectionLabel]
                 return (
                   <div key={item.label}>
-                    <button
+                    <Button
                       onClick={() => toggleSection(sectionLabel)}
                       className="sidebar-item w-full text-white/50"
                     >
@@ -136,7 +137,7 @@ export default function ConsoleLayout() {
                           )}
                         </>
                       )}
-                    </button>
+                    </Button>
 
                     {!isCollapsed && (
                       <div className={`${compact ? '' : 'ml-3 border-l border-white/[0.06] pl-2'}`}>
@@ -178,33 +179,37 @@ export default function ConsoleLayout() {
       </nav>
 
       <div className={`mt-auto border-t border-white/[0.06] py-3 ${compact ? 'px-2' : 'px-4'}`}>
-        <button
+        <Button
           onClick={toggleLang}
-          className={`flex w-full items-center rounded-lg px-2 py-1.5 text-xs text-white/40 hover:text-white/70 hover:bg-white/[0.04] transition-colors ${
+          className={`flex w-full items-center rounded-lg px-2 py-1.5 text-xs text-white/40 hover:text-white/70 hover:bg-[var(--ecom-surface-hover)] transition-colors ${
             compact ? 'justify-center' : 'gap-2'
           }`}
         >
           <Globe className="h-3.5 w-3.5" />
           {!compact && <span>{i18n.language === 'zh' ? '\u4e2d' : 'EN'}</span>}
-        </button>
+        </Button>
       </div>
     </aside>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a12]">
+    <div className="min-h-screen bg-[var(--ecom-bg)]">
       {renderSidebar('desktop')}
 
       {mobileOpen && (
         <div
           className={`fixed inset-0 ${Z_INDEX.pageOverlay} bg-black/60 lg:hidden`}
+          role="button"
+          tabIndex={-1}
+          aria-label="关闭移动端侧边栏"
           onClick={() => setMobileOpen(false)}
+          onKeyDown={event => { if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') setMobileOpen(false) }}
         />
       )}
       {renderSidebar('mobile')}
 
-      <button
+      <Button
         onClick={handleSidebarToggle}
         className={`fixed left-4 top-4 ${Z_INDEX.floatingToolControl} rounded-lg p-2 text-white/60 transition-colors hover:text-white glass`}
       >
@@ -213,7 +218,7 @@ export default function ConsoleLayout() {
         ) : (
           isDesktop && desktopCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />
         )}
-      </button>
+      </Button>
 
       {isAuthenticated && (
         <div className={`fixed right-4 top-4 ${Z_INDEX.floatingToolControl}`}>

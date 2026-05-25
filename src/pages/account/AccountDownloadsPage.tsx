@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Download, FolderArchive, PackageCheck, ExternalLink, LoaderCircle } from 'lucide-react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
@@ -26,7 +26,7 @@ function InputField({ label, ...props }: { label: string } & React.InputHTMLAttr
     <div className="flex flex-col gap-1.5">
       <label className="text-xs font-medium text-slate-400">{label}</label>
       <input
-        className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-cyan-300/40 focus:bg-white/[0.06]"
+        className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition placeholder:text-white/30 focus:border-cyan-300/40 focus:bg-white/[0.06]"
         {...props}
       />
     </div>
@@ -38,7 +38,7 @@ function SelectField({ label, children, ...props }: { label: string; children: R
     <div className="flex flex-col gap-1.5">
       <label className="text-xs font-medium text-slate-400">{label}</label>
       <select
-        className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-cyan-300/40 focus:bg-white/[0.06]"
+        className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition placeholder:text-white/30 focus:border-cyan-300/40 focus:bg-white/[0.06]"
         {...props}
       >
         {children}
@@ -63,11 +63,7 @@ export default function AccountDownloadsPage() {
   const [platformFilter, setPlatformFilter] = useState<'all' | 'amazon' | 'shopee' | 'lazada'>('all')
   const [downloadableOnly, setDownloadableOnly] = useState(false)
 
-  useEffect(() => {
-    void loadDownloads()
-  }, [])
-
-  async function loadDownloads() {
+  const loadDownloads = useCallback(async () => {
     setLoading(true)
     try {
       const items = await listDownloads()
@@ -75,7 +71,11 @@ export default function AccountDownloadsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    void loadDownloads()
+  }, [loadDownloads])
 
   async function handleDownload(item: DownloadRecord) {
     setDownloadingId(item.id)
@@ -152,7 +152,7 @@ export default function AccountDownloadsPage() {
             {t('account.downloads.backToProduction')}
           </Link>
         ) : (
-          <Link to="/account/billing" className="group inline-flex items-center justify-center gap-2 rounded border border-brand-500/30 bg-brand-500/10 px-4 py-2 text-sm font-medium text-brand-300 transition-all hover:bg-brand-500/20 shrink-0"><PackageCheck className="h-4 w-4" />{t('account.downloads.reviewBilling')}</Link>
+          <Link to="/account/billing" className="group inline-flex items-center justify-center gap-2 rounded border border-brand-500/30 bg-brand-500/10 px-4 py-2 text-sm font-medium text-brand-300 transition-colors hover:bg-brand-500/20 shrink-0"><PackageCheck className="h-4 w-4" />{t('account.downloads.reviewBilling')}</Link>
         )}
       </div>
 
@@ -183,7 +183,7 @@ export default function AccountDownloadsPage() {
             <div className="border-b border-white/[0.06] px-5 py-4"><h2 className="text-sm font-semibold text-white/85">导出任务队列 — {filteredDownloads.length} 条记录</h2><p className="mt-1 text-xs text-white/40">可下载的记录会启用下载按钮；暂不支持的平台发布会保持关闭。</p></div>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[980px] text-left text-sm"><thead className="bg-white/[0.035] text-[11px] uppercase tracking-[0.12em] text-white/35"><tr><th className="px-4 py-3">任务 ID</th><th className="px-4 py-3">SKU / 标题</th><th className="px-4 py-3">平台 / 站点 / 语言</th><th className="px-4 py-3">状态</th><th className="px-4 py-3">可下载</th><th className="px-4 py-3">创建时间</th><th className="px-4 py-3">操作</th></tr></thead>
-              <tbody className="divide-y divide-white/[0.06]">{loading ? <tr><td colSpan={7} className="px-4 py-10 text-center text-white/40"><LoaderCircle className="mx-auto h-5 w-5 animate-spin" /></td></tr> : filteredDownloads.length ? filteredDownloads.map(item => <tr key={item.id} className="text-white/65 hover:bg-white/[0.025]"><td className="px-4 py-3 font-mono text-cyan-100/72">{item.id}</td><td className="px-4 py-3"><div className="font-semibold text-white/82">{item.productTitle || item.productSKU || item.id}</div><div className="font-mono text-xs text-white/38">{item.productSKU || item.productId}</div></td><td className="px-4 py-3">{item.platform} / {item.site || '—'} / {item.locale || '—'}</td><td className="px-4 py-3"><span className={`rounded-full border px-2 py-0.5 text-xs ${item.status === 'succeeded' ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-200' : item.status === 'failed' ? 'border-rose-300/25 bg-rose-300/10 text-rose-200' : 'border-amber-300/25 bg-amber-300/10 text-amber-200'}`}>{item.status}</span></td><td className="px-4 py-3">{item.downloadable ? <span className="text-emerald-200">✓ Yes</span> : <span className="text-white/35">✕ No</span>}</td><td className="px-4 py-3">{new Date(item.createdAt).toLocaleString()}</td><td className="px-4 py-3"><Button onClick={() => handleDownload(item)} disabled={!item.downloadable || downloadingId === item.id} className="rounded-lg bg-cyan-200 px-3 py-1.5 text-xs font-bold text-[var(--ecom-action-primary-text)] disabled:cursor-not-allowed disabled:bg-white/[0.05] disabled:text-white/25">{item.downloadable ? '下载' : '下载禁用'}</Button></td></tr>) : <tr><td colSpan={7} className="px-4 py-10 text-center text-white/40">暂无导出任务。</td></tr>}</tbody></table>
+              <tbody className="divide-y divide-white/[0.06]">{loading ? <tr><td colSpan={7} className="px-4 py-10 text-center text-white/40"><LoaderCircle className="mx-auto h-5 w-5 animate-spin" /></td></tr> : filteredDownloads.length ? filteredDownloads.map(item => <tr key={item.id} className="text-white/65 hover:bg-[var(--ecom-surface-hover)]"><td className="px-4 py-3 font-mono text-cyan-100/72">{item.id}</td><td className="px-4 py-3"><div className="font-semibold text-white/82">{item.productTitle || item.productSKU || item.id}</div><div className="font-mono text-xs text-white/38">{item.productSKU || item.productId}</div></td><td className="px-4 py-3">{item.platform} / {item.site || '—'} / {item.locale || '—'}</td><td className="px-4 py-3"><span className={`rounded-full border px-2 py-0.5 text-xs ${item.status === 'succeeded' ? 'border-emerald-300/25 bg-emerald-300/10 text-emerald-200' : item.status === 'failed' ? 'border-rose-300/25 bg-rose-300/10 text-rose-200' : 'border-amber-300/25 bg-amber-300/10 text-amber-200'}`}>{item.status}</span></td><td className="px-4 py-3">{item.downloadable ? <span className="text-emerald-200">✓ Yes</span> : <span className="text-white/35">✕ No</span>}</td><td className="px-4 py-3">{new Date(item.createdAt).toLocaleString()}</td><td className="px-4 py-3"><Button onClick={() => handleDownload(item)} disabled={!item.downloadable || downloadingId === item.id} className="rounded-lg bg-cyan-200 px-3 py-1.5 text-xs font-bold text-[var(--ecom-action-primary-text)] disabled:cursor-not-allowed disabled:bg-white/[0.05] disabled:text-white/25">{item.downloadable ? '下载' : '下载禁用'}</Button></td></tr>) : <tr><td colSpan={7} className="px-4 py-10 text-center text-white/40">暂无导出任务。</td></tr>}</tbody></table>
             </div>
           </section>
 
@@ -260,7 +260,7 @@ export default function AccountDownloadsPage() {
                   type="checkbox"
                   checked={downloadableOnly}
                   onChange={event => setDownloadableOnly(event.target.checked)}
-                  className="peer h-4 w-4 appearance-none rounded border border-white/20 bg-transparent checked:border-brand-500 checked:bg-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30 transition-all cursor-pointer"
+                  className="peer h-4 w-4 appearance-none rounded border border-white/20 bg-transparent checked:border-brand-500 checked:bg-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:ring-1 focus:ring-brand-500/30 transition-colors cursor-pointer"
                 />
                 <svg
                   className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-3 w-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity"
@@ -292,7 +292,7 @@ export default function AccountDownloadsPage() {
                 <LoaderCircle className="h-5 w-5 animate-spin" />
               </div>
             ) : filteredDownloads.length ? filteredDownloads.map((item) => (
-              <motion.div variants={itemVariants} key={item.id} className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-white/[0.02]">
+              <motion.div variants={itemVariants} key={item.id} className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-[var(--ecom-surface-hover)]">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -386,7 +386,7 @@ export default function AccountDownloadsPage() {
           </div>
           <div className="flex-1 divide-y divide-white/5 overflow-y-auto custom-scrollbar">
             {filteredDownloads.slice(0, 8).length ? filteredDownloads.slice(0, 8).map((item) => (
-              <motion.div variants={itemVariants} key={item.id} className="flex flex-col gap-2.5 px-5 py-4 transition-colors hover:bg-white/[0.02]">
+              <motion.div variants={itemVariants} key={item.id} className="flex flex-col gap-2.5 px-5 py-4 transition-colors hover:bg-[var(--ecom-surface-hover)]">
                 <div className="text-sm font-medium text-slate-200 truncate">{item.productTitle || item.productSKU}</div>
                 <div className="text-[11px] text-slate-500 truncate">
                   <span className="text-slate-600">{t('account.downloads.trace.productPath')}:</span> {item.productPath}

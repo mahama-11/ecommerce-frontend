@@ -18,7 +18,7 @@ function SelectField({ value, onChange, options, disabled = false }: { value: st
         value={value}
         onChange={e => onChange(e.target.value)}
         disabled={disabled}
-        className="w-full appearance-none rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 pr-8 text-sm text-white/90 outline-none transition-all hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full appearance-none rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 pr-8 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)} </select>
       <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" /> </div>
@@ -171,7 +171,7 @@ export function AssetsTab({ productId,
           ))} </div>
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-sm text-white/70 hover:text-white cursor-pointer select-none">
-            <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-all ${onlyPrimary ? 'border-brand-500 bg-brand-500' : 'border-white/20 bg-white/5'}`}>
+            <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors ${onlyPrimary ? 'border-brand-500 bg-brand-500' : 'border-white/20 bg-white/5'}`}>
               {onlyPrimary && ( <svg viewBox="0 0 14 14" fill="none" className="h-3 w-3 text-white">
                   <path d="M3 7.5L5.5 10L11 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/> </svg>
               )} </div>
@@ -209,7 +209,7 @@ export function AssetsTab({ productId,
             value={search}
             onChange={event => setSearch(event.target.value)}
             placeholder={t('product.detail.assetsTab.searchPlaceholder')}
-            className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+            className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
           />
           <SelectField
             value={sourceFilter}
@@ -290,7 +290,7 @@ export function AssetsTab({ productId,
           const selected = selectedRelationIds.includes(relation.id)
           return ( <div
               key={relation.id}
-              className={`group overflow-hidden rounded-2xl border bg-[var(--ecom-surface)] shadow-lg transition-all duration-300 hover:shadow-xl ${ selected ? 'border-brand-500 bg-brand-500/5' : 'border-white/10 hover:border-white/20'
+              className={`group overflow-hidden rounded-2xl border bg-[var(--ecom-surface)] shadow-lg transition-colors duration-300 hover:shadow-xl ${ selected ? 'border-brand-500 bg-brand-500/5' : 'border-white/10 hover:border-white/20'
               }`}
             >
               <div className="relative aspect-square overflow-hidden bg-[var(--ecom-surface-raised)] border-b border-white/10">
@@ -307,8 +307,9 @@ export function AssetsTab({ productId,
                     {t('product.detail.assetsTab.primary')} </div>
                 ) : null}
                 <div className="absolute bottom-3 left-3 rounded-full bg-black/80 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-white/90 shadow-md">
-                  {t(`product.detail.assetRoles.${relation.assetRole}` as any, relation.assetRole) || relation.assetRole} </div>
+                  {t(`product.detail.assetRoles.${relation.assetRole}`, relation.assetRole) || relation.assetRole} </div>
                 <label className="absolute right-3 top-3 flex cursor-pointer items-center justify-center h-7 w-7 rounded-full bg-black/50 backdrop-blur-md border border-white/20 hover:bg-black/70 transition-colors">
+                  <span className="sr-only">{t('product.detail.assetsTab.selectAsset', 'Select asset')}</span>
                   <input
                     type="checkbox"
                     checked={selected}
@@ -352,7 +353,7 @@ export function AssetsTab({ productId,
                         value={relation.sortOrder}
                         disabled={mutating}
                         onChange={event => onChangeSortOrder(relation.id, Number(event.target.value) || 0)}
-                        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
+                        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 disabled:opacity-50"
                       /> </div>
                     <div className="flex gap-1 shrink-0">
                       <Button
@@ -414,7 +415,7 @@ export function ListingsTab({ versions,
           {t('product.detail.listingsTabExt.generate')} </Button>
       </div>
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        {versions.map(version => ( <div key={version.id} className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] overflow-hidden flex flex-col shadow-lg transition-all hover:border-white/20">
+        {versions.map(version => ( <div key={version.id} className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] overflow-hidden flex flex-col shadow-lg transition-colors hover:border-white/20">
             <div className="bg-white/5 px-5 py-4 border-b border-white/10 flex items-start justify-between gap-4">
               <div className="min-w-0 pr-2">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -476,7 +477,7 @@ export function ProfitTab({ snapshots, onCalculate }: { snapshots: ProfitSnapsho
           {t('product.detail.profitTab.calculate')} </Button>
       </div>
       <div className="space-y-4">
-        {snapshots.map(snapshot => ( <div key={snapshot.id} className="grid grid-cols-2 gap-6 rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-6 shadow-lg transition-all hover:border-white/20 md:grid-cols-4">
+        {snapshots.map(snapshot => ( <div key={snapshot.id} className="grid grid-cols-2 gap-6 rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-6 shadow-lg transition-colors hover:border-white/20 md:grid-cols-4">
             <ProfitMetric label={t('product.detail.profitTab.grossProfit')} value={`$${snapshot.grossProfit.toFixed(2)}`} helper={`${(snapshot.grossMargin * 100).toFixed(1)}% margin`} />
             <ProfitMetric label={t('product.detail.profitTab.netProfit')} value={`$${snapshot.netProfit.toFixed(2)}`} helper={`${(snapshot.netMargin * 100).toFixed(1)}% margin`} />
             <ProfitMetric label={t('product.detail.profitTab.breakeven')} value={`$${snapshot.breakevenPrice.toFixed(2)}`} helper={t('product.detail.profitTab.minPrice')} />
@@ -535,7 +536,7 @@ export function ExportsTab({ tasks,
           const snapshotAssetCount = downloadTrace?.assetCount ?? task.assetCount ?? assetCount
           const snapshotListingLabel = downloadTrace?.listingVersionLabel ?? task.listingVersionLabel
           const snapshotPrimaryAssetRole = downloadTrace?.primaryAssetRole ?? task.primaryAssetRole
-          return ( <div key={task.id} className="flex flex-col md:flex-row md:items-center justify-between gap-6 rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-lg transition-all hover:border-white/20">
+          return ( <div key={task.id} className="flex flex-col md:flex-row md:items-center justify-between gap-6 rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-lg transition-colors hover:border-white/20">
               <div className="space-y-2.5">
                 <div className="flex items-center gap-3">
                   <span className="font-semibold text-white/90">{t("product.detail.exportsTabExt.exportTitle", { platform: task.platform.toUpperCase() })}</span>
@@ -595,7 +596,7 @@ export function HistoryTab({ activities,
       <p className="text-sm font-medium text-white/60">
         {t('product.detail.historyTab.count', { count: activities.length })} </p>
       <div className="space-y-4">
-        {activities.map(activity => ( <div key={activity.id} className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-lg transition-all hover:border-white/20">
+        {activities.map(activity => ( <div key={activity.id} className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-lg transition-colors hover:border-white/20">
             <p className="font-semibold text-white/90">{activity.title}</p>
             <p className="mt-2 text-sm text-white/60 leading-relaxed">{activity.summary}</p>
             <p className="mt-3 text-[11px] font-mono text-white/30">{new Date(activity.createdAt).toLocaleString()}</p> </div>

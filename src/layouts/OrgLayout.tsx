@@ -37,13 +37,13 @@ export default function OrgLayout() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-white">
-      <div className={`fixed inset-x-0 top-0 ${Z_INDEX.portalNav} border-b border-white/[0.08] bg-[#0b0d14]/80 backdrop-blur-xl`}>
+    <div className="min-h-screen bg-[var(--ecom-bg)] text-white">
+      <div className={`fixed inset-x-0 top-0 ${Z_INDEX.portalNav} border-b border-white/[0.08] bg-[var(--ecom-header-bg)] backdrop-blur-xl`}>
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
           <div className="flex items-center gap-4">
             <Link
               to={getWorkbenchEntryPath()}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/65 transition-colors hover:bg-white/[0.08] hover:text-white"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/65 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white"
             >
               <ArrowLeft className="h-4 w-4" />
               {t('account.common.actions.backToWorkspace')}
@@ -76,7 +76,7 @@ export default function OrgLayout() {
                       `block rounded-2xl border px-4 py-3 transition-colors ${
                         isActive
                           ? 'border-brand-500/35 bg-brand-500/10'
-                          : 'border-white/[0.06] bg-white/[0.03] hover:bg-white/[0.06]'
+                          : 'border-white/[0.06] bg-white/[0.03] hover:bg-[var(--ecom-surface-hover)]'
                       }`
                     }
                   >

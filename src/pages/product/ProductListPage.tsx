@@ -225,7 +225,7 @@ function ProductListPage() {
     const failedRows: ImportRow[] = []
     for (const row of validRows) {
       try {
-        // eslint-disable-next-line no-await-in-loop
+         
         await createProduct({
           skuCode: row.skuCode,
           title: row.title,
@@ -319,7 +319,7 @@ function ProductListPage() {
         <motion.div variants={itemVariants} className="mb-4 flex flex-wrap items-center gap-3">
           <div className="relative min-w-[260px] flex-1 max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-            <input value={keyword} onChange={event => setKeyword(event.target.value)} placeholder="搜索 SKU / 标题 / 标签..." className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-cyan-300/35" />
+            <input value={keyword} onChange={event => setKeyword(event.target.value)} placeholder="搜索 SKU / 标题 / 标签..." className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-3 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 placeholder:text-white/30 focus:border-cyan-300/35" />
           </div>
           {[
             ['all', '全部'],
@@ -352,7 +352,7 @@ function ProductListPage() {
                   const focused = focusedUnit?.product.id === product.id
                   const selected = selectedIds.includes(product.id)
                   return (
-                    <div key={product.id} onClick={() => navigate(`/products/${product.id}`)} className={`grid cursor-pointer gap-3 px-3 py-3 text-sm transition max-xl:grid-cols-1 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(72px,0.5fr)_minmax(80px,0.55fr)_minmax(72px,0.5fr)_minmax(72px,0.5fr)_minmax(150px,0.9fr)] xl:items-center ${focused ? 'bg-cyan-300/[0.075]' : 'hover:bg-white/[0.025]'} ${selected ? 'outline outline-1 outline-cyan-300/30' : ''}`}>
+                    <div key={product.id} role="button" tabIndex={0} onClick={() => navigate(`/products/${product.id}`)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`/products/${product.id}`) }} className={`grid cursor-pointer gap-3 px-3 py-3 text-sm transition max-xl:grid-cols-1 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(72px,0.5fr)_minmax(80px,0.55fr)_minmax(72px,0.5fr)_minmax(72px,0.5fr)_minmax(150px,0.9fr)] xl:items-center ${focused ? 'bg-cyan-300/[0.075]' : 'hover:bg-[var(--ecom-surface-hover)]'} ${selected ? 'outline outline-1 outline-cyan-300/30' : ''}`}>
                       <div className="flex min-w-0 items-center gap-2">
                         <input type="checkbox" checked={selected} onClick={event => event.stopPropagation()} onChange={() => { setFocusedProductId(product.id); toggleSelect(product.id) }} className="shrink-0 rounded border-white/20 bg-black/30 accent-cyan-300" />
                         <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} title={product.skuCode} className="min-w-0 truncate font-mono text-xs text-cyan-100/82 underline-offset-4 transition hover:text-white hover:underline">{product.skuCode}</Link>
@@ -419,18 +419,18 @@ function ProductListPage() {
       </div>
 
       {showCommandPalette ? (
-        <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-md" onClick={() => setShowCommandPalette(false)}>
-          <div className="mx-auto mt-[12vh] w-full max-w-xl overflow-hidden rounded-2xl border border-white/12 bg-[var(--ecom-surface)] shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()}>
-            <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3"><Search className="h-4 w-4 text-white/35" /><input autoFocus placeholder="搜索命令、SKU、站点..." className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/32" /><span className="text-xs text-white/28">ESC</span></div>
-            <div className="p-2 text-sm">{['任务中心 ⌘1', 'Listing 配置 ⌘2', '交付中心 ⌘3'].map(item => <div key={item} className="rounded-xl px-3 py-2 text-white/70 hover:bg-white/[0.05]">{item}</div>)}</div>
+        <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-md" role="button" tabIndex={-1} aria-label="关闭命令面板" onClick={() => setShowCommandPalette(false)} onKeyDown={event => { if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') setShowCommandPalette(false) }}>
+          <div className="mx-auto mt-[12vh] w-full max-w-xl overflow-hidden rounded-2xl border border-white/12 bg-[var(--ecom-surface)] shadow-[0_28px_90px_rgba(0,0,0,0.65)]" role="presentation" onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
+            <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3"><Search className="h-4 w-4 text-white/35" /><input autoFocus placeholder="搜索命令、SKU、站点..." className="flex-1 bg-transparent text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 placeholder:text-white/32" /><span className="text-xs text-white/28">ESC</span></div>
+            <div className="p-2 text-sm">{['任务中心 ⌘1', 'Listing 配置 ⌘2', '交付中心 ⌘3'].map(item => <div key={item} className="rounded-xl px-3 py-2 text-white/70 hover:bg-[var(--ecom-surface-hover)]">{item}</div>)}</div>
           </div>
         </div>
       ) : null}
 
       {showPreviewDrawer && focusedUnit ? (
-        <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setShowPreviewDrawer(false)}>
-          <aside className="ml-auto h-full w-full max-w-md border-l border-white/10 bg-[var(--ecom-surface)] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()}>
-            <Button className="float-right" size="icon-sm" variant="quiet" onClick={() => setShowPreviewDrawer(false)}>x</Button>
+        <div className="fixed inset-0 z-40 bg-black/40" role="button" tabIndex={-1} aria-label="关闭预览抽屉" onClick={() => setShowPreviewDrawer(false)} onKeyDown={event => { if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') setShowPreviewDrawer(false) }}>
+          <aside className="ml-auto h-full w-full max-w-md border-l border-white/10 bg-[var(--ecom-surface)] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.65)]" onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
+            <Button className="float-right" size="icon-sm" variant="quiet" aria-label="关闭预览" onClick={() => setShowPreviewDrawer(false)}>x</Button>
             <h3 className="text-lg font-semibold text-white">{focusedUnit.product.skuCode}</h3>
             <p className="mt-1 text-sm text-white/55">{focusedUnit.product.title}</p>
             <div className="mt-5 space-y-4">
@@ -447,10 +447,10 @@ function ProductListPage() {
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('product.list.createModal.skuCode')}>
-                <input type="text" value={createForm.skuCode} onChange={event => setCreateForm(prev => ({ ...prev, skuCode: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.skuPlaceholder')} />
+                <input type="text" value={createForm.skuCode} onChange={event => setCreateForm(prev => ({ ...prev, skuCode: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" placeholder={t('product.list.createModal.skuPlaceholder')} />
               </Field>
               <Field label={t('product.list.createModal.currency')}>
-                <select value={createForm.costCurrency} onChange={event => setCreateForm(prev => ({ ...prev, costCurrency: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20">
+                <select value={createForm.costCurrency} onChange={event => setCreateForm(prev => ({ ...prev, costCurrency: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20">
                   <option value="USD">USD</option>
                   <option value="CNY">CNY</option>
                   <option value="EUR">EUR</option>
@@ -458,20 +458,20 @@ function ProductListPage() {
               </Field>
             </div>
             <Field label={t('product.list.createModal.productTitle')}>
-              <input type="text" value={createForm.title} onChange={event => setCreateForm(prev => ({ ...prev, title: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.titlePlaceholder')} />
+              <input type="text" value={createForm.title} onChange={event => setCreateForm(prev => ({ ...prev, title: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" placeholder={t('product.list.createModal.titlePlaceholder')} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('product.list.createModal.category')}>
-                <input type="text" value={createForm.categoryId} onChange={event => setCreateForm(prev => ({ ...prev, categoryId: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.categoryPlaceholder')} />
+                <input type="text" value={createForm.categoryId} onChange={event => setCreateForm(prev => ({ ...prev, categoryId: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" placeholder={t('product.list.createModal.categoryPlaceholder')} />
               </Field>
               <Field label={t('product.list.createModal.brand')}>
-                <input type="text" value={createForm.brandId} onChange={event => setCreateForm(prev => ({ ...prev, brandId: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.brandPlaceholder')} />
+                <input type="text" value={createForm.brandId} onChange={event => setCreateForm(prev => ({ ...prev, brandId: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" placeholder={t('product.list.createModal.brandPlaceholder')} />
               </Field>
             </div>
             <Field label={t('product.list.createModal.tags')}>
               <div className="space-y-3">
                 <div className="flex gap-2">
-                  <input type="text" value={createForm.newTag} onChange={event => setCreateForm(prev => ({ ...prev, newTag: event.target.value }))} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addTag() } }} className="flex-1 rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" placeholder={t('product.list.createModal.addTagPlaceholder')} />
+                  <input type="text" value={createForm.newTag} onChange={event => setCreateForm(prev => ({ ...prev, newTag: event.target.value }))} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); addTag() } }} className="flex-1 rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" placeholder={t('product.list.createModal.addTagPlaceholder')} />
                   <Button onClick={addTag} variant="secondary">{t('product.list.createModal.add')}</Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -563,7 +563,7 @@ function StationCard({ code, title, desc, status, tone, href }: { code: string; 
         ? 'bg-rose-300/12 text-rose-200'
         : 'bg-cyan-300/12 text-cyan-100'
   return (
-    <Link to={href} className="group flex min-h-[150px] flex-col gap-3 rounded-[28px] border border-white/[0.06] bg-[var(--ecom-surface)] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.42)] transition hover:border-white/12 hover:bg-white/[0.025]">
+    <Link to={href} className="group flex min-h-[150px] flex-col gap-3 rounded-[28px] border border-white/[0.06] bg-[var(--ecom-surface)] p-4 shadow-[0_20px_70px_rgba(0,0,0,0.42)] transition hover:border-white/12 hover:bg-[var(--ecom-surface-hover)]">
       <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-cyan-300/18 bg-cyan-300/10 text-[11px] font-bold tracking-[0.08em] text-cyan-100">{code}</div>
       <div>
         <div className="font-semibold text-white/90">{title}</div>

@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 // ============================================================
 // 补货计算页面 (InventoryReplenishmentPage)
 // 对应原 HTML replenishment 页面
@@ -9,7 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { Upload, Download, Trash2, Calculator, AlertTriangle, FileText } from 'lucide-react'
 import { useInventoryStore } from '@/store/inventoryStore'
 import { parseCsv, exportReplenishmentCsv, downloadTemplateCsv } from '@/services/inventory'
-import type { ReplenishmentCalc, ReplenishmentRow } from '@/types/inventory'
+import type { ReplenishmentCalc } from '@/types/inventory'
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -47,6 +48,12 @@ export default function InventoryReplenishmentPage() {
   const [calcResult, setCalcResult] = useState<ReplenishmentCalc | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
+  // 执行计算
+  const handleCalculate = useCallback(async () => {
+    const result = await calculateReplenishment(safeStockDays, replenishFactor, period)
+    setCalcResult(result)
+  }, [calculateReplenishment, period, replenishFactor, safeStockDays])
+
   // 处理 CSV 文件上传
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -55,15 +62,9 @@ export default function InventoryReplenishmentPage() {
     setCsvText(text)
     const result = await parseCsv(text)
     if (result.success && result.data.length > 0) {
-      void handleCalculate(result.data as ReplenishmentRow[])
+      void handleCalculate()
     }
-  }, [])
-
-  // 执行计算
-  const handleCalculate = async (_rows?: ReplenishmentRow[]) => {
-    const result = await calculateReplenishment(safeStockDays, replenishFactor, period)
-    setCalcResult(result)
-  }
+  }, [handleCalculate])
 
   // 填充示例
   const handleSample = () => {
@@ -129,7 +130,7 @@ AMZ-KEY-200,机械键盘 RGB,30,420,45,0,60`)
           <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
 
           {/* 上传区 */}
-          <label className="flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed border-white/[0.1] bg-white/[0.02] p-8 text-center transition hover:border-[#ff9900]/30 hover:bg-[#ff9900]/5">
+          <label className="flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed border-white/[0.1] bg-white/[0.02] p-8 text-center transition hover:border-[var(--ecom-border)]/30 hover:bg-[var(--ecom-surface)]/5">
             <Upload className="mb-3 h-8 w-8 text-white/30" />
             <strong className="text-sm text-white/70">{t('inventory.replenishment.clickUpload')}</strong>
             <p className="mt-1 text-xs text-white/30">{t('inventory.replenishment.csvFields')}</p>
@@ -139,27 +140,27 @@ AMZ-KEY-200,机械键盘 RGB,30,420,45,0,60`)
             value={csvText}
             onChange={e => setCsvText(e.target.value)}
             placeholder={`${t('inventory.replenishment.pasteHint')}\nSKU,商品名称,历史天数,历史销量,当前库存,在途库存,安全库存\nAMZ-EAR-1024,无线蓝牙耳机 Pro,30,1380,1280,300,100`}
-            className="mt-4 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus:border-white/20 font-mono"
+            className="mt-4 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-white placeholder-white/25 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20 font-mono"
             rows={6}
           />
 
           <div className="mt-4 flex flex-wrap gap-3">
-            <button onClick={() => handleCalculate()} className="inline-flex items-center gap-2 rounded-xl bg-[#ff9900] px-4 py-2 text-sm font-semibold text-[#111827] transition hover:bg-[#ffb84d] disabled:opacity-50" disabled={calculating}>
+            <Button onClick={() => handleCalculate()} className="inline-flex items-center gap-2 rounded-xl bg-[var(--ecom-surface)] px-4 py-2 text-sm font-semibold text-[var(--ecom-text-primary)] transition hover:bg-[var(--ecom-surface)] disabled:opacity-50" disabled={calculating}>
               <Calculator className="h-4 w-4" />
               {calculating ? t('inventory.replenishment.calculating') : t('inventory.replenishment.calculate')}
-            </button>
-            <button onClick={handleSample} className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-2 text-sm text-white/70 transition hover:bg-white/[0.09]">
+            </Button>
+            <Button onClick={handleSample} className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-2 text-sm text-white/70 transition hover:bg-[var(--ecom-surface-hover)]">
               <FileText className="h-4 w-4" />
               {t('inventory.replenishment.fillSample')}
-            </button>
-            <button onClick={() => downloadTemplateCsv()} className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-2 text-sm text-white/70 transition hover:bg-white/[0.09]">
+            </Button>
+            <Button onClick={() => downloadTemplateCsv()} className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-2 text-sm text-white/70 transition hover:bg-[var(--ecom-surface-hover)]">
               <Download className="h-4 w-4" />
               {t('inventory.replenishment.downloadTemplate')}
-            </button>
-            <button onClick={handleClear} className="inline-flex items-center gap-2 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-2 text-sm text-red-400 transition hover:bg-red-400/20">
+            </Button>
+            <Button onClick={handleClear} className="inline-flex items-center gap-2 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-2 text-sm text-red-400 transition hover:bg-red-400/20">
               <Trash2 className="h-4 w-4" />
               {t('inventory.replenishment.clearData')}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -170,7 +171,7 @@ AMZ-KEY-200,机械键盘 RGB,30,420,45,0,60`)
           <div className="space-y-5">
             <div>
               <label className="mb-2 block text-xs font-medium text-white/60">{t('inventory.replenishment.turnoverCycle')}</label>
-              <select value={period} onChange={e => setPeriod(e.target.value as typeof period)} className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20">
+              <select value={period} onChange={e => setPeriod(e.target.value as typeof period)} className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20">
                 <option value="7d">7 {t('inventory.replenishment.daysCycle')}</option>
                 <option value="30d">15 {t('inventory.replenishment.daysCycle')}</option>
                 <option value="90d">30 {t('inventory.replenishment.daysCycle')}</option>
@@ -179,19 +180,19 @@ AMZ-KEY-200,机械键盘 RGB,30,420,45,0,60`)
 
             <div>
               <label className="mb-2 block text-xs font-medium text-white/60">{t('inventory.replenishment.replenishMultiple')}</label>
-              <input type="number" step="0.1" min="0.5" max="3" value={replenishFactor} onChange={e => setReplenishFactor(Number(e.target.value))} className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" />
+              <input type="number" step="0.1" min="0.5" max="3" value={replenishFactor} onChange={e => setReplenishFactor(Number(e.target.value))} className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" />
               <p className="mt-1.5 text-xs text-white/30">{t('inventory.replenishment.replenishHint')}</p>
             </div>
 
             <div>
               <label className="mb-2 block text-xs font-medium text-white/60">{t('inventory.replenishment.minUnit')}</label>
-              <input type="number" min="1" value={packSize} readOnly className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus:border-white/20" />
+              <input type="number" min="1" value={packSize} readOnly className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" />
               <p className="mt-1.5 text-xs text-white/30">{t('inventory.replenishment.minUnitHint')}</p>
             </div>
 
             {/* 计算公式 */}
-            <div className="rounded-xl border border-[#ff9900]/20 bg-[#ff9900]/8 p-4">
-              <div className="text-xs font-semibold text-[#ffb84d]">{t('inventory.replenishment.formula')}</div>
+            <div className="rounded-xl border border-[var(--ecom-border)]/20 bg-[var(--ecom-surface)]/8 p-4">
+              <div className="text-xs font-semibold text-[var(--ecom-text-primary)]">{t('inventory.replenishment.formula')}</div>
               <div className="mt-2 space-y-1 text-xs text-white/50 font-mono leading-relaxed">
                 <div>{t('inventory.replenishment.formula1')}</div>
                 <div>{t('inventory.replenishment.formula2')}</div>
@@ -238,18 +239,18 @@ AMZ-KEY-200,机械键盘 RGB,30,420,45,0,60`)
               placeholder={t('inventory.replenishment.searchPlaceholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="min-w-[200px] flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 pl-10 text-sm text-white placeholder-white/30 outline-none focus:border-white/20"
+              className="min-w-[200px] flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 pl-10 text-sm text-white placeholder-white/30 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
             />
-            <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 outline-none focus:border-white/20">
+            <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20">
               <option value="全部">{t('inventory.replenishment.allPriority')}</option>
               <option value="高">{t('inventory.replenishment.highPriorityOpt')}</option>
               <option value="中">{t('inventory.replenishment.midPriority')}</option>
               <option value="低">{t('inventory.replenishment.lowPriority')}</option>
             </select>
-            <button onClick={handleExport} className="inline-flex items-center gap-2 rounded-xl bg-[#ff9900] px-4 py-2 text-sm font-semibold text-[#111827] transition hover:bg-[#ffb84d]">
+            <Button onClick={handleExport} className="inline-flex items-center gap-2 rounded-xl bg-[var(--ecom-surface)] px-4 py-2 text-sm font-semibold text-[var(--ecom-text-primary)] transition hover:bg-[var(--ecom-surface)]">
               <Download className="h-4 w-4" />
               {t('inventory.replenishment.exportResult')}
-            </button>
+            </Button>
           </div>
 
           {/* 表格 */}
@@ -280,7 +281,7 @@ AMZ-KEY-200,机械键盘 RGB,30,420,45,0,60`)
                   filteredRows.map(row => {
                     const targetStock = row.avgDailySales * (period === '7d' ? 7 : period === '30d' ? 15 : 30)
                     return (
-                      <tr key={row.sku} className="border-b border-white/[0.04] hover:bg-white/[0.03]">
+                      <tr key={row.sku} className="border-b border-white/[0.04] hover:bg-[var(--ecom-surface-hover)]">
                         <td className="px-4 py-3">
                           <div className="font-mono text-xs text-cyan-400">{row.sku}</div>
                           <div className="mt-0.5 text-xs text-white/50">{row.title}</div>
@@ -292,7 +293,7 @@ AMZ-KEY-200,机械键盘 RGB,30,420,45,0,60`)
                         <td className="px-4 py-3 text-right font-mono text-blue-400">{row.inTransit}</td>
                         <td className="px-4 py-3 text-right font-mono text-white/60">{Math.ceil(row.avgDailySales * safeStockDays)}</td>
                         <td className="px-4 py-3 text-right font-mono text-white/60">{Math.ceil(targetStock)}</td>
-                        <td className={`px-4 py-3 text-right font-mono font-bold ${row.suggestedQty > 0 ? 'text-[#ffb84d]' : 'text-white/40'}`}>{row.suggestedQty}</td>
+                        <td className={`px-4 py-3 text-right font-mono font-bold ${row.suggestedQty > 0 ? 'text-[var(--ecom-text-primary)]' : 'text-white/40'}`}>{row.suggestedQty}</td>
                         <td className="px-4 py-3 text-center">
                           <PriorityBadge current={row.currentStock} safe={Math.ceil(row.avgDailySales * safeStockDays)} />
                         </td>

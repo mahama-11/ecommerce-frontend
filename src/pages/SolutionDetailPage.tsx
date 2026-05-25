@@ -119,7 +119,7 @@ function AgentCard({ agent, locale }: { agent: AgentSolution; locale: string }) 
         ].map(block => {
           const BlockIcon = block.icon
           return (
-            <div key={block.title} className="rounded-3xl border border-white/[0.07] bg-[#080b11]/70 p-5">
+            <div key={block.title} className="rounded-3xl border border-white/[0.07] bg-[var(--ecom-surface)]/70 p-5">
               <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-white/86">
                 <BlockIcon className="h-4 w-4 text-cyan-100/75" />
                 {block.title}
@@ -145,7 +145,7 @@ export default function SolutionDetailPage() {
   const locale = i18n.resolvedLanguage ?? i18n.language
 
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-white">
+    <div className="min-h-screen bg-[var(--ecom-bg)] text-white">
       <section className="relative overflow-hidden border-b border-white/[0.06] px-6 py-20 sm:py-24">
         <div className="glow-orb -left-40 top-0 h-[420px] w-[420px] bg-cyan-400/12" />
         <div className="glow-orb -right-24 top-24 h-[360px] w-[360px] bg-violet-400/12" />

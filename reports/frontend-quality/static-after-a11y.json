@@ -1,0 +1,842 @@
+{
+  "status": "PASS",
+  "policy": "Static frontend quality issues cannot increase; use shared UI/API layers and accessible semantics.",
+  "baseline": "scripts/ecommerce-static-quality-baseline.json",
+  "current": {
+    "totals": {
+      "files": 32,
+      "errors": 1,
+      "warnings": 83,
+      "findings": 84
+    },
+    "by_code": {
+      "a11y.input_missing_name": {
+        "errors": 0,
+        "warnings": 71,
+        "total": 71
+      },
+      "a11y.interactive_nonsemantic": {
+        "errors": 1,
+        "warnings": 0,
+        "total": 1
+      },
+      "style.inline_visual_style": {
+        "errors": 0,
+        "warnings": 12,
+        "total": 12
+      }
+    },
+    "by_file": {
+      "src/components/product-workbench/index.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/layouts/ConsoleLayout.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/account/AccountDownloadsPage.tsx": {
+        "errors": 0,
+        "warnings": 2,
+        "total": 2
+      },
+      "src/pages/account/AccountProfilePage.tsx": {
+        "errors": 0,
+        "warnings": 3,
+        "total": 3
+      },
+      "src/pages/account/AccountTemplatesPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/AgentTemplateMarketPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/AssetCommercePage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/auth/ForgotPasswordPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/auth/LoginPage.tsx": {
+        "errors": 0,
+        "warnings": 2,
+        "total": 2
+      },
+      "src/pages/auth/RegisterPage.tsx": {
+        "errors": 0,
+        "warnings": 4,
+        "total": 4
+      },
+      "src/pages/BatchListingPage.tsx": {
+        "errors": 0,
+        "warnings": 3,
+        "total": 3
+      },
+      "src/pages/BlogPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/ChatWorkspacePage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/ContactPage.tsx": {
+        "errors": 0,
+        "warnings": 4,
+        "total": 4
+      },
+      "src/pages/DesignWorkbenchPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/HelpCenterPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/inventory/InventoryAnalysisPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/inventory/InventoryDashboardPage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/inventory/InventoryProductManagePage.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/inventory/InventoryReplenishmentPage.tsx": {
+        "errors": 0,
+        "warnings": 4,
+        "total": 4
+      },
+      "src/pages/inventory/InventorySettingsPage.tsx": {
+        "errors": 0,
+        "warnings": 4,
+        "total": 4
+      },
+      "src/pages/OpsWorkbenchPage.tsx": {
+        "errors": 0,
+        "warnings": 2,
+        "total": 2
+      },
+      "src/pages/product/components/ProductAIPipelinePanel.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/product/components/ProductDetailTabs.tsx": {
+        "errors": 0,
+        "warnings": 4,
+        "total": 4
+      },
+      "src/pages/product/ProductDetailPage.tsx": {
+        "errors": 0,
+        "warnings": 3,
+        "total": 3
+      },
+      "src/pages/product/ProductListPage.tsx": {
+        "errors": 0,
+        "warnings": 9,
+        "total": 9
+      },
+      "src/pages/production/PrepHubPage.tsx": {
+        "errors": 0,
+        "warnings": 4,
+        "total": 4
+      },
+      "src/pages/production/SandboxPage.tsx": {
+        "errors": 0,
+        "warnings": 8,
+        "total": 8
+      },
+      "src/pages/production/WorkshopPage.tsx": {
+        "errors": 0,
+        "warnings": 6,
+        "total": 6
+      },
+      "src/pages/tool-page/components/RecentActivityPanel.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/tool-page/components/ResultPanel.tsx": {
+        "errors": 0,
+        "warnings": 1,
+        "total": 1
+      },
+      "src/pages/ToolPage.tsx": {
+        "errors": 1,
+        "warnings": 5,
+        "total": 6
+      }
+    },
+    "top_findings": [
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/components/product-workbench/index.tsx",
+        "line": 179,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"checkbox\"\n          checked={selected}\n          onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/layouts/ConsoleLayout.tsx",
+        "line": 96,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n              type=\"text\"\n              placeholder={t('common.search')}\n              className=\"w-full bg-transparent text-sm text-white/80 placeholder-white/30 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountDownloadsPage.tsx",
+        "line": 28,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n        className=\"w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition placeholder:text-white/3"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountDownloadsPage.tsx",
+        "line": 259,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  type=\"checkbox\"\n                  checked={downloadableOnly}\n                  onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 149,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  value={state.fullName}\n                  onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 158,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  disabled\n                  value={user?.email || ''}\n                  className=\"w-full rounded-md border border-white/5 bg-white/[0.03] px-3 py-2 text-sm text-slate-500 cursor-not-allowed\"\n                />"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountProfilePage.tsx",
+        "line": 167,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  value={state.avatarUrl}\n                  onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/account/AccountTemplatesPage.tsx",
+        "line": 105,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input value={draftTitle} onChange={(event) =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/AgentTemplateMarketPage.tsx",
+        "line": 479,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    value={searchQuery}\n                    onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/AssetCommercePage.tsx",
+        "line": 383,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    value={searchQuery}\n                    onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/ForgotPasswordPage.tsx",
+        "line": 16,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"email\"\n          value={email}\n          onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/LoginPage.tsx",
+        "line": 41,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"email\"\n          value={email}\n          onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/LoginPage.tsx",
+        "line": 50,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"password\"\n          value={password}\n          onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 49,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"text\"\n          value={fullName}\n          onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 59,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"email\"\n          value={email}\n          onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 68,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"password\"\n          value={password}\n          onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/auth/RegisterPage.tsx",
+        "line": 78,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          type=\"text\"\n          value={organizationName}\n          onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/BatchListingPage.tsx",
+        "line": 168,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n        value={value}\n        onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/BatchListingPage.tsx",
+        "line": 206,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input type=\"checkbox\" className=\"hidden\" checked={checked} onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/BatchListingPage.tsx",
+        "line": 558,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input value={search} onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/BlogPage.tsx",
+        "line": 74,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  readOnly\n                  value={locale === 'zh' ? '搜索案例、教程或更新...' : 'Search cases, tutorials, or updates...'}\n                  className=\"w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3 pl-10 pr"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/ChatWorkspacePage.tsx",
+        "line": 520,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  value={inputValue}\n                  onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/ContactPage.tsx",
+        "line": 88,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                readOnly\n                value={locale === 'zh' ? '你的姓名' : 'Your Name'}\n                className=\"rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none focus-visible:ring-"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/ContactPage.tsx",
+        "line": 93,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                readOnly\n                value={locale === 'zh' ? '公司 / 团队名' : 'Company / Team'}\n                className=\"rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none focus-visi"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/ContactPage.tsx",
+        "line": 98,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                readOnly\n                value={locale === 'zh' ? '联系邮箱' : 'Contact Email'}\n                className=\"rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none focus-visible:r"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/ContactPage.tsx",
+        "line": 103,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                readOnly\n                value={text(locale, active.title)}\n                className=\"rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/45 outline-none focus-visible:ring-2 focus-visi"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/DesignWorkbenchPage.tsx",
+        "line": 308,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    value={searchQuery}\n                    onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/HelpCenterPage.tsx",
+        "line": 85,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                  readOnly\n                  value={locale === 'zh' ? '例如：如何复制模板到我的模板库' : 'Example: how to copy a template into my library'}\n                  className=\"w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py"
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventoryAnalysisPage.tsx",
+        "line": 96,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventoryDashboardPage.tsx",
+        "line": 149,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n              type=\"text\"\n              placeholder=\"搜索 SKU 或商品名称...\"\n              value={filter.search}\n              onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventoryProductManagePage.tsx",
+        "line": 74,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n              type=\"text\"\n              placeholder={t('inventory.products.searchPlaceholder') ?? '搜索 SKU 或商品名称...'}\n              value={filter.search}\n              onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventoryReplenishmentPage.tsx",
+        "line": 130,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input ref={fileRef} type=\"file\" accept=\".csv\" className=\"hidden\" onChange={handleFileChange} />"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventoryReplenishmentPage.tsx",
+        "line": 183,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input type=\"number\" step=\"0.1\" min=\"0.5\" max=\"3\" value={replenishFactor} onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventoryReplenishmentPage.tsx",
+        "line": 189,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input type=\"number\" min=\"1\" value={packSize} readOnly className=\"w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:rin"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventoryReplenishmentPage.tsx",
+        "line": 237,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n              type=\"text\"\n              placeholder={t('inventory.replenishment.searchPlaceholder')}\n              value={search}\n              onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventorySettingsPage.tsx",
+        "line": 82,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                type=\"email\"\n                value={form.alertEmail}\n                onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventorySettingsPage.tsx",
+        "line": 98,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                type=\"number\"\n                min=\"1\"\n                value={form.defaultSafeStockDays}\n                onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventorySettingsPage.tsx",
+        "line": 108,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                type=\"number\"\n                step=\"0.1\"\n                min=\"0.5\"\n                value={form.defaultReplenishFactor}\n                onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/inventory/InventorySettingsPage.tsx",
+        "line": 119,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                type=\"number\"\n                min=\"1\"\n                value={form.defaultLeadDays}\n                onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/OpsWorkbenchPage.tsx",
+        "line": 398,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    value={searchQuery}\n                    onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/OpsWorkbenchPage.tsx",
+        "line": 511,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    value={searchQuery}\n                    onChange={e =>"
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/product/components/ProductAIPipelinePanel.tsx",
+        "line": 325,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/components/ProductDetailTabs.tsx",
+        "line": 179,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input type=\"checkbox\" className=\"hidden\" checked={onlyPrimary} onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/components/ProductDetailTabs.tsx",
+        "line": 208,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n            value={search}\n            onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/components/ProductDetailTabs.tsx",
+        "line": 312,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    type=\"checkbox\"\n                    checked={selected}\n                    disabled={bulkMutating}\n                    onChange={() =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/components/ProductDetailTabs.tsx",
+        "line": 350,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                        type=\"number\"\n                        value={relation.sortOrder}\n                        disabled={mutating}\n                        onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductDetailPage.tsx",
+        "line": 53,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n        value={value}\n        onChange={e =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductDetailPage.tsx",
+        "line": 609,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                      key={index}\n                      type=\"text\"\n                      value={point}\n                      onChange={(e) =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductDetailPage.tsx",
+        "line": 624,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    type=\"text\"\n                    value={listingForm.newKeyword}\n                    onChange={(e) =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductListPage.tsx",
+        "line": 322,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input value={keyword} onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductListPage.tsx",
+        "line": 357,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input type=\"checkbox\" checked={selected} onClick={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductListPage.tsx",
+        "line": 424,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input autoFocus placeholder=\"搜索命令、SKU、站点...\" className=\"flex-1 bg-transparent text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 placeholder:text-white/32\" />"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductListPage.tsx",
+        "line": 450,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input type=\"text\" value={createForm.skuCode} onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductListPage.tsx",
+        "line": 461,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input type=\"text\" value={createForm.title} onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductListPage.tsx",
+        "line": 465,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input type=\"text\" value={createForm.categoryId} onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductListPage.tsx",
+        "line": 468,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input type=\"text\" value={createForm.brandId} onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductListPage.tsx",
+        "line": 474,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input type=\"text\" value={createForm.newTag} onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/product/ProductListPage.tsx",
+        "line": 509,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input ref={fileInputRef} type=\"file\" accept=\".xlsx,.xls,.csv\" className=\"hidden\" onChange={event =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/PrepHubPage.tsx",
+        "line": 136,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n          data-testid={testId ? `${testId}-input` : undefined}\n          ref={inputRef}\n          type=\"file\"\n          accept=\"image/*\"\n          multiple\n          className=\"hidden\"\n          onChange={onFileInput}\n        />"
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/production/PrepHubPage.tsx",
+        "line": 635,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/production/PrepHubPage.tsx",
+        "line": 754,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/PrepHubPage.tsx",
+        "line": 758,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n              type=\"range\"\n              min={0}\n              max={100}\n              value={globalDriftBias}\n              onChange={(e) =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/SandboxPage.tsx",
+        "line": 543,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                          type=\"text\"\n                          value={asset.detailRequirement || ''}\n                          onChange={(e) =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/SandboxPage.tsx",
+        "line": 550,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                          type=\"text\"\n                          value={asset.negativeRequirement || ''}\n                          onChange={(e) =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/SandboxPage.tsx",
+        "line": 622,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                              type=\"number\"\n                              value={advancedParams.seed}\n                              onChange={(e) =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/SandboxPage.tsx",
+        "line": 638,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                            type=\"text\"\n                            value={advancedParams.negativePrompt}\n                            onChange={(e) =>"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/SandboxPage.tsx",
+        "line": 661,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                            type=\"range\"\n                            min={1}\n                            max={15}\n                            step={0.5}\n                            value={advancedParams.cfgScale}\n                    "
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/SandboxPage.tsx",
+        "line": 675,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                            type=\"range\"\n                            min={10}\n                            max={50}\n                            step={1}\n                            value={advancedParams.steps}\n                        "
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/production/SandboxPage.tsx",
+        "line": 749,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/production/SandboxPage.tsx",
+        "line": 766,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/production/WorkshopPage.tsx",
+        "line": 354,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/WorkshopPage.tsx",
+        "line": 356,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n            type=\"range\"\n            min={0}\n            max={100}\n            value={weightParams.skuBias}\n            disabled={!hasVersions}\n            onChange={(e) =>"
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/production/WorkshopPage.tsx",
+        "line": 368,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/WorkshopPage.tsx",
+        "line": 401,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    type=\"range\"\n                    min={0}\n                    max={1}\n                    step={0.01}\n                    value={weightParams.styleStrength}\n                    disabled={!hasVersions}\n             "
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/WorkshopPage.tsx",
+        "line": 416,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    type=\"range\"\n                    min={0}\n                    max={1}\n                    step={0.01}\n                    value={weightParams.identityConsistency}\n                    disabled={!hasVersions}\n       "
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/production/WorkshopPage.tsx",
+        "line": 431,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n                    type=\"range\"\n                    min={0}\n                    max={1}\n                    step={0.01}\n                    value={weightParams.creativeFreedom}\n                    disabled={!hasVersions}\n           "
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/tool-page/components/RecentActivityPanel.tsx",
+        "line": 69,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/tool-page/components/ResultPanel.tsx",
+        "line": 99,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      },
+      {
+        "code": "a11y.input_missing_name",
+        "severity": "warning",
+        "file": "src/pages/ToolPage.tsx",
+        "line": 420,
+        "message": "Inputs should have meaningful name/autocomplete for browser and assistive tech.",
+        "evidence": "<input\n        ref={fileInputRef}\n        type=\"file\"\n        accept=\"image/png,image/jpeg,image/webp\"\n        className=\"hidden\"\n        onChange={event =>"
+      },
+      {
+        "code": "style.inline_visual_style",
+        "severity": "warning",
+        "file": "src/pages/ToolPage.tsx",
+        "line": 496,
+        "message": "Avoid inline visual styles; use tokens/components unless this is measured layout or dynamic geometry.",
+        "evidence": "style={{"
+      }
+    ]
+  },
+  "baseline_totals": {
+    "files": 45,
+    "errors": 95,
+    "warnings": 160,
+    "findings": 255
+  },
+  "failures": [],
+  "warnings": []
+}

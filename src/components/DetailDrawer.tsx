@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { Z_INDEX } from '@/styles/zIndex'
+import { Button } from '@/components/ui/Button'
 
 interface DetailDrawerProps {
   open: boolean
@@ -51,28 +52,34 @@ export default function DetailDrawer({
 
   return (
     <div
-      className={`fixed inset-0 ${Z_INDEX.drawer} flex justify-end bg-black/50 backdrop-blur-sm transition-all duration-200 ${
+      className={`fixed inset-0 ${Z_INDEX.drawer} flex justify-end bg-black/50 backdrop-blur-sm transition-colors duration-200 ${
         visible ? 'opacity-100' : 'opacity-0'
       }`}
+      role="button"
+      tabIndex={-1}
+      aria-label="关闭详情抽屉"
       onClick={onClose}
+      onKeyDown={event => { if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') onClose() }}
     >
       <div
-        className={`flex h-full w-full max-w-md flex-col overflow-hidden border-l border-white/[0.08] bg-[#0d1018]/95 p-5 shadow-2xl transition-transform duration-220 ease-out ${
+        className={`flex h-full w-full max-w-md flex-col overflow-hidden border-l border-white/[0.08] bg-[var(--ecom-popover-bg)] p-5 shadow-2xl transition-transform duration-220 ease-out ${
           visible ? 'translate-x-0' : 'translate-x-6'
         }`}
+        role="presentation"
         onClick={event => event.stopPropagation()}
+        onKeyDown={event => event.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
           <div>
             {subtitle ? <div className="text-xs text-white/35">{subtitle}</div> : null}
             <h3 className="mt-1 text-lg font-semibold text-white">{title}</h3>
           </div>
-          <button
+          <Button
             onClick={onClose}
             className="rounded-xl border border-white/[0.08] p-2 text-white/50 hover:text-white"
           >
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
 
         <div className="scrollbar-subtle min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">

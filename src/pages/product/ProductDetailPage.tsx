@@ -41,7 +41,7 @@ function SelectField({ label, value, onChange, options, inline = false }: { labe
         <select
           value={value}
           onChange={e => onChange(e.target.value)}
-          className="w-full appearance-none rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 pr-8 text-sm text-white/90 outline-none transition-all hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+          className="w-full appearance-none rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 pr-8 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
         >
           {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)} </select>
         <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" /> </div>
@@ -55,7 +55,7 @@ function InputField({ label, value, onChange, placeholder, onBlur }: { label: st
         onChange={e => onChange(e.target.value)}
         onBlur={onBlur}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
       /> </div>
   ) }
 function TextareaField({ label, value, onChange, placeholder, rows, hint }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string, rows?: number, hint?: string }) {
@@ -66,7 +66,7 @@ function TextareaField({ label, value, onChange, placeholder, rows, hint }: { la
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows || 3}
-        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 resize-y custom-scrollbar"
+        className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50 resize-y custom-scrollbar"
       />
       {hint && <div className="text-[11px] text-white/40">{hint}</div>} </div>
   ) }
@@ -614,7 +614,7 @@ export function ProductDetailPage() {
                         const newPoints = [...listingForm.bulletPoints]
                         newPoints[index] = e.target.value
                         setListingForm(prev => ({ ...prev, bulletPoints: newPoints })) }}
-                      className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+                      className="w-full rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
                       placeholder={`${t('product.detail.listingModal.bulletPlaceholder')} ${index + 1}`}
                     /> ))}
                 </div> </div>
@@ -626,11 +626,11 @@ export function ProductDetailPage() {
                     value={listingForm.newKeyword}
                     onChange={(e) => setListingForm(prev => ({ ...prev, newKeyword: e.target.value }))}
                     onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addKeyword())}
-                    className="flex-1 rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none transition-all placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
+                    className="flex-1 rounded-lg border border-white/10 bg-[var(--ecom-surface-raised)] px-3 py-2 text-sm text-white/90 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 transition-colors placeholder:text-white/20 hover:border-white/20 focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/50"
                     placeholder={t('product.detail.listingModal.addKeyword')}
                   />
-                  <Button onClick={addKeyword} size="icon-sm" variant="secondary">
-                    <Plus className="h-4 w-4" /> </Button>
+                  <Button onClick={addKeyword} size="icon-sm" variant="secondary" aria-label={t('product.detail.listingModal.addKeyword')}>
+                    <Plus className="h-4 w-4" aria-hidden="true" /> </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {listingForm.keywords.map((kw) => ( <span

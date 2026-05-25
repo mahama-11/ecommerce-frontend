@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 import { useToastStore } from '@/store/toastStore';
 import { CheckCircle, AlertCircle, Info, X } from 'lucide-react';
 import { Z_INDEX } from '@/styles/zIndex';
@@ -19,16 +20,16 @@ export default function Toast() {
 
   return (
     <div 
-      className={`fixed top-6 left-1/2 -translate-x-1/2 ${Z_INDEX.toast} transition-all duration-300 pointer-events-none ${
+      className={`fixed top-6 left-1/2 -translate-x-1/2 ${Z_INDEX.toast} transition-colors duration-300 pointer-events-none ${
         visible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
       }`}
     >
-      <div className={`glass-strong border ${bgs[type]} px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 min-w-[300px] transition-all duration-300 ${visible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+      <div className={`glass-strong border ${bgs[type]} px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 min-w-[300px] transition-colors duration-300 ${visible ? 'pointer-events-auto' : 'pointer-events-none'}`}>
         {icons[type]}
         <p className="text-sm font-medium text-white flex-1">{message}</p>
-        <button onClick={hideToast} className="text-gray-400 hover:text-white transition p-1">
+        <Button onClick={hideToast} className="text-gray-400 hover:text-white transition p-1">
           <X className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );

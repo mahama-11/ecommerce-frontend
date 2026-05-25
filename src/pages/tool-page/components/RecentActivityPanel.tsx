@@ -1,6 +1,7 @@
 import { Image } from 'lucide-react'
 import type { GeneratedResult, Locale } from '../types'
 import { copy, resultStatusLabel } from '../utils'
+import { Button } from '@/components/ui/Button'
 
 type RecentActivityPanelProps = {
   locale: Locale
@@ -32,7 +33,7 @@ export function RecentActivityPanel({
       </div>
       <div className="space-y-3">
         {(currentResult ? [currentResult, ...recentJobResults] : recentJobResults).map(item => (
-          <button
+          <Button
             key={item.id}
             type="button"
             onClick={() => {
@@ -40,7 +41,7 @@ export function RecentActivityPanel({
                 onSelectRunningJob(item.id)
               }
             }}
-            className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-left transition-colors hover:bg-white/[0.05]"
+            className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-left transition-colors hover:bg-[var(--ecom-surface-hover)]"
           >
             <div className="flex items-start gap-4">
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] p-2">
@@ -64,13 +65,13 @@ export function RecentActivityPanel({
                 <div className="mt-2 text-xs leading-5 text-white/45">{item.hint}</div>
                 <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-brand-500 to-violet-500 transition-all duration-500"
+                    className="h-full rounded-full bg-gradient-to-r from-brand-500 to-violet-500 transition-colors duration-500"
                     style={{ width: `${item.progress}%` }}
                   />
                 </div>
               </div>
             </div>
-          </button>
+          </Button>
         ))}
         {!results.length ? (
           <div className="flex min-h-[160px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02]">

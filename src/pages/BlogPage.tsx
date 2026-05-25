@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, BookOpenText, FileText, Search, Sparkles, TrendingUp } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 
 type Locale = 'zh' | 'en'
 
@@ -73,7 +74,7 @@ export default function BlogPage() {
                 <input
                   readOnly
                   value={locale === 'zh' ? '搜索案例、教程或更新...' : 'Search cases, tutorials, or updates...'}
-                  className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3 pl-10 pr-4 text-sm text-white/55 outline-none"
+                  className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] py-3 pl-10 pr-4 text-sm text-white/55 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
                 />
               </div>
             </div>
@@ -104,10 +105,10 @@ export default function BlogPage() {
                 </div>
                 <h2 className="mt-4 text-xl font-semibold text-white">{text(locale, post.title)}</h2>
                 <p className="mt-3 text-sm leading-7 text-white/55">{text(locale, post.desc)}</p>
-                <button className="mt-5 inline-flex items-center gap-2 text-sm text-brand-300 hover:text-brand-200">
+                <Button className="mt-5 inline-flex items-center gap-2 text-sm text-brand-300 hover:text-brand-200">
                   <span>{locale === 'zh' ? '阅读全文' : 'Read More'}</span>
                   <ArrowRight className="h-4 w-4" />
-                </button>
+                </Button>
               </article>
             ))}
           </div>
@@ -136,7 +137,7 @@ export default function BlogPage() {
                   { label: { zh: '更新日志', en: 'Changelog' }, to: '/changelog' },
                   { label: { zh: '关于我们', en: 'About Us' }, to: '/aboutus' },
                 ].map(item => (
-                  <Link key={item.to} to={item.to} className="block rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/55 transition-colors hover:bg-white/[0.05] hover:text-white">
+                  <Link key={item.to} to={item.to} className="block rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/55 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white">
                     {text(locale, item.label)}
                   </Link>
                 ))}

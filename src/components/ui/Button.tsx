@@ -28,8 +28,8 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children: ReactNode
 }
 
-export function Button({ className, variant = 'secondary', size = 'md', type = 'button', ...props }: ButtonProps) {
-  return <button type={type} className={cn(baseClass, variants[variant], sizes[size], className)} {...props} />
+export function Button({ className, variant = 'secondary', size = 'md', type = 'button', children, ...props }: ButtonProps) {
+  return <button type={type} className={cn(baseClass, variants[variant], sizes[size], className)} {...props}>{children}</button>
 }
 
 export type ButtonLinkProps = LinkProps & {
@@ -38,8 +38,8 @@ export type ButtonLinkProps = LinkProps & {
   children: ReactNode
 }
 
-export function ButtonLink({ className, variant = 'secondary', size = 'md', ...props }: ButtonLinkProps) {
-  return <Link className={cn(baseClass, variants[variant], sizes[size], className)} {...props} />
+export function ButtonLink({ className, variant = 'secondary', size = 'md', children, ...props }: ButtonLinkProps) {
+  return <Link className={cn(baseClass, variants[variant], sizes[size], className)} {...props}>{children}</Link>
 }
 
 export type ExternalButtonLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
@@ -48,6 +48,6 @@ export type ExternalButtonLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & 
   children: ReactNode
 }
 
-export function ExternalButtonLink({ className, variant = 'secondary', size = 'md', ...props }: ExternalButtonLinkProps) {
-  return <a className={cn(baseClass, variants[variant], sizes[size], className)} {...props} />
+export function ExternalButtonLink({ className, variant = 'secondary', size = 'md', children, ...props }: ExternalButtonLinkProps) {
+  return <a className={cn(baseClass, variants[variant], sizes[size], className)} {...props}>{children}</a>
 }

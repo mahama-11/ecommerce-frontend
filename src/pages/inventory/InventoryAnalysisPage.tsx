@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 // ============================================================
 // 销售分析页面 (InventoryAnalysisPage)
 // 对应原 HTML analysis 页面
@@ -26,17 +27,17 @@ export default function InventoryAnalysisPage() {
         </div>
         <div className="flex gap-2">
           {(['7d', '30d', '90d'] as const).map(p => (
-            <button
+            <Button
               key={p}
               onClick={() => { void loadSales(p) }}
               className={`rounded-xl px-4 py-2 text-sm transition ${
                 salesAnalysis?.period === p
-                  ? 'bg-[#ff9900] text-[#111827] font-semibold'
-                  : 'border border-white/[0.08] bg-white/[0.05] text-white/60 hover:bg-white/[0.09]'
+                  ? 'bg-[var(--ecom-surface)] text-[var(--ecom-text-primary)] font-semibold'
+                  : 'border border-white/[0.08] bg-white/[0.05] text-white/60 hover:bg-[var(--ecom-surface-hover)]'
               }`}
             >
               {p === '7d' ? t('inventory.analysis.period7d') : p === '30d' ? t('inventory.analysis.period30d') : t('inventory.analysis.period90d')}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -80,7 +81,7 @@ export default function InventoryAnalysisPage() {
         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.04] p-5">
           <div className="mb-4">
             <h3 className="text-base font-semibold text-white">{t('inventory.analysis.topSku')}</h3>
-            <p className="mt-1 text-sm text-white/50">{t('inventory.analysis.topSkuSales')}: <strong className="text-[#ffb84d]">{salesAnalysis.topSku}</strong> — {salesAnalysis.topSkuSales.toLocaleString()}</p>
+            <p className="mt-1 text-sm text-white/50">{t('inventory.analysis.topSkuSales')}: <strong className="text-[var(--ecom-text-primary)]">{salesAnalysis.topSku}</strong> — {salesAnalysis.topSkuSales.toLocaleString()}</p>
           </div>
 
           {/* 简易柱状图 */}
@@ -91,7 +92,7 @@ export default function InventoryAnalysisPage() {
               return (
                 <div key={dp.date} className="flex items-center gap-3">
                   <span className="w-20 text-xs text-white/40 font-mono">{dp.date.slice(5)}</span>
-                  <div className="flex-1 h-5 overflow-hidden rounded-full bg-[#ff9900]/10">
+                  <div className="flex-1 h-5 overflow-hidden rounded-full bg-[var(--ecom-surface)]/10">
                     <div className="h-full rounded-full bg-gradient-to-r from-[#ff9900]/60 to-[#ffb84d]" style={{ width: `${width}%` }} />
                   </div>
                   <span className="w-16 text-right text-xs font-mono text-white/70">{dp.sales}</span>

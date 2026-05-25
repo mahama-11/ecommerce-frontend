@@ -133,7 +133,7 @@ export default function ApiDocsPage() {
                   { label: { zh: '定价页', en: 'Pricing' }, to: '/pricing' },
                   { label: { zh: '联系我们', en: 'Contact Us' }, to: '/contact' },
                 ].map(item => (
-                  <Link key={item.to} to={item.to} className="block rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/55 transition-colors hover:bg-white/[0.05] hover:text-white">
+                  <Link key={item.to} to={item.to} className="block rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 text-sm text-white/55 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white">
                     {text(locale, item.label)}
                   </Link>
                 ))}

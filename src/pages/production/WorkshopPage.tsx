@@ -72,7 +72,7 @@ function VersionLineage({ nodes, activeId, onSelect,
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
               onClick={() => onSelect(node.id)}
-              className={`relative cursor-pointer rounded-xl border p-3 transition ${ isActive || isCurrent ? 'border-cyan-400/20 bg-cyan-400/[0.04]' : 'border-transparent bg-transparent hover:bg-white/[0.02]'
+              className={`relative cursor-pointer rounded-xl border p-3 transition ${ isActive || isCurrent ? 'border-cyan-400/20 bg-cyan-400/[0.04]' : 'border-transparent bg-transparent hover:bg-[var(--ecom-surface-hover)]'
               }`}
             >
               {/* Dot on timeline */}
@@ -137,8 +137,12 @@ function VariantCard({ variant, index, isSelected,
         <Check className="h-3 w-3" /> </Button>
       {/* Image */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-label={`选择变体 ${index + 1}`}
         className="relative aspect-square cursor-pointer overflow-hidden bg-white/[0.02]"
         onClick={onToggle}
+        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onToggle() }}
       >
         <img
           src={variant.thumbnailUrl}
@@ -223,7 +227,7 @@ function VariantGrid({ variants, selectedIds, busy,
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               disabled={variants.length === 0}
-              className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none"
+              className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
             >
               <option>全部版本</option>
               {templateOptions.map((option) => <option key={`tpl-${option}`}>{option}</option>)}
@@ -235,7 +239,7 @@ function VariantGrid({ variants, selectedIds, busy,
               value={sort}
               onChange={(e) => setSort(e.target.value)}
               disabled={variants.length === 0}
-              className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none"
+              className="appearance-none rounded-lg border border-white/[0.06] bg-white/[0.02] py-1 pl-2 pr-6 text-[10px] text-white/50 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
             >
               <option>最新优先</option>
               <option>评分优先</option> </select>
@@ -346,7 +350,7 @@ function WeightControl({ weightParams, hasVersions, activeVersionLabel,
         <div className="relative">
           <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-violet-400 to-violet-500 transition-all duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-violet-400 to-violet-500 transition-colors duration-300"
               style={{ width: `${weightParams.skuBias}%` }}
             /> </div>
           <input
@@ -360,7 +364,7 @@ function WeightControl({ weightParams, hasVersions, activeVersionLabel,
           />
           {/* Thumb indicator */}
           <div
-            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white/30 bg-[var(--ecom-surface-raised)] shadow-lg transition-all"
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white/30 bg-[var(--ecom-surface-raised)] shadow-lg transition-colors"
             style={{ left: `calc(${weightParams.skuBias}% - 8px)` }}
           /> </div>
         <div className="flex items-center justify-between text-[9px] text-white/20">
@@ -442,7 +446,7 @@ function WeightControl({ weightParams, hasVersions, activeVersionLabel,
           type="button"
           disabled={!hasVersions || busy}
           onClick={onBatchDownload}
-          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3 transition hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3 transition hover:bg-[var(--ecom-surface-hover)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Download className="h-4 w-4 text-white/40" />
           <span className="text-[10px] text-white/40">批量下载</span>
@@ -520,9 +524,10 @@ function ZoomModal({ variant, onClose, }: {
         <Button
           type="button"
           onClick={onClose}
+          aria-label="关闭图片预览"
           className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
         >
-          <X className="h-4 w-4" /> </Button> </motion.div> </motion.div>
+          <X className="h-4 w-4" aria-hidden="true" /> </Button> </motion.div> </motion.div>
   ) }
 // ─── Main Component ──────────────────────────────────────────
 export default function WorkshopPage() {

@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 // ============================================================
 // 补货预警页面 (InventoryAlertsPage)
 // 对应原 HTML alerts 页面
@@ -34,17 +35,17 @@ export default function InventoryAlertsPage() {
           <p className="mt-1 text-sm text-white/50">{t('inventory.alerts.subtitle')}</p>
         </div>
         {unreadAlerts.length > 0 && (
-          <button
+          <Button
             onClick={async () => {
               for (const a of unreadAlerts) {
                 await markAlertRead(a.id)
               }
             }}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-2 text-sm text-white/70 transition hover:bg-white/[0.09]"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.05] px-4 py-2 text-sm text-white/70 transition hover:bg-[var(--ecom-surface-hover)]"
           >
             <CheckCircle className="h-4 w-4" />
             {t('inventory.alerts.allRead')}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -71,7 +72,7 @@ export default function InventoryAlertsPage() {
           {unreadAlerts.map(alert => (
             <div
               key={alert.id}
-              className={`rounded-xl border p-4 transition hover:bg-white/[0.04] ${
+              className={`rounded-xl border p-4 transition hover:bg-[var(--ecom-surface-hover)] ${
                 alert.alertLevel === 'danger' ? 'border-red-400/20 bg-red-400/5' :
                 alert.alertLevel === 'warning' ? 'border-amber-400/20 bg-amber-400/5' :
                 'border-blue-400/20 bg-blue-400/5'
@@ -87,17 +88,17 @@ export default function InventoryAlertsPage() {
                   <p className="mt-1 text-sm text-white/70">{alert.message}</p>
                   <div className="mt-2 flex items-center gap-4 text-xs text-white/40">
                     <span>{t('inventory.alerts.currentStock')}: <strong className="text-white/70">{alert.currentStock}</strong></span>
-                    <span>{t('inventory.alerts.suggestedAction')}: <strong className="text-[#ffb84d]">{alert.suggestedAction}</strong></span>
+                    <span>{t('inventory.alerts.suggestedAction')}: <strong className="text-[var(--ecom-text-primary)]">{alert.suggestedAction}</strong></span>
                     <span>{new Date(alert.createdAt).toLocaleDateString('zh-CN')}</span>
                   </div>
                 </div>
-                <button
+                <Button
                   onClick={() => { void markAlertRead(alert.id) }}
-                  className="rounded-lg p-1.5 text-white/30 transition hover:bg-white/[0.08] hover:text-white/60"
+                  className="rounded-lg p-1.5 text-white/30 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white/60"
                   title="标记已读"
                 >
                   <CheckCircle className="h-4 w-4" />
-                </button>
+                </Button>
               </div>
             </div>
           ))}

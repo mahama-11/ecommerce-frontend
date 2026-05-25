@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 // ============================================================
 // 商品管理页面 (InventoryProductManagePage)
 // 对应原 HTML products 页面
@@ -39,10 +40,10 @@ export default function InventoryProductManagePage() {
           <h1 className="text-2xl font-bold text-white">{t('inventory.products.title')}</h1>
           <p className="mt-1 text-sm text-white/50">{t('inventory.products.subtitle')}</p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-xl bg-[#ff9900] px-4 py-2 text-sm font-semibold text-[#111827] transition hover:bg-[#ffb84d]">
+        <Button className="inline-flex items-center gap-2 rounded-xl bg-[var(--ecom-surface)] px-4 py-2 text-sm font-semibold text-[var(--ecom-text-primary)] transition hover:bg-[var(--ecom-surface)]">
           <Plus className="h-4 w-4" />
           {t('inventory.products.addProduct')}
-        </button>
+        </Button>
       </div>
 
       {/* 统计卡片 */}
@@ -75,19 +76,19 @@ export default function InventoryProductManagePage() {
               placeholder={t('inventory.products.searchPlaceholder') ?? '搜索 SKU 或商品名称...'}
               value={filter.search}
               onChange={e => setFilter({ search: e.target.value })}
-              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 pl-10 text-sm text-white placeholder-white/30 outline-none focus:border-white/20"
+              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 pl-10 text-sm text-white placeholder-white/30 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
             />
             <Package className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
           </div>
-          <select value={filter.status} onChange={e => setFilter({ status: e.target.value as any })} className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 outline-none focus:border-white/20">
+          <select value={filter.status} onChange={e => setFilter({ status: e.target.value as any })} className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20">
             <option value="all">{t('inventory.products.allStatus') ?? '全部状态'}</option>
             <option value="in_stock">{t('inventory.products.instock') ?? '有货'}</option>
             <option value="low_stock">{t('inventory.products.lowstock') ?? '低库存'}</option>
             <option value="out_of_stock">{t('inventory.products.outofstock') ?? '缺货'}</option>
           </select>
-          <button onClick={() => { void loadProducts() }} className="rounded-xl bg-brand-400/15 px-4 py-2 text-sm text-brand-100 transition hover:bg-brand-400/25">
+          <Button onClick={() => { void loadProducts() }} className="rounded-xl bg-brand-400/15 px-4 py-2 text-sm text-brand-100 transition hover:bg-brand-400/25">
             {t('inventory.products.refresh') ?? '刷新'}
-          </button>
+          </Button>
         </div>
 
         <div className="overflow-x-auto">
@@ -119,7 +120,7 @@ export default function InventoryProductManagePage() {
                 </tr>
               ) : (
                 products.map(p => (
-                  <tr key={p.id} className="border-b border-white/[0.04] hover:bg-white/[0.03]">
+                  <tr key={p.id} className="border-b border-white/[0.04] hover:bg-[var(--ecom-surface-hover)]">
                     <td className="px-5 py-3 font-mono text-xs text-cyan-400">{p.sku}</td>
                     <td className="px-5 py-3 text-white/90">{p.title}</td>
                     <td className="px-5 py-3 text-white/50">{p.platform}</td>
@@ -131,12 +132,12 @@ export default function InventoryProductManagePage() {
                     <td className="px-5 py-3 text-center"><StatusBadge status={p.status} /></td>
                     <td className="px-5 py-3 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <button className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/[0.08] hover:text-white/70">
+                        <Button className="rounded-lg p-1.5 text-white/40 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white/70">
                           <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/[0.08] hover:text-white/70">
+                        </Button>
+                        <Button className="rounded-lg p-1.5 text-white/40 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white/70">
                           <ExternalLink className="h-3.5 w-3.5" />
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -150,8 +151,8 @@ export default function InventoryProductManagePage() {
           <div className="flex items-center justify-between border-t border-white/[0.06] px-5 py-4 text-sm text-white/50">
             <span>共 {totalProducts} 条</span>
             <div className="flex gap-2">
-              <button onClick={() => setFilter({ page: Math.max(1, filter.page - 1) })} disabled={filter.page <= 1} className="rounded-lg px-3 py-1 text-xs transition hover:bg-white/[0.07] disabled:opacity-30">上一页</button>
-              <button onClick={() => setFilter({ page: filter.page + 1 })} disabled={filter.page >= Math.ceil(totalProducts / filter.pageSize)} className="rounded-lg px-3 py-1 text-xs transition hover:bg-white/[0.07] disabled:opacity-30">下一页</button>
+              <Button onClick={() => setFilter({ page: Math.max(1, filter.page - 1) })} disabled={filter.page <= 1} className="rounded-lg px-3 py-1 text-xs transition hover:bg-[var(--ecom-surface-hover)] disabled:opacity-30">上一页</Button>
+              <Button onClick={() => setFilter({ page: filter.page + 1 })} disabled={filter.page >= Math.ceil(totalProducts / filter.pageSize)} className="rounded-lg px-3 py-1 text-xs transition hover:bg-[var(--ecom-surface-hover)] disabled:opacity-30">下一页</Button>
             </div>
           </div>
         )}

@@ -47,7 +47,7 @@ export function ProductWorkflowNav({ active, productId, productIds, contextLabel
   const hasSingleSku = Boolean(productId || ids.length === 1)
 
   return (
-    <nav className={`rounded-[28px] border border-white/[0.08] bg-[#080b11]/88 p-3 shadow-[0_18px_54px_rgba(0,0,0,0.28)] ring-1 ring-cyan-300/5 ${className}`} aria-label={t('productWorkbench.workflow.aria')}>
+    <nav className={`rounded-[28px] border border-white/[0.08] bg-[var(--ecom-surface-raised)] p-3 shadow-[0_18px_54px_rgba(0,0,0,0.28)] ring-1 ring-cyan-300/5 ${className}`} aria-label={t('productWorkbench.workflow.aria')}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1">
         <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-200/65">{t('productWorkbench.workflow.title')}</div>
         <div className="max-w-[360px] truncate text-[11px] text-white/35" title={contextLabel || undefined}>{contextLabel || (ids.length ? t('productWorkbench.workflow.contextCount', { count: ids.length }) : t('productWorkbench.workflow.noContext'))}</div>
@@ -57,9 +57,9 @@ export function ProductWorkflowNav({ active, productId, productIds, contextLabel
           const disabled = station.id === 'detail' && !hasSingleSku
           const activeStation = station.id === active
           const node = (
-            <div className={`group min-w-[155px] rounded-2xl border px-3 py-2 transition ${activeStation ? 'border-cyan-300/40 bg-cyan-300/[0.12] text-white shadow-[0_0_24px_rgba(103,232,249,0.08)]' : disabled ? 'border-white/[0.04] bg-white/[0.02] text-white/25' : 'border-white/[0.06] bg-white/[0.035] text-white/55 hover:border-white/12 hover:bg-white/[0.06] hover:text-white/82'}`}>
+            <div className={`group min-w-[155px] rounded-2xl border px-3 py-2 transition ${activeStation ? 'border-cyan-300/40 bg-cyan-300/[0.12] text-white shadow-[0_0_24px_rgba(103,232,249,0.08)]' : disabled ? 'border-white/[0.04] bg-white/[0.02] text-white/25' : 'border-white/[0.06] bg-white/[0.035] text-white/55 hover:border-white/12 hover:bg-[var(--ecom-surface-hover)] hover:text-white/82'}`}>
               <div className="flex items-center gap-2">
-                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${activeStation ? 'bg-cyan-200 text-[#05070b]' : 'bg-white/[0.08] text-white/55'}`}>{index + 1}</span>
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${activeStation ? 'bg-cyan-200 text-[var(--ecom-action-primary-text)]' : 'bg-white/[0.08] text-white/55'}`}>{index + 1}</span>
                 <span className="text-xs font-semibold">{t(station.labelKey, station.fallback)}</span>
               </div>
               <div className="mt-1 truncate pl-7 text-[11px] opacity-55">{disabled ? t('productWorkbench.workflow.selectOne') : t(station.hintKey, station.hintFallback)}</div>

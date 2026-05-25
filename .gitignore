@@ -1,0 +1,15 @@
+dist/
+node_modules/
+reports/frontend-style-consistency/*-latest.json
+reports/frontend-style-consistency/automation-gate-latest.json
+reports/frontend-style-consistency/style-consistency-latest.json
+reports/frontend-style-consistency/selfcheck-static.json
+reports/frontend-style-consistency/evidence-manifest.json
+reports/frontend-style-consistency/style-drift-repair-queue.json
+reports/frontend-style-consistency/changed-files-for-evidence.txt
+reports/frontend-style-consistency/screenshots/
+reports/frontend-quality/*-latest.json
+reports/frontend-quality/lighthouse-raw.json
+reports/frontend-quality/playwright-report.json
+storybook-static/
+test-results/

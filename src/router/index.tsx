@@ -1,16 +1,17 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { lazy as reactLazy, Suspense, type ComponentType, type LazyExoticComponent, type ReactNode } from 'react'
 import type { RouteObject } from 'react-router-dom'
+import { Button } from '@/components/ui/Button'
 
 function ChunkLoadRecovery() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0a12] px-6 text-center text-white">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--ecom-bg)] px-6 text-center text-white">
       <div className="max-w-sm space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] p-6">
         <p className="text-sm font-medium">页面资源已更新</p>
         <p className="text-xs leading-relaxed text-white/55">请刷新页面后继续，当前填写内容会尽量保留。</p>
-        <button type="button" onClick={() => window.location.reload()} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black">
+        <Button type="button" onClick={() => window.location.reload()} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black">
           刷新页面
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -94,7 +95,7 @@ const WorkshopPage = lazy(() => import('@/pages/production/WorkshopPage'))
 
 function Fallback() {
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-[#0a0a12]">
+    <div className="flex h-screen w-full items-center justify-center bg-[var(--ecom-bg)]">
       <div className="flex flex-col items-center gap-4">
         <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
         <span className="text-sm text-white/40">...</span>

@@ -11,6 +11,7 @@ import {
 import { commercialService } from '@/services/commercial'
 import { formatWalletHistoryAmount, getWalletHistoryAssetSummary } from '@/utils/commercialDisplay'
 import type { WalletHistoryEntry } from '@/types/commercial'
+import { Button } from '@/components/ui/Button'
 
 type HistoryFilter = 'all' | 'cash' | 'quota' | 'credits'
 
@@ -63,7 +64,7 @@ export default function AccountHistoryPage() {
         </div>
         <div className="flex flex-wrap items-center gap-1 rounded-md bg-white/[0.03] p-1 border border-white/5">
           {filters.map(item => (
-            <button
+            <Button
               key={item}
               type="button"
               onClick={() => setFilter(item)}
@@ -74,14 +75,14 @@ export default function AccountHistoryPage() {
               }`}
             >
               {historyFilterLabel(item, locale)}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       <div className="space-y-4">
         {visibleEntries.length ? visibleEntries.map((entry) => (
-          <motion.div variants={itemVariants} key={entry.id} className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl p-5 shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-colors hover:border-white/10 hover:bg-white/[0.03]"
+          <motion.div variants={itemVariants} key={entry.id} className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-xl p-5 shadow-[0_2px_10px_rgb(0,0,0,0.08)] transition-colors hover:border-white/10 hover:bg-[var(--ecom-surface-hover)]"
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">

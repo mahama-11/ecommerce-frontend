@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/Button'
 // ============================================================
 // 库存管理布局组件 (InventoryLayout)
 // 暗色侧边栏 + 7 项导航，视觉与 ProductWorkbenchLayout 一致
@@ -96,7 +97,7 @@ export default function InventoryLayout() {
   const activeNav = NAV_ITEMS.find(item => item.match(pathname))
 
   return (
-    <div className="flex min-h-screen bg-[#0a0a12]">
+    <div className="flex min-h-screen bg-[var(--ecom-bg)]">
       {/* 背景光效 */}
       <div className="pointer-events-none fixed inset-0 opacity-60">
         <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
@@ -104,7 +105,7 @@ export default function InventoryLayout() {
       </div>
 
       {/* 侧边栏 */}
-      <aside className="fixed inset-y-0 left-0 z-20 flex w-[240px] flex-col border-r border-white/[0.06] bg-[#0b0d14]/95 backdrop-blur-xl">
+      <aside className="fixed inset-y-0 left-0 z-20 flex w-[240px] flex-col border-r border-white/[0.06] bg-[var(--ecom-popover-bg)] backdrop-blur-xl">
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-6">
           <div className="relative flex h-10 w-10 items-center justify-center rounded-xl">
@@ -131,7 +132,7 @@ export default function InventoryLayout() {
                     className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
                       active
                         ? 'bg-cyan-500/15 text-cyan-300'
-                        : 'text-white/55 hover:bg-white/[0.05] hover:text-white/80'
+                        : 'text-white/55 hover:bg-[var(--ecom-surface-hover)] hover:text-white/80'
                     }`}
                   >
                     {item.icon}
@@ -156,11 +157,11 @@ export default function InventoryLayout() {
       {/* 主内容区 */}
       <div className="ml-[240px] flex min-h-screen flex-1 flex-col">
         {/* 顶部条 */}
-        <header className="sticky top-0 z-30 flex h-[52px] items-center justify-between border-b border-white/[0.06] bg-[#080b11]/88 px-6 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 flex h-[52px] items-center justify-between border-b border-white/[0.06] bg-[var(--ecom-header-bg)] px-6 backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <Link
               to={isAuthenticated ? '/products' : '/'}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-white/48 transition hover:bg-white/[0.04] hover:text-white/80"
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-white/48 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white/80"
             >
               <Home className="h-3.5 w-3.5" />
               <span>Product Center</span>
@@ -172,14 +173,14 @@ export default function InventoryLayout() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
               onClick={toggleLang}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/[0.08] bg-[#080b11] px-2.5 py-1 text-xs text-white/48 transition hover:border-white/15 hover:text-white/80"
+              className="inline-flex items-center gap-1 rounded-lg border border-white/[0.08] bg-[var(--ecom-surface)] px-2.5 py-1 text-xs text-white/48 transition hover:border-white/15 hover:text-white/80"
             >
               <Globe className="h-3.5 w-3.5" />
               <span>{languageLabel}</span>
-            </button>
+            </Button>
             {isAuthenticated ? (
               <UserAccountMenu compact />
             ) : (

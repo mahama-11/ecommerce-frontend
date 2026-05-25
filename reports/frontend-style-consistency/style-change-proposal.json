@@ -1,0 +1,24 @@
+{
+  "status": "ACCEPTED",
+  "decision": "ACCEPTED",
+  "rationale": "P0/P1 frontend governance requires expanding the shared design-system layer from Button/EcomShell to Button, Card, Input, Badge, and Dialog, plus Storybook coverage and automated gate checks. This prevents page-local styling drift and makes future style changes reviewable through shared primitives.",
+  "scope": "Shared ecommerce UI primitives, design-system registry, Storybook configuration, a11y lint/static gate, Playwright smoke and screenshot baselines, API contract generation, bundle and Lighthouse budgets.",
+  "migration_plan": "Keep existing product pages on current shared tokens, register new primitives as active, require new UI increments to consume these primitives, and burn down remaining lint/a11y debt through baseline-reducing follow-up batches.",
+  "affected_surfaces": [
+    "Product Center",
+    "Product Workbench",
+    "Production Prep",
+    "Shared UI primitives",
+    "Storybook component catalog"
+  ],
+  "screenshots": [
+    "reports/frontend-style-consistency/screenshots/product-center.png",
+    "reports/frontend-style-consistency/screenshots/visual-tools.png",
+    "reports/frontend-style-consistency/screenshots/production-prep.png",
+    "tests/e2e/ecommerce.visual.spec.ts-snapshots/product-center-chromium-visual-linux.png",
+    "tests/e2e/ecommerce.visual.spec.ts-snapshots/visual-tools-chromium-visual-linux.png",
+    "tests/e2e/ecommerce.visual.spec.ts-snapshots/production-prep-chromium-visual-linux.png"
+  ],
+  "accepted_by": "automation-governance",
+  "accepted_at": "2026-05-25"
+}

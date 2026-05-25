@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { register } from '@/services/auth'
 import { applyAuth } from '@/state/auth'
+import { Button } from '@/components/ui/Button'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -37,8 +38,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0a12] px-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 rounded-2xl border border-white/10 bg-[#0d0f18] p-8">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--ecom-bg)] px-4">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-8">
         <h1 className="text-center text-xl font-bold text-white">Create Account</h1>
         {error && (
           <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
@@ -53,7 +54,7 @@ export default function RegisterPage() {
           autoComplete="name"
           required
           minLength={2}
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:ring-1 focus:ring-cyan-400"
         />
         <input
           type="email"
@@ -62,7 +63,7 @@ export default function RegisterPage() {
           placeholder="Email"
           autoComplete="email"
           required
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:ring-1 focus:ring-cyan-400"
         />
         <input
           type="password"
@@ -72,7 +73,7 @@ export default function RegisterPage() {
           autoComplete="new-password"
           required
           minLength={6}
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:ring-1 focus:ring-cyan-400"
         />
         <input
           type="text"
@@ -80,11 +81,11 @@ export default function RegisterPage() {
           onChange={e => setOrganizationName(e.target.value)}
           placeholder="Organization name"
           autoComplete="organization"
-          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:ring-1 focus:ring-cyan-400"
         />
-        <button disabled={submitting} type="submit" className="w-full rounded-lg bg-cyan-500 py-2 text-sm font-semibold text-black hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60">
+        <Button disabled={submitting} type="submit" className="w-full rounded-lg bg-cyan-500 py-2 text-sm font-semibold text-black hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60">
           {submitting ? 'Creating...' : 'Register'}
-        </button>
+        </Button>
         <p className="text-center text-xs text-white/40">
           Already have an account? <a href="/login" className="text-cyan-400 hover:underline">Sign In</a>
         </p>

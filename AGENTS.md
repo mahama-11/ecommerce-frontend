@@ -22,6 +22,7 @@ It should not host:
 ## 2. Key Documents
 
 - [Developer Guide](docs/DEVELOPER_GUIDE.md)
+- [Frontend Style Governance](docs/frontend-style-governance.md)
 - [Git Hooks](docs/GIT_HOOKS.md)
 - [Project Skeleton](docs/architecture/PROJECT_SKELETON.md)
 - [Template Center Design](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_DESIGN.md)
@@ -33,6 +34,18 @@ It should not host:
 cd v-ecommerce-frontend
 npm install --legacy-peer-deps
 npm run dev
+npm run frontend:gate
+npm run frontend:evidence
+npm run style:repair-queue
+npm run lint:baseline
+npm run quality:static
+npm run design-system:check
+npm run storybook:build
+npm run api:contract
+npm run test:e2e
+npm run test:visual
+npm run lighthouse:budget
+npm run bundle:budget
 npm run typecheck
 npm run lint
 npm run build

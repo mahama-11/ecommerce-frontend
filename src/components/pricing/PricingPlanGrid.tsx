@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { getAuthAwareStartPath } from '@/utils/authNavigation'
 import { useToastStore } from '@/store/toastStore'
 import type { CommercialOrderView, OfferingsResult, RateCard, SKU } from '@/types/commercial'
+import { Button } from '@/components/ui/Button'
 
 type PricingVariant = 'preview' | 'full'
 
@@ -159,7 +160,7 @@ export default function PricingPlanGrid({ variant = 'full', className = '' }: Pr
         return (
           <div
             key={plan.id}
-            className={`relative glass rounded-2xl ${compact ? 'p-6' : 'p-8'} flex flex-col transition-all duration-300 hover:-translate-y-1 ${
+            className={`relative glass rounded-2xl ${compact ? 'p-6' : 'p-8'} flex flex-col transition-colors duration-300 hover:-translate-y-1 ${
               plan.popular
                 ? 'border-brand-500/40 shadow-[0_0_40px_-8px_rgba(59,130,246,0.3)]'
                 : 'hover:border-white/15'
@@ -193,16 +194,16 @@ export default function PricingPlanGrid({ variant = 'full', className = '' }: Pr
             {variant === 'preview' ? (
               <Link
                 to="/pricing"
-                className={`block text-center ${compact ? 'py-2.5' : 'py-3'} rounded-xl text-sm font-semibold transition-all ${plan.popular ? 'btn-primary text-white' : 'btn-outline'}`}
+                className={`block text-center ${compact ? 'py-2.5' : 'py-3'} rounded-xl text-sm font-semibold transition-colors ${plan.popular ? 'btn-primary text-white' : 'btn-outline'}`}
               >
                 {plan.cta}
               </Link>
             ) : (
-              <button
+              <Button
                 type="button"
                 disabled={isCurrent || isBusy}
                 onClick={() => void handlePurchase(plan.packageCode, plan.skuCode, plan.name)}
-                className={`block text-center py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed ${plan.popular ? 'btn-primary text-white' : 'btn-outline'}`}
+                className={`block text-center py-3 rounded-xl text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${plan.popular ? 'btn-primary text-white' : 'btn-outline'}`}
               >
                 {isCurrent
                   ? (language.startsWith('zh') ? '当前套餐' : 'Current plan')
@@ -211,7 +212,7 @@ export default function PricingPlanGrid({ variant = 'full', className = '' }: Pr
                     : isAuthenticated
                       ? plan.cta
                       : (language.startsWith('zh') ? '登录后购买' : 'Sign in to buy')}
-              </button>
+              </Button>
             )}
           </div>
         )

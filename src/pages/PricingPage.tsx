@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronDown, ArrowRight, Sparkles } from 'lucide-react'
 import PricingPlanGrid from '@/components/pricing/PricingPlanGrid'
+import { Button } from '@/components/ui/Button'
 
 interface FaqItem {
   q: string
@@ -63,9 +64,9 @@ export default function PricingPage() {
           <div className="space-y-3">
             {faqItems.map((item, i) => (
               <div key={i} className="glass rounded-xl overflow-hidden">
-                <button
+                <Button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-white/[0.02] transition-colors"
+                  className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-[var(--ecom-surface-hover)] transition-colors"
                 >
                   <span className="font-medium text-white/90">{item.q}</span>
                   <ChevronDown
@@ -73,9 +74,9 @@ export default function PricingPage() {
                       openFaq === i ? 'rotate-180' : ''
                     }`}
                   />
-                </button>
+                </Button>
                 <div
-                  className={`grid transition-all duration-300 ${
+                  className={`grid transition-colors duration-300 ${
                     openFaq === i ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
                   }`}
                 >

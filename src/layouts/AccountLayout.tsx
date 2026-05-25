@@ -34,13 +34,13 @@ export default function AccountLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a12] text-slate-50 font-sans selection:bg-brand-500/30 selection:text-brand-50">
-      <header className={`sticky top-0 ${Z_INDEX.stickyHeader} border-b border-white/5 bg-[#0a0a12]/80 backdrop-blur-xl shadow-[0_4px_24px_-12px_rgba(0,0,0,0.5)]`}>
+    <div className="min-h-screen bg-[var(--ecom-bg)] text-slate-50 font-sans selection:bg-brand-500/30 selection:text-brand-50">
+      <header className={`sticky top-0 ${Z_INDEX.stickyHeader} border-b border-white/5 bg-[var(--ecom-bg)]/80 backdrop-blur-xl shadow-[0_4px_24px_-12px_rgba(0,0,0,0.5)]`}>
         <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <Link
               to={getWorkbenchEntryPath()}
-              className="group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-slate-400 transition-all hover:bg-white/5 hover:text-slate-100"
+              className="group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-100"
             >
               <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
               {t('account.common.actions.backToWorkspace')}
@@ -64,7 +64,7 @@ export default function AccountLayout() {
                   <NavLink
                     to={item.to}
                     className={({ isActive }) =>
-                      `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                      `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
                         isActive
                           ? 'bg-brand-500/10 text-brand-400 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)] ring-1 ring-brand-500/20'
                           : 'text-slate-400 hover:bg-white/5 hover:text-slate-100 hover:shadow-sm'

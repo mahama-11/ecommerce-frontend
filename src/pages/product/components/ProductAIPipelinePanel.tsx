@@ -20,6 +20,7 @@ import type {
   ProductParsedInfo,
   ProductPrompt,
 } from '@/types/product'
+import { Button } from '@/components/ui/Button'
 
 type PipelineStatus = 'ready' | 'running' | 'blocked' | 'failed' | 'missing'
 
@@ -119,7 +120,7 @@ function JsonTree({ value, testId }: { value: Record<string, unknown>; testId: s
     return <div data-testid={testId} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/35">—</div>
   }
   return (
-    <div data-testid={testId} className="space-y-2 rounded-xl border border-white/10 bg-[#09090b]/70 p-3">
+    <div data-testid={testId} className="space-y-2 rounded-xl border border-white/10 bg-[var(--ecom-surface)]/70 p-3">
       {rows.map(({ path, value: rowValue }) => (
         <div key={path} className="grid gap-2 border-b border-white/5 pb-2 last:border-none last:pb-0 sm:grid-cols-[180px_minmax(0,1fr)]">
           <div className="break-all font-mono text-[11px] text-white/40">{path}</div>
@@ -223,7 +224,7 @@ export function ProductAIPipelinePanel({
 
   return (
     <section data-testid="product-ai-pipeline" className="space-y-5">
-      <div data-testid="product-detail-header" className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[#0d0d11] p-5 shadow-2xl md:p-6">
+      <div data-testid="product-detail-header" className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[var(--ecom-surface)] p-5 shadow-2xl md:p-6">
         <div className="absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.04)_1px,transparent_1px)] [background-size:36px_36px]" />
         <div className="relative flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
@@ -242,7 +243,7 @@ export function ProductAIPipelinePanel({
             <span className={`h-1.5 w-1.5 rounded-full ${blockers.length === 0 ? dotStyle.ready : dotStyle.blocked}`} />
             {blockers.length === 0 ? t('product.detail.ai.health.ready') : parsedInfo?.status === 'succeeded' ? t('product.detail.ai.health.readyForPrompt') : t('product.detail.ai.health.needsParsedInfo')}
           </span>
-          <button
+          <Button
             data-testid="product-detail-primary-cta"
             onClick={nextAction.run}
             disabled={nextAction.disabled}
@@ -250,7 +251,7 @@ export function ProductAIPipelinePanel({
           >
             {generatingPrompt && nextAction.action === t('product.detail.ai.actions.generatePrompt') ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <PackageCheck className="h-4 w-4" />}
             {generatingPrompt && nextAction.action === t('product.detail.ai.actions.generatePrompt') ? t('product.detail.ai.actions.generatingPrompt') : nextAction.action}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -268,11 +269,11 @@ export function ProductAIPipelinePanel({
         {stages.map((stage) => {
           const Icon = stage.icon
           return (
-            <button
+            <Button
               key={stage.key}
               data-testid={stage.testId}
               onClick={stage.key === 'assets-listing' ? onOpenAssets : stage.key === 'export-ready' ? onOpenExports : undefined}
-              className={`group relative z-10 min-h-[118px] rounded-2xl border bg-[#0d0d11] p-4 pl-12 text-left transition hover:-translate-y-0.5 hover:border-white/20 md:pl-4 ${stage.key === currentStageKey ? 'border-amber-400/60 shadow-[0_0_0_1px_rgba(251,191,36,0.12)]' : stage.status === 'blocked' ? 'border-amber-400/45' : 'border-white/10'}`}
+              className={`group relative z-10 min-h-[118px] rounded-2xl border bg-[var(--ecom-surface)] p-4 pl-12 text-left transition hover:-translate-y-0.5 hover:border-white/20 md:pl-4 ${stage.key === currentStageKey ? 'border-amber-400/60 shadow-[0_0_0_1px_rgba(251,191,36,0.12)]' : stage.status === 'blocked' ? 'border-amber-400/45' : 'border-white/10'}`}
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white/80"><Icon className="h-4 w-4" /></div>
@@ -282,22 +283,22 @@ export function ProductAIPipelinePanel({
               <div className="mt-1.5 text-xs leading-relaxed text-white/45">{stage.evidence}</div>
               <span className={`absolute left-4 top-4 h-2 w-2 rounded-full ${dotStyle[stage.status]}`} />
               {stage.key === currentStageKey ? <span className="absolute right-4 top-14 rounded-full border border-amber-300/30 bg-amber-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-100">{t('product.detail.ai.next.marker')}</span> : null}
-            </button>
+            </Button>
           )
         })}
       </div>
 
-      <div data-testid="pipeline-next-action-card" className="grid gap-4 rounded-2xl border border-white/10 bg-[#0d0d11] p-5 lg:grid-cols-[1.2fr_1fr_auto] lg:items-center">
+      <div data-testid="pipeline-next-action-card" className="grid gap-4 rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5 lg:grid-cols-[1.2fr_1fr_auto] lg:items-center">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/80">{t('product.detail.ai.next.title')}</div>
           <div className="mt-2 text-lg font-semibold text-white/90">{nextAction.title}</div>
           <p className="mt-1 text-sm leading-relaxed text-white/55">{nextAction.reason}</p>
         </div>
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-white/60">{nextAction.output}</div>
-        <button data-testid="pipeline-next-action-button" onClick={nextAction.run} disabled={nextAction.disabled} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60">
+        <Button data-testid="pipeline-next-action-button" onClick={nextAction.run} disabled={nextAction.disabled} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60">
           {generatingPrompt ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <PackageCheck className="h-4 w-4" />}
           {generatingPrompt ? t('product.detail.ai.actions.generatingPrompt') : nextAction.action}
-        </button>
+        </Button>
         {blockers.length > 0 ? (
           <div data-testid="pipeline-blockers-list" className="lg:col-span-3 flex flex-wrap gap-2 border-t border-white/10 pt-4">
             {blockers.map(item => <span key={item.key} data-testid={`pipeline-blocker-${item.key}`} className="rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1 text-xs text-amber-100">{item.label}</span>)}
@@ -306,7 +307,7 @@ export function ProductAIPipelinePanel({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <div data-testid="product-parsed-info-panel" className="rounded-2xl border border-white/10 bg-[#0d0d11] p-5">
+        <div data-testid="product-parsed-info-panel" className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5">
           <div data-testid="parsed-info-panel">
           <PanelTitle title={t('product.detail.ai.parsed.title')} subtitle={t('product.detail.ai.parsed.subtitle')} badge={t('product.detail.ai.parsed.readonly')} />
           {aiLoading ? <PanelSkeleton testId="parsed-info-loading" /> : !parsedInfo ? (
@@ -315,7 +316,7 @@ export function ProductAIPipelinePanel({
             <div data-testid="parsed-info-error" className="mt-5 rounded-xl border border-rose-400/25 bg-rose-400/10 p-4">
               <div className="flex items-start gap-3 text-rose-100"><AlertTriangle className="mt-0.5 h-4 w-4" /><div><b>{t('product.detail.ai.parsed.failedTitle')}</b><p className="mt-1 text-sm text-rose-100/70">{t('product.detail.ai.parsed.failedDesc')}</p></div></div>
               <details className="mt-3 text-xs text-rose-100/60"><summary>{t('product.detail.ai.parsed.errorDetail')}</summary><p className="mt-2 font-mono">{parsedInfo.errorMessage || '—'}</p></details>
-              <button data-testid="parsed-info-retry-button" onClick={onOpenAssets} className="mt-4 rounded-lg border border-rose-300/30 bg-rose-300/10 px-3 py-2 text-sm font-semibold text-rose-100">{t('product.detail.ai.actions.checkAssets')}</button>
+              <Button data-testid="parsed-info-retry-button" onClick={onOpenAssets} className="mt-4 rounded-lg border border-rose-300/30 bg-rose-300/10 px-3 py-2 text-sm font-semibold text-rose-100">{t('product.detail.ai.actions.checkAssets')}</Button>
             </div>
           ) : (
             <div className="mt-5 space-y-5">
@@ -331,23 +332,23 @@ export function ProductAIPipelinePanel({
               </div>
               <div data-testid="parsed-info-visual-features"><div className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">{t('product.detail.ai.labels.visualFeatures')}</div><div className="flex flex-wrap gap-2">{featureChips.length ? featureChips.map(item => <span key={`${item.key}-${item.value}`} className="rounded-full border border-teal-300/20 bg-teal-300/10 px-2.5 py-1 text-xs text-teal-100"><span className="font-mono text-teal-100/50">{item.key}</span> · {item.value}</span>) : <span className="text-sm text-white/35">—</span>}</div></div>
               <div data-testid="parsed-info-usage-scenarios"><div className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">{t('product.detail.ai.labels.usageScenarios')}</div><ul className="space-y-1.5 text-sm text-white/65">{parsedInfo.usageScenarios.length ? parsedInfo.usageScenarios.map(item => <li key={item}>• {item}</li>) : <li>—</li>}</ul></div>
-              <div data-testid="parsed-info-source-assets" className="flex flex-wrap gap-2 border-t border-white/10 pt-4">{parsedInfo.sourceAssetIds.length ? parsedInfo.sourceAssetIds.map(assetId => <button key={assetId} onClick={onOpenAssets} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 font-mono text-[11px] text-white/60">{assetId}</button>) : <span className="text-sm text-white/35">{t('product.detail.ai.parsed.noSources')}</span>}</div>
+              <div data-testid="parsed-info-source-assets" className="flex flex-wrap gap-2 border-t border-white/10 pt-4">{parsedInfo.sourceAssetIds.length ? parsedInfo.sourceAssetIds.map(assetId => <Button key={assetId} onClick={onOpenAssets} className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 font-mono text-[11px] text-white/60">{assetId}</Button>) : <span className="text-sm text-white/35">{t('product.detail.ai.parsed.noSources')}</span>}</div>
             </div>
           )}
           </div>
         </div>
 
-        <div data-testid="product-prompt-versions-panel" className="rounded-2xl border border-white/10 bg-[#0d0d11] p-5">
+        <div data-testid="product-prompt-versions-panel" className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)] p-5">
           <div data-testid="prompt-versions-panel">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <PanelTitle title={t('product.detail.ai.prompt.title')} subtitle={t('product.detail.ai.prompt.subtitle')} />
             <div>
-              <button data-testid="product-prompt-generate-button" onClick={onGeneratePrompt} disabled={parsedInfo?.status !== 'succeeded' || generatingPrompt} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-teal-300/30 bg-teal-300/10 px-4 py-2 text-sm font-semibold text-teal-100 transition hover:bg-teal-300/20 disabled:cursor-not-allowed disabled:opacity-50">
+              <Button data-testid="product-prompt-generate-button" onClick={onGeneratePrompt} disabled={parsedInfo?.status !== 'succeeded' || generatingPrompt} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-teal-300/30 bg-teal-300/10 px-4 py-2 text-sm font-semibold text-teal-100 transition hover:bg-teal-300/20 disabled:cursor-not-allowed disabled:opacity-50">
                 <span data-testid="prompt-create-button" className="contents">
                 {generatingPrompt ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <PackageCheck className="h-4 w-4" />}
                 {generatingPrompt ? t('product.detail.ai.actions.generatingPrompt') : t('product.detail.ai.actions.generatePrompt')}
                 </span>
-              </button>
+              </Button>
               {parsedInfo?.status !== 'succeeded' ? <div data-testid="prompt-create-disabled-reason" className="mt-2 text-xs text-amber-200/75">{t('product.detail.ai.prompt.disabledReason')}</div> : null}
             </div>
           </div>
@@ -358,13 +359,13 @@ export function ProductAIPipelinePanel({
               {prompts.map(prompt => {
                 const expanded = activeExpandedPromptId === prompt.id
                 return (
-                  <article key={prompt.id} data-testid={`prompt-version-card-${prompt.versionNo}`} className="rounded-2xl border border-white/10 bg-[#09090b]/70 p-4">
+                  <article key={prompt.id} data-testid={`prompt-version-card-${prompt.versionNo}`} className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)]/70 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-sm font-semibold text-white">v{prompt.versionNo}</span><span data-testid={`prompt-version-status-${prompt.versionNo}`} className={`rounded-full border px-2 py-0.5 text-[10px] uppercase ${prompt.status === 'ready' ? statusStyle.ready : prompt.status === 'failed' ? statusStyle.failed : statusStyle.blocked}`}>{t(PROMPT_STATUS_LABEL_KEYS[prompt.status] ?? 'product.detail.ai.prompt.status.unknown', prompt.status)}</span><span className="rounded-md bg-white/5 px-2 py-0.5 text-[11px] text-white/50">{prompt.generationType} · {prompt.module}</span></div>
                         <div className="mt-2 text-xs text-white/40">{formatDate(prompt.createdAt)} · {prompt.templateIds.length ? prompt.templateIds.join(', ') : t('product.detail.ai.prompt.noTemplate')}</div>
                       </div>
-                      <button data-testid={`prompt-version-expand-${prompt.versionNo}`} onClick={() => setExpandedPromptId(expanded ? null : prompt.id)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/70"><ChevronDown className={`h-3.5 w-3.5 transition ${expanded ? 'rotate-180' : ''}`} />{expanded ? t('product.detail.ai.actions.collapse') : t('product.detail.ai.actions.viewContent')}</button>
+                      <Button data-testid={`prompt-version-expand-${prompt.versionNo}`} onClick={() => setExpandedPromptId(expanded ? null : prompt.id)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/70"><ChevronDown className={`h-3.5 w-3.5 transition ${expanded ? 'rotate-180' : ''}`} />{expanded ? t('product.detail.ai.actions.collapse') : t('product.detail.ai.actions.viewContent')}</Button>
                     </div>
                     {expanded ? (
                       <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
@@ -405,7 +406,7 @@ function Fact({ label, value, testId }: { label: string; value: string; testId?:
 }
 
 function EmptyState({ testId, icon, title, desc, action, onAction, disabled }: { testId: string; icon: ReactNode; title: string; desc: string; action: string; onAction?: () => void; disabled?: boolean }) {
-  return <div data-testid={testId} className="mt-5 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-white/45">{icon}</div><div className="mt-4 font-semibold text-white/80">{title}</div><p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/45">{desc}</p><button onClick={onAction} disabled={!onAction || disabled} className="mt-4 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50">{action}</button></div>
+  return <div data-testid={testId} className="mt-5 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-white/45">{icon}</div><div className="mt-4 font-semibold text-white/80">{title}</div><p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/45">{desc}</p><Button onClick={onAction} disabled={!onAction || disabled} className="mt-4 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-white/70 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50">{action}</Button></div>
 }
 
 function PanelSkeleton({ testId }: { testId: string }) {

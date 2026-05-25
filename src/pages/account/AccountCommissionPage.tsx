@@ -6,6 +6,7 @@ import { getCommercialAssetLabel, getCommercialStatusLabel } from '@/i18n/helper
 import { commercialService } from '@/services/commercial'
 import type { ChannelBindingView, ChannelCommissionView, ChannelOverview, ChannelSettlementView, CommissionLedger, CommissionOverview } from '@/types/commercial'
 import { useToastStore } from '@/store/toastStore'
+import { Button } from '@/components/ui/Button'
 
 function emptyCommissionOverview(): CommissionOverview {
   return {
@@ -139,15 +140,15 @@ export default function AccountCommissionPage() {
           <h1 className="text-3xl font-semibold tracking-tight text-slate-100">{t('account.commission.title')}</h1>
           <p className="mt-2 text-sm text-slate-400">{t('account.commission.subtitle')}</p>
         </motion.div>
-        <button
+        <Button
           type="button"
           onClick={handleRedeem}
           disabled={redeeming || overview.redeemable_commission <= 0}
-          className="group inline-flex items-center justify-center gap-2 rounded-md btn-primary px-4 py-2 text-sm font-medium text-white shadow-md hover:shadow-lg transition-all active:scale-95 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="group inline-flex items-center justify-center gap-2 rounded-md btn-primary px-4 py-2 text-sm font-medium text-white shadow-md hover:shadow-lg transition-colors active:scale-95 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {redeeming ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
           {t('account.common.actions.redeemCommission')}
-        </button>
+        </Button>
       </div>
 
       <motion.section variants={itemVariants} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -172,7 +173,7 @@ export default function AccountCommissionPage() {
               { key: 'redeemed', label: t('account.common.filters.redeemed') },
               { key: 'reversed', label: t('account.common.filters.reversed') },
             ].map(item => (
-              <button
+              <Button
                 key={item.key}
                 type="button"
                 onClick={() => setLedgerFilter(item.key as typeof ledgerFilter)}
@@ -183,13 +184,13 @@ export default function AccountCommissionPage() {
                 }`}
               >
                 {item.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
         <div className="divide-y divide-white/5">
           {visibleCommissions.length ? visibleCommissions.map((item) => (
-            <motion.div variants={itemVariants} key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-white/[0.03]">
+            <motion.div variants={itemVariants} key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-[var(--ecom-surface-hover)]">
               <div className="min-w-0">
                 <div className="font-medium text-slate-100 truncate">{getCommercialStatusLabel(t, item.status)}</div>
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
@@ -239,7 +240,7 @@ export default function AccountCommissionPage() {
                   { key: 'settled', label: t('account.common.filters.settled') },
                   { key: 'reversed', label: t('account.common.filters.reversed') },
                 ].map(item => (
-                  <button
+                  <Button
                     key={item.key}
                     type="button"
                     onClick={() => setChannelFilter(item.key as typeof channelFilter)}
@@ -250,13 +251,13 @@ export default function AccountCommissionPage() {
                     }`}
                   >
                     {item.label}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
             <div className="divide-y divide-white/5">
               {visibleChannelCommissions.length ? visibleChannelCommissions.map((item) => (
-                <motion.div variants={itemVariants} key={item.ledger.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-white/[0.03]">
+                <motion.div variants={itemVariants} key={item.ledger.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-5 transition-colors hover:bg-[var(--ecom-surface-hover)]">
                   <div className="min-w-0">
                     <div className="font-medium text-slate-100 truncate">{item.partner?.name || item.ledger.channel_partner_id}</div>
                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
@@ -284,7 +285,7 @@ export default function AccountCommissionPage() {
             </div>
             <div className="flex-1 divide-y divide-white/5">
               {bindings.length ? bindings.map((item) => (
-                <motion.div variants={itemVariants} key={item.binding.id} className="flex flex-col gap-2 px-6 py-5 transition-colors hover:bg-white/[0.03]">
+                <motion.div variants={itemVariants} key={item.binding.id} className="flex flex-col gap-2 px-6 py-5 transition-colors hover:bg-[var(--ecom-surface-hover)]">
                   <div className="font-medium text-slate-100 truncate">{item.partner?.name || item.binding.channel_partner_id}</div>
                   <div className="text-sm text-slate-500 truncate">{item.program?.name || item.binding.channel_program_id}</div>
                   <div className="mt-2 flex items-center justify-between">
@@ -305,7 +306,7 @@ export default function AccountCommissionPage() {
             </div>
             <div className="flex-1 divide-y divide-white/5">
               {settlements.length ? settlements.map((item) => (
-                <motion.div variants={itemVariants} key={item.item.id} className="flex flex-col gap-2 px-6 py-5 transition-colors hover:bg-white/[0.03]">
+                <motion.div variants={itemVariants} key={item.item.id} className="flex flex-col gap-2 px-6 py-5 transition-colors hover:bg-[var(--ecom-surface-hover)]">
                   <div className="font-medium text-slate-100 truncate">{item.partner?.name || item.item.channel_partner_id}</div>
                   <div className="text-sm font-medium text-slate-300">
                     {item.item.net_amount} {item.item.currency}

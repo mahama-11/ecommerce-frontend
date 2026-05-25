@@ -33,11 +33,28 @@ Common commands:
 
 ```bash
 npm run dev
+npm run frontend:gate
+npm run frontend:evidence
+npm run style:repair-queue
 npm run lint
-npx tsc --noEmit
+npm run typecheck
 npm run build
 bash scripts/install-git-hooks.sh
 ```
+
+`npm run ci:quick` is the default local preflight for frontend increments. It runs the full P0/P1 governance suite: automated frontend gate, TypeScript, Storybook, production build, bundle budget, API contract, Lighthouse budget, Playwright smoke, and Playwright visual diff:
+
+```bash
+npm run ci:quick
+```
+
+Frontend automation reports are written under `reports/frontend-style-consistency/`:
+
+- `automation-gate-latest.json` / custom `--report`: changed-file classification, gate decision, style totals, evidence status.
+- `evidence-manifest.json`: generated Chromium screenshot evidence for Product Center / Production surfaces.
+- `style-drift-repair-queue.json`: prioritized burn-down queue for historical page-local styling.
+
+Product Center / Production page UI changes should use `npm run frontend:gate`; it auto-generates screenshot evidence when needed unless `--no-auto-evidence` is passed.
 
 ## 4. Project Structure
 
@@ -277,7 +294,65 @@ Template center UX baseline:
 - `src/pages/product/ProductDetailPage.tsx` now exposes inline metadata editing for SKU/title/category/brand/currency/tags and persists changes through blur-triggered product patch requests
 - product-detail tab workbench sections are split into `src/pages/product/components/ProductDetailTabs.tsx`, where assets/listings/profit/exports/history now evolve independently instead of staying embedded in one monolithic page file
 
-## 9. Internationalization
+## 9. Frontend Automation Gates
+
+Frontend consistency is enforced by scripts, not by reviewer memory.
+
+Default preflight:
+
+```bash
+npm run ci:quick
+```
+
+This runs:
+
+1. `npm run frontend:gate`
+2. `npm run typecheck`
+3. `npm run storybook:build`
+4. `npm run build`
+5. `npm run bundle:budget`
+6. `npm run api:contract`
+7. `npm run lighthouse:budget`
+8. `npm run test:e2e`
+9. `npm run test:visual`
+
+`npm run frontend:gate` performs the automated product-frontend guard:
+
+- runs `scripts/ecommerce-style-consistency.mjs`
+- runs `scripts/ecommerce-eslint-baseline-gate.mjs` so existing lint debt cannot increase
+- runs `scripts/ecommerce-static-quality-gate.mjs` so accessibility/focus/motion/architecture findings cannot increase
+- runs `scripts/ecommerce-design-system-registry-gate.mjs` so shared UI primitives and component standardization stay machine-readable
+- runs `scripts/ecommerce-api-contract-gate.mjs` so frontend API DTOs stay generated from `contracts/ecommerce.openapi.json`
+- writes machine-readable reports under `reports/frontend-style-consistency/` and `reports/frontend-quality/`
+- blocks any style-consistency or quality-baseline failure
+- classifies changed files from git diff
+- blocks Product Center / Production UI changes unless visual evidence exists for non-shared-design-system page work
+- blocks global style changes to `src/index.css`, `Button`, or `EcomShell` unless an accepted style-change proposal exists
+
+For Product Center / Production UI changes that are not only shared token/component updates, provide:
+
+```text
+reports/frontend-style-consistency/evidence-manifest.json
+```
+
+The manifest must include local screenshots and a `PASS`, `ACCEPTED`, or `ACCEPTED_WITH_NOTES` decision. This keeps C/D-risk product-flow changes from being reported complete without visible evidence.
+
+For global style evolution, provide:
+
+```text
+reports/frontend-style-consistency/style-change-proposal.json
+```
+
+The proposal must include rationale, scope, affected surfaces, migration plan, local visual evidence, and an accepted/approved decision. This allows the unified style to evolve without letting one page silently fork the product style.
+
+Style drift policy:
+
+- historical drift is recorded in `scripts/ecommerce-style-consistency-baseline.json`
+- new drift cannot be added
+- existing drift counts cannot increase
+- baseline refresh is allowed only when a migration intentionally reduces old page-local styling
+
+## 10. Internationalization
 
 All user-visible text should be localized through:
 

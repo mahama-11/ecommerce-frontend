@@ -24,6 +24,7 @@ import { DELIVERY_ITEMS,
 } from '@/mock/assetCommerce'
 import { createLinkedUploadFromDesign,
   type WorkflowEvent, } from '@/mock/workflowBridge'
+import { Button } from '@/components/ui/Button'
 interface PageConfig { titleKey: string
   icon: LucideIcon
   badge: LocalizedText
@@ -362,7 +363,7 @@ export default function AssetCommercePage({ forcedPath }: { forcedPath?: AssetCo
               {config.actions.map(action => ( <Link
                   key={action.to}
                   to={action.to}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white/65 transition-colors hover:bg-white/[0.07] hover:text-white sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white/65 transition-colors hover:bg-[var(--ecom-surface-hover)] hover:text-white sm:w-auto"
                 >
                   <span>{copyText(locale, action.label)}</span>
                   <ArrowRight className="h-4 w-4" /> </Link>
@@ -384,7 +385,7 @@ export default function AssetCommercePage({ forcedPath }: { forcedPath?: AssetCo
                     onChange={e => { setSearchQuery(e.target.value)
                       setSelectedIndex(0) }}
                     placeholder={locale === 'zh' ? '搜索资料、规则、资产组...' : 'Search documents, rules, or asset groups...'}
-                    className="glass w-full rounded-xl py-3 pl-10 pr-4 text-sm text-white/80 placeholder-white/25 outline-none"
+                    className="glass w-full rounded-xl py-3 pl-10 pr-4 text-sm text-white/80 placeholder-white/25 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
                   /> </div>
                 <div className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs text-white/45">
                   <Filter className="h-3.5 w-3.5 text-brand-400" />
@@ -398,31 +399,31 @@ export default function AssetCommercePage({ forcedPath }: { forcedPath?: AssetCo
             <div className="flex gap-2">
               {[ { key: 'overview', zh: '概览视图', en: 'Overview' },
                 { key: 'detail', zh: '详情视图', en: 'Detail' }, ].map(item => (
-                <button
+                <Button
                   key={item.key}
                   onClick={() => setViewMode(item.key as 'overview' | 'detail')}
                   className={`rounded-xl px-4 py-2 text-sm transition-colors ${ viewMode === item.key
-                      ? 'bg-brand-500/15 text-brand-300' : 'bg-white/[0.03] text-white/50 hover:bg-white/[0.05] hover:text-white'
+                      ? 'bg-brand-500/15 text-brand-300' : 'bg-white/[0.03] text-white/50 hover:bg-[var(--ecom-surface-hover)] hover:text-white'
                   }`}
                 >
-                  {locale === 'zh' ? item.zh : item.en} </button>
+                  {locale === 'zh' ? item.zh : item.en} </Button>
               ))} </div>
             <div className="grid gap-4 lg:grid-cols-2">
               {visibleCollections.map((item, index) => ( <article
                   key={item.title.zh}
-                  className={`tool-card glass rounded-2xl p-5 transition-all ${ selectedCollection?.title.zh === item.title.zh ? 'border-brand-500/30 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]' : ''
+                  className={`tool-card glass rounded-2xl p-5 transition-colors ${ selectedCollection?.title.zh === item.title.zh ? 'border-brand-500/30 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]' : ''
                   }`}
                 >
                   <h3 className="mb-3 text-lg font-semibold text-white">{copyText(locale, item.title)}</h3>
                   <p className="mb-5 text-sm leading-6 text-white/55">{copyText(locale, item.desc)}</p>
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-xs text-white/40">
                     {copyText(locale, item.meta)} </div>
-                  <button
+                  <Button
                     onClick={() => handleSelect(index)}
                     className="mt-4 inline-flex items-center gap-2 text-sm text-brand-300 hover:text-brand-200"
                   >
                     {locale === 'zh' ? '查看详情' : 'View Details'}
-                    <ArrowRight className="h-4 w-4" /> </button>
+                    <ArrowRight className="h-4 w-4" /> </Button>
                 </article> ))}
             </div> </div>
           <aside className="glass rounded-2xl p-5">
@@ -453,28 +454,28 @@ export default function AssetCommercePage({ forcedPath }: { forcedPath?: AssetCo
                   <span>{operationsTitle}</span> </div>
                 <p className="mt-2 text-sm text-white/45">{operationsHint}</p> </div>
               <div className="flex flex-wrap items-center gap-2">
-                {filterOptions.map(option => ( <button
+                {filterOptions.map(option => ( <Button
                     key={option.key}
                     onClick={() => setStatusFilter(option.key as 'all' | UploadStatus | OrderStatus | DeliveryStatus)}
                     className={`rounded-xl px-3 py-2 text-xs transition-colors ${ statusFilter === option.key
-                        ? 'bg-brand-500/15 text-brand-300' : 'bg-white/[0.03] text-white/45 hover:bg-white/[0.05] hover:text-white'
+                        ? 'bg-brand-500/15 text-brand-300' : 'bg-white/[0.03] text-white/45 hover:bg-[var(--ecom-surface-hover)] hover:text-white'
                     }`}
                   >
-                    {option.label} </button>
+                    {option.label} </Button>
                 ))}
-                <button
+                <Button
                   onClick={handlePrimaryAction}
                   className="inline-flex items-center gap-2 rounded-xl border border-brand-500/25 bg-brand-500/10 px-4 py-2.5 text-sm text-brand-300 transition-colors hover:bg-brand-500/15"
                 >
                   {isAssetPage ? <UploadCloud className="h-4 w-4" /> : <Package2 className="h-4 w-4" />}
-                  <span>{primaryActionLabel}</span> </button>
+                  <span>{primaryActionLabel}</span> </Button>
               </div> </div>
             <div className="mt-5 space-y-3">
               {isAssetPage && visibleUploads.map(item => (
-                  <button
+                  <Button
                     key={item.id}
                     onClick={() => handleQueueOpen(item)}
-                    className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-left transition-colors hover:bg-white/[0.05]"
+                    className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-left transition-colors hover:bg-[var(--ecom-surface-hover)]"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -482,13 +483,13 @@ export default function AssetCommercePage({ forcedPath }: { forcedPath?: AssetCo
                         <div className="mt-1 text-sm text-white/45">{copyText(locale, item.meta)}</div> </div>
                       <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs ${getStatusClass(item.status)}`}>
                         {getStatusText(item.status)} </span>
-                    </div> </button>
+                    </div> </Button>
                 ))}
               {isOrderPage && visibleOrders.map(item => (
-                  <button
+                  <Button
                     key={item.id}
                     onClick={() => handleOrderOpen(item)}
-                    className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-left transition-colors hover:bg-white/[0.05]"
+                    className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-left transition-colors hover:bg-[var(--ecom-surface-hover)]"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -500,12 +501,12 @@ export default function AssetCommercePage({ forcedPath }: { forcedPath?: AssetCo
                         <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs ${getStatusClass(item.status)}`}>
                           {getStatusText(item.status)} </span>
                       </div> </div>
-                  </button> ))}
+                  </Button> ))}
               {isDownloadPage && visibleDeliveries.map(item => (
-                  <button
+                  <Button
                     key={item.id}
                     onClick={() => handleDeliveryOpen(item)}
-                    className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-left transition-colors hover:bg-white/[0.05]"
+                    className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4 text-left transition-colors hover:bg-[var(--ecom-surface-hover)]"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -517,7 +518,7 @@ export default function AssetCommercePage({ forcedPath }: { forcedPath?: AssetCo
                         <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs ${getStatusClass(item.status)}`}>
                           {getStatusText(item.status)} </span>
                       </div> </div>
-                  </button> ))}
+                  </Button> ))}
               {!activeItemsCount && ( <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.02] px-4 py-6 text-sm text-white/40">
                   {locale === 'zh' ? '当前筛选条件下没有匹配结果。' : 'No result matches the current filters.'} </div>
               )} </div>

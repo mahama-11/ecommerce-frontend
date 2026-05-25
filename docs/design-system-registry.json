@@ -1,0 +1,115 @@
+{
+  "version": "2026-05-25",
+  "policy": "Business pages consume semantic tokens and shared primitives. New core UI patterns must be added here before page-local reuse.",
+  "token_layers": [
+    "brand",
+    "semantic",
+    "component"
+  ],
+  "required_core_components": [
+    {
+      "name": "Button",
+      "path": "src/components/ui/Button.tsx",
+      "status": "active",
+      "required_variants": [
+        "primary",
+        "secondary",
+        "ghost",
+        "danger"
+      ],
+      "story_required": true
+    },
+    {
+      "name": "EcomShell",
+      "path": "src/components/ui/EcomShell.tsx",
+      "status": "active",
+      "required_variants": [
+        "product",
+        "production"
+      ],
+      "story_required": true
+    },
+    {
+      "name": "Input",
+      "path": "src/components/ui/Input.tsx",
+      "status": "active",
+      "story_required": true,
+      "required_variants": [
+        "default",
+        "danger",
+        "success",
+        "sm",
+        "md",
+        "lg"
+      ]
+    },
+    {
+      "name": "Card",
+      "path": "src/components/ui/Card.tsx",
+      "status": "active",
+      "story_required": true,
+      "required_variants": [
+        "default",
+        "raised",
+        "subtle",
+        "none",
+        "sm",
+        "md",
+        "lg"
+      ]
+    },
+    {
+      "name": "Badge",
+      "path": "src/components/ui/Badge.tsx",
+      "status": "active",
+      "story_required": true,
+      "required_variants": [
+        "neutral",
+        "cyan",
+        "emerald",
+        "amber",
+        "rose",
+        "soft",
+        "outline",
+        "solid"
+      ]
+    },
+    {
+      "name": "Dialog",
+      "path": "src/components/ui/Dialog.tsx",
+      "status": "active",
+      "story_required": true,
+      "required_variants": [
+        "sm",
+        "md",
+        "lg"
+      ]
+    },
+    {
+      "name": "Toast",
+      "path": "src/components/ui/Toast.tsx",
+      "status": "planned",
+      "story_required": true
+    },
+    {
+      "name": "EmptyState",
+      "path": "src/components/ui/EmptyState.tsx",
+      "status": "planned",
+      "story_required": true
+    }
+  ],
+  "gates": [
+    "style:consistency",
+    "lint:baseline",
+    "quality:static",
+    "frontend:evidence",
+    "bundle:budget",
+    "selfcheck"
+  ],
+  "storybook": {
+    "config": ".storybook/main.ts",
+    "required_for_active_components": true,
+    "build_command": "npm run storybook:build"
+  },
+  "p0_status": "complete_after_gates_pass"
+}
