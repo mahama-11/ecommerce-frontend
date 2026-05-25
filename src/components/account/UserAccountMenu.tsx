@@ -84,6 +84,10 @@ export default function UserAccountMenu({
       setOrders([])
       return
     }
+    if (import.meta.env.DEV && window.location.search.includes('dev=1')) {
+      setOrders([])
+      return
+    }
     let cancelled = false
     commercialService.listOrders()
       .then((result) => {
@@ -222,7 +226,7 @@ export default function UserAccountMenu({
                   </span>
                 </div>
                 {access?.product_roles?.length ? (
-                  <div className="mt-2 truncate text-[11px] uppercase tracking-[0.18em] text-white/25">
+                  <div className="mt-2 truncate text-[11px] uppercase tracking-[0.18em] text-[var(--ecom-text-faint)]">
                     {access.product_roles.join(' · ')}
                   </div>
                 ) : null}
