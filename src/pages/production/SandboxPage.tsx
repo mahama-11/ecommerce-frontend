@@ -210,6 +210,8 @@ export default function SandboxPage() {
   const [promptPlanning, setPromptPlanning] = useState(false)
   const [promptPlan, setPromptPlan] = useState<PromptPlanSummary | null>(null)
   const [promptPlanNotice, setPromptPlanNotice] = useState<string | null>(null)
+  const [promptPlanEditorText, setPromptPlanEditorText] = useState('')
+  const [promptPlanEditorDirty, setPromptPlanEditorDirty] = useState(false)
   const [executionNotice, setExecutionNotice] = useState<string | null>(null)
   const [executionProgress, setExecutionProgress] = useState<number | null>(null)
   const [executionPhase, setExecutionPhase] = useState<'idle' | 'waiting' | 'ready' | 'failed'>('idle')
@@ -250,6 +252,8 @@ export default function SandboxPage() {
         if (!cancelled) { setSourceOptions([])
           setSelectedSourceIds([]) } })
     return () => { cancelled = true } }, [productId])
+  useEffect(() => { if (promptPlan?.status === 'ready' && promptPlan.promptId) { setPromptPlanEditorText(promptPlanGenerationPrompt(promptPlan) || ''); setPromptPlanEditorDirty(false); return }
+    setPromptPlanEditorText(''); setPromptPlanEditorDirty(false) }, [promptPlan?.promptId, promptPlan?.status])
   const runPromptPlanner = async () => {
     if (!productId) return
     setPromptPlanning(true)
@@ -335,7 +339,7 @@ export default function SandboxPage() {
         setExecutionPhase('failed')
         setIsRunning(false)
         return }
-      const batch = await productionApi.executeFanoutIntents(productId, selectedIntentIds, fanoutTasks, { ...(store.executionConfig ?? { provider: 'comfyui_bridge' as const, maxConcurrency: 3, retryOnFailure: false, maxRetries: 0, timeoutSeconds: 300, }), providerConfig: { ...(store.executionConfig?.providerConfig ?? {}), generation_provider_code: (currentModel?.providerCode ?? 'comfyui_bridge') satisfies ImageGenerationProviderCode, model_id: currentModel?.modelId ?? selectedModel, ui_model_option_id: selectedModel, resolution_id: currentResolution?.id, dimensions: currentResolution?.dimensions, fanout_total: fanoutTasks.length, task_slots: fanoutTasks.map((task, index) => ({ index, asset_task_id: task.id, scene_tag: task.sceneTag, source_id: task.sourceId, template_id: task.templateId, template_name: task.templateName, detail_requirement: task.detailRequirement, negative_requirement: task.negativeRequirement || advancedParams.negativePrompt, })), prompt_composer: { diy_prompt_text: diyPrompt, negative_prompt_text: advancedParams.negativePrompt, }, }, }, { onProgress: (latest) => { setFanoutTasksState(latest.tasks)
+      const batch = await productionApi.executeFanoutIntents(productId, selectedIntentIds, fanoutTasks, { ...(store.executionConfig ?? { provider: 'comfyui_bridge' as const, maxConcurrency: 3, retryOnFailure: false, maxRetries: 0, timeoutSeconds: 300, }), providerConfig: { ...(store.executionConfig?.providerConfig ?? {}), generation_provider_code: (currentModel?.providerCode ?? 'comfyui_bridge') satisfies ImageGenerationProviderCode, model_id: currentModel?.modelId ?? selectedModel, ui_model_option_id: selectedModel, resolution_id: currentResolution?.id, dimensions: currentResolution?.dimensions, fanout_total: fanoutTasks.length, task_slots: fanoutTasks.map((task, index) => ({ index, asset_task_id: task.id, scene_tag: task.sceneTag, source_id: task.sourceId, template_id: task.templateId, template_name: task.templateName, detail_requirement: task.detailRequirement, negative_requirement: task.negativeRequirement || advancedParams.negativePrompt, })), prompt_composer: { diy_prompt_text: effectiveGenerationPromptText || diyPrompt, user_adjusted_prompt_text: effectiveGenerationPromptText, original_prompt_text: generationPromptText, prompt_text_changed_by_user: promptPlanChangedByUser, negative_prompt_text: advancedParams.negativePrompt, }, }, }, { onProgress: (latest) => { setFanoutTasksState(latest.tasks)
           setExecutionProgress(latest.totalTasks > 0 ? Math.round(((latest.completedTasks + latest.failedTasks) / latest.totalTasks) * 100) : 0)
           setExecutionNotice(productionProgressNotice(latest)) }, })
       setFanoutTasksState(batch.tasks)
@@ -361,19 +365,12 @@ export default function SandboxPage() {
       setExecutionProgress(null)
       setExecutionPhase('failed')
       setIsRunning(false) } finally { setExecuting(false) } }
-  const goBack = () => {
-    if (productId) navigate(`/products/${productId}/production/prep`) }
-  const currentModel = MODEL_OPTIONS.find((m) => m.id === selectedModel)
-  const currentResolution = RESOLUTION_OPTIONS.find((r) => r.id === selectedResolution)
-  const hasRunnableIntents = store.intents.length > 0
-  const promptPlanReady = promptPlan?.status === 'ready' && Boolean(promptPlan.promptId)
-  const canStartProduction = hasRunnableIntents && promptPlanReady && fanoutTasks.length > 0 && !executing
-  const promptPlanBlocker = promptPlanStatusText(promptPlan)
+  const goBack = () => { if (productId) navigate(`/products/${productId}/production/prep`) }
+  const currentModel = MODEL_OPTIONS.find((m) => m.id === selectedModel); const currentResolution = RESOLUTION_OPTIONS.find((r) => r.id === selectedResolution); const hasRunnableIntents = store.intents.length > 0
+  const promptPlanReady = promptPlan?.status === 'ready' && Boolean(promptPlan.promptId); const canStartProduction = hasRunnableIntents && promptPlanReady && fanoutTasks.length > 0 && !executing; const promptPlanBlocker = promptPlanStatusText(promptPlan)
   const startProductionBlocker = !hasRunnableIntents ? '先回到生产准备，完成图片解析结果确认和取舍选择。' : !promptPlanReady ? promptPlanBlocker : fanoutTasks.length === 0 ? '请先在 Prep 上传至少一张 SKU 图片。' : '可以开始生产。'
-  const promptPlanSourceLabel = promptPlan?.source === 'llm_prompt_planner' ? '已按你的选择整理' : promptPlan?.source ? '基础方案' : '准备中'
-  const promptPlanStatusLabel = promptPlan?.status === 'ready' ? '可用于生产' : promptPlan?.status === 'blocked' ? '需要先完成准备' : promptPlan?.status ? '整理中' : '未知'
-  const generationPromptText = promptPlanGenerationPrompt(promptPlan)
-  const promptKeywords = promptPlanKeywords(promptPlan)
+  const promptPlanSourceLabel = promptPlan?.source === 'llm_prompt_planner' ? '已按你的选择整理' : promptPlan?.source ? '基础方案' : '准备中'; const promptPlanStatusLabel = promptPlan?.status === 'ready' ? '可用于生产' : promptPlan?.status === 'blocked' ? '需要先完成准备' : promptPlan?.status ? '整理中' : '未知'
+  const generationPromptText = promptPlanGenerationPrompt(promptPlan); const effectiveGenerationPromptText = promptPlanEditorText.trim() || generationPromptText; const promptPlanChangedByUser = promptPlanEditorDirty && promptPlanEditorText.trim() !== generationPromptText.trim(); const promptKeywords = promptPlanKeywords(promptPlan)
   const productionReadinessItems = [ { label: '策略输入', ok: hasRunnableIntents, detail: hasRunnableIntents ? `${store.intents.length} 条已确认` : '还没有可生成的选择' }, { label: '出图方案', ok: promptPlanReady, detail: promptPlanReady ? '已准备好' : promptPlanBlocker }, { label: '出图槽位', ok: fanoutTasks.length > 0, detail: fanoutTasks.length > 0 ? `${fanoutTasks.length} 个任务` : '等待 Prep 图片' }, ]
   return ( <div className="mx-auto max-w-[1440px] px-5 py-6">
       {/* Page Header */}
@@ -439,11 +436,10 @@ export default function SandboxPage() {
               {promptPlanNotice && ( <div className="rounded-lg border border-cyan-300/15 bg-cyan-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-cyan-100/75" aria-live="polite">
                   {promptPlanNotice} </div> )}
               {promptPlanReady && ( <div className="space-y-2 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.045] p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-[10px] font-semibold text-emerald-100/80">本次出图要求</p>
-                    <span className="rounded-full bg-emerald-300/10 px-2 py-0.5 text-[9px] text-emerald-100/55">已准备好</span> </div>
-                  <p className="rounded-lg bg-black/25 p-2 text-[10px] leading-relaxed text-white/75">
-                    {generationPromptText || '出图要求已整理完成。'} </p>
+                  <label className="block space-y-1.5">
+                    <div className="flex items-center justify-between gap-2"><span className="text-[10px] font-semibold text-emerald-100/80">本次出图要求</span><span className={promptPlanChangedByUser ? 'rounded-full bg-cyan-300/10 px-2 py-0.5 text-[9px] text-cyan-100/65' : 'rounded-full bg-emerald-300/10 px-2 py-0.5 text-[9px] text-emerald-100/55'}>{promptPlanChangedByUser ? '已手动微调' : '可直接编辑'}</span></div>
+                    <textarea value={promptPlanEditorText} onChange={(e) => { setPromptPlanEditorText(e.target.value); setPromptPlanEditorDirty(true) }} rows={7} placeholder="系统整理出的出图要求会自动填入这里；你可以直接改文案，点击开始生产时会按这里的内容提交。" className="min-h-[132px] w-full resize-y rounded-lg border border-emerald-300/15 bg-black/25 p-2 text-[10px] leading-relaxed text-white/80 outline-none placeholder:text-white/20 focus:border-cyan-300/35 focus-visible:ring-2 focus-visible:ring-cyan-300/40 focus-visible:ring-offset-0" />
+                    <div className="flex items-center justify-between gap-2 text-[9px] text-white/35"><span>这里的最终文案会随本次生成任务一起提交。</span><Button type="button" onClick={() => { setPromptPlanEditorText(generationPromptText); setPromptPlanEditorDirty(false) }} className="text-cyan-200/60 hover:text-cyan-100">恢复系统方案</Button></div> </label>
                   <div className="grid grid-cols-1 gap-2 text-[9px] text-white/42">
                     <div><span className="text-white/28">风格关键词：</span>{promptKeywords.length ? promptKeywords.join('、') : '未返回'}</div>
                     <div><span className="text-white/28">背景：</span>{promptPlanFieldSummary(promptPlan, 'background')}</div>

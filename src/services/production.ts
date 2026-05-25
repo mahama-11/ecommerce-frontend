@@ -534,6 +534,12 @@ export async function executeIntents(productId: string, intentIds: string[], con
   const response = await request<GenerationVersionDTO>(`${VWF}/${session.id}/generation-versions`, { method: 'POST', body: JSON.stringify({ prompt_id: promptPlan.prompt_id, status: 'queued', stage: 'queued', progress: 0, idempotency_key: `generation:${session.id}:${promptPlan.prompt_id}:${intentIds.join(',')}`, metadata: buildSafeGenerationMetadata(intentIds, config), }), })
   if (response.status === 'contract_needed' || !response.runtime_job_id) { contractNeeded('当前生成服务还没有返回可生产的任务。为避免展示占位图，系统已停在本页，请稍后重试或检查生成服务配置。') }
   return { jobId: response.runtime_job_id || response.version_id, versionId: response.version_id, status: response.status, runtimeJobId: response.runtime_job_id, } }
+function shortConfigFingerprint(value: unknown): string {
+  const raw = JSON.stringify(value ?? null)
+  let hash = 0
+  for (let i = 0; i < raw.length; i += 1) {
+    hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0 }
+  return Math.abs(hash).toString(36) }
 export async function executeFanoutIntents( productId: string, intentIds: string[], tasks: ProductionFanoutTask[], config?: ExecutionConfig, opts?: { onProgress?: (batch: ProductionFanoutBatch) => void }, ): Promise<ProductionFanoutBatch> {
   if (isDevMode()) {
     await delay(1200)
@@ -550,7 +556,8 @@ export async function executeFanoutIntents( productId: string, intentIds: string
   const maxRetries = Math.max(0, Math.min(config?.maxRetries ?? 0, 5))
   const timeoutMs = Math.max(30, config?.timeoutSeconds ?? 300) * 1000
   const retryOnFailure = Boolean(config?.retryOnFailure)
-  const batchId = `fanout:${session.id}:${promptPlan.prompt_id}:${intentIds.join(',')}:${tasks.map(t => t.id).join('|')}`
+  const promptOverrideFingerprint = shortConfigFingerprint((config?.providerConfig ?? {}).prompt_composer)
+  const batchId = `fanout:${session.id}:${promptPlan.prompt_id}:${intentIds.join(',')}:${tasks.map(t => t.id).join('|')}:prompt-${promptOverrideFingerprint}`
   const completed = new Map<string, ProductionFanoutTask>()
   const finalFailures = new Map<string, ProductionFanoutTask>()
   let pending: ProductionFanoutTask[] = tasks.map(task => ({ ...task, status: 'pending' as const, progress: 0, retryCount: task.retryCount ?? 0 }))
