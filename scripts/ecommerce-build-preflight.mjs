@@ -34,7 +34,7 @@ const upstream = (() => {
 const aheadBehind = (() => {
   if (!upstream) return null
   try {
-    const [ahead, behind] = git(['rev-list', '--left-right', '--count', `${upstream}...HEAD`]).split(/\s+/).map(Number)
+    const [behind, ahead] = git(['rev-list', '--left-right', '--count', `${upstream}...HEAD`]).split(/\s+/).map(Number)
     return { upstream, ahead, behind }
   } catch {
     return { upstream, ahead: null, behind: null }
