@@ -25,7 +25,10 @@
     "style:repair-queue": "node scripts/ecommerce-style-drift-repair-queue.mjs",
     "frontend:evidence": "node scripts/ecommerce-frontend-visual-evidence.mjs",
     "frontend:gate": "node scripts/ecommerce-frontend-automation-gate.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:preflight": "node scripts/ecommerce-build-preflight.mjs",
+    "deploy:dev": "deploy/deploy.sh dev",
+    "deploy:promote": "deploy/deploy.sh promote"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.3",
