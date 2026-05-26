@@ -78,9 +78,15 @@ async function ensureSessionPromptTemplate(session: VisualSession, locale = 'zh-
   const updated = await request<VisualSession>(`${VWF}/${session.id}`, { method: 'PATCH', body: JSON.stringify({ template_id: templateId }), })
   setStored(sessionKey(session.product_id), updated)
   return updated.template_id || templateId }
-async function getStageView(productId: string): Promise<StageViewDTO> {
+type StageViewProjection = 'sandbox' | 'sources' | 'workshop' | 'full'
+async function getStageView(productId: string, projection?: StageViewProjection): Promise<StageViewDTO> {
   const session = await ensureVisualSession(productId)
-  return request<StageViewDTO>(`${VWF}/${session.id}/stage-view`, { method: 'GET' }) }
+  const query = projection ? `?projection=${encodeURIComponent(projection)}` : ''
+  return request<StageViewDTO>(`${VWF}/${session.id}/stage-view${query}`, { method: 'GET' }) }
+async function listGenerationVersionDTOs(productId: string): Promise<GenerationVersionDTO[]> {
+  const session = await ensureVisualSession(productId)
+  const response = await request<{ items?: GenerationVersionDTO[] }>(`${VWF}/${session.id}/generation-versions`, { method: 'GET' })
+  return response.items ?? [] }
 export type ProductionArchitectureState = { businessFlow?: BusinessWorkflowDAG
   integrationVerdict?: IntegrationVerdict
   rollbackSnapshot?: RollbackSnapshot
@@ -296,7 +302,7 @@ export async function listParsingSources(productId: string): Promise<ParsingSour
   const localSources = getLocalSources(productId)
   if (isDevMode()) return localSources
   try {
-    const stage = await getStageView(productId)
+    const stage = await getStageView(productId, 'sources')
     const sourceRefs = stage.source_references?.length ? stage.source_references : stage.source_reference ? [stage.source_reference] : []
     if (sourceRefs.length === 0) return localSources
     const backendSources = await Promise.all(sourceRefs.map(async (sourceRef) => {
@@ -509,8 +515,8 @@ export async function getGenerationExecutionStatus(productId: string, versionId:
   if (isDevMode()) {
     await delay(700)
     return { versionId, status: 'completed', stage: 'completed', progress: 100, resultAssetCount: 1, terminal: true, successful: true, message: '已生成 1 张演示结果图。' } }
-  const stage = await getStageView(productId)
-  const version = (stage.generation_versions ?? []).find(item => item.version_id === versionId)
+  const versions = await listGenerationVersionDTOs(productId)
+  const version = versions.find(item => item.version_id === versionId)
   if (!version) {
     return { versionId, status: 'queued', stage: 'queued', progress: 0, resultAssetCount: 0, terminal: false, successful: false, message: '生产任务已提交，正在等待生成服务返回进度。请保持本页打开。' } }
   return generationExecutionStatus(version) }
@@ -624,19 +630,19 @@ export async function getTaskQuota(productId: string): Promise<TaskQuota> {
   if (isDevMode()) {
     await delay(200)
     return MOCK_QUOTA }
-  const stage = await getStageView(productId)
+  const stage = await getStageView(productId, 'sandbox')
   return { totalSlots: 1, usedSlots: stage.status === 'running' ? 1 : 0, reservedSlots: 0 } }
 export async function getExecutionConfig(productId: string): Promise<ExecutionConfig> {
   if (isDevMode()) {
     await delay(200)
     return MOCK_EXECUTION_CONFIG }
-  await getStageView(productId)
+  await getStageView(productId, 'sandbox')
   return MOCK_EXECUTION_CONFIG }
 export async function updateExecutionConfig(productId: string, config: ExecutionConfig): Promise<ExecutionConfig> {
   if (isDevMode()) {
     await delay(300)
     return config }
-  await getStageView(productId)
+  await getStageView(productId, 'sandbox')
   return config }
 function generationVersionLabel(index: number): string {
   return `V${index + 1}.0` }
@@ -663,8 +669,7 @@ export async function listGenerationVersions(productId: string): Promise<Version
   if (isDevMode()) {
     await delay(300)
     return [] }
-  const stage = await getStageView(productId)
-  const versions = [...(stage.generation_versions ?? [])].sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
+  const versions = [...(await listGenerationVersionDTOs(productId))].sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
   const groups = new Map<string, GenerationVersionDTO[]>()
   versions.forEach((version) => {
     const key = generationGroupId(version)
@@ -683,8 +688,7 @@ export async function listVariants(productId: string): Promise<AssetVariant[]> {
   if (isDevMode()) {
     await delay(400)
     return MOCK_VARIANTS }
-  const stage = await getStageView(productId)
-  const variants = (stage.generation_versions ?? []).flatMap(version => (version.result_assets ?? []).map(asset => ({ version, asset, })))
+  const variants = (await listGenerationVersionDTOs(productId)).flatMap(version => (version.result_assets ?? []).map(asset => ({ version, asset, })))
   return Promise.all(variants.map(async ({ version, asset }) => {
     const groupId = generationGroupId(version)
     const assetContentPath = asset.asset_content_url || (asset.asset_id ? `/api/v1/ecommerce/assets/${asset.asset_id}/content` : '')
