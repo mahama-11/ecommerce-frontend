@@ -11,7 +11,9 @@ const styleReportRel = 'reports/frontend-style-consistency/style-consistency-lat
 const repairQueueReportRel = 'reports/frontend-style-consistency/style-drift-repair-queue.json'
 const eslintReportRel = 'reports/frontend-quality/eslint-baseline-latest.json'
 const staticQualityReportRel = 'reports/frontend-quality/static-quality-latest.json'
+const layoutDensityReportRel = 'reports/frontend-quality/layout-density-latest.json'
 const designSystemReportRel = 'reports/frontend-quality/design-system-registry-latest.json'
+const frontendIaReportRel = 'reports/frontend-quality/frontend-ia-latest.json'
 const apiContractReportRel = 'reports/frontend-quality/api-contract-latest.json'
 const autoEvidenceChangedFilesRel = 'reports/frontend-style-consistency/changed-files-for-evidence.txt'
 
@@ -84,7 +86,7 @@ function isProductFlowFile(file) {
     || /^src\/layouts\/(ProductWorkbenchLayout|ProductionLayout)\.tsx$/.test(file)
 }
 
-function hasEvidenceManifest() {
+function hasEvidenceManifest(requiredFiles = []) {
   const candidates = [
     'reports/frontend-style-consistency/evidence-manifest.json',
     'reports/frontend-style-consistency/FRONTEND_EVIDENCE_MANIFEST.json',
@@ -98,6 +100,16 @@ function hasEvidenceManifest() {
       const screenshots = data.screenshots || data.visual_evidence || []
       const decision = data.acceptance_status || data.status || data.human_decision?.decision
       if (Array.isArray(screenshots) && screenshots.length > 0 && /^(PASS|ACCEPTED|ACCEPTED_WITH_NOTES)$/i.test(String(decision || ''))) {
+        const coveredFiles = data.changed_files || data.changedFiles || data.source_files || []
+        if (requiredFiles.length > 0) {
+          if (!Array.isArray(coveredFiles) || coveredFiles.length === 0) {
+            return { rel, status: 'INVALID', reason: 'manifest is stale or not change-scoped: changed_files must list the product-flow files covered by the screenshots' }
+          }
+          const missing = requiredFiles.filter(file => !coveredFiles.includes(file))
+          if (missing.length > 0) {
+            return { rel, status: 'INVALID', reason: `manifest does not cover changed product-flow files: ${missing.join(', ')}` }
+          }
+        }
         return { rel, status: 'FOUND' }
       }
       return { rel, status: 'INVALID', reason: 'manifest exists but lacks screenshots plus PASS/ACCEPTED decision' }
@@ -154,7 +166,9 @@ const style = run('node', ['scripts/ecommerce-style-consistency.mjs', '--report'
 const repairQueue = run('node', ['scripts/ecommerce-style-drift-repair-queue.mjs', '--report', repairQueueReportRel])
 const eslintGate = run('node', ['scripts/ecommerce-eslint-baseline-gate.mjs', '--report', eslintReportRel])
 const staticQualityGate = run('node', ['scripts/ecommerce-static-quality-gate.mjs', '--report', staticQualityReportRel])
+const layoutDensityGate = run('node', ['scripts/ecommerce-layout-density-gate.mjs', '--report', layoutDensityReportRel])
 const designSystemGate = run('node', ['scripts/ecommerce-design-system-registry-gate.mjs', '--report', designSystemReportRel])
+const frontendIaGate = run('node', ['scripts/ecommerce-frontend-ia-gate.mjs', '--report', frontendIaReportRel])
 const apiContractGate = run('node', ['scripts/ecommerce-api-contract-gate.mjs'])
 let styleJson = null
 try {
@@ -174,11 +188,23 @@ try {
 } catch {
   staticQualityJson = { status: 'UNKNOWN', raw_stdout: staticQualityGate.stdout.slice(-4000) }
 }
+let layoutDensityJson = null
+try {
+  layoutDensityJson = JSON.parse(layoutDensityGate.stdout)
+} catch {
+  layoutDensityJson = { status: 'UNKNOWN', raw_stdout: layoutDensityGate.stdout.slice(-4000) }
+}
 let designSystemJson = null
 try {
   designSystemJson = JSON.parse(designSystemGate.stdout)
 } catch {
   designSystemJson = { status: 'UNKNOWN', raw_stdout: designSystemGate.stdout.slice(-4000) }
+}
+let frontendIaJson = null
+try {
+  frontendIaJson = JSON.parse(frontendIaGate.stdout)
+} catch {
+  frontendIaJson = { status: 'UNKNOWN', raw_stdout: frontendIaGate.stdout.slice(-4000) }
 }
 let apiContractJson = null
 try {
@@ -201,8 +227,14 @@ if (eslintGate.status !== 0 || eslintJson.status === 'FAIL') {
 if (staticQualityGate.status !== 0 || staticQualityJson.status === 'FAIL') {
   failures.push('Static quality/a11y/architecture gate failed; accessibility and architecture debt may burn down but cannot increase')
 }
+if (layoutDensityGate.status !== 0 || layoutDensityJson.status === 'FAIL') {
+  failures.push('Layout density/readability gate failed; product-flow UI must support long Chinese copy without no-wrap, truncation, or tiny dense two-column cards')
+}
 if (designSystemGate.status !== 0 || designSystemJson.status === 'FAIL') {
   failures.push('Design-system registry gate failed; shared UI primitives and governance contract must stay machine-readable')
+}
+if (frontendIaGate.status !== 0 || frontendIaJson.status === 'FAIL') {
+  failures.push('Frontend IA governance gate failed; core product pages must keep page roles, information hierarchy, action hierarchy, and screenshot review contract explicit')
 }
 if (apiContractGate.status !== 0 || apiContractJson.status === 'FAIL') {
   failures.push('API contract gate failed; frontend API types must stay generated from contracts/ecommerce.openapi.json')
@@ -224,10 +256,12 @@ if (requiresStyleChangeProposal) {
 const requiresVisualEvidence = productFlowFiles.length > 0 && !sharedOnly
 let evidenceGeneration = { status: 'SKIPPED', reason: requiresVisualEvidence ? 'existing manifest accepted or generation disabled' : 'visual evidence not required for this change set' }
 if (requiresVisualEvidence) {
-  let existingEvidence = hasEvidenceManifest()
+  let existingEvidence = hasEvidenceManifest(productFlowFiles)
   const autoGenerateEvidence = !args.includes('--no-auto-evidence') && existingEvidence.status !== 'FOUND'
   if (autoGenerateEvidence) {
-    writeJson(autoEvidenceChangedFilesRel, files.join('\n') + '\n')
+    const changedFilesPath = join(root, autoEvidenceChangedFilesRel)
+    mkdirSync(dirname(changedFilesPath), { recursive: true })
+    writeFileSync(changedFilesPath, files.join('\n') + '\n')
     const generated = run('node', ['scripts/ecommerce-frontend-visual-evidence.mjs', '--changed-files', autoEvidenceChangedFilesRel], { timeout: 120000 })
     evidenceGeneration = {
       status: generated.status === 0 ? 'PASS' : 'FAIL',
@@ -235,7 +269,7 @@ if (requiresVisualEvidence) {
       stdout_tail: generated.stdout.slice(-2000),
       stderr_tail: generated.stderr.slice(-2000),
     }
-    existingEvidence = hasEvidenceManifest()
+    existingEvidence = hasEvidenceManifest(productFlowFiles)
   }
   var evidence = existingEvidence
 } else {
@@ -255,7 +289,7 @@ if (criticalSurfaceFiles.length > 0) {
 
 const result = {
   status: failures.length ? 'FAIL' : (warnings.length ? 'PASS_WITH_NOTES' : 'PASS'),
-  policy: 'Ecommerce frontend increments must not increase style drift; product-flow UI changes require visual evidence before completion.',
+  policy: 'Ecommerce frontend increments must not increase style drift or layout-density/readability debt; product-flow UI changes require visual evidence before completion.',
   changed_files: files,
   classifications: {
     ui_files: uiFiles,
@@ -296,6 +330,15 @@ const result = {
     failures: staticQualityJson.failures || [],
     warnings: staticQualityJson.warnings || [],
   },
+  layout_density: {
+    exit_code: layoutDensityGate.status,
+    report: layoutDensityReportRel,
+    status: layoutDensityJson.status,
+    current_totals: layoutDensityJson.current?.totals,
+    baseline_totals: layoutDensityJson.baseline_totals,
+    failures: layoutDensityJson.failures || [],
+    warnings: layoutDensityJson.warnings || [],
+  },
   design_system_registry: {
     exit_code: designSystemGate.status,
     report: designSystemReportRel,
@@ -304,6 +347,15 @@ const result = {
     planned_components: designSystemJson.planned_components || [],
     failures: designSystemJson.failures || [],
     warnings: designSystemJson.warnings || [],
+  },
+  frontend_ia: {
+    exit_code: frontendIaGate.status,
+    report: frontendIaReportRel,
+    status: frontendIaJson.status,
+    required_surfaces: frontendIaJson.required_surfaces || [],
+    required_components: frontendIaJson.required_components || [],
+    failures: frontendIaJson.failures || [],
+    warnings: frontendIaJson.warnings || [],
   },
   api_contract: {
     exit_code: apiContractGate.status,

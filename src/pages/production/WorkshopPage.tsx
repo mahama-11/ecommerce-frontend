@@ -2,10 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Check, Download, Loader2,
-  Search, Grid3X3, List, ChevronDown,
-  ChevronUp, Info, ArrowUpRight, RotateCw,
-  Save, Plus, X, Clock,
-  Sparkles, } from 'lucide-react'
+  Grid3X3, List, ChevronDown,
+  ChevronUp, Info, RotateCw,
+  Save, X, } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useWorkshopStore } from '@/store/productionStore'
 import * as productionApi from '@/services/production'
@@ -13,6 +12,7 @@ import { createExportPackage } from '@/services/product'
 import { useToastStore } from '@/store/toastStore'
 import type { AssetVariant, VersionNode } from '@/types/production'
 import { isDevMode } from '@/mocks/productionDemo'
+import { VersionLineage, ResultAssetCard } from '@/components/production/ProductionWorkflowComponents'
 import { Button } from '@/components/ui/Button'
 // ─── Mock Variant Images (placeholder URLs) ──────────────────
 const VARIANT_THUMBS = [ 'https://picsum.photos/seed/workshop1/400/400',
@@ -31,160 +31,8 @@ const MOCK_VARIANTS: AssetVariant[] = Array.from({ length: 8 }).map((_, i) => ({
 function fmtDate(iso: string): string {
   const d = new Date(iso)
   return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` }
-// ─── Version Icon ────────────────────────────────────────────
-function VersionIcon({ type }: { type: string }) {
-  const icons: Record<string, React.ReactNode> = { init: <Sparkles className="h-3.5 w-3.5" />, default: <Clock className="h-3.5 w-3.5" />, }
-  return ( <span className="text-white/30">{icons[type] ?? icons.default}</span> ) }
-// ─── Version Lineage (Left Panel) ────────────────────────────
-function VersionLineage({ nodes, activeId, onSelect,
-  onCompare, onBranch, }: { nodes: VersionNode[]
-  activeId: string | null
-  onSelect: (id: string) => void
-  onCompare: () => void
-  onBranch: () => void }) {
-  return ( <div className="flex max-h-[calc(100vh-10rem)] min-h-0 flex-col">
-      {/* Header */}
-      <div className="mb-3 flex shrink-0 items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-white">版本谱系</h3>
-          <p className="text-[10px] text-white/25">Version Lineage</p> </div>
-        <Button
-          type="button"
-          disabled={nodes.length === 0}
-          onClick={onCompare}
-          title="对比已有生成版本。"
-          className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/10 bg-cyan-400/[0.03] px-2 py-1 text-[10px] text-cyan-200/65 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <ArrowUpRight className="h-3 w-3" />
-          对比模式 </Button> </div>
-      {/* Timeline */}
-      <div className="relative min-h-0 flex-1 space-y-1 overflow-y-auto pl-4 pr-1 scrollbar-thin">
-        {/* Vertical line */}
-        {nodes.length > 0 && <div className="absolute left-[11px] top-2 bottom-2 w-px bg-white/[0.06]" />}
-        {nodes.length === 0 && ( <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-3 py-4 text-[11px] leading-relaxed text-amber-200/70">
-            还没有可查看的生成版本。请先在策略配置页提交生产任务，等真实图片结果返回后再进入工坊。 </div> )}
-        {nodes.map((node, idx) => {
-          const isActive = node.id === activeId
-          const isCurrent = node.isCurrent
-          return ( <motion.div
-              key={node.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              onClick={() => onSelect(node.id)}
-              className={`relative cursor-pointer rounded-xl border p-3 transition ${ isActive || isCurrent ? 'border-cyan-400/20 bg-cyan-400/[0.04]' : 'border-transparent bg-transparent hover:bg-[var(--ecom-surface-hover)]'
-              }`}
-            >
-              {/* Dot on timeline */}
-              <div
-                className={`absolute -left-[calc(1rem-2px)] top-4 h-2 w-2 rounded-full border-2 ${ isCurrent ? 'border-cyan-400 bg-cyan-400' : isActive
-                      ? 'border-cyan-400/50 bg-cyan-400/30' : 'border-white/10 bg-white/10' }`}
-              />
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5 shrink-0">
-                  <VersionIcon type={node.id === 'v-init' ? 'init' : 'default'} /> </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[11px] font-medium ${isCurrent ? 'text-cyan-400' : 'text-white/60'}`}>
-                      {node.label} </span>
-                    {isCurrent && ( <span className="rounded bg-cyan-400/10 px-1 py-0.5 text-[8px] text-cyan-400">
-                        当前 </span> )} </div>
-                  <p className="mt-0.5 text-[9px] text-white/25">{fmtDate(node.timestamp)}</p>
-                  <p className="mt-1 text-[10px] leading-relaxed text-white/40">{node.description}</p>
-                  <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-white/[0.03] px-1.5 py-0.5">
-                    <span className="text-[9px] text-white/30">SKU {node.skuBias}%</span>
-                    <span className="text-[9px] text-white/15">|</span>
-                    <span className="text-[9px] text-white/30">REF {node.refBias}%</span> </div> </div> </div>
-            </motion.div> ) })} </div>
-      {/* New branch button */}
-      <Button
-        type="button"
-        disabled={nodes.length === 0}
-        onClick={onBranch}
-        title="基于当前版本继续生成一个新分支。"
-        className="mt-3 flex w-full shrink-0 items-center justify-center gap-1 rounded-xl border border-dashed border-cyan-400/20 bg-cyan-400/[0.04] py-2 text-[11px] text-cyan-200/70 transition hover:border-cyan-400/35 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <Plus className="h-3.5 w-3.5" />
-        新建分支 </Button> </div> )
-}
-// ─── Variant Card ────────────────────────────────────────────
-function VariantCard({ variant, index, isSelected,
-  onToggle, onZoom, onDownload, }: {
-  variant: AssetVariant
-  index: number
-  isSelected: boolean
-  onToggle: () => void
-  onZoom: () => void
-  onDownload: () => void }) {
-  const [hovered, setHovered] = useState(false)
-  return ( <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.04 }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`group relative overflow-hidden rounded-xl border transition ${ isSelected ? 'border-cyan-400/30 bg-cyan-400/[0.02]' : 'border-white/[0.05] bg-white/[0.01] hover:border-white/10'
-      }`}
-    >
-      {/* Selection action */}
-      <Button
-        type="button"
-        aria-pressed={isSelected}
-        aria-label={`${isSelected ? '取消选择' : '选择'}生成结果 ${index + 1}`}
-        onClick={(e) => { e.stopPropagation()
-          onToggle() }}
-        className={`absolute right-2 top-2 z-10 h-7 rounded-full px-2 text-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-md transition ${ isSelected ? 'border border-cyan-300/50 bg-cyan-300/20 text-cyan-100' : 'border border-white/12 bg-black/45 text-white/70 hover:border-cyan-300/35 hover:text-cyan-100'
-        }`}
-      >
-        {isSelected ? <Check className="h-3 w-3" /> : null}
-        <span>{isSelected ? '已选' : '选择'}</span> </Button>
-      {/* Image */}
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label={`选择变体 ${index + 1}`}
-        className="relative aspect-square cursor-pointer overflow-hidden bg-white/[0.02]"
-        onClick={onToggle}
-        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onToggle() }}
-      >
-        <img
-          src={variant.thumbnailUrl}
-          alt={`Variant ${index + 1}`}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          loading="lazy"
-        />
-        {/* Hover overlay actions */}
-        <AnimatePresence>
-          {hovered && ( <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/60 to-transparent pb-3"
-            >
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation()
-                    onZoom() }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
-                >
-                  <Search className="h-3.5 w-3.5" /> </Button>
-                <Button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation()
-                    onDownload() }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
-                >
-                  <Download className="h-3.5 w-3.5" /> </Button> </div> </motion.div>
-          )} </AnimatePresence> </div>
-      {/* Label */}
-      <div className="px-2 py-1.5">
-        <div className="truncate text-[10px] text-white/40">
-          {String(variant.metadata?.template_name ?? variant.metadata?.template_id ?? variant.metadata?.version_id ?? `结果 ${index + 1}`)} </div>
-        <div className="truncate text-[9px] text-white/20">
-          {String(variant.metadata?.source_name ?? variant.metadata?.source_id ?? variant.metadata?.fanout_task_id ?? '')} </div> </div> </motion.div>
-  ) }
 // ─── Variant Grid (Center) ───────────────────────────────────
+
 function VariantGrid({ variants, selectedIds, busy,
   onToggle, onZoom, onDownload, onFinalize,
 }: { variants: AssetVariant[]
@@ -254,7 +102,7 @@ function VariantGrid({ variants, selectedIds, busy,
           <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-white/45">
             还没有真实生成结果。系统不会用占位图冒充结果；请回到策略配置页提交生产，等待图片返回后再进入。 </p> </div> ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredVariants.map((variant, idx) => ( <VariantCard
+          {filteredVariants.map((variant, idx) => ( <ResultAssetCard
               key={variant.id}
               variant={variant}
               index={idx}

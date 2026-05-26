@@ -105,6 +105,12 @@ prune_remote_tars() {
 
 case "$CMD" in
   dev)
+    if [ "${ALLOW_LEGACY_DEV_DEPLOY:-0}" != "1" ]; then
+      echo "BLOCKED: legacy ecommerce-frontend deploy/deploy.sh dev is disabled for Cloud dev." >&2
+      echo "Use: cd /root/work/v && tools/dev/deploy-cloud-dev-all.sh --apps ecom,platform --services frontend" >&2
+      echo "Override only for emergency local experiments: ALLOW_LEGACY_DEV_DEPLOY=1 deploy/deploy.sh dev" >&2
+      exit 2
+    fi
     require_clean_commit
     DEV_TAG="${DEV_TAG:-dev}"
     IMG="$IMAGE_NAME:$DEV_TAG"

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'; import { useParams, useNavigate } from 'react-router-dom'; import { useTranslation } from 'react-i18next'; import { Play, Minus, Plus, Settings, Loader2, AlertCircle, Trash2, ChevronDown, ChevronLeft, Hexagon, Sun, Frame, Package, Palette, Scale, Info, Sparkles, Image, ChevronUp, } from 'lucide-react'; import { motion, AnimatePresence } from 'framer-motion'; import { useSandboxStore } from '@/store/productionStore'; import * as productionApi from '@/services/production'; import { useToastStore } from '@/store/toastStore'; import { isDevMode } from '@/mocks/productionDemo'; import type { SceneTemplate, ModelOption, ResolutionOption, AssetTask, StrategySummary, ParsingSource, ProductionFanoutTask, ImageGenerationProviderCode, } from '@/types/production'; import type { PromptPlanSummary } from '@/services/production'
-import { Button } from '@/components/ui/Button'; const MODEL_OPTIONS: ModelOption[] = [ { id: 'comfyui-bridge', name: '稳定生产模式', label: '默认稳定模式', description: '适合正式生产，出图质量和稳定性优先', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' }, { id: 'minimax-image-01', name: 'MiniMax 图生图', label: 'MiniMax 图生图', description: '适合用当前商品/参考图做图生图，保持主体并生成电商成片', costPerImage: 10, providerCode: 'minimax_image_generation', modelId: 'image-01' }, { id: 'gemini-pro-image', name: '高质量创意模式', label: '高质量创意模式', description: '适合需要更强图片理解和编辑能力的场景', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' }, { id: 'gemini-flash-image', name: '快速预览模式', label: '快速预览模式', description: '适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' }, ]
+import { Button } from '@/components/ui/Button'; import { EditablePromptCard, ProductionSectionCard } from '@/components/production/ProductionWorkflowComponents'; const MODEL_OPTIONS: ModelOption[] = [ { id: 'comfyui-bridge', name: '稳定生产模式', label: '默认稳定模式', description: '适合正式生产，出图质量和稳定性优先', costPerImage: 10, recommended: true, providerCode: 'comfyui_bridge' }, { id: 'minimax-image-01', name: 'MiniMax 图生图', label: 'MiniMax 图生图', description: '适合用当前商品/参考图做图生图，保持主体并生成电商成片', costPerImage: 10, providerCode: 'minimax_image_generation', modelId: 'image-01' }, { id: 'gemini-pro-image', name: '高质量创意模式', label: '高质量创意模式', description: '适合需要更强图片理解和编辑能力的场景', costPerImage: 10, providerCode: 'gemini_image_generation', modelId: 'gemini-3-pro-image-preview' }, { id: 'gemini-flash-image', name: '快速预览模式', label: '快速预览模式', description: '适合快速预览和批量草稿', costPerImage: 8, providerCode: 'gemini_image_generation', modelId: 'gemini-3.1-flash-image-preview-token' }, ]
 const RESOLUTION_OPTIONS: ResolutionOption[] = [ { id: '1024-square', label: '标准方图', dimensions: '1024×1024', costMultiplier: 1 }, { id: '720-wide', label: '横版预览', dimensions: '1280×720', costMultiplier: 0.75 }, ]; const TEMPLATES: SceneTemplate[] = [ { id: 'amazon-hero', name: 'Amazon 平台主图模板', category: 'hero', aspectRatio: '1:1', description: '纯白背景，主体居中，符合 Amazon 主图规范', compositionRules: ['中心构图，突出主体', '纯色或渐变背景，无干扰', '符合平台主图规范'], platform: 'Amazon' }, { id: 'industrial-poster', name: '工业风营销海报模板', category: 'poster', aspectRatio: '3:4', description: '深色工业风背景，强调产品质感与力量感', compositionRules: ['纵向构图，强调视觉冲击', '可容纳文案信息区', '适合活动 / 促销场景'], platform: '通用' }, { id: 'lifestyle-scene', name: '场景使用图模板', category: 'lifestyle', aspectRatio: '16:9', description: '真实使用场景，展示产品在实际环境中的效果', compositionRules: ['场景化构图，增强真实感', '展示产品使用环境', '增强信任感与代入感'], platform: '通用' }, { id: 'detail-closeup', name: '细节特写模板', category: 'detail', aspectRatio: '1:1', description: '局部放大，突出材质纹理与工艺细节', compositionRules: ['微距视角，强调细节', '浅景深效果', '突出材质与工艺'], platform: '通用' }, { id: 'comparison-split', name: '对比图模板', category: 'comparison', aspectRatio: '16:9', description: '左右对比，突出产品优势与差异点', compositionRules: ['对称分割布局', '强调对比差异', '适合功能卖点展示'], platform: '通用' }, ]
 const SAMPLING_OPTIONS = ['DPM++ 2M Karras', 'Euler a', 'DPM++ SDE Karras', 'Euler', 'DDIM', 'UniPC']
 const SCENE_TAG_OPTIONS = ['主图', '海报', '使用图', '细节图', '对比图']
@@ -188,17 +188,6 @@ function WireframePreview({ template, index }: { template: SceneTemplate; index:
               {template.platform} </span> )} </div>
         <ul className="space-y-0.5">
           {template.compositionRules.map((rule, i) => ( <li key={i} className="text-[9px] text-white/25">• {rule}</li> ))} </ul> </div> </div> ) }
-function SectionCard({ title, subtitle, children, className = '', }: { title: string; subtitle?: string; children: React.ReactNode; className?: string }) {
-  return ( <motion.section
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 ${className}`}
-    >
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold text-white">{title}</h2>
-          {subtitle && <p className="mt-0.5 text-[11px] text-white/30">{subtitle}</p>} </div> </div>
-      {children} </motion.section> ) }
 export default function SandboxPage() {
   const { id } = useParams<{ id: string }>()
   const { t } = useTranslation()
@@ -252,8 +241,9 @@ export default function SandboxPage() {
         if (!cancelled) { setSourceOptions([])
           setSelectedSourceIds([]) } })
     return () => { cancelled = true } }, [productId])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (promptPlan?.status === 'ready' && promptPlan.promptId) { setPromptPlanEditorText(promptPlanGenerationPrompt(promptPlan) || ''); setPromptPlanEditorDirty(false); return }
-    setPromptPlanEditorText(''); setPromptPlanEditorDirty(false) }, [promptPlan?.promptId, promptPlan?.status])
+    setPromptPlanEditorText(''); setPromptPlanEditorDirty(false) }, [promptPlan])
   const runPromptPlanner = async () => {
     if (!productId) return
     setPromptPlanning(true)
@@ -390,7 +380,7 @@ export default function SandboxPage() {
         {/* ─── Left Column (3 cols) ────────────────────────── */}
         <div className="space-y-5 lg:col-span-3">
           {/* 1. Strategy Summary */}
-          <SectionCard title="策略输入摘要" subtitle="来自生产准备页的图片解析与四个“要/不要”选择">
+          <ProductionSectionCard title="策略输入摘要" subtitle="来自生产准备页的图片解析与四个“要/不要”选择">
             {strategySummary ? ( <div className="space-y-4">
                 {/* Overview */}
                 <div className="rounded-xl border border-white/[0.04] bg-white/[0.015] p-3">
@@ -414,42 +404,44 @@ export default function SandboxPage() {
                       >
                         {IconComp && ( <IconComp className="h-3.5 w-3.5 shrink-0 text-white/25" /> )}
                         <div className="min-w-0 flex-1">
-                          <p className="text-[9px] text-white/25">{attr.label}</p>
-                          <p className="truncate text-[11px] text-white/60">{attr.value}</p> </div> </div> ) })} </div> </div> ) : ( <div className="flex min-h-[160px] flex-col items-center justify-center text-center">
+                          <p className="text-[10px] text-white/35">{attr.label}</p>
+                          <p className="line-clamp-2 break-words text-xs leading-5 text-white/65">{attr.value}</p> </div> </div> ) })} </div> </div> ) : ( <div className="flex min-h-[160px] flex-col items-center justify-center text-center">
                 <AlertCircle className="mb-2 h-6 w-6 text-white/15" />
                 <p className="text-[11px] text-white/30">暂无策略摘要</p>
-                <p className="mt-0.5 text-[10px] text-white/20">请先完成生产准备页的解析与选择</p> </div> )} </SectionCard>
-          <SectionCard title="出图方案 / 变化说明" subtitle="把你的选择整理成后续出图要求">
+                <p className="mt-0.5 text-[10px] text-white/20">请先完成生产准备页的解析与选择</p> </div> )} </ProductionSectionCard>
+          <ProductionSectionCard title="出图方案 / 变化说明" subtitle="把你的选择整理成后续出图要求">
             <div className="space-y-3">
-              <div className="rounded-lg border border-white/[0.04] bg-white/[0.015] p-3 text-[10px] text-white/45">
-                <p className="mb-2 leading-relaxed text-white/35">点击后，系统会把生产准备里的图片识别结果和你的选择整理成一份出图方案；准备好后，上方展示最终出图要求，下方只展示新增、移除或调整的变化。</p>
-                <div className="flex items-center justify-between gap-2">
+              <div className="rounded-xl border border-white/[0.04] bg-white/[0.015] p-3 text-xs leading-5 text-white/50">
+                <p className="mb-3 leading-6 text-white/45">点击后，系统会把生产准备里的图片识别结果和你的选择整理成一份出图方案；准备好后，上方展示最终出图要求，下方只展示新增、移除或调整的变化。</p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <span>方案来源</span>
                   <span className={promptPlan?.source === 'llm_prompt_planner' ? 'text-emerald-300/80' : 'text-amber-300/80'}>
                     {promptPlanSourceLabel} </span> </div>
-                <div className="mt-1 flex items-center justify-between gap-2">
+                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
                   <span>准备状态</span>
                   <span>{promptPlanStatusLabel}</span> </div>
                 {!promptPlanReady && ( <div className="mt-2 rounded-md border border-amber-300/10 bg-amber-300/[0.04] px-2 py-1.5 leading-relaxed text-amber-100/75">
                     下一步：{promptPlanBlocker} </div> )}
-                {promptPlan?.promptId && ( <div className="mt-1 truncate text-white/30">方案已保存，可用于本次生产</div> )} </div>
+                {promptPlan?.promptId && ( <div className="mt-2 rounded-md bg-white/[0.035] px-2 py-1 text-white/40">方案已保存，可用于本次生产</div> )} </div>
               {promptPlanNotice && ( <div className="rounded-lg border border-cyan-300/15 bg-cyan-300/[0.055] px-3 py-2 text-[10px] leading-relaxed text-cyan-100/75" aria-live="polite">
                   {promptPlanNotice} </div> )}
-              {promptPlanReady && ( <div className="space-y-2 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.045] p-3">
-                  <label className="block space-y-1.5">
-                    <div className="flex items-center justify-between gap-2"><span className="text-[10px] font-semibold text-emerald-100/80">本次出图要求</span><span className={promptPlanChangedByUser ? 'rounded-full bg-cyan-300/10 px-2 py-0.5 text-[9px] text-cyan-100/65' : 'rounded-full bg-emerald-300/10 px-2 py-0.5 text-[9px] text-emerald-100/55'}>{promptPlanChangedByUser ? '已手动微调' : '可直接编辑'}</span></div>
-                    <textarea value={promptPlanEditorText} onChange={(e) => { setPromptPlanEditorText(e.target.value); setPromptPlanEditorDirty(true) }} rows={7} placeholder="系统整理出的出图要求会自动填入这里；你可以直接改文案，点击开始生产时会按这里的内容提交。" className="min-h-[132px] w-full resize-y rounded-lg border border-emerald-300/15 bg-black/25 p-2 text-[10px] leading-relaxed text-white/80 outline-none placeholder:text-white/20 focus:border-cyan-300/35 focus-visible:ring-2 focus-visible:ring-cyan-300/40 focus-visible:ring-offset-0" />
-                    <div className="flex items-center justify-between gap-2 text-[9px] text-white/35"><span>这里的最终文案会随本次生成任务一起提交。</span><Button type="button" onClick={() => { setPromptPlanEditorText(generationPromptText); setPromptPlanEditorDirty(false) }} className="text-cyan-200/60 hover:text-cyan-100">恢复系统方案</Button></div> </label>
-                  <div className="grid grid-cols-1 gap-2 text-[9px] text-white/42">
-                    <div><span className="text-white/28">风格关键词：</span>{promptKeywords.length ? promptKeywords.join('、') : '未返回'}</div>
-                    <div><span className="text-white/28">背景：</span>{promptPlanFieldSummary(promptPlan, 'background')}</div>
-                    <div><span className="text-white/28">光线：</span>{promptPlanFieldSummary(promptPlan, 'lighting')}</div>
-                    <div><span className="text-white/28">构图：</span>{promptPlanFieldSummary(promptPlan, 'composition')}</div> </div> </div> )}
+              {promptPlanReady && ( <EditablePromptCard
+                  value={promptPlanEditorText}
+                  dirty={promptPlanChangedByUser}
+                  onChange={(value) => { setPromptPlanEditorText(value); setPromptPlanEditorDirty(true) }}
+                  onRestore={() => { setPromptPlanEditorText(generationPromptText); setPromptPlanEditorDirty(false) }}
+                  keywords={promptKeywords}
+                  details={[
+                    { label: '背景', value: promptPlanFieldSummary(promptPlan, 'background') },
+                    { label: '光线', value: promptPlanFieldSummary(promptPlan, 'lighting') },
+                    { label: '构图', value: promptPlanFieldSummary(promptPlan, 'composition') },
+                  ]}
+                /> )}
               <Button
                 type="button"
                 onClick={runPromptPlanner}
                 disabled={promptPlanning || !hasRunnableIntents}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-[11px] font-medium text-cyan-200 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-40"
+                className="!h-auto min-h-10 w-full !whitespace-normal rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs font-semibold leading-5 text-cyan-200 transition hover:bg-cyan-400/15 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {promptPlanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
                 {promptPlanning ? '正在整理出图方案...' : hasRunnableIntents ? '生成/刷新出图方案' : '先完成 Prep 后生成方案'} </Button>
@@ -463,14 +455,14 @@ export default function SandboxPage() {
                     {promptPlan.diff.added.map((item, idx) => <p key={`add-${idx}`} className="text-emerald-300/70">+ {item}</p>)}
                     {promptPlan.diff.removed.map((item, idx) => <p key={`remove-${idx}`} className="text-rose-300/70">- {item}</p>)}
                     {promptPlan.diff.changed.map((item, idx) => <p key={`change-${idx}`} className="text-amber-300/70">~ {item}</p>)} </div> ) : ( <p className="text-[10px] text-white/25">
-                    {promptPlan?.diff.status === 'not_returned' ? '没有返回变化清单；请以上方“本次出图要求”为准。' : '完成生产准备里的选择后，点击上方按钮，系统会整理本次出图要求并展示变化。'} </p> )} </div> </div> </SectionCard> </div>
+                    {promptPlan?.diff.status === 'not_returned' ? '没有返回变化清单；请以上方“本次出图要求”为准。' : '完成生产准备里的选择后，点击上方按钮，系统会整理本次出图要求并展示变化。'} </p> )} </div> </div> </ProductionSectionCard> </div>
         {/* ─── Center Column (6 cols) ──────────────────────── */}
         <div className="space-y-5 lg:col-span-6">
           {/* 3. Task Allocation */}
-          <SectionCard title="任务配额与出图槽位" subtitle="任务配额=槽位数；源图沿用 Prep 中已解析的 SKU 图片">
+          <ProductionSectionCard title="任务配额与出图槽位" subtitle="任务配额=槽位数；源图沿用 Prep 中已解析的 SKU 图片">
             <div className="space-y-4">
               {/* Image Count */}
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <span className="text-[11px] text-white/50">生成图片数量</span>
                 <div className="flex items-center gap-2">
                   <Button
@@ -489,7 +481,7 @@ export default function SandboxPage() {
                     className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-white/40 transition hover:border-white/15 hover:text-white disabled:opacity-30"
                   >
                     <Plus className="h-3 w-3" /> </Button> </div>
-                <span className="text-[9px] text-white/20">最多支持 10 个槽位；1 个槽位 = 1 张待生成图片</span> </div>
+                <span className="text-[10px] leading-5 text-white/30">最多支持 10 个槽位；1 个槽位 = 1 张待生成图片</span> </div>
               {/* Asset Rows */}
               <div className="space-y-2">
                 {taskSlots.map((asset, idx) => {
@@ -499,7 +491,7 @@ export default function SandboxPage() {
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="flex items-center gap-3 rounded-xl border border-white/[0.04] bg-white/[0.015] px-3 py-2.5"
+                    className="flex flex-wrap items-start gap-3 rounded-xl border border-white/[0.04] bg-white/[0.015] px-3 py-3"
                   >
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.04]">
                       <Image className="h-3.5 w-3.5 text-white/30" /> </div>
@@ -560,20 +552,20 @@ export default function SandboxPage() {
                   className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/[0.06] bg-white/[0.01] py-2.5 text-[11px] text-white/30 transition hover:border-white/10 hover:text-white/50"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  添加新任务 </Button> )} </div> </SectionCard>
+                  添加新任务 </Button> )} </div> </ProductionSectionCard>
           {/* 4. Template Preview */}
-          <SectionCard title={`模板参考（${imageCount} 个槽位）`}>
+          <ProductionSectionCard title={`模板参考（${imageCount} 个槽位）`}>
             <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 ${imageCount >= 5 ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
               {taskSlots.map((asset, idx) => {
                 const tpl = getTemplate(asset.templateId)
                 return <WireframePreview key={asset.id} template={tpl} index={idx} /> })} </div>
             <p className="mt-3 flex items-center gap-1 text-[9px] text-white/15">
               <Info className="h-3 w-3" />
-              本次会按「任务配额槽位」创建独立生成任务；源图沿用生产准备中的商品图，每个槽位只配置图类型、模板和细节要求。 </p> </SectionCard> </div>
+              本次会按「任务配额槽位」创建独立生成任务；源图沿用生产准备中的商品图，每个槽位只配置图类型、模板和细节要求。 </p> </ProductionSectionCard> </div>
         {/* ─── Right Column (3 cols) ───────────────────────── */}
         <div className="space-y-5 lg:col-span-3">
           {/* 5. Execution Settings */}
-          <SectionCard title="生产设置">
+          <ProductionSectionCard title="生产设置">
             <div className="space-y-4">
               {/* Model Selection */}
               <div>
@@ -688,9 +680,9 @@ export default function SandboxPage() {
                           >
                             <span
                               className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-transform ${ advancedParams.highResFix ? 'left-[14px]' : 'left-0.5' }`}
-                            /> </Button> </div> </div> </motion.div> )} </AnimatePresence> </div> </div> </SectionCard>
+                            /> </Button> </div> </div> </motion.div> )} </AnimatePresence> </div> </div> </ProductionSectionCard>
           {/* 6. Credits Estimation */}
-          <SectionCard title="消耗预估">
+          <ProductionSectionCard title="消耗预估">
             <div className="space-y-3">
               <div className="space-y-2 rounded-xl border border-white/[0.03] bg-white/[0.01] p-3">
                 <div className="flex items-center justify-between">
@@ -762,7 +754,7 @@ export default function SandboxPage() {
                                   className={done ? 'h-full rounded-full bg-emerald-300/75 transition-colors duration-500' : failed ? 'h-full rounded-full bg-rose-300/75 transition-colors duration-500' : 'h-full rounded-full bg-cyan-300/70 transition-colors duration-500'}
                                   style={{ width: `${done ? 100 : Math.max(8, Math.min(100, Math.round(task.progress || 0)))}%` }}
                                 /> </div>
-                              {task.error && <div className="mt-1 text-[9px] text-rose-100/65">{task.error}</div>} </div> ) })} </div> </div> )} </div> )} </div> </SectionCard> </div> </div>
+                              {task.error && <div className="mt-1 text-[9px] text-rose-100/65">{task.error}</div>} </div> ) })} </div> </div> )} </div> )} </div> </ProductionSectionCard> </div> </div>
       {/* ─── Bottom Action Bar ─────────────────────────────── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}

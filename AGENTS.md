@@ -23,8 +23,12 @@ It should not host:
 
 - [Developer Guide](docs/DEVELOPER_GUIDE.md)
 - [Frontend Style Governance](docs/frontend-style-governance.md)
+- [Frontend Product IA Governance](docs/frontend-product-ia-governance.md)
 - [Git Hooks](docs/GIT_HOOKS.md)
 - [Project Skeleton](docs/architecture/PROJECT_SKELETON.md)
+- [Contract Adapter Config](contract-adapter.config.json)
+- [Contract Critical Journeys](contract-governance/critical-journeys.json)
+- [Workspace Cloud Dev Deploy Runbook](../tools/dev/README.md) — Cloud dev 部署固定入口；不要用本 repo 旧 `deploy/deploy.sh dev` 绕过 commit/prod guard/evidence。
 - [Template Center Design](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_DESIGN.md)
 - [Template Center Evolution Plan](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_EVOLUTION_PLAN.md)
 
@@ -35,13 +39,16 @@ cd v-ecommerce-frontend
 npm install --legacy-peer-deps
 npm run dev
 npm run frontend:gate
+npm run layout:density
 npm run frontend:evidence
-npm run style:repair-queue
+npm run frontend:burn-down
 npm run lint:baseline
 npm run quality:static
 npm run design-system:check
 npm run storybook:build
 npm run api:contract
+npm run contract:smoke
+npm run contract:evidence
 npm run test:e2e
 npm run test:visual
 npm run lighthouse:budget

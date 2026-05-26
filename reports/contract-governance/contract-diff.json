@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "PASS",
+  "classification": "compatible",
+  "baseArtifact": "contracts/base/ecommerce.openapi.json",
+  "headArtifact": "contracts/ecommerce.openapi.json",
+  "generatedAt": "2026-05-26T10:47:11.275Z",
+  "summary": {
+    "compatible": 0,
+    "risky": 0,
+    "breaking": 0,
+    "total": 0
+  },
+  "changes": []
+}

@@ -5,6 +5,8 @@ const routes = [
   ['product-center', '/products?dev=1', /商品中心|Product Center/],
   ['visual-tools', '/products/workbench/visual-tools?dev=1', /Visual Tools/],
   ['production-prep', '/products/dev-product/production/prep?dev=1', /Production Prep|出图四问|生产准备/],
+  ['production-sandbox', '/products/dev-product/production/sandbox?dev=1', /策略输入摘要|出图方案|Production Sandbox/],
+  ['production-workshop', '/products/dev-product/production/workshop?dev=1', /版本谱系|生成结果|Production Workshop/],
 ] as const
 
 test.beforeEach(async ({ page }) => {

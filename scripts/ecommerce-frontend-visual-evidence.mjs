@@ -19,6 +19,11 @@ const devSession = JSON.stringify({
 })
 const authBootstrapSource = `localStorage.setItem('ecommerce_access_token', 'dev'); localStorage.setItem('ecommerce_session', ${JSON.stringify(devSession)});`
 const changedFiles = readChangedFiles()
+const viewports = [
+  { id: 'desktop', width: 1440, height: 1200, mobile: false },
+  { id: 'tablet', width: 1024, height: 1000, mobile: false },
+  { id: 'mobile', width: 390, height: 844, mobile: true },
+]
 
 function valueAfter(name) {
   const idx = args.indexOf(name)
@@ -199,13 +204,13 @@ async function connectCdp() {
     }).catch(() => {})
   }
   await cdp.send('Log.enable').catch(() => {})
-  await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1200, deviceScaleFactor: 1, mobile: false })
   await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: authBootstrapSource })
   return cdp
 }
 
-async function captureRoute(cdp, route, screenshotDir) {
+async function captureRoute(cdp, route, screenshotDir, viewport) {
   cdp.events = []
+  await cdp.send('Emulation.setDeviceMetricsOverride', { width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: viewport.mobile })
   const url = `${baseUrl}${route.path}`
   await cdp.send('Page.navigate', { url: `${baseUrl}/@vite/client` })
   await delay(500)
@@ -215,15 +220,34 @@ async function captureRoute(cdp, route, screenshotDir) {
   const body = await cdp.send('Runtime.evaluate', { expression: `document.body?.innerText?.slice(0, 2000) || ''`, returnByValue: true })
   const title = await cdp.send('Runtime.evaluate', { expression: `document.title || ''`, returnByValue: true })
   const location = await cdp.send('Runtime.evaluate', { expression: `window.location.href`, returnByValue: true })
+  const overflow = await cdp.send('Runtime.evaluate', { expression: `(() => {
+    const nodes = [...document.querySelectorAll('body *')]
+    const findings = []
+    for (const el of nodes) {
+      const rect = el.getBoundingClientRect()
+      if (rect.width <= 0 || rect.height <= 0) continue
+      const style = getComputedStyle(el)
+      const text = (el.innerText || el.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ').slice(0, 120)
+      if (rect.right > window.innerWidth + 2 || rect.left < -2) findings.push({ type: 'viewport-horizontal-overflow', tag: el.tagName, className: String(el.className || '').slice(0, 120), text, rect: { left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) } })
+      if ((style.overflow === 'hidden' || style.overflowX === 'hidden') && el.scrollWidth > el.clientWidth + 2 && text.length > 8) findings.push({ type: 'potential-text-clipping-x', tag: el.tagName, className: String(el.className || '').slice(0, 120), text, clientWidth: el.clientWidth, scrollWidth: el.scrollWidth })
+      if ((style.overflow === 'hidden' || style.overflowY === 'hidden') && el.scrollHeight > el.clientHeight + 2 && text.length > 8) findings.push({ type: 'potential-text-clipping-y', tag: el.tagName, className: String(el.className || '').slice(0, 120), text, clientHeight: el.clientHeight, scrollHeight: el.scrollHeight })
+      if (findings.length >= 30) break
+    }
+    return { viewport: { width: window.innerWidth, height: window.innerHeight }, bodyScrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, findings }
+  })()`, returnByValue: true })
   const png = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true })
-  const screenshotRel = `${screenshotDirRel}/${route.id}.png`
+  const screenshotRel = `${screenshotDirRel}/${route.id}-${viewport.id}.png`
   const screenshotPath = join(root, screenshotRel)
   mkdirSync(dirname(screenshotPath), { recursive: true })
   writeFileSync(screenshotPath, Buffer.from(png.data, 'base64'))
   const consoleErrors = cdp.events.filter(event => event.method === 'Runtime.exceptionThrown' || (event.method === 'Log.entryAdded' && ['error', 'warning'].includes(event.params?.entry?.level)))
   const networkFailures = cdp.events.filter(event => event.method === 'Network.loadingFailed')
+  const overflowValue = overflow.result?.value || { findings: [] }
   return {
-    id: route.id,
+    id: `${route.id}-${viewport.id}`,
+    route_id: route.id,
+    viewport_id: viewport.id,
+    viewport: { width: viewport.width, height: viewport.height, mobile: viewport.mobile },
     surface: route.surface,
     url,
     final_url: location.result?.value || url,
@@ -232,6 +256,8 @@ async function captureRoute(cdp, route, screenshotDir) {
     text_sample: body.result?.value || '',
     console_error_count: consoleErrors.length,
     network_failure_count: networkFailures.length,
+    overflow_finding_count: overflowValue.findings?.length || 0,
+    overflow_findings: overflowValue.findings || [],
     status: 'CAPTURED',
   }
 }
@@ -249,21 +275,35 @@ async function main() {
     chrome = await launchChrome()
     cdp = await connectCdp()
     const screenshots = []
-    for (const route of routes) screenshots.push(await captureRoute(cdp, route, screenshotDir))
+    for (const route of routes) {
+      for (const viewport of viewports) screenshots.push(await captureRoute(cdp, route, screenshotDir, viewport))
+    }
+    const overflowFindings = screenshots.flatMap(item => (item.overflow_findings || []).map(finding => ({ route_id: item.route_id, viewport_id: item.viewport_id, ...finding })))
     const manifest = {
-      schema_version: '1.0',
-      status: 'PASS',
-      acceptance_status: 'PASS',
+      schema_version: '1.1',
+      status: screenshots.some(item => item.console_error_count > 0 || item.network_failure_count > 0) ? 'PASS_WITH_NOTES' : 'PASS',
+      acceptance_status: screenshots.some(item => item.console_error_count > 0 || item.network_failure_count > 0) ? 'ACCEPTED_WITH_NOTES' : 'PASS',
       generated_by: 'scripts/ecommerce-frontend-visual-evidence.mjs',
       generated_at: new Date().toISOString(),
       frontend_root: root,
       base_url: baseUrl,
       changed_files: changedFiles,
       routes,
+      viewports,
       screenshots,
+      overflow_report: {
+        status: overflowFindings.length ? 'PASS_WITH_NOTES' : 'PASS',
+        finding_count: overflowFindings.length,
+        findings: overflowFindings,
+      },
+      visual_diff: {
+        status: 'DELEGATED_TO_PLAYWRIGHT_BASELINE',
+        command: 'npm run test:visual',
+        note: 'Playwright screenshot baselines cover critical routes; this CDP evidence adds multi-viewport screenshots and overflow/clipping inventory.',
+      },
       decision: {
         decision: 'ACCEPTED_WITH_NOTES',
-        notes: 'Automated screenshot evidence captured via Chromium CDP. This proves render/visual inventory evidence, not full interaction or backend persistence QA.',
+        notes: 'Automated multi-viewport screenshot evidence captured via Chromium CDP. This proves render/visual inventory plus overflow/clipping evidence, not full interaction or backend persistence QA.',
       },
     }
     writeJson(reportRel, manifest)
