@@ -35,7 +35,7 @@ function buildStationHref(station: WorkflowStation, productId?: string, productI
     case 'detail':
       return primaryId ? `/products/${primaryId}` : '/products'
     case 'listing':
-      return encodedIds ? `/products/workbench/batch-listing?productIds=${encodedIds}&source=${encodeURIComponent(source)}` : '/products/workbench/batch-listing'
+      return '/aiChat/template'
     case 'delivery':
       return encodedIds ? `/products/workbench/downloads?productIds=${encodedIds}&source=${encodeURIComponent(source)}` : '/products/workbench/downloads'
   }

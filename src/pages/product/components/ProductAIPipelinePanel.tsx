@@ -386,7 +386,7 @@ export function ProductAIPipelinePanel({
 
       <div className="flex flex-wrap gap-2 text-xs text-white/45">
         <Link data-testid="open-ai-workspace-link" to={`/products/${product.id}/ai/ai-product`} className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 hover:text-white">{t('product.detail.openAIWorkspace')}</Link>
-        <Link data-testid="open-batch-listing-link" to="/products/workbench/batch-listing" className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 hover:text-white">{t('product.detail.openBatchListing')}</Link>
+        <Link data-testid="open-batch-listing-link" to="/aiChat/template" className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 hover:text-white">{t('product.detail.openBatchListing')}</Link>
         <Link data-testid="open-download-center-link" to="/products/workbench/downloads" className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 hover:text-white">{t('product.detail.openDownloadCenter')}</Link>
       </div>
     </section>

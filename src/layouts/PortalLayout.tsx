@@ -35,7 +35,7 @@ export default function PortalLayout() {
       links: [
         { label: t('nav.workbench'), to: workbenchPath },
         { label: locale === 'zh' ? '任务中心' : 'Task Center', to: '/products' },
-        { label: locale === 'zh' ? '模板中心' : 'Template Center', to: '/products/workbench/batch-listing' },
+        { label: locale === 'zh' ? '模板中心' : 'Template Center', to: '/aiChat/template' },
         { label: locale === 'zh' ? '交付中心' : 'Delivery Center', to: '/products/workbench/downloads' },
       ],
     },

@@ -51,7 +51,6 @@ const PricingPage = lazy(() => import('@/pages/PricingPage'))
 const SolutionDetailPage = lazy(() => import('@/pages/SolutionDetailPage'))
 const ToolPage = lazy(() => import('@/pages/ToolPage'))
 const ProductAiWorkspacePage = lazy(() => import('@/pages/ToolPage').then(module => ({ default: module.ProductScopedToolPage })))
-const BatchListingPage = lazy(() => import('@/pages/BatchListingPage'))
 const ProductVisualToolsPage = lazy(() => import('@/pages/ProductVisualToolsPage'))
 const AboutUsPage = lazy(() => import('@/pages/AboutUsPage'))
 const HelpCenterPage = lazy(() => import('@/pages/HelpCenterPage'))
@@ -177,7 +176,7 @@ export const router = createBrowserRouter([
   { path: '/chat', ...consolePage(ChatWorkspacePage) },
   { path: '/chat/doc', ...consolePage(ChatWorkspacePage) },
   { path: '/aiChat/template', ...consolePage(AgentTemplateMarketPage) },
-  { path: '/aiChat/batchListing', element: <Navigate to="/products/workbench/batch-listing" replace /> },
+  { path: '/aiChat/batchListing', element: <Navigate to="/aiChat/template" replace /> },
   { path: '/aiChat/history', ...consolePage(OpsWorkbenchPage) },
   { path: '/aiChat/myTemplate', ...consolePage(OpsWorkbenchPage) },
   { path: '/aiChat/analysisRecords', ...consolePage(OpsWorkbenchPage) },
@@ -190,6 +189,7 @@ export const router = createBrowserRouter([
   { path: '/draw/scene-reference', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/product-home', element: <Navigate to="/products" replace /> },
   { path: '/draw/product-records', element: <Navigate to="/products/workbench/visual-tools" replace /> },
+  { path: '/products/workbench/batch-listing', element: <Navigate to="/aiChat/template" replace /> },
   { path: '/draw/designer-home', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/my-design', ...consolePage(DesignWorkbenchPage) },
   { path: '/draw/my-template', ...consolePage(DesignWorkbenchPage) },
@@ -200,9 +200,9 @@ export const router = createBrowserRouter([
     { path: 'workbench', element: <Navigate to="/products" replace /> },
     { path: 'downloads', element: <Navigate to="/products/workbench/downloads" replace /> },
     { path: 'visual-tools', element: <Navigate to="/products/workbench/visual-tools" replace /> },
-    { path: 'batch-listing', element: <Navigate to="/products/workbench/batch-listing" replace /> },
+    { path: 'batch-listing', element: <Navigate to="/aiChat/template" replace /> },
     { path: ':id', element: <S><ProductDetailPage /></S> },
-    { path: 'workbench/batch-listing', element: <S><BatchListingPage /></S> },
+    { path: 'workbench/batch-listing', element: <Navigate to="/aiChat/template" replace /> },
     { path: 'workbench/visual-tools', element: <S><ProductVisualToolsPage /></S> },
     { path: 'workbench/visual-tools/:toolSlug', element: <S><ProductVisualToolsPage /></S> },
     { path: 'workbench/downloads', element: <S><AccountDownloadsPage /></S> },

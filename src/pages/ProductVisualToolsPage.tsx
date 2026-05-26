@@ -97,7 +97,7 @@ export default function ProductVisualToolsPage() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="relative flex min-h-[calc(100vh-52px)] flex-col overflow-hidden bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)]"
+      className="relative flex min-h-[calc(100vh-52px)] flex-col overflow-x-hidden bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)]"
     >
       <div className="pointer-events-none fixed inset-0 opacity-60">
         <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
@@ -123,7 +123,7 @@ export default function ProductVisualToolsPage() {
               {t('product.visualTools.productHome')}
             </Link>
             <Link
-              to={`/products/workbench/batch-listing${selectedProductID ? `?productIds=${encodeURIComponent(selectedProductID)}&source=visual` : '?source=visual'}`}
+              to="/aiChat/template"
               className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 transition hover:bg-white/10 hover:text-white"
             >
               {t('product.visualTools.batchListing')}
@@ -158,10 +158,10 @@ export default function ProductVisualToolsPage() {
         </div>
       </motion.div>
 
-      <div className="flex-1 flex overflow-hidden max-w-[1600px] w-full mx-auto relative p-6">
-        <div className="flex-1 flex gap-6 overflow-hidden h-full flex-col xl:flex-row">
+      <div className="flex w-full max-w-[1600px] mx-auto relative p-4 sm:p-6">
+        <div className="flex w-full min-w-0 gap-6 flex-col xl:flex-row">
           {/* Main List */}
-          <motion.div variants={itemVariants} className="flex-1 overflow-auto rounded-[28px] border border-white/10 bg-[var(--ecom-surface)] backdrop-blur-md shadow-2xl p-6 flex flex-col min-w-0">
+          <motion.div variants={itemVariants} className="flex min-w-0 flex-1 flex-col rounded-[28px] border border-white/10 bg-[var(--ecom-surface)] p-4 shadow-2xl backdrop-blur-md sm:p-6">
             <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 mb-6">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="text-sm font-medium text-white">{t('product.visualTools.sourceStripTitle')}</div>
@@ -225,7 +225,7 @@ export default function ProductVisualToolsPage() {
               )}
             </div>
 
-            <div className="flex-1 overflow-auto space-y-8 pr-2">
+            <div className="space-y-8">
               {groupedTools.map(([category, items]) => (
                 <div key={category}>
                   <div className="mb-4 flex items-center gap-2">
@@ -241,18 +241,18 @@ export default function ProductVisualToolsPage() {
                           key={tool.id}
                           type="button"
                           onClick={() => setSelectedToolSlug(tool.slug)}
-                          className={`rounded-xl border p-4 text-left transition-colors ${
+                          className={`h-auto min-h-[112px] w-full items-stretch justify-start whitespace-normal rounded-xl border p-4 text-left transition-colors ${
                             active
                               ? 'border-brand-500/40 bg-brand-500/10 shadow-[0_0_15px_rgba(var(--brand-500),0.15)]'
                               : 'border-white/10 bg-white/[0.02] hover:bg-[var(--ecom-surface-hover)]'
                           }`}
                         >
-                          <div className="flex items-start gap-4">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xl">
+                          <div className="flex min-w-0 items-start gap-4">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xl leading-none">
                               {tool.icon}
                             </div>
                             <div className="min-w-0 flex-1 mt-0.5">
-                              <div className={`font-medium ${active ? 'text-brand-300' : 'text-white/90'}`}>{localized.name}</div>
+                              <div className={`break-words font-medium leading-snug ${active ? 'text-brand-300' : 'text-white/90'}`}>{localized.name}</div>
                               <div className="mt-1.5 text-xs text-white/40 leading-relaxed line-clamp-2">{localized.desc}</div>
                             </div>
                           </div>
@@ -266,7 +266,7 @@ export default function ProductVisualToolsPage() {
           </motion.div>
 
           {/* Right Sidebar */}
-          <motion.div variants={itemVariants} className="xl:w-[360px] flex-shrink-0 flex flex-col gap-6 h-full overflow-y-auto">
+          <motion.div variants={itemVariants} className="flex min-w-0 flex-shrink-0 flex-col gap-6 xl:w-[360px]">
             <div className="rounded-[28px] border border-white/10 bg-[var(--ecom-surface)] backdrop-blur-md p-6 shadow-xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 mb-5">
                 <Sparkles className="h-3.5 w-3.5 text-cyan-200" />
@@ -276,12 +276,12 @@ export default function ProductVisualToolsPage() {
               {selectedTool ? (
                 <div>
                   <div className="flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-2xl shadow-inner">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-2xl leading-none shadow-inner">
                       {selectedTool.icon}
                     </div>
-                    <div>
-                      <div className="font-semibold text-lg text-white/90">{getLocalizedTool(selectedTool, i18n.language).name}</div>
-                      <div className="mt-1 text-xs font-mono text-white/40">{selectedTool.slug}</div>
+                    <div className="min-w-0">
+                      <div className="break-words text-lg font-semibold leading-snug text-white/90">{getLocalizedTool(selectedTool, i18n.language).name}</div>
+                      <div className="mt-1 truncate text-xs font-mono text-white/40">{selectedTool.slug}</div>
                     </div>
                   </div>
                   <p className="mt-5 text-sm leading-relaxed text-white/50">
@@ -295,10 +295,10 @@ export default function ProductVisualToolsPage() {
                   <ImageIcon className="h-4 w-4" /> {t('product.visualTools.realSkuBinding')}
                 </div>
                 <div className="text-sm font-semibold text-white">{selectedProduct ? selectedProduct.title : t('product.visualTools.selectSkuBeforeLaunch')}</div>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="rounded-xl border border-white/8 bg-black/20 p-2"><div className="text-white/35">{t('product.visualTools.metrics.assets')}</div><div className="mt-1 text-white">{selectedProduct?.assetsCount ?? 0}</div></div>
-                  <div className="rounded-xl border border-white/8 bg-black/20 p-2"><div className="text-white/35">{t('product.visualTools.metrics.listing')}</div><div className="mt-1 text-white">{selectedProduct?.listingVersionsCount ?? 0}</div></div>
-                  <div className="rounded-xl border border-white/8 bg-black/20 p-2"><div className="text-white/35">{t('product.visualTools.metrics.export')}</div><div className="mt-1 text-white">{selectedProduct?.exportStatus ?? t('product.visualTools.pending')}</div></div>
+                <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+                  <div className="min-w-0 rounded-xl border border-white/8 bg-black/20 p-2"><div className="truncate text-white/35">{t('product.visualTools.metrics.assets')}</div><div className="mt-1 truncate text-white">{selectedProduct?.assetsCount ?? 0}</div></div>
+                  <div className="min-w-0 rounded-xl border border-white/8 bg-black/20 p-2"><div className="truncate text-white/35">{t('product.visualTools.metrics.listing')}</div><div className="mt-1 truncate text-white">{selectedProduct?.listingVersionsCount ?? 0}</div></div>
+                  <div className="min-w-0 rounded-xl border border-white/8 bg-black/20 p-2"><div className="truncate text-white/35">{t('product.visualTools.metrics.export')}</div><div className="mt-1 truncate text-white">{selectedProduct?.exportStatus ?? t('product.visualTools.pending')}</div></div>
                 </div>
               </div>
 
