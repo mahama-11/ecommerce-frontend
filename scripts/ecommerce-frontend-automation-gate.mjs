@@ -14,6 +14,7 @@ const staticQualityReportRel = 'reports/frontend-quality/static-quality-latest.j
 const layoutDensityReportRel = 'reports/frontend-quality/layout-density-latest.json'
 const designSystemReportRel = 'reports/frontend-quality/design-system-registry-latest.json'
 const frontendIaReportRel = 'reports/frontend-quality/frontend-ia-latest.json'
+const visualCompositionReportRel = 'reports/frontend-quality/visual-composition-latest.json'
 const apiContractReportRel = 'reports/frontend-quality/api-contract-latest.json'
 const runtimeLayoutReportRel = 'reports/frontend-quality/runtime-layout-latest.json'
 const autoEvidenceChangedFilesRel = 'reports/frontend-style-consistency/changed-files-for-evidence.txt'
@@ -170,6 +171,7 @@ const staticQualityGate = run('node', ['scripts/ecommerce-static-quality-gate.mj
 const layoutDensityGate = run('node', ['scripts/ecommerce-layout-density-gate.mjs', '--report', layoutDensityReportRel])
 const designSystemGate = run('node', ['scripts/ecommerce-design-system-registry-gate.mjs', '--report', designSystemReportRel])
 const frontendIaGate = run('node', ['scripts/ecommerce-frontend-ia-gate.mjs', '--report', frontendIaReportRel])
+const visualCompositionGate = run('node', ['scripts/ecommerce-visual-composition-gate.mjs', '--report', visualCompositionReportRel])
 const apiContractGate = run('node', ['scripts/ecommerce-api-contract-gate.mjs'])
 let styleJson = null
 try {
@@ -207,6 +209,12 @@ try {
 } catch {
   frontendIaJson = { status: 'UNKNOWN', raw_stdout: frontendIaGate.stdout.slice(-4000) }
 }
+let visualCompositionJson = null
+try {
+  visualCompositionJson = JSON.parse(visualCompositionGate.stdout)
+} catch {
+  visualCompositionJson = { status: 'UNKNOWN', raw_stdout: visualCompositionGate.stdout.slice(-4000), warnings: [], failures: [] }
+}
 let apiContractJson = null
 try {
   apiContractJson = JSON.parse(apiContractGate.stdout)
@@ -236,6 +244,12 @@ if (designSystemGate.status !== 0 || designSystemJson.status === 'FAIL') {
 }
 if (frontendIaGate.status !== 0 || frontendIaJson.status === 'FAIL') {
   failures.push('Frontend IA governance gate failed; core product pages must keep page roles, information hierarchy, action hierarchy, and screenshot review contract explicit')
+}
+if (visualCompositionGate.status !== 0 || visualCompositionJson.status === 'FAIL') {
+  failures.push('Visual composition gate failed; core product pages must avoid boxed/control-console anti-patterns and include task stage plus result preview')
+}
+if (visualCompositionJson.status === 'PASS_WITH_NOTES') {
+  warnings.push(...(visualCompositionJson.warnings || []).map(item => `visual composition: ${item}`))
 }
 if (apiContractGate.status !== 0 || apiContractJson.status === 'FAIL') {
   failures.push('API contract gate failed; frontend API types must stay generated from contracts/ecommerce.openapi.json')
@@ -371,6 +385,16 @@ const result = {
     required_components: frontendIaJson.required_components || [],
     failures: frontendIaJson.failures || [],
     warnings: frontendIaJson.warnings || [],
+  },
+  visual_composition: {
+    exit_code: visualCompositionGate.status,
+    report: visualCompositionReportRel,
+    status: visualCompositionJson.status,
+    core_pages: visualCompositionJson.core_pages || [],
+    required_primitives: visualCompositionJson.required_primitives || [],
+    recommended_primitives: visualCompositionJson.recommended_primitives || [],
+    failures: visualCompositionJson.failures || [],
+    warnings: visualCompositionJson.warnings || [],
   },
   api_contract: {
     exit_code: apiContractGate.status,

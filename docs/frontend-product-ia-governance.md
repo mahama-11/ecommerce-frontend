@@ -6,13 +6,15 @@ Product Center and Production Pipeline pages must feel like one coherent product
 
 ## Visual direction
 
-Agent Ecommerce product workspaces use a restrained dark production cockpit:
+Agent Ecommerce product workspaces use a dark commerce creation workspace, not a generic engineering cockpit:
 
 - semantic `--ecom-*` tokens for surface, border, text, hover, and action colors;
 - high contrast only for current action/status, not every card;
 - dense information is allowed, but long Chinese business copy must wrap with readable line-height;
 - business cards explain user decisions and consequences, not backend/runtime implementation details;
 - local page classes are allowed only for composition, not for inventing a second button/card/dark palette.
+- Product Center / Visual Tools / Production pages must follow `docs/product-ux-visual-backbone.md`: dark product workbench + ecommerce visual creation + task progression + result preview.
+- Visual Tools is a 商品视觉创作站, not a tool registry; the first screen must show product context, visual outcome preview, recommended next visual goals, and one primary next action.
 
 ## Page roles
 
@@ -38,6 +40,8 @@ Agent Ecommerce product workspaces use a restrained dark production cockpit:
 7. Do not expose `backend`, `runtime`, `provider`, `contract-needed`, `prompt_plan`, IDs, storage keys, or raw JSON in customer-facing UI.
 
 ## Shared component rule
+
+Product composition pages must use `ProductHeroStage`, `VisualOutcomePreview`, `ProductAssetStrip`, `RecommendedToolRail`, `GenerationActionDock`, `WorkflowProgressRail`, `ResultDestinationCard`, `ToolCategoryCarousel`, and `SoftInspectorPanel` for task-stage composition before falling back to raw Card/Button grids.
 
 Production Pipeline pages must use the shared production business components for repeated dense UI patterns:
 

@@ -155,6 +155,105 @@
         "loading",
         "empty"
       ]
+    },
+    {
+      "name": "ProductHeroStage",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "VisualOutcomePreview",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "ProductAssetStrip",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "RecommendedToolRail",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "GenerationActionDock",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "WorkflowProgressRail",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "ResultDestinationCard",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "ToolCategoryCarousel",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "SoftInspectorPanel",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
     }
   ],
   "gates": [
@@ -167,7 +266,8 @@
     "layout:density",
     "governance:test",
     "test:visual",
-    "frontend:ia"
+    "frontend:ia",
+    "visual:composition"
   ],
   "storybook": {
     "config": ".storybook/main.ts",

@@ -39,7 +39,8 @@
     "contract:diff": "node ../tools/contract-governance/scripts/classify-openapi-diff.mjs --base contracts/base/ecommerce.openapi.json --head contracts/ecommerce.openapi.json --out reports/contract-governance/contract-diff.json",
     "contract:breaking-check": "npm run contract:diff",
     "contract:generate": "npm run api:contract",
-    "contract:check-generated": "npm run api:contract"
+    "contract:check-generated": "npm run api:contract",
+    "visual:composition": "node scripts/ecommerce-visual-composition-gate.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.3",

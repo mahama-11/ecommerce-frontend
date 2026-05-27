@@ -365,7 +365,15 @@ const en = { common: { brand: 'Agent Ecommerce', loading: 'Loading...',
         available: 'Available from SKU.assets', empty: 'No bound asset returned yet', videoNeeded: 'Video generation not available yet' },
       metrics: { assets: 'Assets', listing: 'Listing', export: 'Export'
       }, rules: { rule1: 'Generated assets are automatically linked to the selected product.', rule2: 'Tool parameters are automatically initialized using product metadata.',
-        rule3: 'Generation records can be traced anytime in the Download Center.' } } },
+        rule3: 'Generation records can be traced anytime in the Download Center.' } }, visualToolsStudio: {
+      eyebrow: 'Product Visual Studio', title: 'Create product visuals with a clear next step', subtitle: 'Choose a product, preview the expected visual direction, pick a recommended goal, then generate assets that stay connected to the product journey.',
+      currentProduct: 'Current product', noProductLabel: 'Start here', chooseProductFirst: 'Choose or create a product first', primaryChooseProduct: 'Choose Product', primaryReady: 'Generate Product Visuals', chooseGoal: 'Choose a visual goal',
+      steps: { product: 'Product', chooseProduct: 'Choose a product', visualGoal: 'Visual goal', chooseGoal: 'Choose goal', result: 'Result', resultDesc: 'Saved for listing and delivery' },
+      previewTitle: 'Visual outcome preview', previewDescReady: 'Your selected product and visual goal define the next image set. Use the preview area to keep the result expectation visible before entering generation.', previewDescEmpty: 'Choose a product to unlock a clearer preview and next action.',
+      assetTitle: 'Product assets', videoLater: 'Video source can be added later', productSelector: 'Product for this visual task', recommendedTitle: 'Recommended next visual goals', recommendedDesc: 'Start with a focused goal instead of scanning the full capability list.',
+      inspectorTitle: 'Selected visual goal', actionNoteReady: 'Results will be saved back to this product and can be reused in Template Center or Download Center.', actionNoteEmpty: 'Choose a product first so the visual result has a destination.', destinationTitle: 'Result destination', destinationDesc: 'Generated images are saved with the selected product, then continue to detail review, Template Center, or Download Center.',
+      helpTitle: 'How to move forward', helpProduct: 'Start from one product so every image has context.', helpGoal: 'Pick one visual goal; more tools remain available below.', helpVideo: 'Video tools stay visible as future options but do not distract from image creation today.', comingSoon: 'Coming soon', exploreMore: 'Explore more visual goals', exploreMoreHint: 'Secondary library · open only when the recommendation is not enough'
+    } },
   pages: { chat: 'AI Chat', chatDoc: 'Knowledge Chat', aiChatTemplate: 'AI Agent Templates',
     aiChatBatchListing: 'Template Center', aiChatHistory: 'Chat History', aiChatMyTemplate: 'My Template Library', aiChatAnalysisRecords: 'Analysis Records',
     aiChatTraining: 'AI Training', databaseKnowledge: 'Knowledge Base', databasePicturelibrary: 'Image Library', brandLibrary: 'Brand Library',
