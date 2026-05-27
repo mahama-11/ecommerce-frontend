@@ -15,6 +15,7 @@ const layoutDensityReportRel = 'reports/frontend-quality/layout-density-latest.j
 const designSystemReportRel = 'reports/frontend-quality/design-system-registry-latest.json'
 const frontendIaReportRel = 'reports/frontend-quality/frontend-ia-latest.json'
 const pagePositionReportRel = 'reports/frontend-style-consistency/page-position-report.json'
+const designGovernanceReportRel = 'reports/frontend-quality/design-governance-latest.json'
 const visualCompositionReportRel = 'reports/frontend-quality/visual-composition-latest.json'
 const apiContractReportRel = 'reports/frontend-quality/api-contract-latest.json'
 const runtimeLayoutReportRel = 'reports/frontend-quality/runtime-layout-latest.json'
@@ -176,6 +177,7 @@ const explicitChangedFiles = valueAfter('--changed-files')
 const pagePositionArgs = ['scripts/ecommerce-page-position-gate.mjs', '--report', pagePositionReportRel]
 if (explicitChangedFiles) pagePositionArgs.push('--changed-files', explicitChangedFiles)
 const pagePositionGate = run('node', pagePositionArgs)
+const designGovernanceGate = run('node', ['scripts/ecommerce-design-governance-gate.mjs', '--report', designGovernanceReportRel])
 const visualCompositionGate = run('node', ['scripts/ecommerce-visual-composition-gate.mjs', '--report', visualCompositionReportRel])
 const apiContractGate = run('node', ['scripts/ecommerce-api-contract-gate.mjs'])
 let styleJson = null
@@ -220,6 +222,12 @@ try {
 } catch {
   pagePositionJson = { status: 'UNKNOWN', raw_stdout: pagePositionGate.stdout.slice(-4000), failures: [], warnings: [] }
 }
+let designGovernanceJson = null
+try {
+  designGovernanceJson = JSON.parse(designGovernanceGate.stdout)
+} catch {
+  designGovernanceJson = { status: 'UNKNOWN', raw_stdout: designGovernanceGate.stdout.slice(-4000), failures: [], warnings: [] }
+}
 let visualCompositionJson = null
 try {
   visualCompositionJson = JSON.parse(visualCompositionGate.stdout)
@@ -261,6 +269,12 @@ if (pagePositionGate.status !== 0 || pagePositionJson.status === 'FAIL') {
 }
 if (pagePositionJson.status === 'PASS_WITH_NOTES') {
   warnings.push(...(pagePositionJson.warnings || []).map(item => `page position: ${item}`))
+}
+if (designGovernanceGate.status !== 0 || designGovernanceJson.status === 'FAIL') {
+  failures.push('Design governance gate failed; P0 IA map, P1 page contracts, P2 page type patterns, P3 design-system rules, semantic tokens, product components, and shared shells must stay present')
+}
+if (designGovernanceJson.status === 'PASS_WITH_NOTES') {
+  warnings.push(...(designGovernanceJson.warnings || []).map(item => `design governance: ${item}`))
 }
 if (visualCompositionGate.status !== 0 || visualCompositionJson.status === 'FAIL') {
   failures.push('Visual composition gate failed; core product pages must avoid boxed/control-console anti-patterns and include task stage plus result preview')
@@ -417,6 +431,17 @@ const result = {
     changed_routes_requiring_evidence: pagePositionJson.changed_routes_requiring_evidence || [],
     failures: pagePositionJson.failures || [],
     warnings: pagePositionJson.warnings || [],
+  },
+  design_governance: {
+    exit_code: designGovernanceGate.status,
+    report: designGovernanceReportRel,
+    status: designGovernanceJson.status,
+    required_documents: designGovernanceJson.required_documents || [],
+    required_components: designGovernanceJson.required_components || [],
+    required_tokens: designGovernanceJson.required_tokens || [],
+    required_shells: designGovernanceJson.required_shells || [],
+    failures: designGovernanceJson.failures || [],
+    warnings: designGovernanceJson.warnings || [],
   },
   visual_composition: {
     exit_code: visualCompositionGate.status,
