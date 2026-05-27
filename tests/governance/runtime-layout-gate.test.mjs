@@ -31,7 +31,11 @@ const completeRoutes = [
   { id: 'product-batch-listing-legacy', path: '/products/workbench/batch-listing?dev=1' },
   { id: 'visual-tools-index', path: '/products/workbench/visual-tools?dev=1' },
   { id: 'visual-tools-ai-wearable', path: '/products/workbench/visual-tools/ai-wearable?dev=1' },
+  { id: 'product-detail', path: '/products/dev-product?dev=1' },
   { id: 'production-prep', path: '/products/dev-product/production/prep?dev=1' },
+  { id: 'production-sandbox', path: '/products/dev-product/production/sandbox?dev=1' },
+  { id: 'production-workshop', path: '/products/dev-product/production/workshop?dev=1' },
+  { id: 'downloads', path: '/products/workbench/downloads?dev=1' },
 ]
 
 function baseManifest(overrides = {}) {
@@ -83,7 +87,24 @@ test('runtime layout gate requires template center and ai-wearable in the page i
   assert.match(payload.failures.join('\n'), /visual-tools-ai-wearable/)
 })
 
-test('visual evidence route plan includes legacy batch-listing redirects, template center, and ai-wearable', () => {
+
+test('runtime layout gate fails when manifest contains route ids not declared by page-position registry', () => {
+  const root = makeProject()
+  writeManifest(root, baseManifest({
+    routes: [...completeRoutes, { id: 'unknown-route', path: '/unknown' }],
+    screenshots: [
+      ...completeRoutes.map(route => ({ route_id: route.id, viewport_id: 'desktop', overflow_finding_count: 0 })),
+      { route_id: 'unknown-route', viewport_id: 'desktop', overflow_finding_count: 0 },
+    ],
+  }))
+
+  const result = runNode(runtimeGateScript, root)
+  assert.notEqual(result.status, 0, result.stdout + result.stderr)
+  const payload = JSON.parse(result.stdout)
+  assert.match(payload.failures.join('\n'), /not declared in the page-position registry: unknown-route/)
+})
+
+test('visual evidence route plan includes legacy redirects and critical SKU flow routes', () => {
   const root = makeProject()
   const result = runNode(evidenceScript, root, ['--route-plan-only'])
   assert.equal(result.status, 0, result.stdout + result.stderr)
@@ -93,4 +114,8 @@ test('visual evidence route plan includes legacy batch-listing redirects, templa
   assert.ok(ids.includes('batch-listing-legacy'))
   assert.ok(ids.includes('product-batch-listing-legacy'))
   assert.ok(ids.includes('visual-tools-ai-wearable'))
+  assert.ok(ids.includes('product-detail'))
+  assert.ok(ids.includes('production-sandbox'))
+  assert.ok(ids.includes('production-workshop'))
+  assert.ok(ids.includes('downloads'))
 })

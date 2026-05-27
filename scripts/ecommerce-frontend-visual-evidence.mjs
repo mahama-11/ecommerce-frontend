@@ -50,7 +50,11 @@ function routePlan(files) {
     add('product-batch-listing-legacy', '/products/workbench/batch-listing?dev=1', 'Legacy Product Batch Listing Redirect')
     add('visual-tools-index', '/products/workbench/visual-tools?dev=1', 'Product Workbench')
     add('visual-tools-ai-wearable', '/products/workbench/visual-tools/ai-wearable?dev=1', 'Product Workbench · AI Wearable')
+    add('product-detail', '/products/dev-product?dev=1', 'Product Detail')
     add('production-prep', '/products/dev-product/production/prep?dev=1', 'Production Prep')
+    add('production-sandbox', '/products/dev-product/production/sandbox?dev=1', 'Production Sandbox')
+    add('production-workshop', '/products/dev-product/production/workshop?dev=1', 'Production Workshop')
+    add('downloads', '/products/workbench/downloads?dev=1', 'Downloads')
   }
 
   if (files.length === 0) {
@@ -118,7 +122,7 @@ async function waitForHttp(url, timeoutMs = 30000) {
 
 async function startServer() {
   if (keepServer) return null
-  const child = spawn('npm', ['run', 'dev', '--', '--host', '127.0.0.1', '--port', String(port)], {
+  const child = spawn(join(root, 'node_modules/.bin/vite'), ['--host', '127.0.0.1', '--port', String(port), '--strictPort'], {
     cwd: root,
     stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, BROWSER: 'none' },

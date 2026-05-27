@@ -16,6 +16,13 @@ Agent Ecommerce product workspaces use a dark commerce creation workspace, not a
 - Product Center / Visual Tools / Production pages must follow `docs/product-ux-visual-backbone.md`: dark product workbench + ecommerce visual creation + task progression + result preview.
 - Visual Tools is a 商品视觉创作站, not a tool registry; the first screen must show product context, visual outcome preview, recommended next visual goals, and one primary next action.
 
+
+## Page-position registry
+
+The source of truth for route positioning is `docs/ecommerce-page-position-registry.json`. It is internal governance, not a customer-facing site map. Each covered route declares its page type, business object, upstream/downstream, primary action, result destination, allowed design pattern, and forbidden anti-patterns.
+
+Run `npm run page:position` or the default `npm run frontend:gate` to verify that critical routes keep valid page contracts. Visual Tools must remain a `production-station`: it can explain value inside the SKU task context, but it must not become a marketing homepage or an equal-weight tool registry.
+
 ## Page roles
 
 | Surface | Role | Primary user question | Primary action | Secondary actions |

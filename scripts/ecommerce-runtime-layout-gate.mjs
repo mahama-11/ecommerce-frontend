@@ -7,15 +7,43 @@ const args = process.argv.slice(2)
 const manifestRel = valueAfter('--manifest') ?? 'reports/frontend-style-consistency/evidence-manifest.json'
 const reportRel = valueAfter('--report') ?? 'reports/frontend-quality/runtime-layout-latest.json'
 
-const requiredRouteIds = [
-  'product-center',
-  'template-center',
-  'batch-listing-legacy',
-  'product-batch-listing-legacy',
-  'visual-tools-index',
-  'visual-tools-ai-wearable',
-  'production-prep',
-]
+function readRequiredRouteIds() {
+  const fallback = [
+    'product-center',
+    'template-center',
+    'batch-listing-legacy',
+    'product-batch-listing-legacy',
+    'visual-tools-index',
+    'visual-tools-ai-wearable',
+    'product-detail',
+    'production-prep',
+    'production-sandbox',
+    'production-workshop',
+    'downloads',
+  ]
+  try {
+    const registry = JSON.parse(readFileSync(join(root, 'docs/ecommerce-page-position-registry.json'), 'utf8'))
+    const ids = new Set(fallback)
+    for (const route of registry.routes || []) {
+      for (const id of route.evidenceRouteIds || []) ids.add(id)
+    }
+    return [...ids].sort()
+  } catch {
+    return fallback
+  }
+}
+const requiredRouteIds = readRequiredRouteIds()
+function knownRouteIds() {
+  const ids = new Set(requiredRouteIds)
+  try {
+    const registry = JSON.parse(readFileSync(join(root, 'docs/ecommerce-page-position-registry.json'), 'utf8'))
+    for (const route of registry.routes || []) {
+      if (route.routeId) ids.add(route.routeId)
+      for (const id of route.evidenceRouteIds || []) ids.add(id)
+    }
+  } catch {}
+  return ids
+}
 
 function valueAfter(name) {
   const idx = args.indexOf(name)
@@ -85,8 +113,12 @@ if (!existsSync(join(root, manifestRel))) {
   try {
     manifest = readJson(manifestRel)
     const ids = routeIdsFrom(manifest)
+    const knownIds = knownRouteIds()
     for (const required of requiredRouteIds) {
       if (!ids.has(required)) failures.push(`missing required runtime layout route inventory: ${required}`)
+    }
+    for (const observed of ids) {
+      if (!knownIds.has(observed)) failures.push(`visual evidence route id is not declared in the page-position registry: ${observed}`)
     }
 
     const overflowFindings = normalizeFindings(manifest)

@@ -14,6 +14,7 @@ const staticQualityReportRel = 'reports/frontend-quality/static-quality-latest.j
 const layoutDensityReportRel = 'reports/frontend-quality/layout-density-latest.json'
 const designSystemReportRel = 'reports/frontend-quality/design-system-registry-latest.json'
 const frontendIaReportRel = 'reports/frontend-quality/frontend-ia-latest.json'
+const pagePositionReportRel = 'reports/frontend-style-consistency/page-position-report.json'
 const visualCompositionReportRel = 'reports/frontend-quality/visual-composition-latest.json'
 const apiContractReportRel = 'reports/frontend-quality/api-contract-latest.json'
 const runtimeLayoutReportRel = 'reports/frontend-quality/runtime-layout-latest.json'
@@ -171,6 +172,10 @@ const staticQualityGate = run('node', ['scripts/ecommerce-static-quality-gate.mj
 const layoutDensityGate = run('node', ['scripts/ecommerce-layout-density-gate.mjs', '--report', layoutDensityReportRel])
 const designSystemGate = run('node', ['scripts/ecommerce-design-system-registry-gate.mjs', '--report', designSystemReportRel])
 const frontendIaGate = run('node', ['scripts/ecommerce-frontend-ia-gate.mjs', '--report', frontendIaReportRel])
+const explicitChangedFiles = valueAfter('--changed-files')
+const pagePositionArgs = ['scripts/ecommerce-page-position-gate.mjs', '--report', pagePositionReportRel]
+if (explicitChangedFiles) pagePositionArgs.push('--changed-files', explicitChangedFiles)
+const pagePositionGate = run('node', pagePositionArgs)
 const visualCompositionGate = run('node', ['scripts/ecommerce-visual-composition-gate.mjs', '--report', visualCompositionReportRel])
 const apiContractGate = run('node', ['scripts/ecommerce-api-contract-gate.mjs'])
 let styleJson = null
@@ -209,6 +214,12 @@ try {
 } catch {
   frontendIaJson = { status: 'UNKNOWN', raw_stdout: frontendIaGate.stdout.slice(-4000) }
 }
+let pagePositionJson = null
+try {
+  pagePositionJson = JSON.parse(pagePositionGate.stdout)
+} catch {
+  pagePositionJson = { status: 'UNKNOWN', raw_stdout: pagePositionGate.stdout.slice(-4000), failures: [], warnings: [] }
+}
 let visualCompositionJson = null
 try {
   visualCompositionJson = JSON.parse(visualCompositionGate.stdout)
@@ -245,6 +256,12 @@ if (designSystemGate.status !== 0 || designSystemJson.status === 'FAIL') {
 if (frontendIaGate.status !== 0 || frontendIaJson.status === 'FAIL') {
   failures.push('Frontend IA governance gate failed; core product pages must keep page roles, information hierarchy, action hierarchy, and screenshot review contract explicit')
 }
+if (pagePositionGate.status !== 0 || pagePositionJson.status === 'FAIL') {
+  failures.push('Page-position governance gate failed; critical routes must declare page type, business object, upstream/downstream, primary action, result destination, and forbidden patterns')
+}
+if (pagePositionJson.status === 'PASS_WITH_NOTES') {
+  warnings.push(...(pagePositionJson.warnings || []).map(item => `page position: ${item}`))
+}
 if (visualCompositionGate.status !== 0 || visualCompositionJson.status === 'FAIL') {
   failures.push('Visual composition gate failed; core product pages must avoid boxed/control-console anti-patterns and include task stage plus result preview')
 }
@@ -268,10 +285,13 @@ if (requiresStyleChangeProposal) {
     failures.push(`style-change proposal invalid: ${styleChangeProposal.reason || styleChangeProposal.status}`)
   }
 }
-const requiresVisualEvidence = productFlowFiles.length > 0 && !sharedOnly
+const pagePositionEvidenceFiles = (pagePositionJson.changed_routes_requiring_evidence || [])
+  .flatMap(item => Array.isArray(item.files) ? item.files : [])
+const requiredEvidenceFiles = unique([...productFlowFiles, ...pagePositionEvidenceFiles])
+const requiresVisualEvidence = requiredEvidenceFiles.length > 0 && !sharedOnly
 let evidenceGeneration = { status: 'SKIPPED', reason: requiresVisualEvidence ? 'existing manifest accepted or generation disabled' : 'visual evidence not required for this change set' }
 if (requiresVisualEvidence) {
-  let existingEvidence = hasEvidenceManifest(productFlowFiles)
+  let existingEvidence = hasEvidenceManifest(requiredEvidenceFiles)
   const autoGenerateEvidence = !args.includes('--no-auto-evidence') && existingEvidence.status !== 'FOUND'
   if (autoGenerateEvidence) {
     const changedFilesPath = join(root, autoEvidenceChangedFilesRel)
@@ -284,7 +304,7 @@ if (requiresVisualEvidence) {
       stdout_tail: generated.stdout.slice(-2000),
       stderr_tail: generated.stderr.slice(-2000),
     }
-    existingEvidence = hasEvidenceManifest(productFlowFiles)
+    existingEvidence = hasEvidenceManifest(requiredEvidenceFiles)
   }
   var evidence = existingEvidence
 } else {
@@ -328,6 +348,8 @@ const result = {
     shared_design_system_only: sharedOnly,
     requires_style_change_proposal: requiresStyleChangeProposal,
     requires_visual_evidence: requiresVisualEvidence,
+    page_position_evidence_files: pagePositionEvidenceFiles,
+    required_evidence_files: requiredEvidenceFiles,
   },
   style_consistency: {
     exit_code: style.status,
@@ -385,6 +407,16 @@ const result = {
     required_components: frontendIaJson.required_components || [],
     failures: frontendIaJson.failures || [],
     warnings: frontendIaJson.warnings || [],
+  },
+  page_position: {
+    exit_code: pagePositionGate.status,
+    report: pagePositionReportRel,
+    status: pagePositionJson.status,
+    route_count: pagePositionJson.route_count,
+    changed_route_contracts: pagePositionJson.changed_route_contracts || [],
+    changed_routes_requiring_evidence: pagePositionJson.changed_routes_requiring_evidence || [],
+    failures: pagePositionJson.failures || [],
+    warnings: pagePositionJson.warnings || [],
   },
   visual_composition: {
     exit_code: visualCompositionGate.status,

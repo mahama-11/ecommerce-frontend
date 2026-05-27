@@ -68,3 +68,21 @@ The automated visual composition gate blocks or warns on:
 - customer-facing technical terms such as pipeline, backend, contract, runtime, attach-back, and station;
 - missing hero/task stage;
 - missing visual outcome or product asset preview on Visual/AI generation pages.
+
+
+## Business backbone and page position
+
+Visual composition must follow the SKU business chain, not a literal grid of requirements:
+
+```text
+Product Center
+→ SKU Detail
+→ Visual Tools / Production Prep
+→ Sandbox
+→ Workshop
+→ SKU.assets
+→ Template Center / Listing
+→ Delivery / Downloads
+```
+
+`/products/workbench/visual-tools` is governed as a `production-station`. It must show current SKU/product context, input assets, the recommended or selected visual task, expected outputs, the primary execution action, and where the result will be saved/used. It may communicate value and expected effects, but only inside this production-task context; it must not become a public homepage, a raw tool registry, or an equal-weight tool matrix.

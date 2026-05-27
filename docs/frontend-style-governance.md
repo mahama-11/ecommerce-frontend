@@ -14,6 +14,7 @@ For Product Center / Production Pipeline surfaces, use the shared Ecommerce desi
 - Buttons/links: `src/components/ui/Button.tsx`
 - Product dark shell/navigation/dialog primitives: `src/components/ui/EcomShell.tsx`
 - Guard: `npm run style:consistency`
+- Page-position guard: `npm run page:position`
 - Readability/density guard: `npm run layout:density`
 
 Do not add one-off page-local versions of:
@@ -36,7 +37,9 @@ Every non-trivial UI change follows this order:
 
 ## Guard policy
 
-`npm run frontend:gate` is the default automation entrypoint for frontend increments. It runs style consistency, layout-density/readability, ESLint baseline, static accessibility/architecture quality checks, design-system registry validation, writes machine-readable reports, classifies changed files from git diff, generates the style-drift repair queue, and fails Product Center / Production UI page changes that do not include local visual evidence. If such a page change is detected and no valid change-scoped manifest exists, the gate attempts to generate Chromium screenshot evidence automatically via `npm run frontend:evidence`. It also blocks changes to global style files (`src/index.css`, shared `Button`, shared `EcomShell`) unless the change includes an accepted style-change proposal.
+`npm run frontend:gate` is the default automation entrypoint for frontend increments. It runs page-position governance, style consistency, layout-density/readability, ESLint baseline, static accessibility/architecture quality checks, design-system registry validation, writes machine-readable reports, classifies changed files from git diff, generates the style-drift repair queue, and fails Product Center / Production UI page changes that do not include local visual evidence. If such a page change is detected and no valid change-scoped manifest exists, the gate attempts to generate Chromium screenshot evidence automatically via `npm run frontend:evidence`. It also blocks changes to global style files (`src/index.css`, shared `Button`, shared `EcomShell`) unless the change includes an accepted style-change proposal.
+
+`npm run page:position` validates the internal route registry in `docs/ecommerce-page-position-registry.json`: each critical route must declare its page type, business object, upstream/downstream, primary action, result destination, design pattern, and forbidden anti-patterns. This prevents applying homepage, tool-registry, or admin-page patterns to the wrong surface.
 
 `npm run style:consistency` has two layers:
 
