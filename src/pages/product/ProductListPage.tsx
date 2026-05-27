@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Download, FileSpreadsheet, Image, LoaderCircle, PackageCheck, Plus, Search, Upload, X } from 'lucide-react'
+import { Download, FileSpreadsheet, LoaderCircle, Plus, Search, Upload, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
 import { Button, ButtonLink } from '@/components/ui/Button'
@@ -195,11 +195,18 @@ function ProductListPage() {
   }
 
   function visualProductionHref(productId: string) {
-    return `/products/workbench/visual-tools?productId=${encodeURIComponent(productId)}&source=product-center`
+    return `/products/${encodeURIComponent(productId)}/production/prep`
   }
 
   function productCenterFocusHref(productId: string) {
     return `/products?productId=${encodeURIComponent(productId)}&source=sku-queue`
+  }
+
+  function focusProductCenter(productId: string) {
+    setFocusedProductId(productId)
+    window.requestAnimationFrame(() => {
+      document.getElementById('product-center-overview')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    })
   }
 
   async function handleImportFile(file: File) {
@@ -321,7 +328,7 @@ function ProductListPage() {
       </div>
 
       <div className="relative mx-auto w-full max-w-[1400px] px-5 pb-10">
-        <motion.header variants={itemVariants} className="mb-5">
+        <motion.header id="product-center-overview" variants={itemVariants} className="mb-5">
           <ProductHeroStage
             eyebrow="Workspace Home · SKU Business Entry"
             title="商品队列工作台"
@@ -383,7 +390,7 @@ function ProductListPage() {
             {filteredUnits.length > SKU_PAGE_SIZE ? <span data-testid="sku-pagination-summary">第 {safeCurrentPage} / {totalPages} 页 · 当前 {pageStart + 1}-{pageEnd}</span> : null}
           </div>
           <div data-testid="sku-list-panel" className="overflow-hidden rounded-[28px] border border-white/[0.06] bg-[var(--ecom-surface)] shadow-[0_28px_90px_rgba(0,0,0,0.45)]">
-            <div className="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(72px,0.5fr)_minmax(80px,0.55fr)_minmax(72px,0.5fr)_minmax(72px,0.5fr)_minmax(150px,0.9fr)] border-b border-white/[0.06] bg-[var(--ecom-surface)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/34 max-xl:hidden">
+            <div className="grid grid-cols-[minmax(0,0.82fr)_minmax(0,1.25fr)_minmax(0,1.35fr)_minmax(64px,0.45fr)_minmax(72px,0.5fr)_minmax(64px,0.45fr)_minmax(64px,0.45fr)_minmax(220px,1.05fr)] border-b border-white/[0.06] bg-[var(--ecom-surface)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/34 max-xl:hidden">
               <div>SKU</div><div>标题 / 类目</div><div>真实就绪项</div><div>素材</div><div>Listing</div><div>导出</div><div>更新时间</div><div>操作</div>
             </div>
             {loading ? (
@@ -397,7 +404,7 @@ function ProductListPage() {
                   const focused = focusedUnit?.product.id === product.id
                   const selected = selectedIds.includes(product.id)
                   return (
-                    <div key={product.id} role="button" tabIndex={0} onClick={() => navigate(`/products/${product.id}`)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`/products/${product.id}`) }} className={`grid cursor-pointer gap-3 px-3 py-3 text-sm transition max-xl:grid-cols-1 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(72px,0.5fr)_minmax(80px,0.55fr)_minmax(72px,0.5fr)_minmax(72px,0.5fr)_minmax(150px,0.9fr)] xl:items-center ${focused ? 'bg-cyan-300/[0.075]' : 'hover:bg-[var(--ecom-surface-hover)]'} ${selected ? 'outline outline-1 outline-cyan-300/30' : ''}`}>
+                    <div key={product.id} role="button" tabIndex={0} onClick={() => navigate(`/products/${product.id}`)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`/products/${product.id}`) }} className={`grid cursor-pointer gap-3 px-3 py-3 text-sm transition max-xl:grid-cols-1 xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.25fr)_minmax(0,1.35fr)_minmax(64px,0.45fr)_minmax(72px,0.5fr)_minmax(64px,0.45fr)_minmax(64px,0.45fr)_minmax(220px,1.05fr)] xl:items-center ${focused ? 'bg-cyan-300/[0.075]' : 'hover:bg-[var(--ecom-surface-hover)]'} ${selected ? 'outline outline-1 outline-cyan-300/30' : ''}`}>
                       <div className="flex min-w-0 items-center gap-2">
                         <input type="checkbox" checked={selected} onClick={event => event.stopPropagation()} onChange={() => { setFocusedProductId(product.id); toggleSelect(product.id) }} className="shrink-0 rounded border-white/20 bg-black/30 accent-cyan-300" />
                         <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} title={product.skuCode} className="min-w-0 truncate font-mono text-xs text-cyan-100/82 underline-offset-4 transition hover:text-white hover:underline">{product.skuCode}</Link>
@@ -408,10 +415,10 @@ function ProductListPage() {
                       <QueueTag label={product.listingStatus === 'ready' ? '已采用' : product.listingStatus === 'partial' ? '草稿' : '缺失'} tone={product.listingStatus === 'ready' ? 'green' : product.listingStatus === 'partial' ? 'orange' : 'red'} />
                       <QueueTag label={product.exportStatus === 'done' ? '已完成' : product.exportStatus === 'ready' ? '可交付' : '待导出'} tone={product.exportStatus === 'done' || product.exportStatus === 'ready' ? 'green' : 'red'} />
                       <div className="text-xs text-white/38">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        <ButtonLink to={`/products/${product.id}`} onClick={event => event.stopPropagation()} variant="primary" size="sm">详情</ButtonLink>
-                        <ButtonLink to={visualProductionHref(product.id)} onClick={event => event.stopPropagation()} variant="secondary" size="sm"><Image className="h-3.5 w-3.5" />进入视觉生产</ButtonLink>
-                        <ButtonLink to={productCenterFocusHref(product.id)} onClick={event => { event.stopPropagation(); setFocusedProductId(product.id) }} variant="quiet" size="sm"><PackageCheck className="h-3.5 w-3.5" />进入产品中心</ButtonLink>
+                      <div className="flex flex-wrap gap-1.5 xl:flex-nowrap">
+                        <ButtonLink to={`/products/${product.id}`} onClick={event => event.stopPropagation()} variant="primary" size="sm" className="px-2.5">详情</ButtonLink>
+                        <ButtonLink to={visualProductionHref(product.id)} onClick={event => event.stopPropagation()} variant="secondary" size="sm" className="px-2.5">进入视觉生产</ButtonLink>
+                        <ButtonLink to={productCenterFocusHref(product.id)} onClick={event => { event.stopPropagation(); focusProductCenter(product.id) }} variant="quiet" size="sm" className="px-2.5">进入产品中心</ButtonLink>
                       </div>
                     </div>
                   )
