@@ -36,7 +36,7 @@ export function WorkflowProgressRail({ steps, className }: HTMLAttributes<HTMLDi
   return <div data-composition="workflow-progress-rail" className={cn('flex flex-col gap-2 rounded-[24px] border border-white/8 bg-white/[.035] p-3 sm:flex-row', className)}>
     {steps.map((step, index) => <div key={`${step.label}-${index}`} className={cn('min-w-0 flex-1 rounded-2xl px-3 py-3', step.status === 'active' ? 'bg-cyan-300/[.10] text-cyan-50' : step.status === 'done' ? 'bg-emerald-300/[.08] text-emerald-50/85' : 'bg-white/[.035] text-white/45')}>
       <div className="text-xs font-semibold">{String(index + 1).padStart(2, '0')} · {step.label}</div>
-      {step.desc ? <div className="mt-1 truncate text-xs opacity-65">{step.desc}</div> : null}
+      {step.desc ? <div className="mt-1 break-words text-xs leading-5 opacity-65">{step.desc}</div> : null}
     </div>)}
   </div>
 }

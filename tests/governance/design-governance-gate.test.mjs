@@ -18,6 +18,8 @@ function copyFixture(overrides = {}) {
     'src/styles/tokens.css',
     'src/components/product-composition/index.tsx',
     'src/components/layout/index.tsx',
+    'src/pages/product/ProductListPage.tsx',
+    'src/pages/ProductVisualToolsPage.tsx',
   ]
   for (const rel of files) {
     const target = join(dir, rel)
@@ -78,4 +80,17 @@ test('tokens and layout shells are mandatory for P3 implementation', () => {
   assert.equal(cp.status, 1)
   assert.match(report.failures.join('\n'), /src\/styles\/tokens\.css: missing token --ecom-bg/)
   assert.match(report.failures.join('\n'), /src\/components\/layout\/index\.tsx: missing shell MarketingShell/)
+})
+
+test('core pages must consume their declared shell and product-composition primitives', () => {
+  const productList = readFileSync(join(root, 'src/pages/product/ProductListPage.tsx'), 'utf8')
+  const fixtureRoot = copyFixture({
+    'src/pages/product/ProductListPage.tsx': productList
+      .replace('data-page-shell="workspace-home"', '')
+      .replaceAll('ProductHeroStage', 'MissingHeroPrimitive'),
+  })
+  const { cp, report } = runGate(fixtureRoot)
+  assert.equal(cp.status, 1)
+  assert.match(report.failures.join('\n'), /src\/pages\/product\/ProductListPage\.tsx: must declare page shell workspace-home/)
+  assert.match(report.failures.join('\n'), /src\/pages\/product\/ProductListPage\.tsx: must consume product-composition primitive ProductHeroStage/)
 })

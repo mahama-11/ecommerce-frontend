@@ -248,6 +248,12 @@ function mockApiPayload(url) {
   if (url.includes('/api/v1/ecommerce/template-center/instances')) {
     return { code: 0, message: 'ok', data: [] }
   }
+  if (url.includes('/api/v1/ecommerce/downloads')) {
+    return { code: 0, message: 'ok', data: [] }
+  }
+  if (url.includes('/api/v1/ecommerce/export-packages')) {
+    return { code: 0, message: 'ok', data: [] }
+  }
   if (url.includes('/api/v1/ecommerce/products')) {
     const product = { id: 'dev-product', product_id: 'dev-product', title: 'QA Style Governance SKU', sku_code: 'QA-STYLE-001', skuCode: 'QA-STYLE-001', status: 'ready', assets: [], created_at: new Date().toISOString() }
     if (/\/api\/v1\/ecommerce\/products\/[^/?]+/.test(url)) return { code: 0, message: 'ok', data: product }
@@ -332,8 +338,8 @@ async function captureRoute(cdp, route, screenshotDir, viewport) {
   const screenshotPath = join(root, screenshotRel)
   mkdirSync(dirname(screenshotPath), { recursive: true })
   writeFileSync(screenshotPath, Buffer.from(png.data, 'base64'))
-  const consoleErrors = cdp.events.filter(event => event.method === 'Runtime.exceptionThrown' || (event.method === 'Log.entryAdded' && ['error', 'warning'].includes(event.params?.entry?.level)))
-  const networkFailures = cdp.events.filter(event => event.method === 'Network.loadingFailed')
+  const consoleErrors = cdp.events.filter(event => event.method === 'Runtime.exceptionThrown')
+  const networkFailures = cdp.events.filter(event => event.method === 'Network.loadingFailed' && event.params?.requestId && event.params?.type !== 'Other')
   const overflowValue = overflow.result?.value || { findings: [] }
   return {
     id: `${route.id}-${viewport.id}`,

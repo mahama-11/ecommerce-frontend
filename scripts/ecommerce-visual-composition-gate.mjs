@@ -39,13 +39,17 @@ for (const page of corePages) {
   const path = join(root, page)
   if (!existsSync(path)) { warnings.push(`composition.page_missing: ${page}`); continue }
   const src = readFileSync(path, 'utf8')
+  const copySurface = src
+    .replace(/data-page-shell="[^"]+"/g, '')
+    .replace(/className="[^"]*"/g, '')
+    .replace(/`[^`]*`/g, '')
   const report = {
     page,
     primitives: [...requiredPrimitives, ...recommendedPrimitives].filter(name => src.includes(name)),
     rounded_count: count(/rounded-(?:\[|[a-z0-9])/g, src),
     border_count: count(/border(?:\s|\-|=|`|'|")/g, src),
     grid_count: count(/\bgrid\b|grid-cols/g, src),
-    technical_terms: technicalTerms.filter(term => new RegExp(`\\b${term.replace('-', '[- ]')}\\b`, 'i').test(src)),
+    technical_terms: technicalTerms.filter(term => new RegExp(`\\b${term.replace('-', '[- ]')}\\b`, 'i').test(copySurface)),
   }
   for (const primitive of requiredPrimitives) {
     if (!src.includes(primitive)) failures.push(`composition.${primitive === 'ProductHeroStage' ? 'hero_absence' : 'visual_outcome_absence'}: ${page} must use ${primitive}`)

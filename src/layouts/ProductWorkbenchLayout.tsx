@@ -58,7 +58,6 @@ export default function ProductWorkbenchLayout() {
               <Home className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t('productCenter.shell.home')}</span>
             </ButtonLink>
-            <Link to="/products" className="whitespace-nowrap font-semibold tracking-tight text-white">Product Center</Link>
             <nav className="ml-2 flex min-w-0 items-center gap-1 overflow-x-auto">
               {navItems.map(item => {
                 const active = item.match(pathname)

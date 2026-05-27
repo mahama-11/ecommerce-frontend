@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Download, FileSpreadsheet, LoaderCircle, Plus, Search, Upload, X } from 'lucide-react'
+import { Download, FileSpreadsheet, Image, LoaderCircle, PackageCheck, Plus, Search, Upload, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import type { ProductListItem } from '@/types/product'
 import { createProduct, listProducts } from '@/services/product'
 import type { MissionStage } from './utils/productMission'
-import { deriveMissionWorkUnit } from './utils/productMission'
+import { deriveMissionWorkUnit, buildProductionRail } from './utils/productMission'
+import { ProductHeroStage, ProductAssetStrip, WorkflowProgressRail, ResultDestinationCard } from '@/components/product-composition'
 
 const IMPORT_TEMPLATE_HEADERS = [
   'skuCode',
@@ -104,6 +105,8 @@ function isImportRowValid(row: Partial<ImportRow>) {
 function ProductListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const focusedProductQuery = searchParams.get('productId') || ''
   const { showToast } = useToastStore()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [keyword, setKeyword] = useState('')
@@ -124,7 +127,7 @@ function ProductListPage() {
 
   useEffect(() => {
     void loadProducts()
-  }, [])
+  }, [focusedProductQuery])
 
   useEffect(() => {
     setCurrentPage(1)
@@ -151,7 +154,10 @@ function ProductListPage() {
       const data = await listProducts()
       setProducts(data)
       setSelectedIds(current => current.filter(id => data.some(item => item.id === id)))
-      setFocusedProductId(current => (current && data.some(item => item.id === current) ? current : data[0]?.id ?? ''))
+      setFocusedProductId(current => {
+        if (focusedProductQuery && data.some(item => item.id === focusedProductQuery)) return focusedProductQuery
+        return current && data.some(item => item.id === current) ? current : data[0]?.id ?? ''
+      })
     } catch (error) {
       console.error('Failed to load products:', error)
     } finally {
@@ -186,6 +192,14 @@ function ProductListPage() {
 
   function toggleSelect(productId: string) {
     setSelectedIds(current => (current.includes(productId) ? current.filter(id => id !== productId) : [...current, productId]))
+  }
+
+  function visualProductionHref(productId: string) {
+    return `/products/workbench/visual-tools?productId=${encodeURIComponent(productId)}&source=product-center`
+  }
+
+  function productCenterFocusHref(productId: string) {
+    return `/products?productId=${encodeURIComponent(productId)}&source=sku-queue`
   }
 
   async function handleImportFile(file: File) {
@@ -263,6 +277,7 @@ function ProductListPage() {
   }
 
   const missionUnits = useMemo(() => products.map(deriveMissionWorkUnit), [products])
+  const productionRail = useMemo(() => buildProductionRail(products), [products])
   const filteredUnits = useMemo(() => {
     let result = missionUnits
     if (activeStage !== 'all') result = result.filter(unit => unit.stage === activeStage)
@@ -281,6 +296,9 @@ function ProductListPage() {
   }, [activeStage, keyword, missionUnits])
 
   const focusedUnit = missionUnits.find(unit => unit.product.id === focusedProductId) ?? filteredUnits[0] ?? missionUnits[0] ?? null
+  const visualTodoCount = missionUnits.filter(unit => unit.stage === 'visual').length
+  const listingTodoCount = missionUnits.filter(unit => unit.stage === 'listing').length
+  const deliveryReadyCount = missionUnits.filter(unit => unit.stage === 'delivery' || unit.product.exportStatus === 'ready' || unit.product.exportStatus === 'done').length
   const selectedUnits = missionUnits.filter(unit => selectedIds.includes(unit.product.id))
   const totalPages = Math.max(1, Math.ceil(filteredUnits.length / SKU_PAGE_SIZE))
   const safeCurrentPage = Math.min(currentPage, totalPages)
@@ -296,19 +314,46 @@ function ProductListPage() {
   const itemVariants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 260, damping: 26 } } }
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="show" className="relative min-h-full bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)]">
+    <motion.div variants={containerVariants} initial="hidden" animate="show" data-page-shell="workspace-home" className="relative min-h-full bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)]">
       <div className="pointer-events-none fixed inset-0 opacity-60">
         <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
         <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" />
       </div>
 
       <div className="relative mx-auto w-full max-w-[1400px] px-5 pb-10">
-        <motion.header variants={itemVariants} className="mb-4 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-[1.65rem] font-bold tracking-[-0.03em] text-white">商品中心 / SKU 队列</h1>
-            <p className="mt-1 text-[13px] text-white/55">Create/Import → Queue → SKU Detail → Visual/Video → Assets → Listing → Export → Downloads</p>
+        <motion.header variants={itemVariants} className="mb-5">
+          <ProductHeroStage
+            eyebrow="Workspace Home · SKU Business Entry"
+            title="商品队列工作台"
+            description="从这里判断当前 SKU 该先补素材、进入视觉生产、完善 Listing，还是交付导出；它是业务入口，不是单纯 SKU 表格。"
+            objectLabel="当前聚焦 SKU"
+            objectValue={focusedUnit ? `${focusedUnit.product.skuCode} · ${focusedUnit.product.title}` : '等待 SKU 数据'}
+            primaryAction={{ label: '新建 SKU', onClick: () => setShowCreateModal(true) }}
+            secondary={<Button onClick={() => setShowImportModal(true)} variant="secondary" className="rounded-2xl px-5 py-3 text-sm"><Upload className="h-4 w-4" />导入表格</Button>}
+          >
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <WorkflowProgressRail
+                steps={productionRail.slice(0, 4).map(item => ({
+                  label: item.label,
+                  desc: `${item.count} 个 SKU · ${item.blocked} 个待处理`,
+                  status: item.stage === (focusedUnit?.stage ?? 'visual') ? 'active' : item.count > 0 ? 'done' : 'locked',
+                }))}
+              />
+              <ProductAssetStrip
+                assets={[
+                  { label: '待视觉生产', desc: `${visualTodoCount} 个 SKU 需要补素材/主图`, status: visualTodoCount ? 'needed' : 'ready' },
+                  { label: '待 Listing', desc: `${listingTodoCount} 个 SKU 需要文案/版本`, status: listingTodoCount ? 'needed' : 'ready' },
+                  { label: '可交付', desc: `${deliveryReadyCount} 个 SKU 已进入交付`, status: deliveryReadyCount ? 'ready' : 'optional' },
+                ]}
+              />
+            </div>
+          </ProductHeroStage>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <ResultDestinationCard title="当前业务状态" description={`${products.length} 个 SKU，${filteredUnits.length} 个在当前筛选中。`} />
+            <ResultDestinationCard title="推荐下一步" description={focusedUnit?.nextBestAction.helper ?? '先创建或导入 SKU。'} />
+            <ResultDestinationCard title="结果去向" description="视觉结果回写 SKU.assets，Listing 进入模板中心，导出进入交付中心。" />
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Button onClick={() => setShowCreateModal(true)} variant="primary"><Plus className="h-4 w-4" />新建 SKU</Button>
             <Button onClick={() => setShowImportModal(true)} variant="secondary"><Upload className="h-4 w-4" />导入表格</Button>
             <Button onClick={() => setShowPreviewDrawer(true)} variant="secondary">快速预览</Button>
@@ -365,7 +410,8 @@ function ProductListPage() {
                       <div className="text-xs text-white/38">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</div>
                       <div className="flex flex-wrap gap-1.5">
                         <ButtonLink to={`/products/${product.id}`} onClick={event => event.stopPropagation()} variant="primary" size="sm">详情</ButtonLink>
-                        <ButtonLink to={unit.nextBestAction.href} onClick={event => event.stopPropagation()} variant={unit.nextBestAction.station === 'visual' || unit.nextBestAction.station === 'listing' ? 'primary' : 'secondary'} size="sm">{unit.nextBestAction.label.replace('Route to Visual Station', '进入生产准备').replace('Route to Delivery Station', '查看交付历史').replace('Open Export Handoff', '创建导出任务')}</ButtonLink>
+                        <ButtonLink to={visualProductionHref(product.id)} onClick={event => event.stopPropagation()} variant="secondary" size="sm"><Image className="h-3.5 w-3.5" />进入视觉生产</ButtonLink>
+                        <ButtonLink to={productCenterFocusHref(product.id)} onClick={event => { event.stopPropagation(); setFocusedProductId(product.id) }} variant="quiet" size="sm"><PackageCheck className="h-3.5 w-3.5" />进入产品中心</ButtonLink>
                       </div>
                     </div>
                   )
@@ -412,7 +458,8 @@ function ProductListPage() {
         <motion.section variants={itemVariants}>
           <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">工作站点</div>
           <div className="grid gap-3 md:grid-cols-3">
-            <StationCard code="TASK" title="任务中心" desc="查看当前处理中的任务生成情况、SKU 状态与下一步动作" status="in-progress tasks" tone="info" href="/products" />
+            <StationCard code="SKU" title="商品队列" desc="按 SKU 判断素材、Listing、导出状态和下一步动作" status="business queue" tone="info" href={focusedUnit ? productCenterFocusHref(focusedUnit.product.id) : '/products'} />
+            <StationCard code="VISUAL" title="视觉生产" desc="带着当前 SKU 进入视觉任务工作台" status="SKU.assets" tone="info" href={focusedUnit ? visualProductionHref(focusedUnit.product.id) : '/products/workbench/visual-tools'} />
             <StationCard code="DONE" title="交付中心" desc="历史已完成生成的任务、导出记录与下载追踪" status="completed history" tone="ready" href={focusedUnit ? `/products/workbench/downloads?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/downloads'} />
           </div>
         </motion.section>
@@ -422,7 +469,7 @@ function ProductListPage() {
         <div className="fixed inset-0 z-50 bg-black/70 p-4 backdrop-blur-md" role="button" tabIndex={-1} aria-label="关闭命令面板" onClick={() => setShowCommandPalette(false)} onKeyDown={event => { if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') setShowCommandPalette(false) }}>
           <div className="mx-auto mt-[12vh] w-full max-w-xl overflow-hidden rounded-2xl border border-white/12 bg-[var(--ecom-surface)] shadow-[0_28px_90px_rgba(0,0,0,0.65)]" role="presentation" onClick={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}>
             <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3"><Search className="h-4 w-4 text-white/35" /><input autoFocus placeholder="搜索命令、SKU、站点..." className="flex-1 bg-transparent text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 placeholder:text-white/32" /><span className="text-xs text-white/28">ESC</span></div>
-            <div className="p-2 text-sm">{['任务中心 ⌘1', 'Listing 配置 ⌘2', '交付中心 ⌘3'].map(item => <div key={item} className="rounded-xl px-3 py-2 text-white/70 hover:bg-[var(--ecom-surface-hover)]">{item}</div>)}</div>
+            <div className="p-2 text-sm">{['商品队列 ⌘1', '视觉生产 ⌘2', '模板中心 ⌘3', '交付中心 ⌘4'].map(item => <div key={item} className="rounded-xl px-3 py-2 text-white/70 hover:bg-[var(--ecom-surface-hover)]">{item}</div>)}</div>
           </div>
         </div>
       ) : null}

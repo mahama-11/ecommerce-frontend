@@ -92,6 +92,7 @@ export default function ProductVisualToolsPage() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      data-page-shell="production-station"
       className="relative min-h-[calc(100vh-52px)] overflow-x-hidden bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)]"
     >
       <div className="pointer-events-none fixed inset-0 opacity-70">

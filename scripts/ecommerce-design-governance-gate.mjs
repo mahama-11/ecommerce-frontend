@@ -65,6 +65,19 @@ const requiredProductComponents = [
   'ResultDestinationCard',
 ]
 
+const corePageRequirements = [
+  {
+    rel: 'src/pages/product/ProductListPage.tsx',
+    shell: 'workspace-home',
+    primitives: ['ProductHeroStage', 'WorkflowProgressRail', 'ProductAssetStrip'],
+  },
+  {
+    rel: 'src/pages/ProductVisualToolsPage.tsx',
+    shell: 'production-station',
+    primitives: ['ProductHeroStage', 'VisualOutcomePreview', 'RecommendedToolRail', 'ResultDestinationCard'],
+  },
+]
+
 function valueAfter(name) {
   const idx = args.indexOf(name)
   if (idx >= 0 && args[idx + 1]) return args[idx + 1]
@@ -131,6 +144,22 @@ for (const component of requiredProductComponents) {
   }
 }
 
+for (const page of corePageRequirements) {
+  const source = read(page.rel) || ''
+  if (!presentText(source)) {
+    failures.push(`${page.rel}: missing core page source`)
+    continue
+  }
+  if (!source.includes(`data-page-shell="${page.shell}"`)) {
+    failures.push(`${page.rel}: must declare page shell ${page.shell}`)
+  }
+  for (const primitive of page.primitives) {
+    if (!source.includes(primitive)) {
+      failures.push(`${page.rel}: must consume product-composition primitive ${primitive}`)
+    }
+  }
+}
+
 const result = {
   status: failures.length ? 'FAIL' : (warnings.length ? 'PASS_WITH_NOTES' : 'PASS'),
   policy: 'Ecommerce design governance requires P0 IA map, P1 page contracts, P2 page type patterns, P3 design-system rules, semantic tokens, product composition components, and shared page shells.',
@@ -139,6 +168,7 @@ const result = {
   required_tokens: requiredTokens,
   required_shells: requiredShells,
   required_product_components: requiredProductComponents,
+  core_page_requirements: corePageRequirements,
   failures,
   warnings,
 }
