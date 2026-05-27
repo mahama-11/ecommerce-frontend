@@ -212,6 +212,11 @@ function ProductListPage() {
     })
   }
 
+  function openProductCenter(productId: string) {
+    navigate(productCenterFocusHref(productId))
+    focusProductCenter(productId)
+  }
+
   async function handleImportFile(file: File) {
     setParsingImport(true)
     try {
@@ -407,7 +412,7 @@ function ProductListPage() {
                   const focused = focusedUnit?.product.id === product.id
                   const selected = selectedIds.includes(product.id)
                   return (
-                    <div key={product.id} role="button" tabIndex={0} onClick={() => navigate(`/products/${product.id}`)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') navigate(`/products/${product.id}`) }} className={`grid cursor-pointer gap-3 px-3 py-3 text-sm transition max-2xl:grid-cols-1 2xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.25fr)_minmax(0,1.35fr)_minmax(64px,0.45fr)_minmax(72px,0.5fr)_minmax(64px,0.45fr)_minmax(64px,0.45fr)_minmax(260px,1.2fr)] 2xl:items-center ${focused ? 'bg-cyan-300/[0.075]' : 'hover:bg-[var(--ecom-surface-hover)]'} ${selected ? 'outline outline-1 outline-cyan-300/30' : ''}`}>
+                    <div key={product.id} className={`grid gap-3 px-3 py-3 text-sm transition max-2xl:grid-cols-1 2xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.25fr)_minmax(0,1.35fr)_minmax(64px,0.45fr)_minmax(72px,0.5fr)_minmax(64px,0.45fr)_minmax(64px,0.45fr)_minmax(260px,1.2fr)] 2xl:items-center ${focused ? 'bg-cyan-300/[0.075]' : 'hover:bg-[var(--ecom-surface-hover)]'} ${selected ? 'outline outline-1 outline-cyan-300/30' : ''}`}>
                       <div className="flex min-w-0 items-center gap-2">
                         <input type="checkbox" checked={selected} onClick={event => event.stopPropagation()} onChange={() => { setFocusedProductId(product.id); toggleSelect(product.id) }} className="shrink-0 rounded border-white/20 bg-black/30 accent-cyan-300" />
                         <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} title={product.skuCode} className="min-w-0 truncate font-mono text-xs text-cyan-100/82 underline-offset-4 transition hover:text-white hover:underline">{product.skuCode}</Link>
@@ -421,7 +426,7 @@ function ProductListPage() {
                       <div className="flex min-w-0 flex-wrap gap-1.5 2xl:flex-nowrap">
                         <ButtonLink to={`/products/${product.id}`} onClick={event => event.stopPropagation()} variant="primary" size="sm" className="px-2.5">详情</ButtonLink>
                         <ButtonLink to={visualProductionHref(product.id)} onClick={event => event.stopPropagation()} variant="secondary" size="sm" className="px-2.5">进入视觉生产</ButtonLink>
-                        <ButtonLink to={productCenterFocusHref(product.id)} onClick={event => { event.stopPropagation(); focusProductCenter(product.id) }} variant="quiet" size="sm" className="px-2.5">进入产品中心</ButtonLink>
+                        <Button onClick={event => { event.stopPropagation(); openProductCenter(product.id) }} variant="quiet" size="sm" className="px-2.5">进入产品中心</Button>
                       </div>
                     </div>
                   )

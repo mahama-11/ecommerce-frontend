@@ -24,10 +24,13 @@ test('Product Center row actions keep SKU context for detail, legacy visual prod
   assert.match(source, /new URLSearchParams\(searchParams\)/)
   assert.match(source, /params\.set\('productId', productId\)/)
   assert.match(source, /params\.set\('source', 'sku-queue'\)/)
-  assert.match(source, /to=\{productCenterFocusHref\(product\.id\)\}/)
-  assert.match(source, /focusProductCenter\(product\.id\)/)
+  assert.match(source, /function openProductCenter\(productId: string\)/)
+  assert.match(source, /navigate\(productCenterFocusHref\(productId\)\)/)
+  assert.match(source, /openProductCenter\(product\.id\)/)
+  assert.match(source, /focusProductCenter\(productId\)/)
   assert.match(source, /进入视觉生产/)
   assert.match(source, /进入产品中心/)
+  assert.doesNotMatch(source, /role="button" tabIndex=\{0\} onClick=\{\(\) => navigate\(`\/products\/\$\{product\.id\}`\)\}/)
 })
 
 test('Product Center row actions stay compact without icon-only pressure in the limited action column', () => {
