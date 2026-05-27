@@ -15,6 +15,7 @@ const layoutDensityReportRel = 'reports/frontend-quality/layout-density-latest.j
 const designSystemReportRel = 'reports/frontend-quality/design-system-registry-latest.json'
 const frontendIaReportRel = 'reports/frontend-quality/frontend-ia-latest.json'
 const apiContractReportRel = 'reports/frontend-quality/api-contract-latest.json'
+const runtimeLayoutReportRel = 'reports/frontend-quality/runtime-layout-latest.json'
 const autoEvidenceChangedFilesRel = 'reports/frontend-style-consistency/changed-files-for-evidence.txt'
 
 function valueAfter(name) {
@@ -283,6 +284,20 @@ if (requiresVisualEvidence) {
   }
 }
 
+const runtimeLayoutGate = run('node', ['scripts/ecommerce-runtime-layout-gate.mjs', '--report', runtimeLayoutReportRel])
+let runtimeLayoutJson = null
+try {
+  runtimeLayoutJson = JSON.parse(runtimeLayoutGate.stdout)
+} catch {
+  runtimeLayoutJson = { status: 'UNKNOWN', raw_stdout: runtimeLayoutGate.stdout.slice(-4000), warnings: [], failures: [] }
+}
+if (requiresVisualEvidence && (runtimeLayoutGate.status !== 0 || runtimeLayoutJson.status === 'FAIL')) {
+  failures.push('Runtime layout gate failed; Chromium evidence must cover template center, legacy redirects, ai-wearable, and must have zero clipping/overflow findings')
+}
+if (runtimeLayoutJson.status === 'PASS_WITH_NOTES') {
+  warnings.push(...(runtimeLayoutJson.warnings || []).map(item => `runtime layout: ${item}`))
+}
+
 if (criticalSurfaceFiles.length > 0) {
   warnings.push('Critical ecommerce shell/design-system files changed; include before/after screenshots in the PR or workflow evidence')
 }
@@ -364,6 +379,16 @@ const result = {
     schema: apiContractJson.schema,
     generated: apiContractJson.generated,
     failures: apiContractJson.failures || [],
+  },
+  runtime_layout: {
+    exit_code: runtimeLayoutGate.status,
+    report: runtimeLayoutReportRel,
+    status: runtimeLayoutJson.status,
+    required_route_ids: runtimeLayoutJson.required_route_ids || [],
+    observed_route_ids: runtimeLayoutJson.observed_route_ids || [],
+    overflow_finding_count: runtimeLayoutJson.overflow_finding_count,
+    failures: runtimeLayoutJson.failures || [],
+    warnings: runtimeLayoutJson.warnings || [],
   },
   style_change_proposal: styleChangeProposal,
   evidence_generation: evidenceGeneration,

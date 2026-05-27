@@ -30,6 +30,7 @@
     "style:consistency": "node scripts/ecommerce-style-consistency.mjs",
     "style:repair-queue": "node scripts/ecommerce-style-drift-repair-queue.mjs",
     "frontend:evidence": "node scripts/ecommerce-frontend-visual-evidence.mjs",
+    "runtime:layout": "node scripts/ecommerce-runtime-layout-gate.mjs",
     "frontend:gate": "node scripts/ecommerce-frontend-automation-gate.mjs",
     "preview": "vite preview",
     "build:preflight": "node scripts/ecommerce-build-preflight.mjs",

@@ -92,7 +92,7 @@ const PAGE_CONFIG: Record<string, PageConfig> = { '/database/knowledge': {
         desc: { zh: '提供替代表达、替换建议与失败重试提示。', en: 'Reserve alternative phrases, replacement suggestions, and retry prompts.' }, meta: { zh: '辅助修复建议', en: 'Ready for AI-assisted repair' },
       }, ],
     actions: [ { label: { zh: '品牌库', en: 'Brand Library' }, to: '/brandLibrary' },
-      { label: { zh: '批量 Listing', en: 'Batch Listing' }, to: '/aiChat/batchListing' }, ],
+      { label: { zh: '模板中心', en: 'Template Center' }, to: '/aiChat/batchListing' }, ],
   }, '/database/tagManage': {
     titleKey: 'pages.databaseTagManage', icon: Tag,
     badge: { zh: '跨模块标签体系', en: 'Cross-Module Tag System' }, subtitle: {

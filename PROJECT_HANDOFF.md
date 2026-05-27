@@ -89,7 +89,7 @@ src/
 │   ├── SolutionDetailPage.tsx  #   解决方案详情
 │   ├── ToolPage.tsx            #   V1 工具页 (已重定向到 V2)
 │   ├── ProductVisualToolsPage.tsx # V1 视觉工具总览 (已重定向)
-│   ├── BatchListingPage.tsx    #   批量 Listing
+│   ├── BatchListingPage.tsx    #   模板中心
 │   ├── ChatWorkspacePage.tsx   #   AI 对话工作台
 │   ├── AgentTemplateMarketPage.tsx # AI Agent 模板市场
 │   ├── OpsWorkbenchPage.tsx    #   智能运营工作台

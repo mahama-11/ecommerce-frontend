@@ -241,11 +241,11 @@ export default function ChatWorkspacePage() {
       role: 'assistant',
       zh:
         pathname === '/chat'
-          ? '已根据当前挂载资料生成一版可执行草稿，你可以继续细化、保存为模板或发送到批量 Listing。'
+          ? '已根据当前挂载资料生成一版可执行草稿，你可以继续细化、保存为模板或发送到模板中心。'
           : '已结合知识库资料生成引用式回答骨架，下一步可以继续追问或沉淀到知识资产。',
       en:
         pathname === '/chat'
-          ? 'I generated an actionable draft from the currently mounted context. You can refine it, save it as a template, or send it to batch listing.'
+          ? 'I generated an actionable draft from the currently mounted context. You can refine it, save it as a template, or send it to template center.'
           : 'I generated a grounded answer draft from the mounted knowledge assets. You can continue asking or save it into the knowledge layer.',
     }
 
@@ -268,8 +268,8 @@ export default function ChatWorkspacePage() {
       en: 'Save the current output as a reusable prompt/Agent template and move it into the template asset flow.',
     },
     {
-      zh: '把当前结果带入批量 Listing 工作台，继续做结构化生产。',
-      en: 'Send the current result into the batch listing workbench for structured production.',
+      zh: '把当前结果带入模板中心，继续做结构化生产。',
+      en: 'Send the current result into the template center workbench for structured production.',
     },
     {
       zh: '将结果同步到知识库或品牌库，形成后续 AI 可消费的上下文资产。',
@@ -297,7 +297,7 @@ export default function ChatWorkspacePage() {
         sourceLabel: copy(locale, '来自 AI 对话工作台保存', 'Saved from AI chat workbench'),
         zh: {
           title: '对话结果模板',
-          summary: '由当前对话结果沉淀出的可复用模板，可继续在模板库或批量 Listing 中使用。',
+          summary: '由当前对话结果沉淀出的可复用模板，可继续在模板库或模板中心 中使用。',
           scenario: '适合把会话结果转成可复用运营模板',
         },
         en: {
@@ -325,16 +325,16 @@ export default function ChatWorkspacePage() {
         id: `chat-batch-${Date.now()}`,
         module: 'chat',
         title: {
-          zh: '对话结果已发送到批量 Listing',
-          en: 'Conversation result sent to batch listing',
+          zh: '对话结果已发送到模板中心',
+          en: 'Conversation result sent to template center',
         },
         detail: {
           zh: '后续可在批量内容工作台继续结构化生产',
-          en: 'Continue structured production in the batch listing workbench',
+          en: 'Continue structured production in the template center workbench',
         },
         createdAt: new Date().toISOString(),
       })
-      showToast(copy(locale, '已写入批量 Listing 回流记录', 'Sent to batch-listing workflow'), 'success')
+      showToast(copy(locale, '已写入模板中心 回流记录', 'Sent to batch-listing workflow'), 'success')
     } else {
       void productWorkspaceRepository.saveWorkflowEvent({
         id: `chat-asset-${Date.now()}`,
@@ -546,8 +546,8 @@ export default function ChatWorkspacePage() {
                     en: 'Save as Agent Template',
                   },
                   {
-                    zh: '发送到批量 Listing 工作台',
-                    en: 'Send to Batch Listing',
+                    zh: '发送到模板中心',
+                    en: 'Send to Template Center',
                   },
                   {
                     zh: '同步进知识库 / 品牌库',

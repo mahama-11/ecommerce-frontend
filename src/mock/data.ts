@@ -154,7 +154,7 @@ const SOLUTION_TRANSLATIONS: Record<
       title: 'Multi-Store Seller',
       subtitle: 'Batch variation workflows to scale one asset into many outputs',
       audience: 'Distribution and multi-store operators',
-      features: ['Bulk Listing Generation', 'Bulk Image Variations', 'Sensitive Word Detection', 'Batch Background Removal'],
+      features: ['Template Center Workflow', 'Bulk Image Variations', 'Sensitive Word Detection', 'Batch Background Removal'],
     },
   },
   creativeCustomized: {

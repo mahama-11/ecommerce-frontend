@@ -400,12 +400,12 @@ function ProductListPage() {
         </motion.section>
 
         <motion.section variants={itemVariants} className="mb-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">批量操作栏（选中后激活）</div>
+          <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">模板中心交接（选中后激活）</div>
           <div className="flex flex-wrap items-center gap-2 rounded-[28px] border border-white/[0.06] bg-[var(--ecom-surface)] p-4 shadow-[0_16px_48px_rgba(0,0,0,0.42)]">
             <span className="text-sm text-white/50">已选 {selectedUnits.length} 个 SKU</span>
-            <Button disabled variant="quiet" size="sm">批量 Adopt</Button>
+            <Button disabled variant="quiet" size="sm">应用模板</Button>
             <ButtonLink to={selectedUnits.length ? `/products/workbench/downloads?productIds=${encodeURIComponent(selectedUnits.map(unit => unit.product.id).join(','))}&source=product-center` : '#'} variant="secondary" size="sm" className={selectedUnits.length ? '' : 'pointer-events-none opacity-45'}>查看交付历史</ButtonLink>
-            <span className="text-xs text-white/34">暂未开放的批量动作会保持不可点击。</span>
+            <span className="text-xs text-white/34">未开放的模板动作会保持不可点击。</span>
           </div>
         </motion.section>
 

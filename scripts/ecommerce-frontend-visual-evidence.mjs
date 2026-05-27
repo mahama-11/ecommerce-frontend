@@ -43,23 +43,41 @@ function readChangedFiles() {
 function routePlan(files) {
   const routes = new Map()
   const add = (id, path, surface) => routes.set(id, { id, path, surface })
+  const addCoreRuntimeInventory = () => {
+    add('product-center', '/products?dev=1', 'Product Center')
+    add('template-center', '/aiChat/template?dev=1', 'Template Center')
+    add('batch-listing-legacy', '/aiChat/batchListing?dev=1', 'Legacy Batch Listing Redirect')
+    add('product-batch-listing-legacy', '/products/workbench/batch-listing?dev=1', 'Legacy Product Batch Listing Redirect')
+    add('visual-tools-index', '/products/workbench/visual-tools?dev=1', 'Product Workbench')
+    add('visual-tools-ai-wearable', '/products/workbench/visual-tools/ai-wearable?dev=1', 'Product Workbench · AI Wearable')
+    add('production-prep', '/products/dev-product/production/prep?dev=1', 'Production Prep')
+  }
 
   if (files.length === 0) {
-    add('product-center', '/products?dev=1', 'Product Center')
-    add('visual-tools', '/products/workbench/visual-tools?dev=1', 'Product Workbench')
-    add('production-prep', '/products/dev-product/production/prep?dev=1', 'Production Prep')
+    addCoreRuntimeInventory()
     return [...routes.values()]
   }
 
+  addCoreRuntimeInventory()
   for (const file of files) {
     if (/src\/pages\/product\/ProductListPage\.tsx$/.test(file) || /src\/layouts\/ProductWorkbenchLayout\.tsx$/.test(file)) {
       add('product-center', '/products?dev=1', 'Product Center')
+      add('template-center', '/aiChat/template?dev=1', 'Template Center')
+      add('product-batch-listing-legacy', '/products/workbench/batch-listing?dev=1', 'Legacy Product Batch Listing Redirect')
     }
     if (/src\/pages\/product\/ProductDetailPage\.tsx$/.test(file) || /src\/pages\/product\/components\//.test(file)) {
       add('product-detail', '/products/dev-product?dev=1', 'Product Detail')
+      add('template-center', '/aiChat/template?dev=1', 'Template Center')
     }
     if (/src\/components\/product-workbench\//.test(file) || /src\/pages\/ProductVisualToolsPage\.tsx$/.test(file)) {
-      add('visual-tools', '/products/workbench/visual-tools?dev=1', 'Product Workbench')
+      add('visual-tools-index', '/products/workbench/visual-tools?dev=1', 'Product Workbench')
+      add('visual-tools-ai-wearable', '/products/workbench/visual-tools/ai-wearable?dev=1', 'Product Workbench · AI Wearable')
+      add('template-center', '/aiChat/template?dev=1', 'Template Center')
+    }
+    if (/src\/pages\/AgentTemplateMarketPage\.tsx$/.test(file) || /src\/router\/index\.tsx$/.test(file)) {
+      add('template-center', '/aiChat/template?dev=1', 'Template Center')
+      add('batch-listing-legacy', '/aiChat/batchListing?dev=1', 'Legacy Batch Listing Redirect')
+      add('product-batch-listing-legacy', '/products/workbench/batch-listing?dev=1', 'Legacy Product Batch Listing Redirect')
     }
     if (/src\/pages\/production\/PrepHubPage\.tsx$/.test(file) || /src\/layouts\/ProductionLayout\.tsx$/.test(file)) {
       add('production-prep', '/products/dev-product/production/prep?dev=1', 'Production Prep')
@@ -72,10 +90,7 @@ function routePlan(files) {
     }
   }
 
-  if (routes.size === 0) {
-    add('product-center', '/products?dev=1', 'Product Center')
-    add('production-prep', '/products/dev-product/production/prep?dev=1', 'Production Prep')
-  }
+  if (routes.size === 0) addCoreRuntimeInventory()
   return [...routes.values()]
 }
 
@@ -167,9 +182,67 @@ class CdpClient {
   close() { this.ws.close() }
 }
 
+function mockTemplateItem() {
+  return {
+    id: 'tpl-style-governance',
+    slug: 'style-governance-template',
+    toolSlug: 'ai-wearable',
+    name: 'QA Style Governance Template',
+    summary: 'Reusable ecommerce production template for layout governance evidence.',
+    modality: 'image',
+    executorType: 'image_tool',
+    series: 'visual',
+    capabilityType: 'image_generation',
+    interactionMode: 'guided',
+    coverAssetUrl: '',
+    platformTags: ['Amazon'],
+    industryTags: ['Apparel'],
+    scenarioTags: ['Template Center'],
+    isFeatured: true,
+    recommendScore: 98,
+    isFavorited: false,
+    favoriteCount: 12,
+    useCount: 128,
+    successRateHint: 0.92,
+  }
+}
+
+function mockTemplateFacets() {
+  return {
+    platforms: [{ key: 'amazon', label: 'Amazon', count: 1 }],
+    modalities: [{ key: 'image', label: 'Image', count: 1 }],
+    series: [{ key: 'visual', label: 'Visual', count: 1 }],
+    capabilities: [{ key: 'image_generation', label: 'Image Generation', count: 1 }],
+  }
+}
+
 function mockApiPayload(url) {
   if (url.includes('/api/v1/ecommerce/auth/session')) {
     return { code: 0, message: 'ok', data: { user: { full_name: 'Dev User', email: 'dev@agent-ecommerce.com', org_name: 'Local QA' }, credits: { balance: 999 }, access: { product_roles: ['admin'] } } }
+  }
+  if (url.includes('/api/v1/ecommerce/template-center/catalog/facets')) {
+    return { code: 0, message: 'ok', data: mockTemplateFacets() }
+  }
+  if (url.includes('/api/v1/ecommerce/template-center/catalog/recommendations')) {
+    return { code: 0, message: 'ok', data: [mockTemplateItem()] }
+  }
+  if (/\/api\/v1\/ecommerce\/template-center\/catalog\/[^/?]+/.test(url)) {
+    return { code: 0, message: 'ok', data: {
+      catalog: mockTemplateItem(),
+      locale: { description: 'Template Center QA detail', scenarioDescription: 'Governed style evidence', inputDescription: 'SKU context', outputDescription: 'Reusable template output' },
+      version: { id: 'tpl-version-1', versionNo: 1, versionLabel: 'v1', status: 'ready' },
+      schema: { inputSchema: {}, outputSchema: {}, executionSchema: {}, promptLayers: {}, defaultVariables: {}, toolBinding: {} },
+      examples: [],
+    } }
+  }
+  if (url.includes('/api/v1/ecommerce/template-center/catalog')) {
+    return { code: 0, message: 'ok', data: [mockTemplateItem()] }
+  }
+  if (url.includes('/api/v1/ecommerce/template-center/favorites')) {
+    return { code: 0, message: 'ok', data: [] }
+  }
+  if (url.includes('/api/v1/ecommerce/template-center/instances')) {
+    return { code: 0, message: 'ok', data: [] }
   }
   if (url.includes('/api/v1/ecommerce/products')) {
     const product = { id: 'dev-product', product_id: 'dev-product', title: 'QA Style Governance SKU', sku_code: 'QA-STYLE-001', skuCode: 'QA-STYLE-001', status: 'ready', assets: [], created_at: new Date().toISOString() }
@@ -223,14 +296,29 @@ async function captureRoute(cdp, route, screenshotDir, viewport) {
   const overflow = await cdp.send('Runtime.evaluate', { expression: `(() => {
     const nodes = [...document.querySelectorAll('body *')]
     const findings = []
+    const hasScrollableXAncestor = el => {
+      let current = el.parentElement
+      while (current && current !== document.body) {
+        const s = getComputedStyle(current)
+        if ((s.overflowX === 'auto' || s.overflowX === 'scroll') && current.scrollWidth > current.clientWidth + 2) return true
+        current = current.parentElement
+      }
+      return false
+    }
     for (const el of nodes) {
       const rect = el.getBoundingClientRect()
       if (rect.width <= 0 || rect.height <= 0) continue
       const style = getComputedStyle(el)
+      const className = String(el.className || '').slice(0, 160)
       const text = (el.innerText || el.getAttribute('aria-label') || '').trim().replace(/\\s+/g, ' ').slice(0, 120)
-      if (rect.right > window.innerWidth + 2 || rect.left < -2) findings.push({ type: 'viewport-horizontal-overflow', tag: el.tagName, className: String(el.className || '').slice(0, 120), text, rect: { left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) } })
-      if ((style.overflow === 'hidden' || style.overflowX === 'hidden') && el.scrollWidth > el.clientWidth + 2 && text.length > 8) findings.push({ type: 'potential-text-clipping-x', tag: el.tagName, className: String(el.className || '').slice(0, 120), text, clientWidth: el.clientWidth, scrollWidth: el.scrollWidth })
-      if ((style.overflow === 'hidden' || style.overflowY === 'hidden') && el.scrollHeight > el.clientHeight + 2 && text.length > 8) findings.push({ type: 'potential-text-clipping-y', tag: el.tagName, className: String(el.className || '').slice(0, 120), text, clientHeight: el.clientHeight, scrollHeight: el.scrollHeight })
+      const isDecorative = text.length === 0 && !['IMG', 'SVG', 'BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)
+      const isScreenReaderOnly = /(?:^|\s)sr-only(?:\s|$)/.test(className)
+      const isIntentionalClamp = /(?:^|\s)line-clamp-\d+(?:\s|$)/.test(className) || style.webkitLineClamp !== 'none'
+      const isOffCanvas = rect.right <= 1 || rect.left >= window.innerWidth - 1
+      const canOwnTextClipping = el.children.length <= 2 || ['P', 'SPAN', 'BUTTON', 'A', 'H1', 'H2', 'H3', 'LABEL', 'INPUT', 'TEXTAREA'].includes(el.tagName)
+      if (!isScreenReaderOnly && !isOffCanvas && !isDecorative && !hasScrollableXAncestor(el) && (rect.right > window.innerWidth + 2 || rect.left < -2)) findings.push({ type: 'viewport-horizontal-overflow', tag: el.tagName, className, text, rect: { left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) } })
+      if (!isScreenReaderOnly && canOwnTextClipping && !isIntentionalClamp && (style.overflow === 'hidden' || style.overflowX === 'hidden') && el.scrollWidth > el.clientWidth + 2 && text.length > 8) findings.push({ type: 'potential-text-clipping-x', tag: el.tagName, className, text, clientWidth: el.clientWidth, scrollWidth: el.scrollWidth })
+      if (!isScreenReaderOnly && canOwnTextClipping && !isIntentionalClamp && (style.overflow === 'hidden' || style.overflowY === 'hidden') && el.scrollHeight > el.clientHeight + 2 && text.length > 8) findings.push({ type: 'potential-text-clipping-y', tag: el.tagName, className, text, clientHeight: el.clientHeight, scrollHeight: el.scrollHeight })
       if (findings.length >= 30) break
     }
     return { viewport: { width: window.innerWidth, height: window.innerHeight }, bodyScrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, findings }
@@ -264,6 +352,10 @@ async function captureRoute(cdp, route, screenshotDir, viewport) {
 
 async function main() {
   const routes = routePlan(changedFiles)
+  if (args.includes('--route-plan-only')) {
+    console.log(JSON.stringify({ routes }, null, 2))
+    return
+  }
   const screenshotDir = join(root, screenshotDirRel)
   mkdirSync(screenshotDir, { recursive: true })
   let server = null
@@ -279,10 +371,14 @@ async function main() {
       for (const viewport of viewports) screenshots.push(await captureRoute(cdp, route, screenshotDir, viewport))
     }
     const overflowFindings = screenshots.flatMap(item => (item.overflow_findings || []).map(finding => ({ route_id: item.route_id, viewport_id: item.viewport_id, ...finding })))
+    const hasConsoleOrNetworkNotes = screenshots.some(item => item.console_error_count > 0 || item.network_failure_count > 0)
+    const hasLayoutFailures = overflowFindings.length > 0
+    const manifestStatus = hasLayoutFailures ? 'FAIL' : (hasConsoleOrNetworkNotes ? 'PASS_WITH_NOTES' : 'PASS')
+    const manifestAcceptance = hasLayoutFailures ? 'FAIL' : (hasConsoleOrNetworkNotes ? 'ACCEPTED_WITH_NOTES' : 'PASS')
     const manifest = {
-      schema_version: '1.1',
-      status: screenshots.some(item => item.console_error_count > 0 || item.network_failure_count > 0) ? 'PASS_WITH_NOTES' : 'PASS',
-      acceptance_status: screenshots.some(item => item.console_error_count > 0 || item.network_failure_count > 0) ? 'ACCEPTED_WITH_NOTES' : 'PASS',
+      schema_version: '1.2',
+      status: manifestStatus,
+      acceptance_status: manifestAcceptance,
       generated_by: 'scripts/ecommerce-frontend-visual-evidence.mjs',
       generated_at: new Date().toISOString(),
       frontend_root: root,
@@ -292,7 +388,7 @@ async function main() {
       viewports,
       screenshots,
       overflow_report: {
-        status: overflowFindings.length ? 'PASS_WITH_NOTES' : 'PASS',
+        status: overflowFindings.length ? 'FAIL' : 'PASS',
         finding_count: overflowFindings.length,
         findings: overflowFindings,
       },
@@ -308,6 +404,7 @@ async function main() {
     }
     writeJson(reportRel, manifest)
     console.log(JSON.stringify(manifest, null, 2))
+    if (hasLayoutFailures) process.exitCode = 1
   } catch (error) {
     const manifest = {
       schema_version: '1.0',
