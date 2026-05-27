@@ -78,9 +78,15 @@ async function ensureSessionPromptTemplate(session: VisualSession, locale = 'zh-
   const updated = await request<VisualSession>(`${VWF}/${session.id}`, { method: 'PATCH', body: JSON.stringify({ template_id: templateId }), })
   setStored(sessionKey(session.product_id), updated)
   return updated.template_id || templateId }
-async function getStageView(productId: string): Promise<StageViewDTO> {
+type StageViewProjection = 'sources' | 'sandbox' | 'workshop' | 'full'
+async function getStageView(productId: string, projection: StageViewProjection = 'full'): Promise<StageViewDTO> {
   const session = await ensureVisualSession(productId)
-  return request<StageViewDTO>(`${VWF}/${session.id}/stage-view`, { method: 'GET' }) }
+  const suffix = projection && projection !== 'full' ? `?projection=${encodeURIComponent(projection)}` : ''
+  return request<StageViewDTO>(`${VWF}/${session.id}/stage-view${suffix}`, { method: 'GET' }) }
+async function listGenerationVersionDTOs(productId: string): Promise<GenerationVersionDTO[]> {
+  const session = await ensureVisualSession(productId)
+  const result = await request<{ items: GenerationVersionDTO[] }>(`${VWF}/${session.id}/generation-versions`, { method: 'GET' })
+  return result.items ?? [] }
 export type ProductionArchitectureState = { businessFlow?: BusinessWorkflowDAG
   integrationVerdict?: IntegrationVerdict
   rollbackSnapshot?: RollbackSnapshot
@@ -90,7 +96,7 @@ export async function getProductionArchitectureState(productId: string): Promise
   if (isDevMode()) {
     await delay(200)
     return { businessFlow: { schema_version: 'ecommerce_business_flow.v1', flow_id: productId, status: 'partial', persistence: 'demo', nodes: ['source', 'deconstruction', 'prompt_plan', 'generation', 'workshop', 'product_center_writeback', 'delivery_download', 'charge_metering'].map((node, idx) => ({ node_id: node, label: node.replaceAll('_', ' '), owner: idx < 4 ? 'backend/runtime' : 'frontend/backend', status: idx < 4 ? 'ready' : 'missing', })), edges: [], }, integrationVerdict: { schema_version: 'ecommerce_integration_verdict.v1', status: 'partial_pass', ready_count: 4, total_count: 8, gates: [] }, rollbackSnapshot: { schema_version: 'ecommerce_rollback_snapshot.v1', session_id: productId, status: 'available', scopes: [] }, releaseReadiness: { schema_version: 'ecommerce_release_readiness.v1', status: 'blocked', gates: [] }, updatedAt: new Date().toISOString(), } }
-  const stage = await getStageView(productId)
+  const stage = await getStageView(productId, 'sandbox')
   return { businessFlow: stage.business_flow, integrationVerdict: stage.integration_verdict, rollbackSnapshot: stage.rollback_snapshot, releaseReadiness: stage.release_readiness, updatedAt: stage.updated_at, } }
 export type PromptDiffSummary = { added: string[]
   removed: string[]
@@ -138,7 +144,7 @@ function promptPlanSummary(stage: StageViewDTO): PromptPlanSummary {
   const promptBlockers = [ ...(Array.isArray(plan.blockers) ? plan.blockers : []), ...(Array.isArray(stage.readiness?.blockers) ? stage.readiness.blockers.filter(blocker => !blocker.target || ['prompt_plan', 'prompt_planner', 'source_references', 'deconstruction_job', 'runtime_capabilities'].includes(blocker.target)) : []), ]
   return { status: String(plan.status ?? 'unknown'), source: String(metadata.source ?? 'backend_intent_fusion'), promptId: plan.prompt_id, sceneType: plan.scene_type, variables: plan.variables ?? {}, metadata, diff: { added: toStrings(rawDiff.added), removed: toStrings(rawDiff.removed), changed: toStrings(rawDiff.changed), status: typeof rawDiff.status === 'string' ? rawDiff.status : undefined, }, readiness: stage.readiness ? { overall: stage.readiness.overall, prompt: stage.readiness.prompt, generation: stage.readiness.generation, blockers: stage.readiness.blockers, } : undefined, blockers: promptBlockers, } }
 export async function getPromptPlanSummary(productId: string): Promise<PromptPlanSummary> {
-  return promptPlanSummary(await getStageView(productId)) }
+  return promptPlanSummary(await getStageView(productId, 'sandbox')) }
 export async function requestPromptPlanner(productId: string, opts?: { marketplace?: string; locale?: string; templateId?: string; promptVariables?: Record<string, unknown> }): Promise<{ runtimeJobId?: string; status: string }> {
   const session = await ensureVisualSession(productId)
   const locale = opts?.locale ?? 'zh-CN'
@@ -296,7 +302,7 @@ export async function listParsingSources(productId: string): Promise<ParsingSour
   const localSources = getLocalSources(productId)
   if (isDevMode()) return localSources
   try {
-    const stage = await getStageView(productId)
+    const stage = await getStageView(productId, 'sources')
     const sourceRefs = stage.source_references?.length ? stage.source_references : stage.source_reference ? [stage.source_reference] : []
     if (sourceRefs.length === 0) return localSources
     const backendSources = await Promise.all(sourceRefs.map(async (sourceRef) => {
@@ -375,25 +381,25 @@ export async function getParsingResult(productId: string): Promise<DualTrackPars
   if (isDevMode()) {
     await delay(1200)
     return mockDualTrackParsing() }
-  return stageToParsing(await getStageView(productId)) }
+  return stageToParsing(await getStageView(productId, 'sources')) }
 export async function evaluateDecisionTree(req: EvaluateDecisionTreeRequest): Promise<LlmDecisionTreeResult> {
   if (isDevMode()) {
     await delay(800)
     return mockDecisionTree() }
   const session = await ensureVisualSession(req.productId)
-  const stage = await getStageView(req.productId)
+  const stage = await getStageView(req.productId, 'sources')
   void session
   return stageToDecisionTree(stage) }
 export async function getDecisionTree(productId: string): Promise<LlmDecisionTreeResult> {
   if (isDevMode()) {
     await delay(600)
     return mockDecisionTree() }
-  return stageToDecisionTree(await getStageView(productId)) }
+  return stageToDecisionTree(await getStageView(productId, 'sources')) }
 export async function updateParsedAttribute(productId: string, key: string, value: unknown): Promise<void> {
   if (isDevMode()) {
     await delay(300)
     return }
-  const stage = await getStageView(productId)
+  const stage = await getStageView(productId, 'sources')
   const target = (stage.deconstruction_elements ?? []).find(e => e.element_key === key || e.id === key)
   if (!target) return
   await request(`${VWF}/${stage.session_id || stage.id}/deconstruction-elements/${target.id}`, { method: 'PATCH', body: JSON.stringify({ value: { value }, metadata: { updated_from: 'prep-attribute-editor' } }), }) }
@@ -401,7 +407,7 @@ export async function updateAttentionDecision(productId: string, elementId: stri
   if (isDevMode()) {
     await delay(200)
     return }
-  const stage = await getStageView(productId)
+  const stage = await getStageView(productId, 'sources')
   if (elementId.startsWith('fixed:') && option?.promptSlot) {
     const slot = option.promptSlot
     const sourceRole = slot.includes('sku') ? 'sku' : 'reference'
@@ -420,7 +426,7 @@ export async function updateDriftControl(productId: string, referenceBias: numbe
     await delay(150)
     return }
   const session = await ensureVisualSession(productId)
-  const stage = await getStageView(productId)
+  const stage = await getStageView(productId, 'sources')
   await request<VisualSession>(`${VWF}/${session.id}`, { method: 'PATCH', body: JSON.stringify({ intent_spec: { ...(stage.intent_spec ?? {}), schema_version: stage.intent_spec?.schema_version ?? 'v1', product_id: productId, requirements: { ...(stage.intent_spec?.requirements ?? {}), attribute_drift: { reference_bias: normalized, sku_bias: 100 - normalized, reference_weight: normalized, sku_weight: 100 - normalized, mode: normalized > 65 ? 'focus_reference' : normalized < 35 ? 'focus_sku' : 'balanced', }, }, metadata: { ...(stage.intent_spec?.metadata ?? {}), updated_from: 'prep-attribute-drift-slider', }, }, }), }) }
 function normalizeIntentType(input: string): IntentType {
   const allowed: IntentType[] = ['background_replace', 'model_swap', 'pose_control', 'style_transfer', 'scene_generation', 'image_enhancement', 'batch_variant']
@@ -460,7 +466,7 @@ export async function listIntents(productId: string): Promise<CompiledIntent[]> 
   if (isDevMode()) {
     await delay(300)
     return MOCK_INTENTS }
-  return stageToIntents(await getStageView(productId), productId) }
+  return stageToIntents(await getStageView(productId, 'sandbox'), productId) }
 async function persistIntents(productId: string, intents: CompiledIntent[]): Promise<CompiledIntent[]> {
   const session = await ensureVisualSession(productId)
   const updated = await request<VisualSession>(`${VWF}/${session.id}`, { method: 'PATCH', body: JSON.stringify({ intent_spec: { schema_version: 'v1', tool_slug: 'production-pipeline', product_id: productId, selections: intents.map((item, index) => ({ element_id: `manual-${index + 1}`, decision: 'keep', label: item.description, value: item.params })), requirements: { frontend_intent_count: intents.length }, }, }), })
@@ -509,8 +515,8 @@ export async function getGenerationExecutionStatus(productId: string, versionId:
   if (isDevMode()) {
     await delay(700)
     return { versionId, status: 'completed', stage: 'completed', progress: 100, resultAssetCount: 1, terminal: true, successful: true, message: '已生成 1 张演示结果图。' } }
-  const stage = await getStageView(productId)
-  const version = (stage.generation_versions ?? []).find(item => item.version_id === versionId)
+  const versions = await listGenerationVersionDTOs(productId)
+  const version = versions.find(item => item.version_id === versionId)
   if (!version) {
     return { versionId, status: 'queued', stage: 'queued', progress: 0, resultAssetCount: 0, terminal: false, successful: false, message: '生产任务已提交，正在等待生成服务返回进度。请保持本页打开。' } }
   return generationExecutionStatus(version) }
@@ -528,7 +534,7 @@ export async function executeIntents(productId: string, intentIds: string[], con
     await delay(2000)
     return { jobId: `exec-${uid()}`, versionId: `gv-${uid()}`, status: 'queued' } }
   const session = await ensureVisualSession(productId)
-  const stage = await getStageView(productId)
+  const stage = await getStageView(productId, 'sandbox')
   const promptPlan = stage.prompt_plan
   if (!promptPlan || promptPlan.status !== 'ready' || !promptPlan.prompt_id) { contractNeeded('生成方案还没准备好。请先点击左侧「生成出图方案」，确认后再开始生产。') }
   const response = await request<GenerationVersionDTO>(`${VWF}/${session.id}/generation-versions`, { method: 'POST', body: JSON.stringify({ prompt_id: promptPlan.prompt_id, status: 'queued', stage: 'queued', progress: 0, idempotency_key: `generation:${session.id}:${promptPlan.prompt_id}:${intentIds.join(',')}`, metadata: buildSafeGenerationMetadata(intentIds, config), }), })
@@ -549,7 +555,7 @@ export async function executeFanoutIntents( productId: string, intentIds: string
     return devBatch }
   if (tasks.length === 0) { contractNeeded('没有可提交的出图槽位；请先在 Prep 上传至少一张 SKU 图片，并保留至少一个生产槽位。') }
   const session = await ensureVisualSession(productId)
-  const stage = await getStageView(productId)
+  const stage = await getStageView(productId, 'sandbox')
   const promptPlan = stage.prompt_plan
   if (!promptPlan || promptPlan.status !== 'ready' || !promptPlan.prompt_id) { contractNeeded('生成方案还没准备好。请先点击左侧「生成出图方案」，确认后再开始生产。') }
   const maxConcurrency = Math.max(1, Math.min(config?.maxConcurrency ?? tasks.length, tasks.length))
@@ -631,19 +637,19 @@ export async function getTaskQuota(productId: string): Promise<TaskQuota> {
   if (isDevMode()) {
     await delay(200)
     return MOCK_QUOTA }
-  const stage = await getStageView(productId)
+  const stage = await getStageView(productId, 'sandbox')
   return { totalSlots: 1, usedSlots: stage.status === 'running' ? 1 : 0, reservedSlots: 0 } }
 export async function getExecutionConfig(productId: string): Promise<ExecutionConfig> {
   if (isDevMode()) {
     await delay(200)
     return MOCK_EXECUTION_CONFIG }
-  await getStageView(productId)
+  await getStageView(productId, 'sandbox')
   return MOCK_EXECUTION_CONFIG }
 export async function updateExecutionConfig(productId: string, config: ExecutionConfig): Promise<ExecutionConfig> {
   if (isDevMode()) {
     await delay(300)
     return config }
-  await getStageView(productId)
+  await getStageView(productId, 'sandbox')
   return config }
 function generationVersionLabel(index: number): string {
   return `V${index + 1}.0` }
@@ -670,8 +676,7 @@ export async function listGenerationVersions(productId: string): Promise<Version
   if (isDevMode()) {
     await delay(300)
     return [] }
-  const stage = await getStageView(productId)
-  const versions = [...(stage.generation_versions ?? [])].sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
+  const versions = [...(await listGenerationVersionDTOs(productId))].sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
   const groups = new Map<string, GenerationVersionDTO[]>()
   versions.forEach((version) => {
     const key = generationGroupId(version)
@@ -690,8 +695,7 @@ export async function listVariants(productId: string): Promise<AssetVariant[]> {
   if (isDevMode()) {
     await delay(400)
     return MOCK_VARIANTS }
-  const stage = await getStageView(productId)
-  const variants = (stage.generation_versions ?? []).flatMap(version => (version.result_assets ?? []).map(asset => ({ version, asset, })))
+  const variants = (await listGenerationVersionDTOs(productId)).flatMap(version => (version.result_assets ?? []).map(asset => ({ version, asset, })))
   return Promise.all(variants.map(async ({ version, asset }) => {
     const groupId = generationGroupId(version)
     const assetContentPath = asset.asset_content_url || (asset.asset_id ? `/api/v1/ecommerce/assets/${asset.asset_id}/content` : '')
