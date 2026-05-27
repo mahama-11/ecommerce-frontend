@@ -21,6 +21,9 @@ test('Product Center row actions keep SKU context for detail, legacy visual prod
   assert.match(source, /to=\{`\/products\/\$\{product\.id\}`\}/)
   assert.match(source, /return `\/products\/\$\{encodeURIComponent\(productId\)\}\/production\/prep`/)
   assert.match(source, /to=\{visualProductionHref\(product\.id\)\}/)
+  assert.match(source, /new URLSearchParams\(searchParams\)/)
+  assert.match(source, /params\.set\('productId', productId\)/)
+  assert.match(source, /params\.set\('source', 'sku-queue'\)/)
   assert.match(source, /to=\{productCenterFocusHref\(product\.id\)\}/)
   assert.match(source, /focusProductCenter\(product\.id\)/)
   assert.match(source, /进入视觉生产/)
@@ -32,8 +35,9 @@ test('Product Center row actions stay compact without icon-only pressure in the 
   assert.doesNotMatch(source, /<Image className="h-3\.5 w-3\.5" \/>进入视觉生产/)
   assert.doesNotMatch(source, /<PackageCheck className="h-3\.5 w-3\.5" \/>进入产品中心/)
   assert.doesNotMatch(source, /Image, LoaderCircle, PackageCheck/)
-  assert.match(source, /xl:flex-nowrap/)
-  assert.match(source, /minmax\(220px,1\.05fr\)/)
+  assert.match(source, /max-2xl:grid-cols-1/)
+  assert.match(source, /2xl:flex-nowrap/)
+  assert.match(source, /minmax\(260px,1\.2fr\)/)
 })
 
 test('Product Center visible copy does not expose internal page-type or abstract governance wording', () => {
