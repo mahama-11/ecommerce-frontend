@@ -382,11 +382,11 @@ const zh = { common: { brand: 'Agent Ecommerce', loading: '加载中...',
         listing: 'Listing', export: '导出' }, rules: {
         rule1: '生成的素材会自动关联到当前选中的商品。', rule2: '工具参数会自动读取商品的元数据进行初始化。', rule3: '生成的记录可随时在下载中心追溯。' }
     }, visualToolsStudio: {
-      eyebrow: '商品视觉创作站', title: '围绕当前商品生成可售卖视觉素材', subtitle: '先确定商品，再看素材与预期效果，选择一个视觉目标，然后进入生成。页面重点是下一步，而不是把所有能力一次性铺开。',
+      eyebrow: '商品视觉创作站', title: '围绕当前商品生成可售卖视觉素材', subtitle: '选择商品，查看素材缺口和预期效果，确认一个视觉目标后进入生成。',
       currentProduct: '当前商品', noProductLabel: '从这里开始', chooseProductFirst: '请先选择或创建商品', primaryChooseProduct: '选择商品', primaryReady: '生成商品视觉素材', chooseGoal: '选择视觉目标',
       steps: { product: '商品', chooseProduct: '选择商品', visualGoal: '视觉目标', chooseGoal: '选择目标', result: '结果去向', resultDesc: '保存后用于模板与交付' },
       previewTitle: '预期效果预览', previewDescReady: '当前商品和视觉目标会决定下一组图片方向。进入生成前，先把结果预期放在主舞台上。', previewDescEmpty: '选择商品后，这里会承接更清晰的结果预期与下一步。',
-      assetTitle: '商品素材', videoLater: '视频素材可后续补充', productSelector: '本次视觉任务的商品', recommendedTitle: '推荐下一步视觉目标', recommendedDesc: '先聚焦一个高价值目标，不把完整能力清单当作首屏主角。',
+      assetTitle: '商品素材', videoLater: '视频素材可后续补充', productSelector: '本次视觉任务的商品', recommendedTitle: '推荐下一步视觉目标', recommendedDesc: '优先处理当前商品最需要补齐的主图或场景图，确认后再进入生成。',
       inspectorTitle: '已选视觉目标', actionNoteReady: '生成结果会回到当前商品，可继续用于模板中心或下载中心。', actionNoteEmpty: '请先选择商品，让生成结果有明确去向。', destinationTitle: '结果会保存到商品素材', destinationDesc: '图片生成后会归档到当前商品，并继续进入详情复核、模板中心或下载中心。',
       helpTitle: '怎么继续', helpProduct: '先从一个商品出发，避免视觉结果没有上下文。', helpGoal: '一次只选择一个视觉目标，更多工具在下方保持可用。', helpVideo: '视频能力作为后续选项保留，但不干扰当前图片创作。', comingSoon: '即将开放', exploreMore: '查看更多视觉目标', exploreMoreHint: '次级工具库 · 推荐目标不够时再展开'
     } }, pages: { productList: '商品列表',

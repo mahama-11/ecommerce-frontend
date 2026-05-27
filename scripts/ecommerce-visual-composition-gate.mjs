@@ -25,9 +25,32 @@ const requiredDocPhrases = [
 const requiredPrimitives = ['ProductHeroStage', 'VisualOutcomePreview']
 const recommendedPrimitives = ['ProductAssetStrip', 'RecommendedToolRail', 'GenerationActionDock', 'WorkflowProgressRail', 'ResultDestinationCard', 'SoftInspectorPanel']
 const technicalTerms = ['pipeline', 'backend', 'contract', 'runtime', 'attach-back', 'station']
+const visibleCopySources = [
+  ...corePages,
+  'src/i18n/zh.ts',
+  'src/i18n/en.ts',
+]
+const forbiddenAbstractCopy = [
+  { code: 'abstract_capability_list', pattern: /完整能力清单|能力清单|full capability list/i },
+  { code: 'abstract_first_screen', pattern: /首屏主角|页面重点是|一次性铺开|scanning the full capability/i },
+  { code: 'abstract_high_value_goal', pattern: /高价值目标|focused goal instead of/i },
+  { code: 'internal_page_type_copy', pattern: /Workspace Home\s*·\s*SKU Business Entry|business entry/i },
+]
 const failures = []
 const warnings = []
 const pageReports = []
+const copyReports = []
+
+for (const rel of [...new Set(visibleCopySources)]) {
+  const path = join(root, rel)
+  if (!existsSync(path)) continue
+  const text = readFileSync(path, 'utf8')
+  const hits = forbiddenAbstractCopy.filter(item => item.pattern.test(text)).map(item => item.code)
+  if (hits.length) {
+    copyReports.push({ file: rel, forbidden_abstract_copy: hits })
+    failures.push(`copy.abstract_product_language: ${rel} contains abstract governance/capability-list copy (${hits.join(', ')})`)
+  }
+}
 
 if (!existsSync(join(root, docRel))) failures.push(`composition.backbone_missing: ${docRel}`)
 else {
@@ -75,6 +98,7 @@ const result = {
   required_primitives: requiredPrimitives,
   recommended_primitives: recommendedPrimitives,
   pages: pageReports,
+  copy_sources: copyReports,
   failures,
   warnings,
 }

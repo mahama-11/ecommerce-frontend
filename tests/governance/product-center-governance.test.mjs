@@ -36,6 +36,12 @@ test('Product Center row actions stay compact without icon-only pressure in the 
   assert.match(source, /minmax\(220px,1\.05fr\)/)
 })
 
+test('Product Center visible copy does not expose internal page-type or abstract governance wording', () => {
+  const source = productList()
+  assert.doesNotMatch(source, /Workspace Home|Business Entry|业务入口，不是单纯|页面重点|完整能力清单|首屏主角/)
+  assert.match(source, /查看每个 SKU 的素材、Listing 和交付状态，直接进入下一步处理。/)
+})
+
 test('Product Workbench top nav does not expose redundant Product Center brand/menu item', () => {
   const source = productLayout()
   assert.doesNotMatch(source, /<Link to="\/products" className="whitespace-nowrap font-semibold tracking-tight text-white">Product Center<\/Link>/)

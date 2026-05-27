@@ -330,9 +330,9 @@ function ProductListPage() {
       <div className="relative mx-auto w-full max-w-[1400px] px-5 pb-10">
         <motion.header id="product-center-overview" variants={itemVariants} className="mb-5">
           <ProductHeroStage
-            eyebrow="Workspace Home · SKU Business Entry"
+            eyebrow="SKU 工作台"
             title="商品队列工作台"
-            description="从这里判断当前 SKU 该先补素材、进入视觉生产、完善 Listing，还是交付导出；它是业务入口，不是单纯 SKU 表格。"
+            description="查看每个 SKU 的素材、Listing 和交付状态，直接进入下一步处理。"
             objectLabel="当前聚焦 SKU"
             objectValue={focusedUnit ? `${focusedUnit.product.skuCode} · ${focusedUnit.product.title}` : '等待 SKU 数据'}
             primaryAction={{ label: '新建 SKU', onClick: () => setShowCreateModal(true) }}

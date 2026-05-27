@@ -72,6 +72,33 @@ test('fails over-boxed first screen with deep nested cards and overloaded tool g
   assert.match(payload.failures.join('\n'), /composition\.grid_overload/)
 })
 
+test('fails abstract governance/capability-list copy in visible visual-tool i18n', () => {
+  const root = makeProject({
+    'docs/product-ux-visual-backbone.md': visualBackbone,
+    'src/pages/ProductVisualToolsPage.tsx': `
+      import { ProductHeroStage, VisualOutcomePreview, ProductAssetStrip, RecommendedToolRail, GenerationActionDock, WorkflowProgressRail, ResultDestinationCard, SoftInspectorPanel } from '@/components/product-composition'
+      export default function Page() {
+        return <main>
+          <ProductHeroStage title="Create product visuals" primaryAction={{ label: 'Choose product' }} />
+          <WorkflowProgressRail steps={[]} />
+          <VisualOutcomePreview title="Result preview" />
+          <ProductAssetStrip assets={[]} />
+          <RecommendedToolRail tools={[]} />
+          <GenerationActionDock primaryAction={{ label: 'Generate visuals' }} />
+          <ResultDestinationCard title="Saved to product assets" />
+          <SoftInspectorPanel title="Details" />
+        </main>
+      }
+    `,
+    'src/i18n/zh.ts': `export default { product: { visualToolsStudio: { recommendedDesc: '先聚焦一个高价值目标，不把完整能力清单当作首屏主角。' } } }`,
+  })
+  const result = runGate(root)
+  assert.notEqual(result.status, 0)
+  const payload = JSON.parse(result.stdout)
+  assert.match(payload.failures.join('\n'), /copy\.abstract_product_language/)
+  assert.match(JSON.stringify(payload.copy_sources), /abstract_capability_list/)
+})
+
 test('passes task-stage composition with semantic primitives and weakened system status', () => {
   const root = makeProject({
     'docs/product-ux-visual-backbone.md': visualBackbone,
