@@ -198,23 +198,23 @@ function ProductListPage() {
     return `/products/${encodeURIComponent(productId)}/production/prep`
   }
 
-  function productCenterFocusHref(productId: string) {
+  function scopedSearchParams(productId: string, source: string) {
     const params = new URLSearchParams(searchParams)
     params.set('productId', productId)
-    params.set('source', 'sku-queue')
-    return `/products?${params.toString()}`
+    params.set('source', source)
+    return params
   }
 
-  function focusProductCenter(productId: string) {
-    setFocusedProductId(productId)
-    window.requestAnimationFrame(() => {
-      document.getElementById('product-center-overview')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
-    })
+  function productQueueFocusHref(productId: string) {
+    return `/products?${scopedSearchParams(productId, 'sku-queue').toString()}`
   }
 
-  function openProductCenter(productId: string) {
-    navigate(productCenterFocusHref(productId))
-    focusProductCenter(productId)
+  function visualToolsCenterHref(productId: string) {
+    return `/products/workbench/visual-tools?${scopedSearchParams(productId, 'sku-queue').toString()}`
+  }
+
+  function openVisualToolsCenter(productId: string) {
+    navigate(visualToolsCenterHref(productId))
   }
 
   async function handleImportFile(file: File) {
@@ -426,7 +426,7 @@ function ProductListPage() {
                       <div className="flex min-w-0 flex-wrap gap-1.5 2xl:flex-nowrap">
                         <ButtonLink to={`/products/${product.id}`} onClick={event => event.stopPropagation()} variant="primary" size="sm" className="px-2.5">详情</ButtonLink>
                         <ButtonLink to={visualProductionHref(product.id)} onClick={event => event.stopPropagation()} variant="secondary" size="sm" className="px-2.5">进入视觉生产</ButtonLink>
-                        <Button onClick={event => { event.stopPropagation(); openProductCenter(product.id) }} variant="quiet" size="sm" className="px-2.5">进入产品中心</Button>
+                        <Button onClick={event => { event.stopPropagation(); openVisualToolsCenter(product.id) }} variant="quiet" size="sm" className="px-2.5">进入视觉工具中心</Button>
                       </div>
                     </div>
                   )
@@ -473,7 +473,7 @@ function ProductListPage() {
         <motion.section variants={itemVariants}>
           <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-white/38">工作站点</div>
           <div className="grid gap-3 md:grid-cols-3">
-            <StationCard code="SKU" title="商品队列" desc="按 SKU 判断素材、Listing、导出状态和下一步动作" status="business queue" tone="info" href={focusedUnit ? productCenterFocusHref(focusedUnit.product.id) : '/products'} />
+            <StationCard code="SKU" title="商品队列" desc="按 SKU 判断素材、Listing、导出状态和下一步动作" status="business queue" tone="info" href={focusedUnit ? productQueueFocusHref(focusedUnit.product.id) : '/products'} />
             <StationCard code="VISUAL" title="视觉生产" desc="带着当前 SKU 进入视觉任务工作台" status="SKU.assets" tone="info" href={focusedUnit ? visualProductionHref(focusedUnit.product.id) : '/products/workbench/visual-tools'} />
             <StationCard code="DONE" title="交付中心" desc="历史已完成生成的任务、导出记录与下载追踪" status="completed history" tone="ready" href={focusedUnit ? `/products/workbench/downloads?productIds=${encodeURIComponent(focusedUnit.product.id)}&source=product-center` : '/products/workbench/downloads'} />
           </div>
