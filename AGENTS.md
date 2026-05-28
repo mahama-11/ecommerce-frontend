@@ -25,6 +25,7 @@ It should not host:
 - [Frontend Style Governance](docs/frontend-style-governance.md)
 - [Frontend Product IA Governance](docs/frontend-product-ia-governance.md)
 - [Acceptance/TDD Governance](docs/acceptance-tdd-governance.md)
+- [Multi-image Template Integration Matrix](docs/multimage-template-integration-matrix.md)
 - [Frontend CTA Acceptance Matrix](docs/templates/frontend-cta-acceptance-matrix.md)
 - [Agent Acceptance/TDD Workflow](docs/agent-acceptance-tdd-workflow.md)
 - [Development Governance Closed Loop](docs/development-governance-closed-loop.md)

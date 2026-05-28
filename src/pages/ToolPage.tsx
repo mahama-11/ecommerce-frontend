@@ -60,6 +60,7 @@ function normalizeInputMode(value: unknown, fallback: ToolInputMode): ToolInputM
   }
   return fallback
 }
+function providerCapabilityForInputMode(inputMode: ToolInputMode): string { return inputMode }
 function selectLegacySourceAsset(
   sourceAssets: Record<string, { asset: SourceAssetSummary; previewUrl: string }>,
   requirements: AssetRequirement[],
@@ -234,7 +235,10 @@ function ToolContent({ tool, productId }: ToolContentProps) {
       return current })
   }, [locale, setActiveTemplate, setNegativePrompt, setPrompt, tool.inputMode])
   const loadTemplateOptions = useCallback(async (force: boolean = false) => {
-    const requestKey = `${locale}:${tool.slug}`
+    const providerCapability = providerCapabilityForInputMode(tool.inputMode)
+    const requestKey = JSON.stringify({ locale, toolSlug: tool.slug, inputMode: tool.inputMode,
+      productCategory: selectedProduct?.categoryId ?? '',
+      platform: selectedProduct?.listingVersions?.[0]?.platform ?? '', providerCapability })
     if (templateOptionsLoadingRef.current) return
     if (!force && templateOptionsRequestKeyRef.current === requestKey && templateOptionsLoaded && !templateOptionsError) return
     templateOptionsLoadingRef.current = true
@@ -245,6 +249,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
         toolSlug: tool.slug, inputMode: tool.inputMode,
         productCategory: selectedProduct?.categoryId,
         platform: selectedProduct?.listingVersions?.[0]?.platform,
+        providerCapability: providerCapabilityForInputMode(tool.inputMode),
         sortBy: 'recommended',
       })
       const matched = items .sort((left, right) => right.recommendScore - left.recommendScore)
