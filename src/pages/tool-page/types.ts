@@ -1,4 +1,5 @@
 import type { TemplateListItem } from '@/services/templateCenter'
+import type { ToolInputMode } from '@/types/tool'
 
 export type Locale = 'zh' | 'en'
 
@@ -15,10 +16,16 @@ export type GeneratedResult = {
 
 export type AssetRequirement = {
   slot: string
+  role: string
   label: string
+  helper?: string
   required: boolean
   fieldType: string
   acceptedTypes: string[]
+  maxSizeMB?: number
+  aspectRatio?: string
+  minCount?: number
+  maxCount?: number
 }
 
 export type ActiveTemplateState = {
@@ -27,6 +34,7 @@ export type ActiveTemplateState = {
   name: string
   executorType: string
   modality: string
+  inputMode?: ToolInputMode
   defaultVariables: Array<[string, string]>
   assetRequirements: AssetRequirement[]
   sourceWarning?: string

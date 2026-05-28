@@ -526,7 +526,7 @@ export function ProductDetailPage() {
                 <StatusPill label="Export" ok={product.exportStatus === 'done' || product.exportStatus === 'ready'} /> </div>
               <div className="mt-4 rounded-2xl border border-rose-300/18 bg-rose-300/[0.06] p-3 text-xs leading-5 text-rose-100/72">当前状态：{product.assetStatus !== 'ready' ? '缺素材，请在任务中心查看生成任务状态。' : product.listingStatus !== 'ready' ? '可进入 Listing 页面创建/采用版本。' : '可进入交付中心创建导出。'}</div>
               <div className="mt-4 space-y-2">
-                <ButtonLink to={`/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="w-full" variant="secondary" size="sm">去模板中心</ButtonLink>
+                <ButtonLink to="/aiChat/template" className="w-full" variant="secondary" size="sm">去模板中心</ButtonLink>
                 <ButtonLink to={`/products/workbench/downloads?productIds=${encodeURIComponent(product.id)}&source=sku-detail`} className="w-full" variant="secondary" size="sm">去交付中心</ButtonLink> </div>
             </div> </aside>
         </div> </section>

@@ -2,6 +2,7 @@
   color-scheme: dark;
 }
 @import "tailwindcss";
+@import "./styles/tokens.css";
 
 @theme {
   --color-brand-50: #eff6ff;

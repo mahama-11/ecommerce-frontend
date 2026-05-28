@@ -16,13 +16,13 @@ type ProductNavItem = {
 
 const navItems: ProductNavItem[] = [
   { labelKey: 'productCenter.shell.queue', to: '/products', match: (pathname: string) => pathname === '/products' || /^\/products\/[^/]+$/.test(pathname) },
-  { labelKey: 'productCenter.shell.listing', to: '/products/workbench/batch-listing', match: (pathname: string) => pathname.startsWith('/products/workbench/batch-listing') },
+  { labelKey: 'productCenter.shell.listing', to: '/aiChat/template', match: (pathname: string) => pathname.startsWith('/aiChat/template') || pathname.startsWith('/products/workbench/batch-listing') },
   { labelKey: 'productCenter.shell.delivery', to: '/products/workbench/downloads', match: (pathname: string) => pathname.startsWith('/products/workbench/downloads') },
 ]
 
 const commandItems = [
   { labelKey: 'productCenter.shell.commands.queue', hintKey: 'productCenter.shell.commandHints.queue', to: '/products' },
-  { labelKey: 'productCenter.shell.commands.listing', hintKey: 'productCenter.shell.commandHints.listing', to: '/products/workbench/batch-listing' },
+  { labelKey: 'productCenter.shell.commands.listing', hintKey: 'productCenter.shell.commandHints.listing', to: '/aiChat/template' },
   { labelKey: 'productCenter.shell.commands.delivery', hintKey: 'productCenter.shell.commandHints.delivery', to: '/products/workbench/downloads' },
 ]
 
@@ -58,7 +58,6 @@ export default function ProductWorkbenchLayout() {
               <Home className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t('productCenter.shell.home')}</span>
             </ButtonLink>
-            <Link to="/products" className="whitespace-nowrap font-semibold tracking-tight text-white">Product Center</Link>
             <nav className="ml-2 flex min-w-0 items-center gap-1 overflow-x-auto">
               {navItems.map(item => {
                 const active = item.match(pathname)

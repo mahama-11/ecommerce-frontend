@@ -96,6 +96,164 @@
       "path": "src/components/ui/EmptyState.tsx",
       "status": "planned",
       "story_required": true
+    },
+    {
+      "name": "ProductionSectionCard",
+      "path": "src/components/production/ProductionWorkflowComponents.tsx",
+      "status": "active",
+      "story_required": true,
+      "required_variants": [
+        "default",
+        "empty",
+        "error"
+      ]
+    },
+    {
+      "name": "DecisionOptionCard",
+      "path": "src/components/production/ProductionWorkflowComponents.tsx",
+      "status": "active",
+      "story_required": true,
+      "required_variants": [
+        "selected",
+        "unselected",
+        "loading",
+        "long_chinese",
+        "mobile"
+      ]
+    },
+    {
+      "name": "EditablePromptCard",
+      "path": "src/components/production/ProductionWorkflowComponents.tsx",
+      "status": "active",
+      "story_required": true,
+      "required_variants": [
+        "clean",
+        "dirty",
+        "long_text"
+      ]
+    },
+    {
+      "name": "VersionLineageItem",
+      "path": "src/components/production/ProductionWorkflowComponents.tsx",
+      "status": "active",
+      "story_required": true,
+      "required_variants": [
+        "active",
+        "current",
+        "empty"
+      ]
+    },
+    {
+      "name": "ResultAssetCard",
+      "path": "src/components/production/ProductionWorkflowComponents.tsx",
+      "status": "active",
+      "story_required": true,
+      "required_variants": [
+        "selected",
+        "unselected",
+        "long_sku",
+        "loading",
+        "empty"
+      ]
+    },
+    {
+      "name": "ProductHeroStage",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "VisualOutcomePreview",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "ProductAssetStrip",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "RecommendedToolRail",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "GenerationActionDock",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "WorkflowProgressRail",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "ResultDestinationCard",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "ToolCategoryCarousel",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
+    },
+    {
+      "name": "SoftInspectorPanel",
+      "path": "src/components/product-composition/index.tsx",
+      "status": "active",
+      "story_required": false,
+      "required_variants": [
+        "desktop",
+        "mobile",
+        "empty_or_disabled"
+      ]
     }
   ],
   "gates": [
@@ -104,12 +262,28 @@
     "quality:static",
     "frontend:evidence",
     "bundle:budget",
-    "selfcheck"
+    "selfcheck",
+    "layout:density",
+    "governance:test",
+    "test:visual",
+    "frontend:ia",
+    "visual:composition"
   ],
   "storybook": {
     "config": ".storybook/main.ts",
     "required_for_active_components": true,
-    "build_command": "npm run storybook:build"
+    "build_command": "npm run storybook:build",
+    "required_business_states": [
+      "long_chinese",
+      "mobile",
+      "selected",
+      "disabled",
+      "loading",
+      "multiline",
+      "extreme_sku",
+      "empty",
+      "error"
+    ]
   },
   "p0_status": "complete_after_gates_pass"
 }

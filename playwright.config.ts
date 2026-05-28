@@ -38,9 +38,19 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'chromium-visual',
+      name: 'chromium-visual-desktop',
       testMatch: /.*\.visual\.spec\.ts/,
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1200 } },
+    },
+    {
+      name: 'chromium-visual-tablet',
+      testMatch: /.*\.visual\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1024, height: 1000 } },
+    },
+    {
+      name: 'chromium-visual-mobile',
+      testMatch: /.*\.visual\.spec\.ts/,
+      use: { ...devices['Pixel 7'] },
     },
   ],
 })

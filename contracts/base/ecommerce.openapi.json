@@ -1,0 +1,309 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Agent Ecommerce Frontend Contract",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/ecommerce/auth/session": {
+      "get": {
+        "operationId": "getEcommerceSession",
+        "responses": {
+          "200": {
+            "description": "session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ecommerce/products": {
+      "get": {
+        "operationId": "listProducts",
+        "responses": {
+          "200": {
+            "description": "products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ecommerce/products/{productId}": {
+      "get": {
+        "operationId": "getProduct",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "product",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ecommerce/production/{productId}/stage-view": {
+      "get": {
+        "operationId": "getProductionStageView",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "stage view",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionStageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiEnvelope": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {}
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": [
+          "full_name",
+          "email"
+        ],
+        "properties": {
+          "full_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "org_name": {
+            "type": "string"
+          }
+        }
+      },
+      "SessionData": {
+        "type": "object",
+        "required": [
+          "user",
+          "access"
+        ],
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/User"
+          },
+          "credits": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "access": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "SessionResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiEnvelope"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/SessionData"
+              }
+            }
+          }
+        ]
+      },
+      "Product": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "product_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "sku_code": {
+            "type": "string"
+          },
+          "skuCode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "assets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        }
+      },
+      "ProductListData": {
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Product"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "ProductListResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiEnvelope"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/ProductListData"
+              }
+            }
+          }
+        ]
+      },
+      "ProductResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiEnvelope"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "product"
+                ],
+                "properties": {
+                  "product": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ProductionStageResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ApiEnvelope"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "product_id": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  },
+                  "stages": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "source_assets": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "decisions": {
+                    "type": "array",
+                    "items": {}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

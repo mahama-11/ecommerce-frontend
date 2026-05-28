@@ -22,7 +22,8 @@ npm run dev
 npm run lint
 npm run typecheck
 npm run build
-bash scripts/install-git-hooks.sh
+npm run frontend:gate
+python3 /root/work/agentic-selfcheck/scripts/install_v_continuous_governance_hooks.py --repo /root/work/v/ecommerce-frontend
 ```
 
 ## Documentation

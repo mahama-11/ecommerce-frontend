@@ -1,0 +1,422 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "2026-05-26T10-47-11-430Z-adapter-smoke",
+  "status": "PASS_WITH_NOTES",
+  "project": "ecommerce-frontend",
+  "adapter": {
+    "name": "ecommerce-frontend-contract-adapter",
+    "version": "0.1.0",
+    "configPath": "contract-adapter.config.json"
+  },
+  "environment": {
+    "name": "local",
+    "commit": "9d5e2a6",
+    "branch": "feat/ecom-editable-generation-prompt",
+    "ci": false
+  },
+  "startedAt": "2026-05-26T10:47:11.430Z",
+  "finishedAt": "2026-05-26T10:47:11.432Z",
+  "summary": "Adapter contract smoke completed with explicit notes; see blocked or future live-smoke assertions.",
+  "commands": [
+    {
+      "name": "contract:smoke",
+      "command": "npm run contract:smoke",
+      "cwd": ".",
+      "status": "PASS_WITH_NOTES",
+      "exitCode": 0,
+      "startedAt": "2026-05-26T10:47:11.430Z",
+      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "durationMs": 2
+    }
+  ],
+  "artifacts": [
+    {
+      "kind": "contract",
+      "path": "contracts/ecommerce.openapi.json",
+      "sha256": "f5dd5a1ee1fd2c591d51f64741c9b3b4287cbc7ca4c5d5daa5763b602a0d3c9d"
+    },
+    {
+      "kind": "generated",
+      "path": "src/api/generated/ecommerce-contract.ts",
+      "sha256": "d117e2165f39ba1b4b402b5be575560d83d8b75ddbd8b47ec855de2b3d492579"
+    },
+    {
+      "kind": "smoke",
+      "path": "reports/contract-governance/contract-smoke.json"
+    }
+  ],
+  "smokes": [
+    {
+      "id": "ecommerce-current-contract-baseline",
+      "name": "Ecommerce current OpenAPI and generated type baseline",
+      "status": "PASS",
+      "scope": {
+        "operations": [
+          "getEcommerceSession",
+          "listProducts",
+          "getProduct",
+          "getProductionStageView"
+        ],
+        "generatedArtifacts": [
+          "src/api/generated/ecommerce-contract.ts"
+        ],
+        "consumerPaths": [
+          "src/services/auth.ts",
+          "src/services/product.ts",
+          "src/state/auth.ts"
+        ]
+      },
+      "environment": "local",
+      "startedAt": "2026-05-26T10:47:11.432Z",
+      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "durationMs": 0,
+      "assertions": [
+        {
+          "kind": "api",
+          "description": "The four currently governed Ecommerce operations exist in contracts/ecommerce.openapi.json.",
+          "status": "PASS",
+          "expected": [
+            "getEcommerceSession",
+            "listProducts",
+            "getProduct",
+            "getProductionStageView"
+          ],
+          "actual": [
+            "getEcommerceSession",
+            "listProducts",
+            "getProduct",
+            "getProductionStageView"
+          ]
+        },
+        {
+          "kind": "generated",
+          "description": "The generated Ecommerce contract artifact exposes the four governed operation names.",
+          "status": "PASS",
+          "expected": [
+            "getEcommerceSession",
+            "listProducts",
+            "getProduct",
+            "getProductionStageView"
+          ],
+          "actual": [
+            "getEcommerceSession",
+            "listProducts",
+            "getProduct",
+            "getProductionStageView"
+          ],
+          "artifactPath": "src/api/generated/ecommerce-contract.ts"
+        }
+      ],
+      "cleanup": {
+        "status": "PASS_WITH_NOTES",
+        "notes": "Static baseline only; no records are created."
+      },
+      "notes": "This journey is the only Phase 4 blocking smoke. It validates artifacts that exist today and does not claim live API coverage."
+    },
+    {
+      "id": "ecommerce-product-live-read-smoke",
+      "name": "Future live product list/detail read smoke",
+      "status": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "listProducts",
+          "getProduct"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts"
+        ]
+      },
+      "environment": "local",
+      "startedAt": "2026-05-26T10:47:11.432Z",
+      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "durationMs": 0,
+      "assertions": [
+        {
+          "kind": "api",
+          "description": "Configured operations exist in the contract artifact.",
+          "status": "PASS",
+          "expected": [
+            "listProducts",
+            "getProduct"
+          ],
+          "actual": [
+            "listProducts",
+            "getProduct"
+          ]
+        },
+        {
+          "kind": "generated",
+          "description": "Generated artifact contains configured operation exports.",
+          "status": "PASS",
+          "expected": [
+            "listProducts",
+            "getProduct"
+          ],
+          "actual": [
+            "listProducts",
+            "getProduct"
+          ],
+          "artifactPath": "src/api/generated/ecommerce-contract.ts"
+        },
+        {
+          "kind": "api",
+          "description": "Live Ecommerce product list/detail smoke against an authenticated environment.",
+          "status": "BLOCKED",
+          "notes": "BLOCKED until base URL, auth/session bootstrap, stable test tenant, product fixture, and cleanup/fixture ownership are registered."
+        }
+      ],
+      "cleanup": {
+        "status": "BLOCKED",
+        "notes": "No live records are created by this skeleton."
+      },
+      "notes": "Tracked so release evidence cannot overclaim live product read coverage."
+    },
+    {
+      "id": "ecommerce-production-stage-live-smoke",
+      "name": "Future live production stage-view smoke",
+      "status": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "getProductionStageView"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts",
+          "src/pages/production/**"
+        ]
+      },
+      "environment": "local",
+      "startedAt": "2026-05-26T10:47:11.432Z",
+      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "durationMs": 0,
+      "assertions": [
+        {
+          "kind": "api",
+          "description": "Configured operations exist in the contract artifact.",
+          "status": "PASS",
+          "expected": [
+            "getProductionStageView"
+          ],
+          "actual": [
+            "getProductionStageView"
+          ]
+        },
+        {
+          "kind": "generated",
+          "description": "Generated artifact contains configured operation exports.",
+          "status": "PASS",
+          "expected": [
+            "getProductionStageView"
+          ],
+          "actual": [
+            "getProductionStageView"
+          ],
+          "artifactPath": "src/api/generated/ecommerce-contract.ts"
+        },
+        {
+          "kind": "api",
+          "description": "Live production stage-view smoke for an existing product workspace.",
+          "status": "BLOCKED",
+          "notes": "BLOCKED until a stable product workspace fixture, stage-view readiness contract, and cleanup policy are owned by the Ecommerce adapter."
+        }
+      ],
+      "cleanup": {
+        "status": "BLOCKED",
+        "notes": "No live records are created by this skeleton."
+      },
+      "notes": "Tracked as future Phase 5/6 live smoke coverage; current Phase 4 evidence remains PASS_WITH_NOTES."
+    },
+    {
+      "id": "ecommerce-product-create-list-detail-live-smoke",
+      "name": "Future live product create -> list -> detail smoke",
+      "status": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "createProduct",
+          "listProducts",
+          "getProduct"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts",
+          "src/pages/ProductListPage.tsx",
+          "src/pages/ProductDetailPage.tsx"
+        ]
+      },
+      "environment": "local",
+      "startedAt": "2026-05-26T10:47:11.432Z",
+      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "durationMs": 0,
+      "assertions": [
+        {
+          "kind": "api",
+          "description": "Configured operations exist in the contract artifact.",
+          "status": "BLOCKED",
+          "expected": [
+            "createProduct",
+            "listProducts",
+            "getProduct"
+          ],
+          "actual": [
+            "listProducts",
+            "getProduct"
+          ],
+          "notes": "Missing operations: createProduct"
+        },
+        {
+          "kind": "generated",
+          "description": "Generated artifact contains configured operation exports.",
+          "status": "BLOCKED",
+          "expected": [
+            "createProduct",
+            "listProducts",
+            "getProduct"
+          ],
+          "actual": [
+            "listProducts",
+            "getProduct"
+          ],
+          "artifactPath": "src/api/generated/ecommerce-contract.ts",
+          "notes": "Missing generated names: createProduct"
+        },
+        {
+          "kind": "api",
+          "description": "Live create -> list -> detail/read smoke against an authenticated Ecommerce environment.",
+          "status": "BLOCKED",
+          "notes": "BLOCKED until createProduct is covered by OpenAPI, authenticated fixture creation is stable, and cleanup ownership is registered."
+        }
+      ],
+      "cleanup": {
+        "status": "BLOCKED",
+        "notes": "Future smoke must delete/archive any created disposable product fixture."
+      },
+      "notes": "Tracks the Phase 4 critical journey without overclaiming coverage before producer contract and fixture support exist."
+    },
+    {
+      "id": "ecommerce-prep-choices-save-stage-view-live-smoke",
+      "name": "Future live Prep choices save -> stage-view read smoke",
+      "status": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "savePrepChoices",
+          "getProductionStageView"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts",
+          "src/pages/production/PrepHubPage.tsx"
+        ]
+      },
+      "environment": "local",
+      "startedAt": "2026-05-26T10:47:11.432Z",
+      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "durationMs": 0,
+      "assertions": [
+        {
+          "kind": "api",
+          "description": "Configured operations exist in the contract artifact.",
+          "status": "BLOCKED",
+          "expected": [
+            "savePrepChoices",
+            "getProductionStageView"
+          ],
+          "actual": [
+            "getProductionStageView"
+          ],
+          "notes": "Missing operations: savePrepChoices"
+        },
+        {
+          "kind": "generated",
+          "description": "Generated artifact contains configured operation exports.",
+          "status": "BLOCKED",
+          "expected": [
+            "savePrepChoices",
+            "getProductionStageView"
+          ],
+          "actual": [
+            "getProductionStageView"
+          ],
+          "artifactPath": "src/api/generated/ecommerce-contract.ts",
+          "notes": "Missing generated names: savePrepChoices"
+        },
+        {
+          "kind": "api",
+          "description": "Live Prep choices mutation followed by stage-view refetch.",
+          "status": "BLOCKED",
+          "notes": "BLOCKED until savePrepChoices is covered by OpenAPI and a stable product workspace fixture exists."
+        }
+      ],
+      "cleanup": {
+        "status": "BLOCKED",
+        "notes": "Future smoke must reset or isolate Prep selections for the disposable fixture."
+      },
+      "notes": "Tracks the Phase 4 Prep save/read critical journey as an explicit future adapter obligation."
+    },
+    {
+      "id": "ecommerce-sandbox-prompt-compose-stage-view-live-smoke",
+      "name": "Future live Sandbox prompt compose -> stage-view read smoke",
+      "status": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "composeSandboxPrompt",
+          "getProductionStageView"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts",
+          "src/pages/production/SandboxPage.tsx"
+        ]
+      },
+      "environment": "local",
+      "startedAt": "2026-05-26T10:47:11.432Z",
+      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "durationMs": 0,
+      "assertions": [
+        {
+          "kind": "api",
+          "description": "Configured operations exist in the contract artifact.",
+          "status": "BLOCKED",
+          "expected": [
+            "composeSandboxPrompt",
+            "getProductionStageView"
+          ],
+          "actual": [
+            "getProductionStageView"
+          ],
+          "notes": "Missing operations: composeSandboxPrompt"
+        },
+        {
+          "kind": "generated",
+          "description": "Generated artifact contains configured operation exports.",
+          "status": "BLOCKED",
+          "expected": [
+            "composeSandboxPrompt",
+            "getProductionStageView"
+          ],
+          "actual": [
+            "getProductionStageView"
+          ],
+          "artifactPath": "src/api/generated/ecommerce-contract.ts",
+          "notes": "Missing generated names: composeSandboxPrompt"
+        },
+        {
+          "kind": "api",
+          "description": "Live Sandbox prompt compose command followed by stage-view refetch.",
+          "status": "BLOCKED",
+          "notes": "BLOCKED until composeSandboxPrompt is covered by OpenAPI and prompt fixture/readiness policy is registered."
+        }
+      ],
+      "cleanup": {
+        "status": "BLOCKED",
+        "notes": "Future smoke must isolate or cleanup composed prompt artifacts."
+      },
+      "notes": "Tracks the Phase 4 Sandbox compose/read critical journey as an explicit future adapter obligation."
+    }
+  ],
+  "approvals": [],
+  "warnings": [],
+  "redactions": [
+    "Authorization header",
+    "Cookie header",
+    "API key",
+    "password",
+    "tenant identifiers in smoke fixtures"
+  ],
+  "notes": "Ecommerce Phase 4 adapter landing: current committed OpenAPI/generated baseline is executable; future live smokes are intentionally tracked but not claimed as passing until environment, auth, fixtures, and cleanup are wired."
+}

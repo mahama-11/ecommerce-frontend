@@ -11,8 +11,15 @@ const styleReportRel = 'reports/frontend-style-consistency/style-consistency-lat
 const repairQueueReportRel = 'reports/frontend-style-consistency/style-drift-repair-queue.json'
 const eslintReportRel = 'reports/frontend-quality/eslint-baseline-latest.json'
 const staticQualityReportRel = 'reports/frontend-quality/static-quality-latest.json'
+const layoutDensityReportRel = 'reports/frontend-quality/layout-density-latest.json'
 const designSystemReportRel = 'reports/frontend-quality/design-system-registry-latest.json'
+const frontendIaReportRel = 'reports/frontend-quality/frontend-ia-latest.json'
+const pagePositionReportRel = 'reports/frontend-style-consistency/page-position-report.json'
+const designGovernanceReportRel = 'reports/frontend-quality/design-governance-latest.json'
+const acceptanceGovernanceReportRel = 'reports/frontend-quality/acceptance-governance-latest.json'
+const visualCompositionReportRel = 'reports/frontend-quality/visual-composition-latest.json'
 const apiContractReportRel = 'reports/frontend-quality/api-contract-latest.json'
+const runtimeLayoutReportRel = 'reports/frontend-quality/runtime-layout-latest.json'
 const autoEvidenceChangedFilesRel = 'reports/frontend-style-consistency/changed-files-for-evidence.txt'
 
 function valueAfter(name) {
@@ -84,7 +91,7 @@ function isProductFlowFile(file) {
     || /^src\/layouts\/(ProductWorkbenchLayout|ProductionLayout)\.tsx$/.test(file)
 }
 
-function hasEvidenceManifest() {
+function hasEvidenceManifest(requiredFiles = []) {
   const candidates = [
     'reports/frontend-style-consistency/evidence-manifest.json',
     'reports/frontend-style-consistency/FRONTEND_EVIDENCE_MANIFEST.json',
@@ -98,6 +105,16 @@ function hasEvidenceManifest() {
       const screenshots = data.screenshots || data.visual_evidence || []
       const decision = data.acceptance_status || data.status || data.human_decision?.decision
       if (Array.isArray(screenshots) && screenshots.length > 0 && /^(PASS|ACCEPTED|ACCEPTED_WITH_NOTES)$/i.test(String(decision || ''))) {
+        const coveredFiles = data.changed_files || data.changedFiles || data.source_files || []
+        if (requiredFiles.length > 0) {
+          if (!Array.isArray(coveredFiles) || coveredFiles.length === 0) {
+            return { rel, status: 'INVALID', reason: 'manifest is stale or not change-scoped: changed_files must list the product-flow files covered by the screenshots' }
+          }
+          const missing = requiredFiles.filter(file => !coveredFiles.includes(file))
+          if (missing.length > 0) {
+            return { rel, status: 'INVALID', reason: `manifest does not cover changed product-flow files: ${missing.join(', ')}` }
+          }
+        }
         return { rel, status: 'FOUND' }
       }
       return { rel, status: 'INVALID', reason: 'manifest exists but lacks screenshots plus PASS/ACCEPTED decision' }
@@ -154,7 +171,18 @@ const style = run('node', ['scripts/ecommerce-style-consistency.mjs', '--report'
 const repairQueue = run('node', ['scripts/ecommerce-style-drift-repair-queue.mjs', '--report', repairQueueReportRel])
 const eslintGate = run('node', ['scripts/ecommerce-eslint-baseline-gate.mjs', '--report', eslintReportRel])
 const staticQualityGate = run('node', ['scripts/ecommerce-static-quality-gate.mjs', '--report', staticQualityReportRel])
+const layoutDensityGate = run('node', ['scripts/ecommerce-layout-density-gate.mjs', '--report', layoutDensityReportRel])
 const designSystemGate = run('node', ['scripts/ecommerce-design-system-registry-gate.mjs', '--report', designSystemReportRel])
+const frontendIaGate = run('node', ['scripts/ecommerce-frontend-ia-gate.mjs', '--report', frontendIaReportRel])
+const explicitChangedFiles = valueAfter('--changed-files')
+const pagePositionArgs = ['scripts/ecommerce-page-position-gate.mjs', '--report', pagePositionReportRel]
+if (explicitChangedFiles) pagePositionArgs.push('--changed-files', explicitChangedFiles)
+const pagePositionGate = run('node', pagePositionArgs)
+const designGovernanceGate = run('node', ['scripts/ecommerce-design-governance-gate.mjs', '--report', designGovernanceReportRel])
+const acceptanceGovernanceArgs = ['scripts/ecommerce-acceptance-governance-gate.mjs', '--report', acceptanceGovernanceReportRel]
+if (explicitChangedFiles) acceptanceGovernanceArgs.push('--changed-files', explicitChangedFiles)
+const acceptanceGovernanceGate = run('node', acceptanceGovernanceArgs)
+const visualCompositionGate = run('node', ['scripts/ecommerce-visual-composition-gate.mjs', '--report', visualCompositionReportRel])
 const apiContractGate = run('node', ['scripts/ecommerce-api-contract-gate.mjs'])
 let styleJson = null
 try {
@@ -174,11 +202,47 @@ try {
 } catch {
   staticQualityJson = { status: 'UNKNOWN', raw_stdout: staticQualityGate.stdout.slice(-4000) }
 }
+let layoutDensityJson = null
+try {
+  layoutDensityJson = JSON.parse(layoutDensityGate.stdout)
+} catch {
+  layoutDensityJson = { status: 'UNKNOWN', raw_stdout: layoutDensityGate.stdout.slice(-4000) }
+}
 let designSystemJson = null
 try {
   designSystemJson = JSON.parse(designSystemGate.stdout)
 } catch {
   designSystemJson = { status: 'UNKNOWN', raw_stdout: designSystemGate.stdout.slice(-4000) }
+}
+let frontendIaJson = null
+try {
+  frontendIaJson = JSON.parse(frontendIaGate.stdout)
+} catch {
+  frontendIaJson = { status: 'UNKNOWN', raw_stdout: frontendIaGate.stdout.slice(-4000) }
+}
+let pagePositionJson = null
+try {
+  pagePositionJson = JSON.parse(pagePositionGate.stdout)
+} catch {
+  pagePositionJson = { status: 'UNKNOWN', raw_stdout: pagePositionGate.stdout.slice(-4000), failures: [], warnings: [] }
+}
+let designGovernanceJson = null
+try {
+  designGovernanceJson = JSON.parse(designGovernanceGate.stdout)
+} catch {
+  designGovernanceJson = { status: 'UNKNOWN', raw_stdout: designGovernanceGate.stdout.slice(-4000), failures: [], warnings: [] }
+}
+let acceptanceGovernanceJson = null
+try {
+  acceptanceGovernanceJson = JSON.parse(acceptanceGovernanceGate.stdout)
+} catch {
+  acceptanceGovernanceJson = { status: 'UNKNOWN', raw_stdout: acceptanceGovernanceGate.stdout.slice(-4000), failures: [], warnings: [] }
+}
+let visualCompositionJson = null
+try {
+  visualCompositionJson = JSON.parse(visualCompositionGate.stdout)
+} catch {
+  visualCompositionJson = { status: 'UNKNOWN', raw_stdout: visualCompositionGate.stdout.slice(-4000), warnings: [], failures: [] }
 }
 let apiContractJson = null
 try {
@@ -201,8 +265,38 @@ if (eslintGate.status !== 0 || eslintJson.status === 'FAIL') {
 if (staticQualityGate.status !== 0 || staticQualityJson.status === 'FAIL') {
   failures.push('Static quality/a11y/architecture gate failed; accessibility and architecture debt may burn down but cannot increase')
 }
+if (layoutDensityGate.status !== 0 || layoutDensityJson.status === 'FAIL') {
+  failures.push('Layout density/readability gate failed; product-flow UI must support long Chinese copy without no-wrap, truncation, or tiny dense two-column cards')
+}
 if (designSystemGate.status !== 0 || designSystemJson.status === 'FAIL') {
   failures.push('Design-system registry gate failed; shared UI primitives and governance contract must stay machine-readable')
+}
+if (frontendIaGate.status !== 0 || frontendIaJson.status === 'FAIL') {
+  failures.push('Frontend IA governance gate failed; core product pages must keep page roles, information hierarchy, action hierarchy, and screenshot review contract explicit')
+}
+if (pagePositionGate.status !== 0 || pagePositionJson.status === 'FAIL') {
+  failures.push('Page-position governance gate failed; critical routes must declare page type, business object, upstream/downstream, primary action, result destination, and forbidden patterns')
+}
+if (pagePositionJson.status === 'PASS_WITH_NOTES') {
+  warnings.push(...(pagePositionJson.warnings || []).map(item => `page position: ${item}`))
+}
+if (designGovernanceGate.status !== 0 || designGovernanceJson.status === 'FAIL') {
+  failures.push('Design governance gate failed; P0 IA map, P1 page contracts, P2 page type patterns, P3 design-system rules, semantic tokens, product components, and shared shells must stay present')
+}
+if (designGovernanceJson.status === 'PASS_WITH_NOTES') {
+  warnings.push(...(designGovernanceJson.warnings || []).map(item => `design governance: ${item}`))
+}
+if (acceptanceGovernanceGate.status !== 0 || acceptanceGovernanceJson.status === 'FAIL') {
+  failures.push('Acceptance/TDD governance gate failed; P0/P1 changes must bind requirement semantics to executable acceptance, RED/GREEN evidence, and runtime browser evidence')
+}
+if (acceptanceGovernanceJson.status === 'PASS_WITH_NOTES') {
+  warnings.push(...(acceptanceGovernanceJson.warnings || []).map(item => `acceptance governance: ${item}`))
+}
+if (visualCompositionGate.status !== 0 || visualCompositionJson.status === 'FAIL') {
+  failures.push('Visual composition gate failed; core product pages must avoid boxed/control-console anti-patterns and include task stage plus result preview')
+}
+if (visualCompositionJson.status === 'PASS_WITH_NOTES') {
+  warnings.push(...(visualCompositionJson.warnings || []).map(item => `visual composition: ${item}`))
 }
 if (apiContractGate.status !== 0 || apiContractJson.status === 'FAIL') {
   failures.push('API contract gate failed; frontend API types must stay generated from contracts/ecommerce.openapi.json')
@@ -221,21 +315,26 @@ if (requiresStyleChangeProposal) {
     failures.push(`style-change proposal invalid: ${styleChangeProposal.reason || styleChangeProposal.status}`)
   }
 }
-const requiresVisualEvidence = productFlowFiles.length > 0 && !sharedOnly
+const pagePositionEvidenceFiles = (pagePositionJson.changed_routes_requiring_evidence || [])
+  .flatMap(item => Array.isArray(item.files) ? item.files : [])
+const requiredEvidenceFiles = unique([...productFlowFiles, ...pagePositionEvidenceFiles])
+const requiresVisualEvidence = requiredEvidenceFiles.length > 0 && !sharedOnly
 let evidenceGeneration = { status: 'SKIPPED', reason: requiresVisualEvidence ? 'existing manifest accepted or generation disabled' : 'visual evidence not required for this change set' }
 if (requiresVisualEvidence) {
-  let existingEvidence = hasEvidenceManifest()
+  let existingEvidence = hasEvidenceManifest(requiredEvidenceFiles)
   const autoGenerateEvidence = !args.includes('--no-auto-evidence') && existingEvidence.status !== 'FOUND'
   if (autoGenerateEvidence) {
-    writeJson(autoEvidenceChangedFilesRel, files.join('\n') + '\n')
-    const generated = run('node', ['scripts/ecommerce-frontend-visual-evidence.mjs', '--changed-files', autoEvidenceChangedFilesRel], { timeout: 120000 })
+    const changedFilesPath = join(root, autoEvidenceChangedFilesRel)
+    mkdirSync(dirname(changedFilesPath), { recursive: true })
+    writeFileSync(changedFilesPath, files.join('\n') + '\n')
+    const generated = run('node', ['scripts/ecommerce-frontend-visual-evidence.mjs', '--changed-files', autoEvidenceChangedFilesRel], { timeout: 240000 })
     evidenceGeneration = {
       status: generated.status === 0 ? 'PASS' : 'FAIL',
       exit_code: generated.status,
       stdout_tail: generated.stdout.slice(-2000),
       stderr_tail: generated.stderr.slice(-2000),
     }
-    existingEvidence = hasEvidenceManifest()
+    existingEvidence = hasEvidenceManifest(requiredEvidenceFiles)
   }
   var evidence = existingEvidence
 } else {
@@ -249,13 +348,27 @@ if (requiresVisualEvidence) {
   }
 }
 
+const runtimeLayoutGate = run('node', ['scripts/ecommerce-runtime-layout-gate.mjs', '--report', runtimeLayoutReportRel])
+let runtimeLayoutJson = null
+try {
+  runtimeLayoutJson = JSON.parse(runtimeLayoutGate.stdout)
+} catch {
+  runtimeLayoutJson = { status: 'UNKNOWN', raw_stdout: runtimeLayoutGate.stdout.slice(-4000), warnings: [], failures: [] }
+}
+if (requiresVisualEvidence && (runtimeLayoutGate.status !== 0 || runtimeLayoutJson.status === 'FAIL')) {
+  failures.push('Runtime layout gate failed; Chromium evidence must cover template center, legacy redirects, ai-wearable, and must have zero clipping/overflow findings')
+}
+if (runtimeLayoutJson.status === 'PASS_WITH_NOTES') {
+  warnings.push(...(runtimeLayoutJson.warnings || []).map(item => `runtime layout: ${item}`))
+}
+
 if (criticalSurfaceFiles.length > 0) {
   warnings.push('Critical ecommerce shell/design-system files changed; include before/after screenshots in the PR or workflow evidence')
 }
 
 const result = {
   status: failures.length ? 'FAIL' : (warnings.length ? 'PASS_WITH_NOTES' : 'PASS'),
-  policy: 'Ecommerce frontend increments must not increase style drift; product-flow UI changes require visual evidence before completion.',
+  policy: 'Ecommerce frontend increments must not increase style drift or layout-density/readability debt; product-flow UI changes require visual evidence before completion.',
   changed_files: files,
   classifications: {
     ui_files: uiFiles,
@@ -265,6 +378,8 @@ const result = {
     shared_design_system_only: sharedOnly,
     requires_style_change_proposal: requiresStyleChangeProposal,
     requires_visual_evidence: requiresVisualEvidence,
+    page_position_evidence_files: pagePositionEvidenceFiles,
+    required_evidence_files: requiredEvidenceFiles,
   },
   style_consistency: {
     exit_code: style.status,
@@ -296,6 +411,15 @@ const result = {
     failures: staticQualityJson.failures || [],
     warnings: staticQualityJson.warnings || [],
   },
+  layout_density: {
+    exit_code: layoutDensityGate.status,
+    report: layoutDensityReportRel,
+    status: layoutDensityJson.status,
+    current_totals: layoutDensityJson.current?.totals,
+    baseline_totals: layoutDensityJson.baseline_totals,
+    failures: layoutDensityJson.failures || [],
+    warnings: layoutDensityJson.warnings || [],
+  },
   design_system_registry: {
     exit_code: designSystemGate.status,
     report: designSystemReportRel,
@@ -305,6 +429,58 @@ const result = {
     failures: designSystemJson.failures || [],
     warnings: designSystemJson.warnings || [],
   },
+  frontend_ia: {
+    exit_code: frontendIaGate.status,
+    report: frontendIaReportRel,
+    status: frontendIaJson.status,
+    required_surfaces: frontendIaJson.required_surfaces || [],
+    required_components: frontendIaJson.required_components || [],
+    failures: frontendIaJson.failures || [],
+    warnings: frontendIaJson.warnings || [],
+  },
+  page_position: {
+    exit_code: pagePositionGate.status,
+    report: pagePositionReportRel,
+    status: pagePositionJson.status,
+    route_count: pagePositionJson.route_count,
+    changed_route_contracts: pagePositionJson.changed_route_contracts || [],
+    changed_routes_requiring_evidence: pagePositionJson.changed_routes_requiring_evidence || [],
+    failures: pagePositionJson.failures || [],
+    warnings: pagePositionJson.warnings || [],
+  },
+  design_governance: {
+    exit_code: designGovernanceGate.status,
+    report: designGovernanceReportRel,
+    status: designGovernanceJson.status,
+    required_documents: designGovernanceJson.required_documents || [],
+    required_components: designGovernanceJson.required_components || [],
+    required_tokens: designGovernanceJson.required_tokens || [],
+    required_shells: designGovernanceJson.required_shells || [],
+    failures: designGovernanceJson.failures || [],
+    warnings: designGovernanceJson.warnings || [],
+  },
+  acceptance_governance: {
+    exit_code: acceptanceGovernanceGate.status,
+    report: acceptanceGovernanceReportRel,
+    status: acceptanceGovernanceJson.status,
+    required_documents: acceptanceGovernanceJson.required_documents || [],
+    policy_levels: acceptanceGovernanceJson.policy_levels || {},
+    changed_file_classification: acceptanceGovernanceJson.changed_file_classification || {},
+    acceptance_matrix: acceptanceGovernanceJson.acceptance_matrix,
+    runtime_evidence: acceptanceGovernanceJson.runtime_evidence,
+    failures: acceptanceGovernanceJson.failures || [],
+    warnings: acceptanceGovernanceJson.warnings || [],
+  },
+  visual_composition: {
+    exit_code: visualCompositionGate.status,
+    report: visualCompositionReportRel,
+    status: visualCompositionJson.status,
+    core_pages: visualCompositionJson.core_pages || [],
+    required_primitives: visualCompositionJson.required_primitives || [],
+    recommended_primitives: visualCompositionJson.recommended_primitives || [],
+    failures: visualCompositionJson.failures || [],
+    warnings: visualCompositionJson.warnings || [],
+  },
   api_contract: {
     exit_code: apiContractGate.status,
     report: apiContractReportRel,
@@ -312,6 +488,16 @@ const result = {
     schema: apiContractJson.schema,
     generated: apiContractJson.generated,
     failures: apiContractJson.failures || [],
+  },
+  runtime_layout: {
+    exit_code: runtimeLayoutGate.status,
+    report: runtimeLayoutReportRel,
+    status: runtimeLayoutJson.status,
+    required_route_ids: runtimeLayoutJson.required_route_ids || [],
+    observed_route_ids: runtimeLayoutJson.observed_route_ids || [],
+    overflow_finding_count: runtimeLayoutJson.overflow_finding_count,
+    failures: runtimeLayoutJson.failures || [],
+    warnings: runtimeLayoutJson.warnings || [],
   },
   style_change_proposal: styleChangeProposal,
   evidence_generation: evidenceGeneration,

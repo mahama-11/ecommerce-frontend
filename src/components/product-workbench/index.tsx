@@ -121,7 +121,7 @@ export function StationNav() {
   const { t } = useTranslation()
   const stations = [
     { label: t('product.list.missionControl.nav.mission'), href: '/products', active: true },
-    { label: t('product.list.missionControl.nav.listing'), href: '/products/workbench/batch-listing' },
+    { label: t('product.list.missionControl.nav.listing'), href: '/aiChat/template' },
     { label: t('product.list.missionControl.nav.visual'), href: '/products/workbench/visual-tools' },
     { label: t('product.list.missionControl.nav.delivery'), href: '/products/workbench/downloads' },
   ]

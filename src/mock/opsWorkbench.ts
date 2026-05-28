@@ -50,7 +50,7 @@ export const OPS_RECORDS_MAP: Record<string, OpsRecord[]> = {
   '/aiChat/batchListing': [
     {
       id: 'ops-batch-1',
-      title: { zh: '厨房收纳盒批量 Listing', en: 'Kitchen organizer batch listing' },
+      title: { zh: '厨房收纳盒模板中心', en: 'Kitchen organizer template center' },
       desc: { zh: '已挂载评论洞察和品牌语气，待导出到商品中心。', en: 'Review insights and brand tone attached, waiting to export into the product center.' },
       status: 'running',
       owner: 'Ava',
@@ -71,7 +71,7 @@ export const OPS_RECORDS_MAP: Record<string, OpsRecord[]> = {
     {
       id: 'ops-history-1',
       title: { zh: '收纳盒卖点对话会话', en: 'Organizer selling-point session' },
-      desc: { zh: '最近一次输出已被保存为模板并同步到批量 Listing。', en: 'Latest output was saved as a template and synced into batch listing.' },
+      desc: { zh: '最近一次输出已被保存为模板并同步到模板中心。', en: 'Latest output was saved as a template and synced into template center.' },
       status: 'done',
       owner: 'Ava',
       meta: { zh: '今天 10:40', en: 'Today 10:40' },
@@ -91,11 +91,11 @@ export const OPS_RECORDS_MAP: Record<string, OpsRecord[]> = {
     {
       id: 'ops-analysis-1',
       title: { zh: '亚马逊评论洞察报告', en: 'Amazon review insight report' },
-      desc: { zh: '核心结论已生成，待回写批量 Listing。', en: 'Core conclusions generated and ready to flow into batch listing.' },
+      desc: { zh: '核心结论已生成，待回写模板中心。', en: 'Core conclusions generated and ready to flow into template center.' },
       status: 'review',
       owner: 'Liam',
       meta: { zh: '评论样本 840 条', en: '840 review samples' },
-      action: { zh: '发送到批量 Listing', en: 'Send to Batch Listing' },
+      action: { zh: '发送到模板中心', en: 'Send to Template Center' },
     },
     {
       id: 'ops-analysis-2',

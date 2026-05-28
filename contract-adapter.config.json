@@ -1,0 +1,164 @@
+{
+  "schemaVersion": "1.0.0",
+  "project": {
+    "name": "ecommerce-frontend",
+    "root": "."
+  },
+  "adapter": {
+    "name": "ecommerce-frontend-contract-adapter",
+    "version": "0.1.0",
+    "owner": "agent-ecommerce-frontend"
+  },
+  "producer": {
+    "name": "agent-ecommerce-api",
+    "root": ".",
+    "contractArtifact": "contracts/ecommerce.openapi.json",
+    "exportCommand": "npm run api:contract"
+  },
+  "consumers": [
+    {
+      "name": "ecommerce-frontend",
+      "root": ".",
+      "generatedArtifacts": [
+        "src/api/generated/ecommerce-contract.ts"
+      ],
+      "generateCommand": "npm run api:contract",
+      "checkGeneratedCommand": "npm run api:contract"
+    }
+  ],
+  "reports": {
+    "root": "reports/contract-governance",
+    "diff": "reports/contract-governance/contract-diff.json",
+    "smoke": "reports/contract-governance/contract-smoke.json",
+    "evidence": "reports/contract-governance/contract-evidence.json"
+  },
+  "diff": {
+    "baseArtifact": "contracts/base/ecommerce.openapi.json",
+    "headArtifact": "contracts/ecommerce.openapi.json",
+    "breakingCheckCommand": "npm run contract:breaking-check",
+    "required": true,
+    "notes": "Committed base artifact is compared with the current producer contract by npm run contract:diff / npm run contract:breaking-check.",
+    "diffCommand": "npm run contract:diff"
+  },
+  "criticalOperations": [
+    {
+      "id": "getEcommerceSession",
+      "kind": "operation",
+      "risk": "high",
+      "consumerPaths": [
+        "src/services/auth.ts",
+        "src/state/auth.ts"
+      ],
+      "requiredSmokes": [
+        "ecommerce-current-contract-baseline"
+      ]
+    },
+    {
+      "id": "listProducts",
+      "kind": "operation",
+      "risk": "high",
+      "consumerPaths": [
+        "src/services/product.ts"
+      ],
+      "requiredSmokes": [
+        "ecommerce-current-contract-baseline",
+        "ecommerce-product-live-read-smoke"
+      ]
+    },
+    {
+      "id": "getProduct",
+      "kind": "operation",
+      "risk": "high",
+      "consumerPaths": [
+        "src/services/product.ts"
+      ],
+      "requiredSmokes": [
+        "ecommerce-current-contract-baseline",
+        "ecommerce-product-live-read-smoke"
+      ]
+    },
+    {
+      "id": "getProductionStageView",
+      "kind": "operation",
+      "risk": "medium",
+      "consumerPaths": [
+        "src/services/product.ts",
+        "src/pages/production/**"
+      ],
+      "requiredSmokes": [
+        "ecommerce-current-contract-baseline",
+        "ecommerce-production-stage-live-smoke"
+      ]
+    },
+    {
+      "id": "createProduct",
+      "kind": "operation",
+      "risk": "high",
+      "consumerPaths": [
+        "src/services/product.ts"
+      ],
+      "requiredSmokes": [
+        "ecommerce-product-create-list-detail-live-smoke"
+      ],
+      "status": "planned",
+      "notes": "Planned Phase 4 critical operation; OpenAPI coverage and live smoke are explicitly tracked before activation."
+    },
+    {
+      "id": "savePrepChoices",
+      "kind": "operation",
+      "risk": "high",
+      "consumerPaths": [
+        "src/services/product.ts"
+      ],
+      "requiredSmokes": [
+        "ecommerce-prep-choices-save-stage-view-live-smoke"
+      ],
+      "status": "planned",
+      "notes": "Planned Phase 4 critical operation; OpenAPI coverage and live smoke are explicitly tracked before activation."
+    },
+    {
+      "id": "composeSandboxPrompt",
+      "kind": "operation",
+      "risk": "high",
+      "consumerPaths": [
+        "src/services/product.ts"
+      ],
+      "requiredSmokes": [
+        "ecommerce-sandbox-prompt-compose-stage-view-live-smoke"
+      ],
+      "status": "planned",
+      "notes": "Planned Phase 4 critical operation; OpenAPI coverage and live smoke are explicitly tracked before activation."
+    }
+  ],
+  "smokes": {
+    "journeyConfig": "contract-governance/critical-journeys.json",
+    "command": "npm run contract:smoke",
+    "report": "reports/contract-governance/contract-smoke.json",
+    "environment": "local"
+  },
+  "forbiddenFieldScan": {
+    "command": "npm run api:contract",
+    "allowedAdapterPaths": [
+      "src/services/**",
+      "src/api/generated/**"
+    ],
+    "disallowedImports": [],
+    "disallowedFields": [
+      "debug",
+      "debugOnly",
+      "internalOnly",
+      "rawPayload"
+    ]
+  },
+  "evidence": {
+    "command": "npm run contract:evidence",
+    "redactions": [
+      "Authorization header",
+      "Cookie header",
+      "API key",
+      "password",
+      "tenant identifiers in smoke fixtures"
+    ],
+    "notes": "Phase 4 landing adapter verifies the committed Ecommerce OpenAPI baseline and generated artifact. Future live API smokes are tracked as explicit PASS_WITH_NOTES/BLOCKED skeletons until real environment credentials and fixture setup are registered."
+  }
+}

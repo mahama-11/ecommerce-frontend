@@ -147,7 +147,7 @@ export default function AccountDownloadsPage() {
           </div>
         </motion.div>
         {inProductCenter ? (
-          <Link to={`/products/workbench/batch-listing${contextProductIDs.length ? `?productIds=${encodeURIComponent(contextProductIDs.join(','))}&source=delivery` : '?source=delivery'}`} className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-cyan-200 px-5 py-3 text-sm font-semibold text-[var(--ecom-action-primary-text)] transition hover:bg-white">
+          <Link to="/aiChat/template" className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-cyan-200 px-5 py-3 text-sm font-semibold text-[var(--ecom-action-primary-text)] transition hover:bg-white">
             <PackageCheck className="h-4 w-4" />
             {t('account.downloads.backToProduction')}
           </Link>

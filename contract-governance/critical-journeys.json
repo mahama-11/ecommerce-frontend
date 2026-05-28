@@ -1,0 +1,180 @@
+{
+  "schemaVersion": "1.0.0",
+  "environment": "local",
+  "allowBlockedFutureSmokes": true,
+  "notes": "Ecommerce Phase 4 adapter landing: current committed OpenAPI/generated baseline is executable; future live smokes are intentionally tracked but not claimed as passing until environment, auth, fixtures, and cleanup are wired.",
+  "journeys": [
+    {
+      "id": "ecommerce-current-contract-baseline",
+      "name": "Ecommerce current OpenAPI and generated type baseline",
+      "requiredForCurrentBaseline": true,
+      "expectedStatus": "PASS",
+      "scope": {
+        "operations": [
+          "getEcommerceSession",
+          "listProducts",
+          "getProduct",
+          "getProductionStageView"
+        ],
+        "generatedArtifacts": [
+          "src/api/generated/ecommerce-contract.ts"
+        ],
+        "consumerPaths": [
+          "src/services/auth.ts",
+          "src/services/product.ts",
+          "src/state/auth.ts"
+        ]
+      },
+      "assertions": {
+        "operationDescription": "The four currently governed Ecommerce operations exist in contracts/ecommerce.openapi.json.",
+        "generatedDescription": "The generated Ecommerce contract artifact exposes the four governed operation names.",
+        "generatedContains": [
+          "getEcommerceSession",
+          "listProducts",
+          "getProduct",
+          "getProductionStageView"
+        ]
+      },
+      "cleanup": {
+        "status": "PASS_WITH_NOTES",
+        "notes": "Static baseline only; no records are created."
+      },
+      "notes": "This journey is the only Phase 4 blocking smoke. It validates artifacts that exist today and does not claim live API coverage."
+    },
+    {
+      "id": "ecommerce-product-live-read-smoke",
+      "name": "Future live product list/detail read smoke",
+      "requiredForCurrentBaseline": false,
+      "expectedStatus": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "listProducts",
+          "getProduct"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts"
+        ]
+      },
+      "liveSmoke": {
+        "enabled": false,
+        "kind": "api",
+        "description": "Live Ecommerce product list/detail smoke against an authenticated environment.",
+        "notes": "BLOCKED until base URL, auth/session bootstrap, stable test tenant, product fixture, and cleanup/fixture ownership are registered."
+      },
+      "cleanup": {
+        "status": "BLOCKED",
+        "notes": "No live records are created by this skeleton."
+      },
+      "notes": "Tracked so release evidence cannot overclaim live product read coverage."
+    },
+    {
+      "id": "ecommerce-production-stage-live-smoke",
+      "name": "Future live production stage-view smoke",
+      "requiredForCurrentBaseline": false,
+      "expectedStatus": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "getProductionStageView"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts",
+          "src/pages/production/**"
+        ]
+      },
+      "liveSmoke": {
+        "enabled": false,
+        "kind": "api",
+        "description": "Live production stage-view smoke for an existing product workspace.",
+        "notes": "BLOCKED until a stable product workspace fixture, stage-view readiness contract, and cleanup policy are owned by the Ecommerce adapter."
+      },
+      "cleanup": {
+        "status": "BLOCKED",
+        "notes": "No live records are created by this skeleton."
+      },
+      "notes": "Tracked as future Phase 5/6 live smoke coverage; current Phase 4 evidence remains PASS_WITH_NOTES."
+    },
+    {
+      "id": "ecommerce-product-create-list-detail-live-smoke",
+      "name": "Future live product create -> list -> detail smoke",
+      "requiredForCurrentBaseline": false,
+      "expectedStatus": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "createProduct",
+          "listProducts",
+          "getProduct"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts",
+          "src/pages/ProductListPage.tsx",
+          "src/pages/ProductDetailPage.tsx"
+        ]
+      },
+      "liveSmoke": {
+        "enabled": false,
+        "kind": "api",
+        "description": "Live create -> list -> detail/read smoke against an authenticated Ecommerce environment.",
+        "notes": "BLOCKED until createProduct is covered by OpenAPI, authenticated fixture creation is stable, and cleanup ownership is registered."
+      },
+      "cleanup": {
+        "status": "BLOCKED",
+        "notes": "Future smoke must delete/archive any created disposable product fixture."
+      },
+      "notes": "Tracks the Phase 4 critical journey without overclaiming coverage before producer contract and fixture support exist."
+    },
+    {
+      "id": "ecommerce-prep-choices-save-stage-view-live-smoke",
+      "name": "Future live Prep choices save -> stage-view read smoke",
+      "requiredForCurrentBaseline": false,
+      "expectedStatus": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "savePrepChoices",
+          "getProductionStageView"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts",
+          "src/pages/production/PrepHubPage.tsx"
+        ]
+      },
+      "liveSmoke": {
+        "enabled": false,
+        "kind": "api",
+        "description": "Live Prep choices mutation followed by stage-view refetch.",
+        "notes": "BLOCKED until savePrepChoices is covered by OpenAPI and a stable product workspace fixture exists."
+      },
+      "cleanup": {
+        "status": "BLOCKED",
+        "notes": "Future smoke must reset or isolate Prep selections for the disposable fixture."
+      },
+      "notes": "Tracks the Phase 4 Prep save/read critical journey as an explicit future adapter obligation."
+    },
+    {
+      "id": "ecommerce-sandbox-prompt-compose-stage-view-live-smoke",
+      "name": "Future live Sandbox prompt compose -> stage-view read smoke",
+      "requiredForCurrentBaseline": false,
+      "expectedStatus": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "composeSandboxPrompt",
+          "getProductionStageView"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts",
+          "src/pages/production/SandboxPage.tsx"
+        ]
+      },
+      "liveSmoke": {
+        "enabled": false,
+        "kind": "api",
+        "description": "Live Sandbox prompt compose command followed by stage-view refetch.",
+        "notes": "BLOCKED until composeSandboxPrompt is covered by OpenAPI and prompt fixture/readiness policy is registered."
+      },
+      "cleanup": {
+        "status": "BLOCKED",
+        "notes": "Future smoke must isolate or cleanup composed prompt artifacts."
+      },
+      "notes": "Tracks the Phase 4 Sandbox compose/read critical journey as an explicit future adapter obligation."
+    }
+  ]
+}

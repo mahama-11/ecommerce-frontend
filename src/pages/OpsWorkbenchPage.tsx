@@ -52,7 +52,7 @@ const CONFIG_MAP: Record<string, Config> = {
     icon: ListOrdered,
     badge: { zh: '批量内容生产工作台', en: 'Batch Content Workbench' },
     subtitle: {
-      zh: '围绕 SKU 表、模板、质检和导出结果组织批量 Listing 工作流。',
+      zh: '围绕 SKU 表、模板、质检和导出结果组织模板中心 工作流。',
       en: 'Organize the bulk listing workflow around SKU sheets, templates, QA, and output delivery.',
     },
     stats: [
@@ -108,7 +108,7 @@ const CONFIG_MAP: Record<string, Config> = {
       {
         title: { zh: '复用动作', en: 'Reuse Actions' },
         items: [
-          { zh: '回写批量 Listing', en: 'Send to batch listing' },
+          { zh: '回写模板中心', en: 'Send to template center' },
           { zh: '保存到知识库 / 模板库', en: 'Save to KB / template library' },
           { zh: '共享到团队空间', en: 'Share to team space' },
         ],
@@ -145,7 +145,7 @@ const CONFIG_MAP: Record<string, Config> = {
         title: { zh: '模板联动', en: 'Template Integrations' },
         items: [
           { zh: '连接 AI 对话输入', en: 'Connected to AI chat inputs' },
-          { zh: '连接批量 Listing 工作台', en: 'Connected to batch listing workflows' },
+          { zh: '连接模板中心', en: 'Connected to template center workflows' },
           { zh: '连接资料库上下文引用', en: 'Connected to library-based context injection' },
         ],
       },
@@ -187,7 +187,7 @@ const CONFIG_MAP: Record<string, Config> = {
       },
     ],
     actions: [
-      { label: { zh: '批量 Listing', en: 'Batch Listing' }, to: '/aiChat/batchListing' },
+      { label: { zh: '模板中心', en: 'Template Center' }, to: '/aiChat/batchListing' },
       { label: { zh: 'AI 训练', en: 'AI Training' }, to: '/aiChat/training' },
     ],
   },

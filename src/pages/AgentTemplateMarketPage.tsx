@@ -130,6 +130,7 @@ export default function AgentTemplateMarketPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [activeBannerIndex, setActiveBannerIndex] = useState(0)
   const pageSize = 4
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const touchStartX = useRef<number | null>(null)
   const detailRequestVersionRef = useRef(0)
   const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX
@@ -143,39 +144,54 @@ export default function AgentTemplateMarketPage() {
       } else { setActiveBannerIndex(prev => (prev - 1 + featuredTemplates.length) % featuredTemplates.length)
       } }
     touchStartX.current = null }
-  useEffect(() => { void listCatalogFacets({ locale }).then(setGlobalFacets).catch(() => {})
-  }, [locale])
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearchQuery(searchQuery.trim()), 260)
+    return () => window.clearTimeout(timer)
+  }, [searchQuery])
   useEffect(() => {
     let cancelled = false
+    void Promise.all([listRecommendations(locale), listFavoriteTemplates(locale)])
+      .then(([recommendationItems, favoriteItems]) => {
+        if (cancelled) return
+        setRecommendations(recommendationItems)
+        setFavoriteIds(favoriteItems.map(item => item.id))
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [locale])
+  useEffect(() => {
+    const controller = new AbortController()
+    let cancelled = false
     setLoading(true)
+    const requestFilter = {
+      locale, keyword: debouncedSearchQuery || undefined,
+      modality: activeModality ?? undefined, series: activeSeries ?? undefined,
+      capability: activeCapability ?? undefined, platform: activePlatform === 'all' ? undefined : activePlatform,
+    }
+    const isGlobalFilter = !requestFilter.keyword && !requestFilter.modality && !requestFilter.series && !requestFilter.capability && !requestFilter.platform
     void Promise.all([ listCatalog({
-        locale, keyword: searchQuery.trim() || undefined,
-        modality: activeModality ?? undefined, series: activeSeries ?? undefined,
-        capability: activeCapability ?? undefined, platform: activePlatform === 'all' ? undefined : activePlatform,
-        sortBy, }),
-      listCatalogFacets({ locale,
-        keyword: searchQuery.trim() || undefined, modality: activeModality ?? undefined,
-        series: activeSeries ?? undefined, capability: activeCapability ?? undefined,
-        platform: activePlatform === 'all' ? undefined : activePlatform, }),
-      listRecommendations(locale), listFavoriteTemplates(locale),
-    ]) .then(([catalogItems, facetItems, recommendationItems, favoriteItems]) => {
+        ...requestFilter, sortBy, limit: pageSize, offset: (currentPage - 1) * pageSize,
+      }, { signal: controller.signal }),
+      listCatalogFacets(requestFilter),
+    ]) .then(([catalogItems, facetItems]) => {
         if (cancelled) return
         setCatalog(catalogItems)
         setFacets(facetItems)
-        setRecommendations(recommendationItems)
-        setFavoriteIds(favoriteItems.map(item => item.id))
+        if (isGlobalFilter) setGlobalFacets(facetItems)
         setSelectedTemplateId(prev => catalogItems.some(item => item.id === prev) ? prev : (catalogItems[0]?.id ?? ''),
         ) })
-      .catch(() => {
-        if (cancelled) return
+      .catch(error => {
+        if (cancelled || error instanceof DOMException && error.name === 'AbortError') return
         // Global toast handles error
       }) .finally(() => {
         if (!cancelled) { setLoading(false)
         } })
     return () => { cancelled = true
-    } }, [activeCapability, activeModality, activePlatform, activeSeries, locale, searchQuery, sortBy])
+      controller.abort()
+    } }, [activeCapability, activeModality, activePlatform, activeSeries, currentPage, debouncedSearchQuery, locale, sortBy])
   useEffect(() => {
-    if (!selectedTemplateId) { setSelectedDetail(null)
+    if (!detailOpen || !selectedTemplateId) { setSelectedDetail(null)
+      setDetailLoading(false)
       return
     }
     const requestVersion = ++detailRequestVersionRef.current
@@ -187,8 +203,12 @@ export default function AgentTemplateMarketPage() {
       .finally(() => {
         if (detailRequestVersionRef.current === requestVersion) { setDetailLoading(false)
         } })
-  }, [locale, selectedTemplateId])
+  }, [detailOpen, locale, selectedTemplateId])
   const visibleTemplates = useMemo(() => catalog, [catalog])
+  const totalFilteredCount = useMemo(() => {
+    const modalityTotal = (facets?.modalities ?? []).reduce((sum, item) => sum + item.count, 0)
+    return modalityTotal || catalog.length
+  }, [catalog.length, facets])
   const inputFields = useMemo(() => readInputFields(selectedDetail), [selectedDetail])
   const totalCatalogCount = useMemo( () => (globalFacets?.modalities ?? []).reduce((sum, item) => sum + item.count, 0),
     [globalFacets], )
@@ -203,10 +223,10 @@ export default function AgentTemplateMarketPage() {
     }, 5000)
     return () => clearInterval(timer) }, [featuredTemplates.length])
   useEffect(() => { setCurrentPage(1)
-  }, [activeCapability, activeModality, activePlatform, activeSeries, searchQuery, sortBy])
-  const totalPages = Math.max(1, Math.ceil(visibleTemplates.length / pageSize))
+  }, [activeCapability, activeModality, activePlatform, activeSeries, debouncedSearchQuery, sortBy])
+  const totalPages = Math.max(1, Math.ceil(totalFilteredCount / pageSize))
   const normalizedPage = Math.min(currentPage, totalPages)
-  const paginatedTemplates = visibleTemplates.slice((normalizedPage - 1) * pageSize, normalizedPage * pageSize)
+  const paginatedTemplates = visibleTemplates
   const selectedTemplate = visibleTemplates.find(item => item.id === selectedTemplateId) ??
     paginatedTemplates[0] ?? visibleTemplates[0]
   useEffect(() => {
@@ -504,7 +524,7 @@ export default function AgentTemplateMarketPage() {
             <div className="flex items-center justify-between text-sm text-white/45">
               <span>
                 {copy(locale, '筛选结果', 'Results')}: {' '}
-                <span className="text-white/80">{visibleTemplates.length}</span> </span>
+                <span className="text-white/80">{totalFilteredCount}</span> </span>
               <div className="flex flex-wrap items-center justify-end gap-2">
                     {activeModality && ( <span className="rounded-full border border-brand-500/20 bg-brand-500/10 px-2.5 py-1 text-xs text-brand-300">
                     {copy(locale, '当前模态', 'Active Modality')}: {displayTerm(locale, activeModality)} </span>
@@ -569,14 +589,8 @@ export default function AgentTemplateMarketPage() {
                     className={`tool-card glass rounded-2xl p-5 text-left transition-colors ${ isSelected ? 'border-brand-500/30 shadow-[0_0_0_1px_rgba(59,130,246,0.25)]' : ''
                     }`}
                   >
-                    {card.coverAssetUrl && ( <div className="mb-4 overflow-hidden rounded-2xl border border-white/[0.06] bg-[var(--ecom-surface)]">
-                        <img
-                          src={card.coverAssetUrl}
-                          alt={card.name}
-                          className="h-48 w-full object-cover object-center"
-                          loading="lazy"
-                        /> </div>
-                    )}
+                    <div className="mb-4 flex h-48 items-center justify-center rounded-2xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02] text-xs text-white/35">
+                        {copy(locale, '点击预览素材', 'Click to preview asset')} </div>
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div>
                         <div className="mb-2 text-xs text-white/35">{displayTerm(locale, primaryPlatform(card))}</div>

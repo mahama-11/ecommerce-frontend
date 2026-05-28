@@ -1,6 +1,15 @@
 import { API_BASE_URL } from '@/services/apiBase'
 import { buildHeaders, handleUnauthorized, request } from '@/services/http'
 import { useToastStore } from '@/store/toastStore'
+import type { ToolInputMode } from '@/types/tool'
+
+export type SourceAssetInput = {
+  slot: string
+  role: string
+  asset_id: string
+  label?: string
+  required?: boolean
+}
 
 export type SourceAssetSummary = {
   id: string
@@ -21,6 +30,7 @@ export type ImageJobSummary = {
   scene_type: string
   input_mode: string
   source_asset_id: string
+  source_assets?: SourceAssetInput[]
   runtime_job_id: string
   status: string
   stage: string
@@ -62,7 +72,9 @@ export async function createImageJob(input: {
   productId: string
   skuCode: string
   sceneType: string
-  sourceAssetID: string
+  inputMode: ToolInputMode
+  sourceAssetID?: string
+  sourceAssets?: SourceAssetInput[]
   prompt: string
   negativePrompt?: string
   objective?: 'quality' | 'speed' | 'cost' | 'balanced'
@@ -77,8 +89,9 @@ export async function createImageJob(input: {
       product_id: input.productId,
       sku_code: input.skuCode,
       scene_type: input.sceneType,
-      input_mode: 'image_to_image',
+      input_mode: input.inputMode,
       source_asset_id: input.sourceAssetID,
+      source_assets: input.sourceAssets,
       prompt: input.prompt,
       negative_prompt: input.negativePrompt,
       objective: input.objective,
