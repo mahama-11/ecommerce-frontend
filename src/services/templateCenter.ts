@@ -132,7 +132,9 @@ export async function listCatalog(params: {
   capability?: string
   platform?: string
   sortBy?: 'recommended' | 'newest' | 'most_used' | 'most_favorited' | 'alphabetical'
-}) {
+  limit?: number
+  offset?: number
+}, init?: { signal?: AbortSignal }) {
   return request<TemplateListItem[]>(
     `/api/v1/ecommerce/template-center/catalog${toQuery({
       locale: params.locale,
@@ -143,7 +145,10 @@ export async function listCatalog(params: {
       capability: params.capability,
       platform: params.platform,
       sortBy: params.sortBy,
+      limit: params.limit,
+      offset: params.offset,
     })}`,
+    { signal: init?.signal },
   )
 }
 
