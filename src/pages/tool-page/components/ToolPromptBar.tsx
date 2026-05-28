@@ -10,8 +10,6 @@ type ToolPromptBarProps = {
   locale: Locale
   activeInputMode: ToolInputMode
   activeTemplateName?: string
-  templateOptionsLoaded: boolean
-  templateOptionsLength: number
   currentSourceAsset?: SourceAssetSummary | null
   prompt: string
   setPrompt: (value: string) => void
@@ -27,7 +25,7 @@ type ToolPromptBarProps = {
   onCancelJob: () => void
 }
 
-export function ToolPromptBar({ locale, activeInputMode, activeTemplateName, templateOptionsLoaded: _templateOptionsLoaded, templateOptionsLength: _templateOptionsLength, currentSourceAsset, prompt, setPrompt, creatingJob, uploadingSource, selectedProduct, productLoading, pollingJobID, cancelingJob, onSelectFile, onOpenTemplates, onGenerate, onCancelJob }: ToolPromptBarProps) {
+export function ToolPromptBar({ locale, activeInputMode, activeTemplateName, currentSourceAsset, prompt, setPrompt, creatingJob, uploadingSource, selectedProduct, productLoading, pollingJobID, cancelingJob, onSelectFile, onOpenTemplates, onGenerate, onCancelJob }: ToolPromptBarProps) {
   const needsSourceAsset = activeInputMode !== 'text_to_image'
   return (
     <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50 transition-colors duration-700 translate-y-0 opacity-100">

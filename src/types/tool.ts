@@ -1,4 +1,4 @@
-export type ToolInputMode = 'text_to_image' | 'image_to_image' | 'image_edit' | 'multi_image'
+export type ToolInputMode = 'text_to_image' | 'image_to_image' | 'multi_image'
 
 export type ToolRequiredAsset = {
   slot: string

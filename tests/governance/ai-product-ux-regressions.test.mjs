@@ -5,6 +5,7 @@ import assert from 'node:assert/strict'
 
 const root = process.cwd()
 const toolPage = () => readFileSync(join(root, 'src/pages/ToolPage.tsx'), 'utf8')
+const toolTemplatePicker = () => readFileSync(join(root, 'src/pages/tool-page/components/ToolTemplatePicker.tsx'), 'utf8')
 const visualToolsPage = () => readFileSync(join(root, 'src/pages/ProductVisualToolsPage.tsx'), 'utf8')
 const zh = () => readFileSync(join(root, 'src/i18n/zh.ts'), 'utf8')
 const userMenu = () => readFileSync(join(root, 'src/components/account/UserAccountMenu.tsx'), 'utf8')
@@ -42,7 +43,7 @@ test('Product-scoped AI tool page uses scroll-safe canvas and non-stretching upl
 })
 
 test('Template picker modal is viewport-safe and does not squeeze template cards', () => {
-  const source = toolPage()
+  const source = `${toolPage()}\n${toolTemplatePicker()}`
   assert.match(source, /data-testid="template-picker-modal"/)
   assert.match(source, /max-h-\[min\(86vh,780px\)\]/)
   assert.match(source, /overflow-hidden/)
@@ -52,7 +53,7 @@ test('Template picker modal is viewport-safe and does not squeeze template cards
 
 
 test('Template picker cards are readable, not tiny fixed-height buttons', () => {
-  const source = toolPage()
+  const source = `${toolPage()}\n${toolTemplatePicker()}`
   assert.match(source, /data-testid="template-style-card"/)
   assert.match(source, /h-auto[^"]*whitespace-normal/)
   assert.match(source, /min-h-\[320px\]/)

@@ -55,9 +55,10 @@ function readFirstString(record: Record<string, unknown> | undefined, keys: stri
   return ''
 }
 function normalizeInputMode(value: unknown, fallback: ToolInputMode): ToolInputMode {
-  return value === 'text_to_image' || value === 'image_to_image' || value === 'image_edit' || value === 'multi_image'
-    ? value
-    : fallback
+  if (value === 'text_to_image' || value === 'image_to_image' || value === 'multi_image') {
+    return value
+  }
+  return fallback
 }
 function selectLegacySourceAsset(
   sourceAssets: Record<string, { asset: SourceAssetSummary; previewUrl: string }>,
@@ -112,7 +113,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
   const [pollingJobID, setPollingJobID] = useState<string | null>(null)
   const localizedTool = getLocalizedTool(tool, i18n.resolvedLanguage ?? i18n.language)
   const resetJobState = useCallback(() => { setActiveJobID(null)
-    setPollingJobID(null) }, [])
+    setPollingJobID(null) }, [setActiveJobID, setPollingJobID])
   const resetSourceState = useCallback((options?: { clearPrompt?: boolean; clearFileInput?: boolean; clearResults?: boolean }) => { setSourcePreviewUrl(null)
     setSourceAsset(null)
     setSlotAssets({})
@@ -123,7 +124,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
     if (options?.clearResults) { setResults([])
     }
     if (options?.clearFileInput && fileInputRef.current) { fileInputRef.current.value = ''
-    } }, [resetJobState])
+    } }, [resetJobState, setMissingSlotKeys, setPrompt, setResults, setSlotAssets, setSourceAsset, setSourcePreviewUrl])
   const activeInputMode = activeTemplate?.inputMode ?? tool.inputMode
   const activeAssetRequirements = activeInputMode === 'text_to_image'
     ? []
@@ -231,7 +232,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
       if (!current.trim() && injectedNegativePrompt) {
         return injectedNegativePrompt }
       return current })
-  }, [locale, tool.inputMode])
+  }, [locale, setActiveTemplate, setNegativePrompt, setPrompt, tool.inputMode])
   const loadTemplateOptions = useCallback(async (force: boolean = false) => {
     const requestKey = `${locale}:${tool.slug}`
     if (templateOptionsLoadingRef.current) return
@@ -267,7 +268,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
       setTemplateOptionsError(copy(locale, '模板加载失败，请重试', 'Failed to load templates. Please retry.')) } finally {
       templateOptionsLoadingRef.current = false
       setTemplateOptionsLoading(false) }
-  }, [locale, selectedProduct?.categoryId, selectedProduct?.listingVersions, templateOptionsError, templateOptionsLoaded, tool.inputMode, tool.slug])
+  }, [locale, selectedProduct, setActiveTemplate, setTemplateOptions, setTemplateOptionsError, setTemplateOptionsLoaded, setTemplateOptionsLoading, templateOptionsError, templateOptionsLoaded, tool.inputMode, tool.slug])
   useEffect(() => {
     const payloadFromLocation = (location.state as ToolPageLocationState | null)?.templateUsePayload
     const payload = payloadFromLocation ?? loadUseTemplatePayload()
@@ -731,8 +732,6 @@ function ToolContent({ tool, productId }: ToolContentProps) {
         locale={locale}
         activeInputMode={activeInputMode}
         activeTemplateName={activeTemplate?.name}
-        templateOptionsLoaded={templateOptionsLoaded}
-        templateOptionsLength={templateOptions.length}
         currentSourceAsset={currentSourceAsset}
         prompt={prompt}
         setPrompt={setPrompt}
