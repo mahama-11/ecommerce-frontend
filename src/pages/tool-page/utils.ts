@@ -1,5 +1,6 @@
 import { SIZE_OPTIONS } from './config'
 import type { AssetRequirement, GeneratedResult, Locale } from './types'
+import type { ToolRequiredAsset } from '@/types/tool'
 
 export function copy(locale: Locale, zh: string, en: string) {
   return locale === 'zh' ? zh : en
@@ -61,29 +62,73 @@ export function resultStatusLabel(locale: Locale, status: GeneratedResult['statu
   }
 }
 
+export function normalizeToolAssetRequirements(requiredAssets: ToolRequiredAsset[]): AssetRequirement[] {
+  return requiredAssets.map(item => ({
+    slot: item.slot,
+    role: item.role,
+    label: item.label,
+    helper: item.helper,
+    required: item.required,
+    fieldType: 'image',
+    acceptedTypes: item.constraints?.acceptedTypes ?? ['image/png', 'image/jpeg', 'image/webp'],
+    maxSizeMB: item.constraints?.maxSizeMB,
+    aspectRatio: item.constraints?.aspectRatio,
+    minCount: item.constraints?.minCount,
+    maxCount: item.constraints?.maxCount,
+  }))
+}
+
+function readOptionalNumber(record: Record<string, unknown> | undefined, key: string): number | undefined {
+  const value = record?.[key]
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value)
+  return undefined
+}
+
+function normalizeRawAssetRequirements(items: Array<Record<string, unknown>>): AssetRequirement[] {
+  return items.map(item => ({
+    slot: typeof item.slot === 'string' ? item.slot : typeof item.key === 'string' ? item.key : 'asset',
+    role: typeof item.role === 'string' ? item.role : typeof item.slot === 'string' ? item.slot : 'reference',
+    label:
+      typeof item.label === 'string'
+        ? item.label
+        : typeof item.name === 'string'
+          ? item.name
+          : typeof item.slot === 'string'
+            ? item.slot
+            : 'asset',
+    helper: typeof item.helper === 'string' ? item.helper : typeof item.description === 'string' ? item.description : undefined,
+    required: item.required !== false,
+    fieldType: typeof item.fieldType === 'string' ? item.fieldType : typeof item.type === 'string' ? item.type : 'image',
+    acceptedTypes: Array.isArray(item.acceptedTypes)
+      ? item.acceptedTypes.filter((value): value is string => typeof value === 'string')
+      : Array.isArray((item.constraints as Record<string, unknown> | undefined)?.acceptedTypes)
+        ? ((item.constraints as Record<string, unknown>).acceptedTypes as unknown[]).filter((value): value is string => typeof value === 'string')
+        : ['image/png', 'image/jpeg', 'image/webp'],
+    maxSizeMB: readOptionalNumber(item, 'maxSizeMB') ?? readOptionalNumber(item.constraints as Record<string, unknown> | undefined, 'maxSizeMB'),
+    aspectRatio: typeof item.aspectRatio === 'string' ? item.aspectRatio : typeof (item.constraints as Record<string, unknown> | undefined)?.aspectRatio === 'string' ? ((item.constraints as Record<string, unknown>).aspectRatio as string) : undefined,
+    minCount: readOptionalNumber(item, 'minCount') ?? readOptionalNumber(item.constraints as Record<string, unknown> | undefined, 'minCount'),
+    maxCount: readOptionalNumber(item, 'maxCount') ?? readOptionalNumber(item.constraints as Record<string, unknown> | undefined, 'maxCount'),
+  }))
+}
+
 export function normalizeAssetRequirements(
   inputSchema: Record<string, unknown> | undefined,
   defaultVariablesRecord: Record<string, unknown> | undefined,
 ): AssetRequirement[] {
+  const schemaRequiredAssets = Array.isArray(inputSchema?.required_assets)
+    ? (inputSchema.required_assets as Array<Record<string, unknown>>)
+    : Array.isArray(inputSchema?.requiredAssets)
+      ? (inputSchema.requiredAssets as Array<Record<string, unknown>>)
+      : []
+  if (schemaRequiredAssets.length > 0) return normalizeRawAssetRequirements(schemaRequiredAssets)
+
   const fromDefaultVariables = Array.isArray(defaultVariablesRecord?.assetRequirements)
     ? (defaultVariablesRecord?.assetRequirements as Array<Record<string, unknown>>)
-    : []
-  if (fromDefaultVariables.length > 0) {
-    return fromDefaultVariables.map(item => ({
-      slot: typeof item.slot === 'string' ? item.slot : 'asset',
-      label:
-        typeof item.label === 'string'
-          ? item.label
-          : typeof item.slot === 'string'
-            ? item.slot
-            : 'asset',
-      required: item.required !== false,
-      fieldType: typeof item.fieldType === 'string' ? item.fieldType : 'image',
-      acceptedTypes: Array.isArray(item.acceptedTypes)
-        ? item.acceptedTypes.filter((value): value is string => typeof value === 'string')
-        : [],
-    }))
-  }
+    : Array.isArray(defaultVariablesRecord?.required_assets)
+      ? (defaultVariablesRecord?.required_assets as Array<Record<string, unknown>>)
+      : []
+  if (fromDefaultVariables.length > 0) return normalizeRawAssetRequirements(fromDefaultVariables)
 
   const fields = Array.isArray(inputSchema?.fields)
     ? (inputSchema.fields as Array<Record<string, unknown>>)
@@ -92,6 +137,7 @@ export function normalizeAssetRequirements(
     .filter(field => typeof field.type === 'string' && field.type.includes('image'))
     .map(field => ({
       slot: typeof field.key === 'string' ? field.key : 'asset',
+      role: typeof field.role === 'string' ? field.role : 'reference',
       label:
         typeof field.label === 'string'
           ? field.label
@@ -100,10 +146,45 @@ export function normalizeAssetRequirements(
             : typeof field.key === 'string'
               ? field.key
               : 'asset',
+      helper: typeof field.helper === 'string' ? field.helper : undefined,
       required: field.required !== false,
       fieldType: typeof field.type === 'string' ? field.type : 'image',
-      acceptedTypes: [],
+      acceptedTypes: Array.isArray(field.acceptedTypes)
+        ? field.acceptedTypes.filter((value): value is string => typeof value === 'string')
+        : Array.isArray((field.constraints as Record<string, unknown> | undefined)?.acceptedTypes)
+          ? ((field.constraints as Record<string, unknown>).acceptedTypes as unknown[]).filter((value): value is string => typeof value === 'string')
+          : ['image/png', 'image/jpeg', 'image/webp'],
+      maxSizeMB: readOptionalNumber(field, 'maxSizeMB') ?? readOptionalNumber(field.constraints as Record<string, unknown> | undefined, 'maxSizeMB'),
+      aspectRatio: typeof field.aspectRatio === 'string' ? field.aspectRatio : typeof (field.constraints as Record<string, unknown> | undefined)?.aspectRatio === 'string' ? ((field.constraints as Record<string, unknown>).aspectRatio as string) : undefined,
+      minCount: readOptionalNumber(field, 'minCount') ?? readOptionalNumber(field.constraints as Record<string, unknown> | undefined, 'minCount'),
+      maxCount: readOptionalNumber(field, 'maxCount') ?? readOptionalNumber(field.constraints as Record<string, unknown> | undefined, 'maxCount'),
     }))
+}
+
+export function assetAccept(requirement: AssetRequirement | undefined) {
+  return (requirement?.acceptedTypes?.length ? requirement.acceptedTypes : ['image/png', 'image/jpeg', 'image/webp']).join(',')
+}
+
+export function isFileAccepted(file: File, requirement: AssetRequirement | undefined) {
+  const acceptedTypes = requirement?.acceptedTypes?.length ? requirement.acceptedTypes : ['image/png', 'image/jpeg', 'image/webp']
+  const fileType = file.type.toLowerCase()
+  const fileName = file.name.toLowerCase()
+  return acceptedTypes.some(type => {
+    const normalized = type.toLowerCase().trim()
+    if (!normalized) return false
+    if (normalized.endsWith('/*')) return fileType.startsWith(normalized.slice(0, -1))
+    if (normalized.startsWith('.')) return fileName.endsWith(normalized)
+    return fileType === normalized
+  })
+}
+
+export function formatRequirementConstraints(locale: Locale, requirement: AssetRequirement) {
+  const parts: string[] = []
+  if (requirement.acceptedTypes.length) parts.push(requirement.acceptedTypes.join(', '))
+  if (requirement.maxSizeMB) parts.push(copy(locale, `最大 ${requirement.maxSizeMB}MB`, `Max ${requirement.maxSizeMB}MB`))
+  if (requirement.aspectRatio) parts.push(copy(locale, `比例 ${requirement.aspectRatio}`, `Ratio ${requirement.aspectRatio}`))
+  if (requirement.minCount || requirement.maxCount) parts.push(copy(locale, `数量 ${requirement.minCount ?? 1}-${requirement.maxCount ?? '∞'}`, `Count ${requirement.minCount ?? 1}-${requirement.maxCount ?? '∞'}`))
+  return parts.join(' · ')
 }
 
 export function formatAssetLabel(locale: Locale, value: string) {

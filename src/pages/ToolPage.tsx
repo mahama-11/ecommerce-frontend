@@ -2,14 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, Link, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
-import { ArrowLeft, Loader2, Sparkles, Upload, Image as ImageIcon, Wand2, X, ChevronRight, Play, Search } from 'lucide-react'
+import { ArrowLeft, Loader2, Sparkles, Upload, X } from 'lucide-react'
 import { TOOLS, getLocalizedTool } from '@/mock/data'
-import type { ToolDef } from '@/types/tool'
+import type { ToolDef, ToolInputMode } from '@/types/tool'
 import { productWorkspaceRepository } from '@/repositories/productWorkspace'
 import { cancelImageJob,
   createImageJob, fetchAssetObjectURL,
   getImageJob, listImageJobs,
   registerSourceAsset, type ImageJobSummary,
+  type SourceAssetInput,
   type SourceAssetSummary, } from '@/services/imageRuntime'
 import { clearUseTemplatePayload,
   listCatalog, loadUseTemplatePayload,
@@ -20,13 +21,20 @@ import type { Product } from '@/types/product'
 import { ToolNotFoundView } from './tool-page/components/ToolNotFoundView'
 import type { ActiveTemplateState, AssetRequirement, GeneratedResult, Locale, ToolTemplateOption } from './tool-page/types'
 import { copy,
+  assetAccept,
   defaultAssetGuide, fileToDataURL,
+  formatRequirementConstraints,
   getImageDimensions, isTerminalStatus,
+  isFileAccepted,
   mapJobStatus, normalizeAssetRequirements,
+  normalizeToolAssetRequirements,
   toolToSceneType, formatAssetLabel,
 } from './tool-page/utils'
-import { Z_INDEX } from '@/styles/zIndex'
 import { Button } from '@/components/ui/Button'
+import { ToolPromptBar } from './tool-page/components/ToolPromptBar'
+import { ToolTemplatePicker } from './tool-page/components/ToolTemplatePicker'
+import { ToolTemplateGallery } from './tool-page/components/ToolTemplateGallery'
+import { ToolAssetSlotPanel } from './tool-page/components/ToolAssetSlotPanel'
 type ToolPageLocationState = { templateUsePayload?: TemplateUseResponse
 }
 type ToolContentProps = { tool: ToolDef
@@ -46,6 +54,25 @@ function readFirstString(record: Record<string, unknown> | undefined, keys: stri
   }
   return ''
 }
+function normalizeInputMode(value: unknown, fallback: ToolInputMode): ToolInputMode {
+  return value === 'text_to_image' || value === 'image_to_image' || value === 'image_edit' || value === 'multi_image'
+    ? value
+    : fallback
+}
+function selectLegacySourceAsset(
+  sourceAssets: Record<string, { asset: SourceAssetSummary; previewUrl: string }>,
+  requirements: AssetRequirement[],
+) {
+  const compatibleSlot = requirements.find(item => item.role === 'primary' || item.role === 'product' || item.slot === 'primary')
+    ?? requirements.find(item => item.required)
+    ?? requirements[0]
+  if (compatibleSlot && sourceAssets[compatibleSlot.slot]) return sourceAssets[compatibleSlot.slot]
+  const compatibleEntry = Object.entries(sourceAssets).find(([slot, entry]) => {
+    const requirement = requirements.find(item => item.slot === slot)
+    return requirement?.role === 'primary' || requirement?.role === 'product' || entry.asset.metadata?.role === 'primary' || entry.asset.metadata?.role === 'product'
+  })
+  return compatibleEntry?.[1] ?? Object.values(sourceAssets)[0]
+}
 function ToolContent({ tool, productId }: ToolContentProps) {
   const { i18n } = useTranslation()
   const { showToast } = useToastStore()
@@ -53,6 +80,8 @@ function ToolContent({ tool, productId }: ToolContentProps) {
   const location = useLocation()
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const pendingUploadSlotRef = useRef<string>('primary')
+  const [pendingUploadSlot, setPendingUploadSlot] = useState('primary')
   const resultObjectURLsRef = useRef<string[]>([])
   const resultPreviewByAssetIDRef = useRef<Record<string, string>>({})
   const notifiedJobIDsRef = useRef<Set<string>>(new Set())
@@ -76,6 +105,8 @@ function ToolContent({ tool, productId }: ToolContentProps) {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [sourcePreviewUrl, setSourcePreviewUrl] = useState<string | null>(null)
   const [sourceAsset, setSourceAsset] = useState<SourceAssetSummary | null>(null)
+  const [slotAssets, setSlotAssets] = useState<Record<string, { asset: SourceAssetSummary; previewUrl: string }>>({})
+  const [missingSlotKeys, setMissingSlotKeys] = useState<string[]>([])
   const [results, setResults] = useState<GeneratedResult[]>([])
   const [activeJobID, setActiveJobID] = useState<string | null>(null)
   const [pollingJobID, setPollingJobID] = useState<string | null>(null)
@@ -84,6 +115,8 @@ function ToolContent({ tool, productId }: ToolContentProps) {
     setPollingJobID(null) }, [])
   const resetSourceState = useCallback((options?: { clearPrompt?: boolean; clearFileInput?: boolean; clearResults?: boolean }) => { setSourcePreviewUrl(null)
     setSourceAsset(null)
+    setSlotAssets({})
+    setMissingSlotKeys([])
     resetJobState()
     if (options?.clearPrompt) { setPrompt('')
     }
@@ -91,20 +124,33 @@ function ToolContent({ tool, productId }: ToolContentProps) {
     }
     if (options?.clearFileInput && fileInputRef.current) { fileInputRef.current.value = ''
     } }, [resetJobState])
+  const activeInputMode = activeTemplate?.inputMode ?? tool.inputMode
+  const activeAssetRequirements = activeInputMode === 'text_to_image'
+    ? []
+    : activeTemplate?.assetRequirements.length
+      ? activeTemplate.assetRequirements.filter(item => item.fieldType.includes('image'))
+      : normalizeToolAssetRequirements(tool.requiredAssets)
   const sourceGuide = (() => {
     const fallback = defaultAssetGuide(locale, tool.slug)
-    if (!activeTemplate) return { ...fallback, requirements: [] as AssetRequirement[] }
-    const imageRequirements = activeTemplate.assetRequirements.filter(item => item.fieldType.includes('image'))
+    if (activeInputMode === 'text_to_image') {
+      return {
+        title: copy(locale, '用文字描述生成场景', 'Generate from description'),
+        helper: copy(locale, '这个工具不需要上传图片，填写清晰的画面描述即可开始生成。', 'No upload is required for this tool. Describe the scene clearly to generate.'),
+        requirements: [] as AssetRequirement[],
+        warning: undefined,
+      }
+    }
+    const imageRequirements = activeAssetRequirements
     const primaryRequirement = imageRequirements.find(item => item.required) ?? imageRequirements[0]
     return { title: primaryRequirement
         ? copy( locale,
             `上传${formatAssetLabel(locale, primaryRequirement.label)}`, `Upload ${formatAssetLabel(locale, primaryRequirement.label)}`,
           ) : fallback.title,
       helper: imageRequirements.length > 0 ? copy(
-            locale, `模板建议素材: ${imageRequirements.map(item => formatAssetLabel(locale, item.label)).join(' / ')}`,
-            `Recommended assets: ${imageRequirements.map(item => formatAssetLabel(locale, item.label)).join(' / ')}`, )
+            locale, `按素材槽上传: ${imageRequirements.map(item => formatAssetLabel(locale, item.label)).join(' / ')}`,
+            `Upload by slot: ${imageRequirements.map(item => formatAssetLabel(locale, item.label)).join(' / ')}`, )
         : fallback.helper, requirements: imageRequirements,
-      warning: activeTemplate.sourceWarning, }
+      warning: activeTemplate?.sourceWarning, }
   })()
   useEffect(() => { resultObjectURLsRef.current.forEach(url => URL.revokeObjectURL(url))
     resultObjectURLsRef.current = []
@@ -146,20 +192,22 @@ function ToolContent({ tool, productId }: ToolContentProps) {
           ) : []
     const inputSchema = payload.prefilledInputSchema && typeof payload.prefilledInputSchema === 'object'
         ? (payload.prefilledInputSchema as Record<string, unknown>) : undefined
-    const assetRequirements = normalizeAssetRequirements(inputSchema, defaultVariablesRecord)
-    const imageRequirementCount = assetRequirements.filter(item => item.fieldType.includes('image')).length
+    const assetRequirements = payload.requiredAssets?.length ? normalizeToolAssetRequirements(payload.requiredAssets) : normalizeAssetRequirements(inputSchema, defaultVariablesRecord)
+    const templateInputMode = normalizeInputMode(
+      payload.inputMode
+      || inputSchema?.input_mode
+      || inputSchema?.inputMode
+      || payload.applicability?.inputMode,
+      tool.inputMode,
+    )
     if (templateName) { setActiveTemplate({
         id: templateID, templateCode: externalCode || templateID || templateName,
         name: templateName, executorType:
           typeof payload.preloadedTemplatePayload?.executorType === 'string' ? payload.preloadedTemplatePayload.executorType
             : payload.executorType, modality:
           typeof payload.preloadedTemplatePayload?.modality === 'string' ? payload.preloadedTemplatePayload.modality
-            : 'image', defaultVariables,
-        assetRequirements, sourceWarning:
-          imageRequirementCount > 1 ? copy(
-                locale, `当前模板标准输入包含 ${imageRequirementCount} 份图片素材，这一版工具页先支持选择 1 张主素材，其余多素材编排会在后续补齐。`,
-                `This template normally uses ${imageRequirementCount} image assets. This page currently starts with one primary asset, and full multi-asset orchestration will come next.`, )
-            : undefined, })
+            : 'image', inputMode: templateInputMode, defaultVariables,
+        assetRequirements, sourceWarning: undefined, })
     }
     const injectedNegativePrompt = readFirstString(defaultVariablesRecord, ['negativePrompt', 'negative_prompt'])
     const injectedPrompt = readFirstString(defaultVariablesRecord, [
@@ -183,7 +231,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
       if (!current.trim() && injectedNegativePrompt) {
         return injectedNegativePrompt }
       return current })
-  }, [locale])
+  }, [locale, tool.inputMode])
   const loadTemplateOptions = useCallback(async (force: boolean = false) => {
     const requestKey = `${locale}:${tool.slug}`
     if (templateOptionsLoadingRef.current) return
@@ -193,7 +241,10 @@ function ToolContent({ tool, productId }: ToolContentProps) {
     setTemplateOptionsError('')
     try {
       const items = await listCatalog({ locale,
-        toolSlug: tool.slug, sortBy: 'recommended',
+        toolSlug: tool.slug, inputMode: tool.inputMode,
+        productCategory: selectedProduct?.categoryId,
+        platform: selectedProduct?.listingVersions?.[0]?.platform,
+        sortBy: 'recommended',
       })
       const matched = items .sort((left, right) => right.recommendScore - left.recommendScore)
         .map(item => ({ id: item.id,
@@ -216,7 +267,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
       setTemplateOptionsError(copy(locale, '模板加载失败，请重试', 'Failed to load templates. Please retry.')) } finally {
       templateOptionsLoadingRef.current = false
       setTemplateOptionsLoading(false) }
-  }, [locale, tool.slug])
+  }, [locale, selectedProduct?.categoryId, selectedProduct?.listingVersions, templateOptionsError, templateOptionsLoaded, tool.inputMode, tool.slug])
   useEffect(() => {
     const payloadFromLocation = (location.state as ToolPageLocationState | null)?.templateUsePayload
     const payload = payloadFromLocation ?? loadUseTemplatePayload()
@@ -345,21 +396,53 @@ function ToolContent({ tool, productId }: ToolContentProps) {
   }, [pollingJobID, applyJobSummary, locale, localizedTool.name, saveWorkflowEvent])
   const currentResult = activeJobID ? results.find(item => item.id === activeJobID) ?? null
     : null
-  const currentSourceAsset = sourceAsset ?? (currentResult?.sourceAssetId ? buildHistorySourceAsset(currentResult.sourceAssetId) : null)
+  const primarySlot = activeAssetRequirements.find(item => item.role === 'primary' || item.slot === 'primary') ?? activeAssetRequirements.find(item => item.required) ?? activeAssetRequirements[0]
+  const pendingUploadRequirement = activeAssetRequirements.find(item => item.slot === pendingUploadSlot) ?? primarySlot
+  const legacySource = selectLegacySourceAsset(slotAssets, activeAssetRequirements)
+  const currentSourceAsset = legacySource?.asset ?? (currentResult?.sourceAssetId ? buildHistorySourceAsset(currentResult.sourceAssetId) : null)
+  const currentSlotPreview = legacySource?.previewUrl
+  const currentSourcePreviewUrl = currentSlotPreview ?? (currentSourceAsset?.id === sourceAsset?.id ? sourcePreviewUrl : null)
   const isProcessing = creatingJob || uploadingSource || currentResult?.status === 'running' || currentResult?.status === 'queued'
-  const hasValidCanvas = sourcePreviewUrl || currentResult?.previewUrl || isProcessing
-  const handleSelectFile = () => {
-    if (!selectedProduct) { showToast(copy(locale, '请先选择一个商品，再上传源图。', 'Select a product before uploading a source image.'), 'error')
+  const hasValidCanvas = activeInputMode === 'text_to_image' || currentSourcePreviewUrl || currentResult?.previewUrl || isProcessing
+  const handleSelectFile = (slot = activeAssetRequirements[0]?.slot ?? 'primary') => {
+    if (activeInputMode === 'text_to_image') return
+    if (!selectedProduct) { showToast(copy(locale, '请先选择一个商品，再上传素材。', 'Select a product before uploading an asset.'), 'error')
       return
     }
+    pendingUploadSlotRef.current = slot
+    setPendingUploadSlot(slot)
+    if (fileInputRef.current) fileInputRef.current.accept = assetAccept(activeAssetRequirements.find(item => item.slot === slot) ?? activeAssetRequirements[0])
     fileInputRef.current?.click() }
   const handleClearSource = () => { resetSourceState({ clearPrompt: true, clearFileInput: true })
+  }
+  const handleClearSlot = (slot: string) => {
+    setSlotAssets(current => {
+      const next = { ...current }
+      delete next[slot]
+      const first = Object.values(next)[0]
+      setSourceAsset(first?.asset ?? null)
+      setSourcePreviewUrl(first?.previewUrl ?? null)
+      return next
+    })
+    setMissingSlotKeys(current => current.filter(item => item !== slot))
+    resetJobState()
   }
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
+    if (activeInputMode === 'text_to_image') return
     if (!selectedProduct) { showToast(copy(locale, '请先选择一个商品，再上传源图。', 'Select a product before uploading a source image.'), 'error')
+      return
+    }
+    const slot = pendingUploadSlotRef.current || activeAssetRequirements[0]?.slot || 'primary'
+    const requirement = activeAssetRequirements.find(item => item.slot === slot) ?? activeAssetRequirements[0]
+    if (!isFileAccepted(file, requirement)) {
+      showToast(copy(locale, `文件类型不符合 ${formatAssetLabel(locale, requirement?.label ?? slot)} 要求: ${requirement?.acceptedTypes.join(', ') || 'image/png,image/jpeg,image/webp'}`, `File type is not allowed for ${formatAssetLabel(locale, requirement?.label ?? slot)}: ${requirement?.acceptedTypes.join(', ') || 'image/png,image/jpeg,image/webp'}`), 'error')
+      return
+    }
+    if (requirement?.maxSizeMB && file.size > requirement.maxSizeMB * 1024 * 1024) {
+      showToast(copy(locale, `文件超过 ${requirement.maxSizeMB}MB 限制。`, `File exceeds the ${requirement.maxSizeMB}MB limit.`), 'error')
       return
     }
     setUploadingSource(true)
@@ -373,8 +456,19 @@ function ToolContent({ tool, productId }: ToolContentProps) {
         skuCode: selectedProduct.skuCode, fileName: file.name,
         mimeType: file.type || 'image/png', payload,
         width: dimensions.width, height: dimensions.height,
-        metadata: { tool_slug: tool.slug }, })
+        metadata: {
+          tool_slug: tool.slug,
+          input_mode: activeInputMode,
+          slot,
+          role: requirement?.role,
+          label: requirement?.label,
+          template_id: activeTemplate?.id,
+          template_code: activeTemplate?.templateCode,
+          template_name: activeTemplate?.name,
+        }, })
       setSourceAsset(registered)
+      setSlotAssets(current => ({ ...current, [slot]: { asset: registered, previewUrl: localPreviewUrl } }))
+      setMissingSlotKeys(current => current.filter(item => item !== slot))
       saveWorkflowEvent( '源图已完成登记',
         'Source image registered', `${file.name} 已同步到业务资产层，可直接发起生成任务`,
         `${file.name} is registered and ready for generation`, )
@@ -385,7 +479,13 @@ function ToolContent({ tool, productId }: ToolContentProps) {
   }
   const handleGenerate = async () => {
     if (creatingJob || uploadingSource) return
-    if (!currentSourceAsset) { showToast(copy(locale, '请先上传一张源图，再开始生成。', 'Upload a source image before starting generation.'), 'error')
+    const requiredMissing = activeAssetRequirements.filter(item => item.required && !slotAssets[item.slot]?.asset)
+    if (requiredMissing.length > 0) {
+      setMissingSlotKeys(requiredMissing.map(item => item.slot))
+      showToast(copy(locale, `请先补齐必需素材: ${requiredMissing.map(item => formatAssetLabel(locale, item.label)).join('、')}`, `Add required assets first: ${requiredMissing.map(item => formatAssetLabel(locale, item.label)).join(', ')}`), 'error')
+      return
+    }
+    if (activeInputMode !== 'text_to_image' && !currentSourceAsset) { showToast(copy(locale, '请先上传必需素材，再开始生成。', 'Upload required assets before starting generation.'), 'error')
       return
     }
     if (!prompt.trim()) { showToast(copy(locale, '请先填写生成描述。', 'Enter a prompt before starting generation.'), 'error')
@@ -395,20 +495,29 @@ function ToolContent({ tool, productId }: ToolContentProps) {
       return
     }
     setCreatingJob(true)
+    const sourceAssets: SourceAssetInput[] = activeAssetRequirements.reduce<SourceAssetInput[]>((items, requirement) => {
+      const slotAsset = slotAssets[requirement.slot]?.asset
+      if (slotAsset) {
+        items.push({ slot: requirement.slot, role: requirement.role, asset_id: slotAsset.id, label: requirement.label, required: requirement.required })
+      }
+      return items
+    }, [])
+    const compatibleSourceAsset = sourceAssets.find(item => item.slot === 'primary' || item.role === 'primary' || item.role === 'product') ?? sourceAssets[0]
     try {
       const job = await createImageJob({ productId,
         skuCode: selectedProduct.skuCode, sceneType: toolToSceneType(tool.slug),
-        sourceAssetID: currentSourceAsset.id, prompt,
+        inputMode: activeInputMode, sourceAssetID: activeInputMode === 'text_to_image' ? undefined : (compatibleSourceAsset?.asset_id ?? currentSourceAsset?.id),
+        sourceAssets, prompt,
         negativePrompt, objective: 'quality',
-        requestedVariants: 1, width: currentSourceAsset.width || undefined,
-        height: currentSourceAsset.height || undefined, templateCode: activeTemplate?.templateCode,
+        requestedVariants: 1, width: activeInputMode === 'text_to_image' ? undefined : (currentSourceAsset?.width || undefined),
+        height: activeInputMode === 'text_to_image' ? undefined : (currentSourceAsset?.height || undefined), templateCode: activeTemplate?.templateCode,
       })
       await applyJobSummary(job)
       setActiveJobID(job.job_id)
       setPollingJobID(job.job_id)
       saveWorkflowEvent( `${localizedTool.name} 任务已创建`,
-        `${localizedTool.name} job created`, `任务 ${job.job_id.slice(-6)} 已提交到平台 runtime，正在排队处理`,
-        `Job ${job.job_id.slice(-6)} has been queued in platform runtime`, )
+        `${localizedTool.name} job created`, `任务 ${job.job_id.slice(-6)} 已提交到生成队列，正在排队处理`,
+        `Job ${job.job_id.slice(-6)} has been queued for generation`, )
     } catch {
       // Global toast handles API errors
     } finally { setCreatingJob(false)
@@ -445,7 +554,8 @@ function ToolContent({ tool, productId }: ToolContentProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/png,image/jpeg,image/webp"
+        accept={assetAccept(pendingUploadRequirement)}
+        disabled={activeInputMode === 'text_to_image'}
         className="hidden"
         onChange={event => { void handleFileChange(event)
         }}
@@ -506,10 +616,19 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                 {copy(locale, '查看当前商品', 'Open current product')} </Link>
             ) : null} </div>
         </div>
+        <ToolAssetSlotPanel
+          locale={locale}
+          requirements={activeAssetRequirements}
+          slotAssets={slotAssets}
+          missingSlotKeys={missingSlotKeys}
+          uploadingSource={uploadingSource}
+          onSelectFile={handleSelectFile}
+          onClearSlot={handleClearSlot}
+        />
         {!hasValidCanvas ? ( <div className="w-full max-w-4xl mx-auto flex flex-col items-center z-20 animate-in fade-in slide-in-from-bottom-8 duration-1000">
             {/* Upload Dropzone */}
             <Button
-              onClick={handleSelectFile}
+              onClick={() => handleSelectFile()}
               disabled={uploadingSource}
               className={`relative h-auto min-h-[270px] whitespace-normal w-full max-w-2xl aspect-[16/9] rounded-[32px] border-2 border-dashed transition-colors duration-500 group flex flex-col items-center justify-center backdrop-blur-xl overflow-hidden ${ uploadingSource
                   ? 'border-brand-500/50 bg-brand-500/5 cursor-wait' : 'border-white/10 hover:border-brand-500/40 hover:bg-brand-500/5 hover:shadow-[0_0_40px_rgba(var(--brand-500),0.15)] bg-white/[0.02]'
@@ -534,62 +653,34 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                     <p className="text-sm font-medium text-white/40 max-w-sm text-center leading-relaxed">
                       {sourceGuide.helper} </p>
                     <div className="mt-8 flex gap-3">
-                      {sourceGuide.requirements.map(item => ( <span key={item.slot} className="px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-semibold text-white/60 backdrop-blur-md">
-                          {item.label} {item.required ? '*' : ''} </span>
+                      {sourceGuide.requirements.map(item => ( <span key={item.slot} className="px-3 py-1.5 rounded-full border border-white/10 bg-white/5 text-xs font-semibold text-white/60 backdrop-blur-md" title={formatRequirementConstraints(locale, item)}>
+                          {item.label} {item.required ? '*' : ''}{item.maxSizeMB ? ` · ≤${item.maxSizeMB}MB` : ''} </span>
                       ))} </div>
                   </> )}
               </div> </Button>
-            {/* Inspiration Gallery (Zero Cold-Start) */}
-            {templateOptions.length > 0 && ( <div className="mt-16 w-full max-w-4xl relative">
-                <div className="flex items-center justify-center gap-4 mb-8 opacity-60">
-                  <div className="h-px bg-gradient-to-r from-transparent to-white/40 flex-1 max-w-[120px]"></div>
-                  <h4 className="text-xs font-bold text-white uppercase tracking-[0.2em]">{copy(locale, '或试试这些优秀案例', 'Or try these examples')}</h4>
-                  <div className="h-px bg-gradient-to-l from-transparent to-white/40 flex-1 max-w-[120px]"></div> </div>
-                {/* Marquee Container */}
-                <div className="relative w-full overflow-hidden flex pb-4">
-                  {/* Fade masks for smooth entry/exit */}
-                  <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#060608] to-transparent z-10 pointer-events-none" />
-                  <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#060608] to-transparent z-10 pointer-events-none" />
-                  <div className="flex w-max animate-marquee hover:[animation-play-state:paused]">
-                    {[0, 1].map((setIndex) => ( <div key={setIndex} className="flex gap-5 px-2.5">
-                        {templateOptions.map(item => ( <div
-                            key={`${setIndex}-${item.id}`}
-                            role="button"
-                            tabIndex={0}
-                            aria-label={`${copy(locale, '应用模板', 'Apply template')} ${item.name}`}
-                            className={`flex-none w-36 h-36 rounded-2xl bg-black/40 border overflow-hidden cursor-pointer group relative shadow-xl transition-colors duration-500 ${ activeTemplate?.id === item.id
-                                ? 'border-brand-500 shadow-[0_0_30px_rgba(var(--brand-500),0.5)] -translate-y-2' : 'border-white/10 hover:shadow-[0_0_30px_rgba(var(--brand-500),0.3)] hover:border-brand-500/40 hover:-translate-y-2'
-                            }`}
-                            onClick={() => { void handleSelectTemplatePlan(item)
-                            }}
-                            onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') void handleSelectTemplatePlan(item) }}
-                          >
-                            <img
-                              src={item.coverAssetUrl || `https://picsum.photos/seed/${item.id}/300`}
-                              className={`w-full h-full object-cover transition-colors duration-700 ${ activeTemplate?.id === item.id ? 'opacity-100 scale-110' : 'opacity-60 group-hover:opacity-100 group-hover:scale-110'
-                              }`}
-                              alt={item.name}
-                            />
-                            <div className={`absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex items-end justify-center pb-4 transition-opacity duration-300 ${ activeTemplate?.id === item.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                            }`}>
-                              <span className={`flex items-center gap-1.5 text-xs font-bold text-white bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-lg transition-transform duration-300 ${ activeTemplate?.id === item.id ? 'translate-y-0' : 'transform translate-y-4 group-hover:translate-y-0'
-                              }`}>
-                                {activeTemplate?.id === item.id ? ( <>{copy(locale, '已应用', 'Applied')}</>
-                                ) : ( <><Play size={12} fill="currentColor" /> {copy(locale, '一键同款', 'Try this')}</>
-                                )} </span>
-                            </div> </div>
-                        ))} </div>
-                    ))} </div>
-                </div> </div>
-            )} </div>
+            <ToolTemplateGallery
+              locale={locale}
+              templateOptions={templateOptions}
+              activeTemplateID={activeTemplate?.id}
+              onSelect={(item) => { void handleSelectTemplatePlan(item) }}
+            />
+          </div>
         ) : ( <div className="relative z-20 flex w-full max-w-[min(1120px,calc(100vw-2rem))] items-center justify-center animate-in zoom-in-95 duration-500">
             {/* The Main Canvas */}
             <div data-testid="ai-product-canvas" className="relative flex w-full max-h-[min(70vh,720px)] min-h-[360px] items-center justify-center overflow-hidden rounded-[32px] border border-white/10 bg-black/60 shadow-2xl glass-strong">
               {/* Display Source Image if Result is not yet complete */}
-              {sourcePreviewUrl && !currentResult?.previewUrl && ( <div className="relative w-full h-full flex items-center justify-center group/source">
+              {activeInputMode === 'text_to_image' && !currentResult?.previewUrl && !isProcessing ? (
+                <div className="px-8 text-center text-white/55">
+                  <Sparkles className="mx-auto mb-4 text-brand-300" size={40} />
+                  <div className="text-lg font-bold text-white">{copy(locale, '填写描述后即可生成', 'Describe the scene to generate')}</div>
+                  <div className="mt-2 text-sm">{copy(locale, '无需上传图片素材，适合场景背景和概念图生成。', 'No image upload is needed for scene backgrounds and concept visuals.')}</div>
+                </div>
+              ) : null}
+              {/* Display Source Image if Result is not yet complete */}
+              {currentSourcePreviewUrl && !currentResult?.previewUrl && ( <div className="relative w-full h-full flex items-center justify-center group/source">
                   <img
                     data-testid="source-preview-image"
-                    src={sourcePreviewUrl}
+                    src={currentSourcePreviewUrl}
                     alt="Source"
                     className={`max-w-full max-h-full object-contain transition-colors duration-1000 ${isProcessing ? 'opacity-40 blur-md' : 'opacity-100'}`}
                   />
@@ -636,57 +727,26 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                 </div> )}
             </div> </div>
         )} </main>
-      {/* Floating Prompt Bar (Bottom Action Island) */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50 transition-colors duration-700 translate-y-0 opacity-100">
-        <div className="glass-strong rounded-full p-2 pl-6 pr-2 flex items-center gap-3 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 backdrop-blur-3xl relative">
-          {/* Upload/Replace Button */}
-          <Button
-            onClick={handleSelectFile}
-            className="p-2.5 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors relative group shrink-0"
-            title={copy(locale, '重新上传源图', 'Replace source image')}
-          >
-            <ImageIcon size={22} />
-            {currentSourceAsset && <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[var(--ecom-border)]"></div>} </Button>
-          <div className="h-6 w-px bg-white/10 shrink-0"></div>
-          {/* Visual Parameters: Template Trigger */}
-          <Button
-            onClick={() => { setPickerOpen(true)
-              void loadTemplateOptions(!templateOptionsLoaded || templateOptions.length === 0) }}
-            className="px-4 py-2.5 rounded-full hover:bg-white/10 text-brand-400 transition-colors flex items-center gap-2 shrink-0 border border-transparent hover:border-brand-500/30"
-          >
-            <Sparkles size={18} />
-            <span className="text-sm font-bold max-w-[120px] truncate hidden sm:inline-block">
-              {activeTemplate ? activeTemplate.name : copy(locale, '默认风格', 'Default Style')} </span>
-            <ChevronRight size={14} className="opacity-50" /> </Button>
-          <div className="h-6 w-px bg-white/10 shrink-0"></div>
-          {/* Prompt Input */}
-          <input
-            value={prompt}
-            onChange={e => setPrompt(e.target.value)}
-            placeholder={copy(locale, '描述你想要的细节，或直接点击生成...', 'Describe details, or just generate...')}
-            className="min-w-0 flex-1 bg-transparent border-none text-white text-base font-medium focus:ring-0 placeholder-white/30 h-12 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
-            onKeyDown={e => {
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault()
-                void handleGenerate() }
-            }}
-          />
-          {/* Generate CTA */}
-          <Button
-            onClick={handleGenerate}
-            disabled={creatingJob || uploadingSource || !currentSourceAsset || !selectedProduct || productLoading}
-            className="h-14 px-8 rounded-full bg-brand-500 text-white font-black text-sm flex items-center gap-2.5 hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300 shadow-[0_0_20px_rgba(var(--brand-500),0.3)] hover:shadow-[0_0_40px_rgba(var(--brand-500),0.6)] shrink-0"
-          >
-            {creatingJob ? <Loader2 size={20} className="animate-spin" /> : <Wand2 size={20} />}
-            {creatingJob ? copy(locale, '生成中...', 'Generating...') : copy(locale, '魔法生成', 'Generate')} </Button>
-          {pollingJobID && ( <Button
-              onClick={() => { void handleCancelJob() }}
-              disabled={cancelingJob}
-              className="h-14 px-6 rounded-full border border-white/15 bg-white/5 text-white font-bold text-sm flex items-center gap-2 hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-300 shrink-0"
-            >
-              {cancelingJob ? <Loader2 size={18} className="animate-spin" /> : <X size={18} />}
-              {cancelingJob ? copy(locale, '取消中...', 'Canceling...') : copy(locale, '取消任务', 'Cancel Job')} </Button>
-          )} </div>
-      </div>
+      <ToolPromptBar
+        locale={locale}
+        activeInputMode={activeInputMode}
+        activeTemplateName={activeTemplate?.name}
+        templateOptionsLoaded={templateOptionsLoaded}
+        templateOptionsLength={templateOptions.length}
+        currentSourceAsset={currentSourceAsset}
+        prompt={prompt}
+        setPrompt={setPrompt}
+        creatingJob={creatingJob}
+        uploadingSource={uploadingSource}
+        selectedProduct={selectedProduct}
+        productLoading={productLoading}
+        pollingJobID={pollingJobID}
+        cancelingJob={cancelingJob}
+        onSelectFile={() => handleSelectFile()}
+        onOpenTemplates={() => { setPickerOpen(true); void loadTemplateOptions(!templateOptionsLoaded || templateOptions.length === 0) }}
+        onGenerate={() => { void handleGenerate() }}
+        onCancelJob={() => { void handleCancelJob() }}
+      />
       {/* History Drawer (Right Side Filmstrip) */}
       {results.filter(r => r.status !== 'failed').length > 0 ? ( <div className="absolute top-1/2 right-6 -translate-y-1/2 z-40 transition-colors duration-700">
         <div className="glass-strong rounded-[24px] p-3 border border-white/10 flex flex-col gap-3 shadow-2xl backdrop-blur-2xl">
@@ -707,76 +767,21 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                   )} </Button>
              ))} </div>
         </div> </div> ) : null}
-      {/* Template Picker Modal (Visual Parameters) */}
-      {pickerOpen && ( <div className={`fixed inset-0 ${Z_INDEX.modal} flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-md animate-in fade-in duration-300`}>
-          <div data-testid="template-picker-modal" className="flex w-full max-w-5xl max-h-[min(86vh,780px)] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[var(--ecom-surface)] p-6 shadow-2xl animate-in zoom-in-95 duration-300 sm:p-8">
-            <div className="mb-6 flex shrink-0 items-start justify-between gap-4">
-              <div>
-                <h3 className="text-2xl font-black text-white">{copy(locale, '选择模特与风格', 'Choose Style Template')}</h3>
-                <p className="text-sm font-medium text-white/40 mt-2">
-                  {copy(locale, '点击直接应用，省去繁琐提示词。', 'Click to apply instantly, skip complex prompts.')} </p>
-              </div>
-              <Button onClick={() => setPickerOpen(false)} className="rounded-full bg-white/5 p-3 hover:bg-white/10 text-white/60 hover:text-white transition-colors">
-                <X size={20} /> </Button>
-            </div>
-            <div className="relative mb-5 shrink-0">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
-              <input
-                type="text"
-                value={templateSearchTerm}
-                onChange={(e) => setTemplateSearchTerm(e.target.value)}
-                placeholder={copy(locale, '搜索模板名称...', 'Search templates...')}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white placeholder:text-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-brand-500/50 transition-colors"
-              /> </div>
-            {templateOptionsLoading ? ( <div className="flex min-h-[240px] items-center justify-center text-white/60">
-                <Loader2 size={20} className="mr-3 animate-spin" />
-                {copy(locale, '正在加载模板...', 'Loading templates...')} </div>
-            ) : templateOptionsError ? ( <div className="flex min-h-[240px] flex-col items-center justify-center text-center">
-                <p className="text-sm text-white/60">{templateOptionsError}</p>
-                <Button
-                  type="button"
-                  onClick={() => void loadTemplateOptions(true)}
-                  className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
-                >
-                  {copy(locale, '重试加载', 'Retry')} </Button>
-              </div> ) : filteredTemplateOptions.length === 0 ? (
-   <div className="flex min-h-[240px] items-center justify-center text-sm text-white/50">
-     {copy(locale, '暂无可用模板', 'No templates available')} </div>
- ) : ( <div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-2">
-   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-   {filteredTemplateOptions.map(item => {
-                const isActive = activeTemplate?.id === item.id
-                return ( <Button
-                    key={item.id}
-                    data-testid="template-style-card"
-                    aria-busy={selectingTemplateID === item.id}
-                    onClick={() => { void handleSelectTemplatePlan(item)
-                      setPickerOpen(false) }}
-                    className={`group relative h-auto min-h-[320px] whitespace-normal overflow-hidden rounded-2xl border-2 text-left transition-colors duration-300 flex flex-col items-stretch justify-start ${ isActive ? 'border-brand-500 shadow-[0_0_30px_rgba(var(--brand-500),0.3)] scale-[1.02] z-10' : 'border-white/5 hover:border-white/20'
-                    }`}
-                  >
-                    <div className="relative h-56 w-full shrink-0 overflow-hidden bg-white/[0.03]">
-                      <img src={item.coverAssetUrl || `https://picsum.photos/seed/${item.id}/300/400`} className="absolute inset-0 h-full w-full object-cover opacity-85 transition-opacity group-hover:opacity-100" alt={item.name} />
-                      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/80 to-transparent" />
-                    </div>
-                    <div className="flex min-h-[104px] flex-1 flex-col justify-between gap-3 bg-black/55 p-4">
-                      <div>
-                        <div className="text-base font-bold text-white leading-snug">{item.name}</div>
-                        <div className="mt-2 text-sm text-white/65 leading-relaxed line-clamp-3">{item.summary}</div>
-                      </div>
-                      <div className="flex items-center justify-between text-xs font-bold text-brand-200">
-                        <span>{copy(locale, '点击应用', 'Apply')}</span>
-                        {selectingTemplateID === item.id ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={14} />}
-                      </div>
-                    </div>
-                    {isActive && ( <div className="absolute top-3 right-3 bg-brand-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
-                        {copy(locale, '已选', 'Selected')} </div>
-                    )} </Button>
-                    ) })}
-                    </div>
-                    </div> )}
-          </div> </div>
-      )} </div>
+      <ToolTemplatePicker
+        open={pickerOpen}
+        locale={locale}
+        templateSearchTerm={templateSearchTerm}
+        setTemplateSearchTerm={setTemplateSearchTerm}
+        templateOptionsLoading={templateOptionsLoading}
+        templateOptionsError={templateOptionsError}
+        filteredTemplateOptions={filteredTemplateOptions}
+        activeTemplateID={activeTemplate?.id}
+        selectingTemplateID={selectingTemplateID}
+        onClose={() => setPickerOpen(false)}
+        onRetry={() => { void loadTemplateOptions(true) }}
+        onSelect={(item) => { void handleSelectTemplatePlan(item); setPickerOpen(false) }}
+      />
+    </div>
   ) }
 export default function ToolPage() {
   const { toolSlug } = useParams()

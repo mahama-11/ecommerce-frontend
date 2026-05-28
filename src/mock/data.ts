@@ -1,4 +1,4 @@
-import type { ToolDef, SolutionDef, PricingPlan } from '@/types/tool'
+import type { PricingPlan, SolutionDef, ToolDef, ToolInputMode, ToolRequiredAsset } from '@/types/tool'
 
 type SupportedLocale = 'zh' | 'en'
 
@@ -273,29 +273,55 @@ export const TOOL_CATEGORIES = [
   { key: 'designer', label: '设计器', labelKey: 'toolCategories.designer', icon: '🎨', color: 'from-emerald-500/20 to-teal-600/10' },
 ] as const
 
+const imageAsset = (
+  slot: string,
+  role: string,
+  label: string,
+  helper: string,
+  required = true,
+): ToolRequiredAsset => ({
+  slot,
+  role,
+  label,
+  helper,
+  required,
+  constraints: { acceptedTypes: ['image/png', 'image/jpeg', 'image/webp'], minCount: required ? 1 : 0, maxCount: 1, maxSizeMB: 20 },
+})
+
+const noAssets: ToolRequiredAsset[] = []
+const oneProductImage = [imageAsset('primary', 'product', '商品主图', '上传主体完整、边缘清晰的商品图。')]
+const oneModelImage = [imageAsset('primary', 'model', '模特/真人图', '上传主体完整、光线稳定的人像或试穿图。')]
+const oneSceneImage = [imageAsset('primary', 'reference', '场景参考图', '上传构图完整、风格明确的参考图。')]
+
+const withCapability = <T extends Omit<ToolDef, 'inputMode' | 'requiredAssets'>>(
+  tool: T,
+  inputMode: ToolInputMode,
+  requiredAssets: ToolRequiredAsset[],
+): ToolDef => ({ ...tool, inputMode, requiredAssets })
+
 export const TOOLS: ToolDef[] = [
-  { id: 't1', slug: 'changing-model', name: '真人换模特', desc: '上传真人试穿图 → 换脸换肤为不同人种模特', icon: '👤', category: 'model', complexity: 5, tags: ['服装', '换脸', 'V2.0'] },
-  { id: 't2', slug: 'changing-mannequin', name: '人台换模特', desc: '上传人台假模特图 → 生成真人模特效果', icon: '🧍', category: 'model', complexity: 5, tags: ['人台', '全身', '场景'] },
-  { id: 't3', slug: 'changing-bg', name: '换背景', desc: '上传真人棚拍图 → 替换为各种场景背景', icon: '🌄', category: 'model', complexity: 4, tags: ['背景', '场景', '棚拍'] },
-  { id: 't4', slug: 'ai-dressing', name: 'AI穿衣', desc: '上传平铺服装 → 一键生成穿衣上身效果', icon: '👗', category: 'model', complexity: 5, tags: ['穿衣', '上下装', '连体衣'] },
-  { id: 't5', slug: 'ai-wearable', name: '穿戴商品', desc: '上传手表/项链/耳环 → 生成模特穿戴特写图', icon: '⌚', category: 'model', complexity: 4, tags: ['穿戴', '首饰', '特写'] },
-  { id: 't6', slug: 'ai-posture', name: '姿势裂变', desc: '1张模特图 → N种不同姿势的套图', icon: '🤸', category: 'model', complexity: 4, tags: ['姿势', '裂变', '套图'] },
+  withCapability({ id: 't1', slug: 'changing-model', name: '真人换模特', desc: '上传真人试穿图 → 换脸换肤为不同人种模特', icon: '👤', category: 'model', complexity: 5, tags: ['服装', '换脸', 'V2.0'] }, 'image_edit', oneModelImage),
+  withCapability({ id: 't2', slug: 'changing-mannequin', name: '人台换模特', desc: '上传人台假模特图 → 生成真人模特效果', icon: '🧍', category: 'model', complexity: 5, tags: ['人台', '全身', '场景'] }, 'image_to_image', [imageAsset('primary', 'garment', '人台服装图', '上传正面或 3/4 角度的人台服装图。')]),
+  withCapability({ id: 't3', slug: 'changing-bg', name: '换背景', desc: '上传真人棚拍图 → 替换为各种场景背景', icon: '🌄', category: 'model', complexity: 4, tags: ['背景', '场景', '棚拍'] }, 'image_edit', oneModelImage),
+  withCapability({ id: 't4', slug: 'ai-dressing', name: 'AI穿衣', desc: '上传平铺服装 → 一键生成穿衣上身效果', icon: '👗', category: 'model', complexity: 5, tags: ['穿衣', '上下装', '连体衣'] }, 'multi_image', [imageAsset('garment', 'garment', '服装图', '上传平铺或白底服装图。'), imageAsset('model', 'model', '模特参考图', '可上传希望上身的模特或姿态参考图。', false)]),
+  withCapability({ id: 't5', slug: 'ai-wearable', name: '穿戴商品', desc: '上传手表/项链/耳环 → 生成模特穿戴特写图', icon: '⌚', category: 'model', complexity: 4, tags: ['穿戴', '首饰', '特写'] }, 'multi_image', [imageAsset('product', 'product', '配饰商品图', '上传配饰商品的清晰正面图。'), imageAsset('body_reference', 'model', '佩戴参考图', '可上传手部、颈部或耳部参考图。', false)]),
+  withCapability({ id: 't6', slug: 'ai-posture', name: '姿势裂变', desc: '1张模特图 → N种不同姿势的套图', icon: '🤸', category: 'model', complexity: 4, tags: ['姿势', '裂变', '套图'] }, 'image_to_image', oneModelImage),
 
-  { id: 't7', slug: 'ai-product', name: '商品场景合成', desc: '上传商品图 → AI合成到海量预设场景中', icon: '🎯', category: 'product', complexity: 4, tags: ['场景', '合成', '全品类'] },
-  { id: 't8', slug: 'product-replacement', name: '商品替换', desc: '上传参考图 → 替换其中的商品为自己的产品', icon: '🔄', category: 'product', complexity: 4, tags: ['替换', '透视', '参考图'] },
-  { id: 't9', slug: 'image-fission', name: '场景裂变', desc: '上传1张场景参考图 → 裂变出N张类似场景', icon: '✨', category: 'product', complexity: 3, tags: ['裂变', '相似', '批量'] },
-  { id: 't10', slug: 'scene-image', name: '场景素材生成', desc: '文字描述 → 生成场景背景图', icon: '🖌️', category: 'product', complexity: 3, tags: ['文生图', '场景', '背景'] },
-  { id: 't11', slug: 'handheld-goods', name: '手持商品', desc: '上传商品图 → 生成模特手持商品效果', icon: '🤲', category: 'product', complexity: 4, tags: ['手持', '模特', '商品'] },
+  withCapability({ id: 't7', slug: 'ai-product', name: '商品场景合成', desc: '上传商品图 → AI合成到海量预设场景中', icon: '🎯', category: 'product', complexity: 4, tags: ['场景', '合成', '全品类'] }, 'multi_image', [imageAsset('product', 'product', '商品图', '上传白底、透明底或抠干净的商品图。'), imageAsset('scene_reference', 'reference', '场景参考图', '可上传目标场景风格参考图。', false)]),
+  withCapability({ id: 't8', slug: 'product-replacement', name: '商品替换', desc: '上传参考图 → 替换其中的商品为自己的产品', icon: '🔄', category: 'product', complexity: 4, tags: ['替换', '透视', '参考图'] }, 'multi_image', [imageAsset('reference_scene', 'reference', '替换参考图', '上传包含待替换位置的场景图。'), imageAsset('product', 'product', '目标商品图', '上传需要放入场景的商品图。')]),
+  withCapability({ id: 't9', slug: 'image-fission', name: '场景裂变', desc: '上传1张场景参考图 → 裂变出N张类似场景', icon: '✨', category: 'product', complexity: 3, tags: ['裂变', '相似', '批量'] }, 'image_to_image', oneSceneImage),
+  withCapability({ id: 't10', slug: 'scene-image', name: '场景素材生成', desc: '文字描述 → 生成场景背景图', icon: '🖌️', category: 'product', complexity: 3, tags: ['文生图', '场景', '背景'] }, 'text_to_image', noAssets),
+  withCapability({ id: 't11', slug: 'handheld-goods', name: '手持商品', desc: '上传商品图 → 生成模特手持商品效果', icon: '🤲', category: 'product', complexity: 4, tags: ['手持', '模特', '商品'] }, 'multi_image', [imageAsset('product', 'product', '商品图', '上传商品正面或 3/4 角度图。'), imageAsset('hand_reference', 'reference', '手持参考图', '可上传手部姿势或握持方式参考图。', false)]),
 
-  { id: 't12', slug: 'clothing-image-suite', name: '服装套图', desc: '上传≤6张服装图 → 一键生成模特图+种草图+卖点图+A+图', icon: '👔', category: 'suite', complexity: 5, tags: ['服装', '一站式', '品牌'] },
-  { id: 't13', slug: 'product-image-suite', name: '商品套图', desc: '上传多视角商品图 → 生成A+图+卖点图+白底图+场景图', icon: '📸', category: 'suite', complexity: 5, tags: ['商品', '多图', '品牌'] },
+  withCapability({ id: 't12', slug: 'clothing-image-suite', name: '服装套图', desc: '上传≤6张服装图 → 一键生成模特图+种草图+卖点图+A+图', icon: '👔', category: 'suite', complexity: 5, tags: ['服装', '一站式', '品牌'] }, 'multi_image', [imageAsset('front', 'garment', '服装正面图', '上传服装正面图。'), imageAsset('back', 'garment', '服装背面图', '可上传服装背面图。', false), imageAsset('detail', 'detail', '细节图', '可上传面料、领口、袖口等细节图。', false)]),
+  withCapability({ id: 't13', slug: 'product-image-suite', name: '商品套图', desc: '上传多视角商品图 → 生成A+图+卖点图+白底图+场景图', icon: '📸', category: 'suite', complexity: 5, tags: ['商品', '多图', '品牌'] }, 'multi_image', [imageAsset('front', 'product', '商品正面图', '上传商品正面主图。'), imageAsset('side', 'product', '商品侧面图', '可上传侧面或 45° 角度图。', false), imageAsset('detail', 'detail', '卖点细节图', '可上传材质、功能或包装细节图。', false)]),
 
-  { id: 't14', slug: 'video', name: '图生视频', desc: '上传参考图+prompt → AI生成5秒视频', icon: '🎥', category: 'video', complexity: 5, tags: ['视频', 'AI', '5秒'] },
-  { id: 't15', slug: 'batch-generate-videos', name: '批量生成视频', desc: '批量上传视频 → 风格转换(平面/色彩/动漫)', icon: '🎞️', category: 'video', complexity: 4, tags: ['批量', '风格', '转换'] },
-  { id: 't16', slug: 'video-concat', name: '视频拼接', desc: '选择2-4个视频片段 → 一键拼接成品视频', icon: '🔗', category: 'video', complexity: 2, tags: ['拼接', '剪辑', '成品'] },
+  withCapability({ id: 't14', slug: 'video', name: '图生视频', desc: '上传参考图+prompt → AI生成5秒视频', icon: '🎥', category: 'video', complexity: 5, tags: ['视频', 'AI', '5秒'] }, 'image_to_image', oneProductImage),
+  withCapability({ id: 't15', slug: 'batch-generate-videos', name: '批量生成视频', desc: '批量上传视频 → 风格转换(平面/色彩/动漫)', icon: '🎞️', category: 'video', complexity: 4, tags: ['批量', '风格', '转换'] }, 'multi_image', [imageAsset('reference', 'reference', '视频参考帧', '上传视频首帧或关键帧参考图。')]),
+  withCapability({ id: 't16', slug: 'video-concat', name: '视频拼接', desc: '选择2-4个视频片段 → 一键拼接成品视频', icon: '🔗', category: 'video', complexity: 2, tags: ['拼接', '剪辑', '成品'] }, 'multi_image', [imageAsset('clip_reference', 'reference', '片段参考图', '上传需要拼接的视频片段封面或参考图。')]),
 
-  { id: 't17', slug: 'designer-home', name: '设计器', desc: '图片设计器, 按类型/品类/版式筛选模板', icon: '🎨', category: 'designer', complexity: 4, tags: ['设计', '模板', '版式'] },
-  { id: 't18', slug: 'product-refine', name: '商品精修', desc: '一键提升商品图片质感', icon: '💎', category: 'product', complexity: 3, tags: ['精修', '质感', '增强'] },
+  withCapability({ id: 't17', slug: 'designer-home', name: '设计器', desc: '图片设计器, 按类型/品类/版式筛选模板', icon: '🎨', category: 'designer', complexity: 4, tags: ['设计', '模板', '版式'] }, 'image_edit', oneProductImage),
+  withCapability({ id: 't18', slug: 'product-refine', name: '商品精修', desc: '一键提升商品图片质感', icon: '💎', category: 'product', complexity: 3, tags: ['精修', '质感', '增强'] }, 'image_edit', [imageAsset('primary', 'product', '商品原图', '上传未经压缩的原始商品图。')]),
 ]
 
 export const SOLUTIONS: SolutionDef[] = [
