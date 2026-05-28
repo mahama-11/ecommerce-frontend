@@ -32,7 +32,7 @@ It should not host:
 - [Project Skeleton](docs/architecture/PROJECT_SKELETON.md)
 - [Contract Adapter Config](contract-adapter.config.json)
 - [Contract Critical Journeys](contract-governance/critical-journeys.json)
-- [Workspace Cloud Dev Deploy Runbook](../tools/dev/README.md) — Cloud dev 部署固定入口；不要用本 repo 旧 `deploy/deploy.sh dev` 绕过 commit/prod guard/evidence。
+- [Workspace Cloud Dev Deploy Runbook](../tools/dev/README.md) — Cloud dev 部署固定入口，负责 commit/provenance guard、prod guard 与 health/evidence。
 - [Template Center Design](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_DESIGN.md)
 - [Template Center Evolution Plan](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_EVOLUTION_PLAN.md)
 

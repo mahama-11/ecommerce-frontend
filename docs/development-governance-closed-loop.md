@@ -36,14 +36,14 @@ Requirement / bug report
 3. Do not refresh baselines to hide regressions. Baselines move down by burn-down, or up only with an accepted proposal.
 4. Product-flow UI changes must have browser/runtime evidence, not only typecheck/build.
 5. Dev deploys must be clean and provenance-backed by default; dirty deploy is only a labelled dev escape hatch.
-6. Old repo-local deploy scripts and old hook docs are legacy escape hatches, not the normal path.
+6. Deploy and hook entrypoints must point to the workspace-level tools so agents do not choose parallel paths.
 
 ## Current audit notes
 
 - The frontend loop is mostly closed: requirement semantics, page position, design system, visual evidence, API contract, SelfCheck routing, CI, and Cloud dev deploy all have machine-readable gates.
 - Recent gap closed: product-scoped AI tool page `src/pages/ToolPage.tsx` is now explicitly routed to Ecommerce frontend style governance in SelfCheck, not only to the large-source locality guard.
-- Recent redundancy removed: `npm run deploy:dev` now calls the workspace Cloud dev deploy entry instead of the blocked legacy repo-local deploy script.
-- Recent stale doc removed: Git hook docs now point to the workspace SelfCheck hook installer instead of a missing `scripts/install-git-hooks.sh`.
+- Deploy entrypoints now resolve to workspace Cloud dev/prod promotion tools, not repo-local alternatives.
+- Git hook docs now point only to the workspace SelfCheck hook installer.
 
 ## Remaining deliberate gaps
 

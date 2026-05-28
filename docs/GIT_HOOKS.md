@@ -1,6 +1,6 @@
 # Git Hooks
 
-This repo uses the workspace SelfCheck hook installer, not a repo-local shell script.
+This repo uses the workspace SelfCheck hook installer.
 
 ## Install / refresh hooks
 
@@ -31,13 +31,3 @@ npm run frontend:gate
 - `reports/frontend-style-consistency/automation-gate-latest.json`
 - `reports/frontend-style-consistency/evidence-manifest.json`
 - `reports/frontend-quality/*-latest.json`
-
-## Do not use
-
-The old docs command below is intentionally obsolete and should not be reintroduced:
-
-```bash
-bash scripts/install-git-hooks.sh
-```
-
-That file does not exist in this repo and would bypass the workspace SelfCheck selector.
