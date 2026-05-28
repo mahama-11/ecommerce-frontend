@@ -38,6 +38,14 @@ function buildHistorySourceAsset(sourceAssetID: string): SourceAssetSummary {
     width: 0, height: 0,
     file_name: 'history-source', }
 }
+function readFirstString(record: Record<string, unknown> | undefined, keys: string[]): string {
+  if (!record) return ''
+  for (const key of keys) {
+    const value = record[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
 function ToolContent({ tool, productId }: ToolContentProps) {
   const { i18n } = useTranslation()
   const { showToast } = useToastStore()
@@ -153,9 +161,22 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                 `This template normally uses ${imageRequirementCount} image assets. This page currently starts with one primary asset, and full multi-asset orchestration will come next.`, )
             : undefined, })
     }
-    const injectedNegativePrompt = typeof defaultVariablesRecord?.negativePrompt === 'string'
-        ? defaultVariablesRecord.negativePrompt : typeof defaultVariablesRecord?.negative_prompt === 'string'
-          ? defaultVariablesRecord.negative_prompt : ''
+    const injectedNegativePrompt = readFirstString(defaultVariablesRecord, ['negativePrompt', 'negative_prompt'])
+    const injectedPrompt = readFirstString(defaultVariablesRecord, [
+      'prompt', 'positivePrompt', 'positive_prompt', 'generationPrompt', 'generation_prompt',
+      'composed_prompt_text', 'creative_brief', 'stylePrompt', 'style_prompt',
+    ]) || readFirstString(payload.preloadedTemplatePayload as Record<string, unknown> | undefined, [
+      'prompt', 'promptText', 'prompt_text', 'positivePrompt', 'positive_prompt', 'generationPrompt', 'generation_prompt',
+    ]) || (templateName ? copy(locale,
+      `按「${templateName}」的模特、姿态和画面风格，为当前商品生成一张完整清晰的商品图。`,
+      `Generate a complete, clear product image using the model, pose, and visual style of ${templateName}.`,
+    ) : '')
+    setPrompt(current => {
+      if (replacePrompt) {
+        return injectedPrompt || '' }
+      if (!current.trim() && injectedPrompt) {
+        return injectedPrompt }
+      return current })
     setNegativePrompt(current => {
       if (replacePrompt) {
         return injectedNegativePrompt || '' }
@@ -567,9 +588,10 @@ function ToolContent({ tool, productId }: ToolContentProps) {
               {/* Display Source Image if Result is not yet complete */}
               {sourcePreviewUrl && !currentResult?.previewUrl && ( <div className="relative w-full h-full flex items-center justify-center group/source">
                   <img
+                    data-testid="source-preview-image"
                     src={sourcePreviewUrl}
                     alt="Source"
-                    className={`w-full h-full object-contain transition-colors duration-1000 ${isProcessing ? 'opacity-40 blur-md scale-105' : 'opacity-100'}`}
+                    className={`max-w-full max-h-full object-contain transition-colors duration-1000 ${isProcessing ? 'opacity-40 blur-md' : 'opacity-100'}`}
                   />
                   {!isProcessing && ( <Button
                       onClick={handleClearSource}
@@ -582,9 +604,10 @@ function ToolContent({ tool, productId }: ToolContentProps) {
               {/* Display Result Image */}
               {currentResult?.previewUrl && ( <div className="relative w-full h-full flex items-center justify-center group/result">
                   <img
+                    data-testid="result-preview-image"
                     src={currentResult.previewUrl}
                     alt="Result"
-                    className="w-full h-full object-contain animate-in fade-in duration-1000"
+                    className="max-w-full max-h-full object-contain animate-in fade-in duration-1000"
                   />
                   {!isProcessing && ( <Button
                       onClick={handleClearSource}
@@ -725,15 +748,27 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                 const isActive = activeTemplate?.id === item.id
                 return ( <Button
                     key={item.id}
+                    data-testid="template-style-card"
+                    aria-busy={selectingTemplateID === item.id}
                     onClick={() => { void handleSelectTemplatePlan(item)
                       setPickerOpen(false) }}
-                    className={`group relative aspect-[3/4] rounded-2xl border-2 overflow-hidden text-left transition-colors duration-300 ${ isActive ? 'border-brand-500 shadow-[0_0_30px_rgba(var(--brand-500),0.3)] scale-[1.02] z-10' : 'border-white/5 hover:border-white/20'
+                    className={`group relative h-auto min-h-[320px] whitespace-normal overflow-hidden rounded-2xl border-2 text-left transition-colors duration-300 flex flex-col items-stretch justify-start ${ isActive ? 'border-brand-500 shadow-[0_0_30px_rgba(var(--brand-500),0.3)] scale-[1.02] z-10' : 'border-white/5 hover:border-white/20'
                     }`}
                   >
-                    <img src={item.coverAssetUrl || `https://picsum.photos/seed/${item.id}/300/400`} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt={item.name} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-4">
-                      <div className="text-sm font-bold text-white truncate">{item.name}</div>
-                      <div className="text-[10px] text-white/60 line-clamp-2 mt-1">{item.summary}</div> </div>
+                    <div className="relative h-56 w-full shrink-0 overflow-hidden bg-white/[0.03]">
+                      <img src={item.coverAssetUrl || `https://picsum.photos/seed/${item.id}/300/400`} className="absolute inset-0 h-full w-full object-cover opacity-85 transition-opacity group-hover:opacity-100" alt={item.name} />
+                      <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/80 to-transparent" />
+                    </div>
+                    <div className="flex min-h-[104px] flex-1 flex-col justify-between gap-3 bg-black/55 p-4">
+                      <div>
+                        <div className="text-base font-bold text-white leading-snug">{item.name}</div>
+                        <div className="mt-2 text-sm text-white/65 leading-relaxed line-clamp-3">{item.summary}</div>
+                      </div>
+                      <div className="flex items-center justify-between text-xs font-bold text-brand-200">
+                        <span>{copy(locale, '点击应用', 'Apply')}</span>
+                        {selectingTemplateID === item.id ? <Loader2 size={14} className="animate-spin" /> : <ChevronRight size={14} />}
+                      </div>
+                    </div>
                     {isActive && ( <div className="absolute top-3 right-3 bg-brand-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
                         {copy(locale, '已选', 'Selected')} </div>
                     )} </Button>

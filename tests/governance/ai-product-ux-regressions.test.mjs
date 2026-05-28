@@ -33,7 +33,12 @@ test('Product-scoped AI tool page uses scroll-safe canvas and non-stretching upl
   assert.match(source, /max-h-\[min\(70vh,720px\)\]/)
   assert.match(source, /max-w-\[min\(1120px,calc\(100vw-2rem\)\)\]/)
   assert.doesNotMatch(source, /w-full aspect-square sm:aspect-video max-h-\[75vh\]/)
-  assert.match(source, /object-contain/)
+  assert.match(source, /data-testid="source-preview-image"[\s\S]*max-w-full[\s\S]*max-h-full[\s\S]*object-contain/)
+  assert.match(source, /data-testid="result-preview-image"[\s\S]*max-w-full[\s\S]*max-h-full[\s\S]*object-contain/)
+  const sourceImageSegment = source.slice(source.indexOf('data-testid="source-preview-image"'), source.indexOf('data-testid="result-preview-image"'))
+  const resultImageSegment = source.slice(source.indexOf('data-testid="result-preview-image"'), source.indexOf('{!isProcessing && ( <Button', source.indexOf('data-testid="result-preview-image"')))
+  assert.doesNotMatch(sourceImageSegment, /w-full h-full object-cover/)
+  assert.doesNotMatch(resultImageSegment, /w-full h-full object-cover/)
 })
 
 test('Template picker modal is viewport-safe and does not squeeze template cards', () => {
@@ -43,6 +48,25 @@ test('Template picker modal is viewport-safe and does not squeeze template cards
   assert.match(source, /overflow-hidden/)
   assert.match(source, /grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4/)
   assert.doesNotMatch(source, /grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-\[60vh\]/)
+})
+
+
+test('Template picker cards are readable, not tiny fixed-height buttons', () => {
+  const source = toolPage()
+  assert.match(source, /data-testid="template-style-card"/)
+  assert.match(source, /h-auto[^"]*whitespace-normal/)
+  assert.match(source, /min-h-\[320px\]/)
+  assert.match(source, /text-base font-bold text-white/)
+  assert.match(source, /text-sm text-white\/65 leading-relaxed/)
+  assert.doesNotMatch(source, /text-\[10px\] text-white\/60 line-clamp-2/)
+})
+
+test('Clicking a model/style template applies a usable prompt so generation does not require manual prompt writing', () => {
+  const source = toolPage()
+  assert.match(source, /const injectedPrompt/)
+  assert.match(source, /setPrompt\(current =>/)
+  assert.match(source, /applyTemplatePayload\(payload, \{ replacePrompt: true/)
+  assert.match(source, /setPickerOpen\(false\)/)
 })
 
 test('User account compact trigger renders one clean avatar shape without nested border frames', () => {
