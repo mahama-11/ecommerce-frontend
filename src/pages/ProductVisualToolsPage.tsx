@@ -231,6 +231,7 @@ export default function ProductVisualToolsPage() {
               <div className="mt-5 rounded-[22px] bg-black/20 p-4">
                 <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-white/60"><Package className="h-4 w-4 text-cyan-100" />{t('product.visualToolsStudio.currentProduct')}</div>
                 <div className="text-sm font-semibold text-white/90">{selectedProduct ? selectedProduct.title : t('product.visualToolsStudio.chooseProductFirst')}</div>
+                {selectedProduct ? <Link to={`/products/${selectedProduct.id}`} className="mt-3 inline-flex items-center justify-center gap-2 rounded-[18px] border border-brand-500/20 bg-brand-500/10 px-3 py-2 text-xs font-semibold text-brand-100 transition hover:bg-brand-500/20">{t('product.visualTools.viewProductDetail')}<ArrowRight className="h-3.5 w-3.5" /></Link> : null}
                 <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                   <div className="rounded-2xl bg-white/[.055] p-2"><div className="text-white/36">{t('product.visualTools.metrics.assets')}</div><div className="mt-1 truncate text-white/86">{assetCount}</div></div>
                   <div className="rounded-2xl bg-white/[.055] p-2"><div className="text-white/36">{t('product.visualTools.metrics.listing')}</div><div className="mt-1 truncate text-white/86">{selectedProduct?.listingVersionsCount ?? 0}</div></div>
@@ -254,7 +255,6 @@ export default function ProductVisualToolsPage() {
               </div>
             </SoftInspectorPanel>
 
-            {selectedProduct ? <Link to={`/products/${selectedProduct.id}`} className="flex items-center justify-center gap-2 rounded-[24px] border border-white/10 bg-white/[.045] px-4 py-3 text-sm text-white/68 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white">{t('product.visualTools.viewProductDetail')}<ArrowRight className="h-4 w-4" /></Link> : null}
           </div>
         </div>
       </main>

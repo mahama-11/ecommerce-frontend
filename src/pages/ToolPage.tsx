@@ -416,7 +416,11 @@ function ToolContent({ tool, productId }: ToolContentProps) {
       // API error toast
     } finally { setSelectingTemplateID(null)
     } }
-  return ( <div className="min-h-screen bg-[var(--ecom-surface)] flex flex-col relative overflow-hidden">
+  const filteredTemplateOptions = templateOptions.filter(item =>
+    item.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
+    item.summary.toLowerCase().includes(templateSearchTerm.toLowerCase())
+  )
+  return ( <div className="min-h-screen bg-[var(--ecom-surface)] flex flex-col relative overflow-x-hidden">
       <input
         ref={fileInputRef}
         type="file"
@@ -440,7 +444,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
             <span className="text-xs font-medium text-white/50">{localizedTool.desc}</span> </div>
         </div> </header>
       {/* Main Canvas Area */}
-      <main className="flex-1 flex flex-col items-center justify-center relative w-full h-full pt-20 pb-32 px-4 z-10">
+      <main className="relative z-10 flex min-h-screen w-full flex-col items-center justify-center px-4 pb-36 pt-24">
         {/* Ambient Glow */}
         <div className="pointer-events-none absolute -right-40 top-0 h-[600px] w-[600px] rounded-full bg-brand-500/10 blur-[120px]" />
         <div className="pointer-events-none absolute -left-40 bottom-0 h-[600px] w-[600px] rounded-full bg-indigo-500/10 blur-[120px]" />
@@ -486,7 +490,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
             <Button
               onClick={handleSelectFile}
               disabled={uploadingSource}
-              className={`relative w-full max-w-2xl aspect-[16/9] rounded-[32px] border-2 border-dashed transition-colors duration-500 group flex flex-col items-center justify-center backdrop-blur-xl overflow-hidden ${ uploadingSource
+              className={`relative h-auto min-h-[270px] whitespace-normal w-full max-w-2xl aspect-[16/9] rounded-[32px] border-2 border-dashed transition-colors duration-500 group flex flex-col items-center justify-center backdrop-blur-xl overflow-hidden ${ uploadingSource
                   ? 'border-brand-500/50 bg-brand-500/5 cursor-wait' : 'border-white/10 hover:border-brand-500/40 hover:bg-brand-500/5 hover:shadow-[0_0_40px_rgba(var(--brand-500),0.15)] bg-white/[0.02]'
               }`}
             >
@@ -557,9 +561,9 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                     ))} </div>
                 </div> </div>
             )} </div>
-        ) : ( <div className="relative w-full max-w-5xl h-full flex items-center justify-center z-20 animate-in zoom-in-95 duration-500">
+        ) : ( <div className="relative z-20 flex w-full max-w-[min(1120px,calc(100vw-2rem))] items-center justify-center animate-in zoom-in-95 duration-500">
             {/* The Main Canvas */}
-            <div className="relative w-full aspect-square sm:aspect-video max-h-[75vh] rounded-[32px] overflow-hidden glass-strong border border-white/10 shadow-2xl flex items-center justify-center bg-black/60">
+            <div data-testid="ai-product-canvas" className="relative flex w-full max-h-[min(70vh,720px)] min-h-[360px] items-center justify-center overflow-hidden rounded-[32px] border border-white/10 bg-black/60 shadow-2xl glass-strong">
               {/* Display Source Image if Result is not yet complete */}
               {sourcePreviewUrl && !currentResult?.previewUrl && ( <div className="relative w-full h-full flex items-center justify-center group/source">
                   <img
@@ -637,7 +641,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             placeholder={copy(locale, '描述你想要的细节，或直接点击生成...', 'Describe details, or just generate...')}
-            className="flex-1 bg-transparent border-none text-white text-base font-medium focus:ring-0 placeholder-white/30 h-12 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 min-w-[200px]"
+            className="min-w-0 flex-1 bg-transparent border-none text-white text-base font-medium focus:ring-0 placeholder-white/30 h-12 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0"
             onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault()
                 void handleGenerate() }
@@ -661,7 +665,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
           )} </div>
       </div>
       {/* History Drawer (Right Side Filmstrip) */}
-      <div className={`absolute top-1/2 right-6 -translate-y-1/2 z-40 transition-colors duration-700 ${(results.filter(r => r.status !== 'failed').length > 0) ? 'translate-x-0 opacity-100' : 'translate-x-24 opacity-0 pointer-events-none'}`}>
+      {results.filter(r => r.status !== 'failed').length > 0 ? ( <div className="absolute top-1/2 right-6 -translate-y-1/2 z-40 transition-colors duration-700">
         <div className="glass-strong rounded-[24px] p-3 border border-white/10 flex flex-col gap-3 shadow-2xl backdrop-blur-2xl">
            <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] text-center pb-2 border-b border-white/5">
              {copy(locale, '历史记录', 'History')} </div>
@@ -679,11 +683,11 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                         <Loader2 size={16} className="text-brand-400 animate-spin" /> </div>
                   )} </Button>
              ))} </div>
-        </div> </div>
+        </div> </div> ) : null}
       {/* Template Picker Modal (Visual Parameters) */}
-      {pickerOpen && ( <div className={`fixed inset-0 ${Z_INDEX.modal} flex items-center justify-center bg-black/80 px-4 backdrop-blur-md animate-in fade-in duration-300`}>
-          <div className="w-full max-w-4xl rounded-[32px] border border-white/10 bg-[var(--ecom-surface)] p-8 shadow-2xl animate-in zoom-in-95 duration-300">
-            <div className="flex items-center justify-between mb-8">
+      {pickerOpen && ( <div className={`fixed inset-0 ${Z_INDEX.modal} flex items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-md animate-in fade-in duration-300`}>
+          <div data-testid="template-picker-modal" className="flex w-full max-w-5xl max-h-[min(86vh,780px)] flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[var(--ecom-surface)] p-6 shadow-2xl animate-in zoom-in-95 duration-300 sm:p-8">
+            <div className="mb-6 flex shrink-0 items-start justify-between gap-4">
               <div>
                 <h3 className="text-2xl font-black text-white">{copy(locale, '选择模特与风格', 'Choose Style Template')}</h3>
                 <p className="text-sm font-medium text-white/40 mt-2">
@@ -692,7 +696,7 @@ function ToolContent({ tool, productId }: ToolContentProps) {
               <Button onClick={() => setPickerOpen(false)} className="rounded-full bg-white/5 p-3 hover:bg-white/10 text-white/60 hover:text-white transition-colors">
                 <X size={20} /> </Button>
             </div>
-            <div className="relative mb-6">
+            <div className="relative mb-5 shrink-0">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
               <input
                 type="text"
@@ -712,15 +716,12 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                   className="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
                 >
                   {copy(locale, '重试加载', 'Retry')} </Button>
-              </div> ) : templateOptions
-              .filter(item => item.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) ||
-                item.summary.toLowerCase().includes(templateSearchTerm.toLowerCase()) ).length === 0 ? (
-              <div className="flex min-h-[240px] items-center justify-center text-sm text-white/50">
-                {copy(locale, '暂无可用模板', 'No templates available')} </div>
-            ) : ( <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto scrollbar-hide pr-2 pb-4">
-              {templateOptions .filter(item =>
-                  item.name.toLowerCase().includes(templateSearchTerm.toLowerCase()) || item.summary.toLowerCase().includes(templateSearchTerm.toLowerCase())
-                ) .map(item => {
+              </div> ) : filteredTemplateOptions.length === 0 ? (
+   <div className="flex min-h-[240px] items-center justify-center text-sm text-white/50">
+     {copy(locale, '暂无可用模板', 'No templates available')} </div>
+ ) : ( <div className="min-h-0 flex-1 overflow-y-auto pr-1 pb-2">
+   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+   {filteredTemplateOptions.map(item => {
                 const isActive = activeTemplate?.id === item.id
                 return ( <Button
                     key={item.id}
@@ -736,8 +737,9 @@ function ToolContent({ tool, productId }: ToolContentProps) {
                     {isActive && ( <div className="absolute top-3 right-3 bg-brand-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">
                         {copy(locale, '已选', 'Selected')} </div>
                     )} </Button>
-                ) })}
-            </div> )}
+                    ) })}
+                    </div>
+                    </div> )}
           </div> </div>
       )} </div>
   ) }

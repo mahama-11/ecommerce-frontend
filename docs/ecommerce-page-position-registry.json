@@ -458,8 +458,12 @@
       "resultDestinationDetail": [
         "SKU.assets"
       ],
+      "routeId": "product-ai-product",
+      "evidenceRouteIds": [
+        "product-ai-product"
+      ],
       "files": [
-        "src/pages/ProductAiWorkspacePage.tsx"
+        "src/pages/ToolPage.tsx"
       ]
     },
     {

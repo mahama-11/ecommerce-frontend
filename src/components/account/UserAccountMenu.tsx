@@ -182,11 +182,9 @@ export default function UserAccountMenu({
       <Button
         type="button"
         onClick={() => setOpen(prev => !prev)}
-        className={`glass-strong border border-white/10 text-left text-white hover:border-white/20 hover:bg-[var(--ecom-surface-hover)] flex items-center gap-3 rounded-2xl transition-colors ${
-          compact ? 'px-3 py-2' : 'px-3.5 py-2.5'
-        }`}
+        className={`${compact ? 'h-10 w-10 rounded-full p-0' : 'px-3.5 py-2.5 rounded-2xl'} glass-strong border border-white/10 text-left text-white hover:border-white/20 hover:bg-[var(--ecom-surface-hover)] flex items-center gap-3 transition-colors`}
       >
-        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-brand-500/20 bg-brand-500/15 text-xs font-semibold text-brand-200">
+        <div className={`flex items-center justify-center overflow-hidden rounded-full bg-brand-500/15 text-xs font-semibold text-brand-200 ${compact ? 'h-full w-full border-0' : 'h-10 w-10 border border-brand-500/20'}`}>
           {user.avatar_url ? (
             <img src={user.avatar_url} alt={name} className="h-full w-full object-cover" />
           ) : (

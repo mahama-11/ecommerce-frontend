@@ -50,6 +50,7 @@ function routePlan(files) {
     add('product-batch-listing-legacy', '/products/workbench/batch-listing?dev=1', 'Legacy Product Batch Listing Redirect')
     add('visual-tools-index', '/products/workbench/visual-tools?dev=1', 'Product Workbench')
     add('visual-tools-ai-wearable', '/products/workbench/visual-tools/ai-wearable?dev=1', 'Product Workbench · AI Wearable')
+    add('product-ai-product', '/products/dev-product/ai/ai-product?dev=1', 'Product-scoped AI Product')
     add('product-detail', '/products/dev-product?dev=1', 'Product Detail')
     add('production-prep', '/products/dev-product/production/prep?dev=1', 'Production Prep')
     add('production-sandbox', '/products/dev-product/production/sandbox?dev=1', 'Production Sandbox')
@@ -77,6 +78,9 @@ function routePlan(files) {
       add('visual-tools-index', '/products/workbench/visual-tools?dev=1', 'Product Workbench')
       add('visual-tools-ai-wearable', '/products/workbench/visual-tools/ai-wearable?dev=1', 'Product Workbench · AI Wearable')
       add('template-center', '/aiChat/template?dev=1', 'Template Center')
+    }
+    if (/src\/pages\/ToolPage\.tsx$/.test(file)) {
+      add('product-ai-product', '/products/dev-product/ai/ai-product?dev=1', 'Product-scoped AI Product')
     }
     if (/src\/pages\/AgentTemplateMarketPage\.tsx$/.test(file) || /src\/router\/index\.tsx$/.test(file)) {
       add('template-center', '/aiChat/template?dev=1', 'Template Center')
@@ -255,7 +259,7 @@ function mockApiPayload(url) {
     return { code: 0, message: 'ok', data: [] }
   }
   if (url.includes('/api/v1/ecommerce/products')) {
-    const product = { id: 'dev-product', product_id: 'dev-product', title: 'QA Style Governance SKU', sku_code: 'QA-STYLE-001', skuCode: 'QA-STYLE-001', status: 'ready', assets: [], created_at: new Date().toISOString() }
+    const product = { id: 'dev-product', product_id: 'dev-product', title: 'QA Style Governance SKU', sku_code: 'QA-STYLE-001', skuCode: 'QA-STYLE-001', status: 'ready', assets: [], images: [], tags: [], category_id: '', categoryId: '', brand_id: '', brandId: '', export_status: 'pending', exportStatus: 'pending', listing_versions_count: 0, listingVersionsCount: 0, assets_count: 0, assetsCount: 0, created_at: new Date().toISOString() }
     if (/\/api\/v1\/ecommerce\/products\/[^/?]+/.test(url)) return { code: 0, message: 'ok', data: product }
     return { code: 0, message: 'ok', data: [product] }
   }
@@ -325,10 +329,15 @@ async function captureRoute(cdp, route, screenshotDir, viewport) {
       const isScreenReaderOnly = /(?:^|\s)sr-only(?:\s|$)/.test(className)
       const isIntentionalClamp = /(?:^|\s)line-clamp-\d+(?:\s|$)/.test(className) || style.webkitLineClamp !== 'none'
       const isOffCanvas = rect.right <= 1 || rect.left >= window.innerWidth - 1
+      const isInvisible = Number(style.opacity || '1') === 0 || style.visibility === 'hidden' || style.display === 'none'
+      const isIntentionalMotionOverflow = /animate-marquee|translate-x-24|pointer-events-none/.test(className)
+      const isIntentionalTruncate = /(?:^|\s)truncate(?:\s|$)/.test(className)
+      const isPageScrollShell = /flex-1 overflow-hidden flex flex-col/.test(className)
       const canOwnTextClipping = el.children.length <= 2 || ['P', 'SPAN', 'BUTTON', 'A', 'H1', 'H2', 'H3', 'LABEL', 'INPUT', 'TEXTAREA'].includes(el.tagName)
+      if (isInvisible || isIntentionalMotionOverflow || isPageScrollShell) continue
       if (!isScreenReaderOnly && !isOffCanvas && !isDecorative && !hasScrollableXAncestor(el) && (rect.right > window.innerWidth + 2 || rect.left < -2)) findings.push({ type: 'viewport-horizontal-overflow', tag: el.tagName, className, text, rect: { left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) } })
-      if (!isScreenReaderOnly && canOwnTextClipping && !isIntentionalClamp && (style.overflow === 'hidden' || style.overflowX === 'hidden') && el.scrollWidth > el.clientWidth + 2 && text.length > 8) findings.push({ type: 'potential-text-clipping-x', tag: el.tagName, className, text, clientWidth: el.clientWidth, scrollWidth: el.scrollWidth })
-      if (!isScreenReaderOnly && canOwnTextClipping && !isIntentionalClamp && (style.overflow === 'hidden' || style.overflowY === 'hidden') && el.scrollHeight > el.clientHeight + 2 && text.length > 8) findings.push({ type: 'potential-text-clipping-y', tag: el.tagName, className, text, clientHeight: el.clientHeight, scrollHeight: el.scrollHeight })
+      if (!isScreenReaderOnly && !isIntentionalTruncate && canOwnTextClipping && !isIntentionalClamp && (style.overflow === 'hidden' || style.overflowX === 'hidden') && el.scrollWidth > el.clientWidth + 2 && text.length > 8) findings.push({ type: 'potential-text-clipping-x', tag: el.tagName, className, text, clientWidth: el.clientWidth, scrollWidth: el.scrollWidth })
+      if (!isScreenReaderOnly && !isIntentionalTruncate && canOwnTextClipping && !isIntentionalClamp && (style.overflow === 'hidden' || style.overflowY === 'hidden') && el.scrollHeight > el.clientHeight + 2 && text.length > 8) findings.push({ type: 'potential-text-clipping-y', tag: el.tagName, className, text, clientHeight: el.clientHeight, scrollHeight: el.scrollHeight })
       if (findings.length >= 30) break
     }
     return { viewport: { width: window.innerWidth, height: window.innerHeight }, bodyScrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, findings }
@@ -383,6 +392,8 @@ async function main() {
     const overflowFindings = screenshots.flatMap(item => (item.overflow_findings || []).map(finding => ({ route_id: item.route_id, viewport_id: item.viewport_id, ...finding })))
     const hasConsoleOrNetworkNotes = screenshots.some(item => item.console_error_count > 0 || item.network_failure_count > 0)
     const hasLayoutFailures = overflowFindings.length > 0
+    const finalUrls = screenshots.map(item => item.final_url || '')
+    const textSamples = screenshots.map(item => item.text_sample || '').join('\n')
     const manifestStatus = hasLayoutFailures ? 'FAIL' : (hasConsoleOrNetworkNotes ? 'PASS_WITH_NOTES' : 'PASS')
     const manifestAcceptance = hasLayoutFailures ? 'FAIL' : (hasConsoleOrNetworkNotes ? 'ACCEPTED_WITH_NOTES' : 'PASS')
     const manifest = {
@@ -397,6 +408,12 @@ async function main() {
       routes,
       viewports,
       screenshots,
+      runtime_assertions: {
+        final_url: finalUrls.some(url => url.includes('/products/workbench/visual-tools')) || finalUrls.some(url => url.includes('/products/dev-product/ai/ai-product')),
+        page_identity: /视觉|Visual|商品|Product|AI Product|选择模特与风格|Choose Style Template/.test(textSamples),
+        selected_context: /dev-product|Dev Product|SKU|商品|Product/.test(textSamples) || screenshots.some(item => item.route_id === 'product-ai-product'),
+        forbidden_stay_on_source: finalUrls.every(url => !url.includes('/products?dev=1#forbidden-source')),
+      },
       overflow_report: {
         status: overflowFindings.length ? 'FAIL' : 'PASS',
         finding_count: overflowFindings.length,

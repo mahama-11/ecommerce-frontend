@@ -386,9 +386,9 @@ const zh = { common: { brand: 'Agent Ecommerce', loading: '加载中...',
       currentProduct: '当前商品', noProductLabel: '从这里开始', chooseProductFirst: '请先选择或创建商品', primaryChooseProduct: '选择商品', primaryReady: '生成商品视觉素材', chooseGoal: '选择视觉目标',
       steps: { product: '商品', chooseProduct: '选择商品', visualGoal: '视觉目标', chooseGoal: '选择目标', result: '结果去向', resultDesc: '保存后用于模板与交付' },
       previewTitle: '预期效果预览', previewDescReady: '当前商品和视觉目标会决定下一组图片方向。进入生成前，先把结果预期放在主舞台上。', previewDescEmpty: '选择商品后，这里会承接更清晰的结果预期与下一步。',
-      assetTitle: '商品素材', videoLater: '视频素材可后续补充', productSelector: '本次视觉任务的商品', recommendedTitle: '推荐下一步视觉目标', recommendedDesc: '优先处理当前商品最需要补齐的主图或场景图，确认后再进入生成。',
+      assetTitle: '商品素材', videoLater: '视频素材可后续补充', productSelector: '本次视觉任务的商品', recommendedTitle: '推荐下一步视觉目标', recommendedDesc: '按当前商品选择一个图片目标，生成结果会保存到商品素材。',
       inspectorTitle: '已选视觉目标', actionNoteReady: '生成结果会回到当前商品，可继续用于模板中心或下载中心。', actionNoteEmpty: '请先选择商品，让生成结果有明确去向。', destinationTitle: '结果会保存到商品素材', destinationDesc: '图片生成后会归档到当前商品，并继续进入详情复核、模板中心或下载中心。',
-      helpTitle: '怎么继续', helpProduct: '先从一个商品出发，避免视觉结果没有上下文。', helpGoal: '一次只选择一个视觉目标，更多工具在下方保持可用。', helpVideo: '视频能力作为后续选项保留，但不干扰当前图片创作。', comingSoon: '即将开放', exploreMore: '查看更多视觉目标', exploreMoreHint: '次级工具库 · 推荐目标不够时再展开'
+      helpTitle: '怎么继续', helpProduct: '当前商品会带入素材、SKU 和结果归档位置。', helpGoal: '先生成一组图片结果，完成后可继续切换其他目标。', helpVideo: '视频入口保留在工具区，图片创作不需要先配置视频。', comingSoon: '即将开放', exploreMore: '查看更多视觉目标', exploreMoreHint: '更多图片与视频工具'
     } }, pages: { productList: '商品列表',
     exportCenter: '导出中心', productTemplates: '商品模板', assetLibrary: '资产库', chat: 'AI 自由对话',
     chatDoc: '知识库对话', aiChatTemplate: 'AI Agent 模板', aiChatBatchListing: '模板中心', aiChatHistory: '历史会话',

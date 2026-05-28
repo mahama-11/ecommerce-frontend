@@ -31,6 +31,7 @@ const completeRoutes = [
   { id: 'product-batch-listing-legacy', path: '/products/workbench/batch-listing?dev=1' },
   { id: 'visual-tools-index', path: '/products/workbench/visual-tools?dev=1' },
   { id: 'visual-tools-ai-wearable', path: '/products/workbench/visual-tools/ai-wearable?dev=1' },
+  { id: 'product-ai-product', path: '/products/dev-product/ai/ai-product?dev=1' },
   { id: 'product-detail', path: '/products/dev-product?dev=1' },
   { id: 'production-prep', path: '/products/dev-product/production/prep?dev=1' },
   { id: 'production-sandbox', path: '/products/dev-product/production/sandbox?dev=1' },
@@ -114,6 +115,7 @@ test('visual evidence route plan includes legacy redirects and critical SKU flow
   assert.ok(ids.includes('batch-listing-legacy'))
   assert.ok(ids.includes('product-batch-listing-legacy'))
   assert.ok(ids.includes('visual-tools-ai-wearable'))
+  assert.ok(ids.includes('product-ai-product'))
   assert.ok(ids.includes('product-detail'))
   assert.ok(ids.includes('production-sandbox'))
   assert.ok(ids.includes('production-workshop'))

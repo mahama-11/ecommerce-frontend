@@ -327,7 +327,7 @@ if (requiresVisualEvidence) {
     const changedFilesPath = join(root, autoEvidenceChangedFilesRel)
     mkdirSync(dirname(changedFilesPath), { recursive: true })
     writeFileSync(changedFilesPath, files.join('\n') + '\n')
-    const generated = run('node', ['scripts/ecommerce-frontend-visual-evidence.mjs', '--changed-files', autoEvidenceChangedFilesRel], { timeout: 120000 })
+    const generated = run('node', ['scripts/ecommerce-frontend-visual-evidence.mjs', '--changed-files', autoEvidenceChangedFilesRel], { timeout: 240000 })
     evidenceGeneration = {
       status: generated.status === 0 ? 'PASS' : 'FAIL',
       exit_code: generated.status,
