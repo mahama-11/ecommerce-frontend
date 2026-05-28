@@ -16,6 +16,7 @@ const designSystemReportRel = 'reports/frontend-quality/design-system-registry-l
 const frontendIaReportRel = 'reports/frontend-quality/frontend-ia-latest.json'
 const pagePositionReportRel = 'reports/frontend-style-consistency/page-position-report.json'
 const designGovernanceReportRel = 'reports/frontend-quality/design-governance-latest.json'
+const acceptanceGovernanceReportRel = 'reports/frontend-quality/acceptance-governance-latest.json'
 const visualCompositionReportRel = 'reports/frontend-quality/visual-composition-latest.json'
 const apiContractReportRel = 'reports/frontend-quality/api-contract-latest.json'
 const runtimeLayoutReportRel = 'reports/frontend-quality/runtime-layout-latest.json'
@@ -178,6 +179,9 @@ const pagePositionArgs = ['scripts/ecommerce-page-position-gate.mjs', '--report'
 if (explicitChangedFiles) pagePositionArgs.push('--changed-files', explicitChangedFiles)
 const pagePositionGate = run('node', pagePositionArgs)
 const designGovernanceGate = run('node', ['scripts/ecommerce-design-governance-gate.mjs', '--report', designGovernanceReportRel])
+const acceptanceGovernanceArgs = ['scripts/ecommerce-acceptance-governance-gate.mjs', '--report', acceptanceGovernanceReportRel]
+if (explicitChangedFiles) acceptanceGovernanceArgs.push('--changed-files', explicitChangedFiles)
+const acceptanceGovernanceGate = run('node', acceptanceGovernanceArgs)
 const visualCompositionGate = run('node', ['scripts/ecommerce-visual-composition-gate.mjs', '--report', visualCompositionReportRel])
 const apiContractGate = run('node', ['scripts/ecommerce-api-contract-gate.mjs'])
 let styleJson = null
@@ -228,6 +232,12 @@ try {
 } catch {
   designGovernanceJson = { status: 'UNKNOWN', raw_stdout: designGovernanceGate.stdout.slice(-4000), failures: [], warnings: [] }
 }
+let acceptanceGovernanceJson = null
+try {
+  acceptanceGovernanceJson = JSON.parse(acceptanceGovernanceGate.stdout)
+} catch {
+  acceptanceGovernanceJson = { status: 'UNKNOWN', raw_stdout: acceptanceGovernanceGate.stdout.slice(-4000), failures: [], warnings: [] }
+}
 let visualCompositionJson = null
 try {
   visualCompositionJson = JSON.parse(visualCompositionGate.stdout)
@@ -275,6 +285,12 @@ if (designGovernanceGate.status !== 0 || designGovernanceJson.status === 'FAIL')
 }
 if (designGovernanceJson.status === 'PASS_WITH_NOTES') {
   warnings.push(...(designGovernanceJson.warnings || []).map(item => `design governance: ${item}`))
+}
+if (acceptanceGovernanceGate.status !== 0 || acceptanceGovernanceJson.status === 'FAIL') {
+  failures.push('Acceptance/TDD governance gate failed; P0/P1 changes must bind requirement semantics to executable acceptance, RED/GREEN evidence, and runtime browser evidence')
+}
+if (acceptanceGovernanceJson.status === 'PASS_WITH_NOTES') {
+  warnings.push(...(acceptanceGovernanceJson.warnings || []).map(item => `acceptance governance: ${item}`))
 }
 if (visualCompositionGate.status !== 0 || visualCompositionJson.status === 'FAIL') {
   failures.push('Visual composition gate failed; core product pages must avoid boxed/control-console anti-patterns and include task stage plus result preview')
@@ -442,6 +458,18 @@ const result = {
     required_shells: designGovernanceJson.required_shells || [],
     failures: designGovernanceJson.failures || [],
     warnings: designGovernanceJson.warnings || [],
+  },
+  acceptance_governance: {
+    exit_code: acceptanceGovernanceGate.status,
+    report: acceptanceGovernanceReportRel,
+    status: acceptanceGovernanceJson.status,
+    required_documents: acceptanceGovernanceJson.required_documents || [],
+    policy_levels: acceptanceGovernanceJson.policy_levels || {},
+    changed_file_classification: acceptanceGovernanceJson.changed_file_classification || {},
+    acceptance_matrix: acceptanceGovernanceJson.acceptance_matrix,
+    runtime_evidence: acceptanceGovernanceJson.runtime_evidence,
+    failures: acceptanceGovernanceJson.failures || [],
+    warnings: acceptanceGovernanceJson.warnings || [],
   },
   visual_composition: {
     exit_code: visualCompositionGate.status,

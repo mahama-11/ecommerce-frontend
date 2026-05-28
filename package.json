@@ -14,6 +14,7 @@
     "frontend:ia": "node scripts/ecommerce-frontend-ia-gate.mjs",
     "frontend:burn-down": "node scripts/ecommerce-historical-page-burn-down.mjs",
     "governance:test": "node --test tests/governance/*.test.mjs",
+    "acceptance:governance": "node scripts/ecommerce-acceptance-governance-gate.mjs",
     "design-system:check": "node scripts/ecommerce-design-system-registry-gate.mjs",
     "storybook": "storybook dev -p 6006",
     "storybook:build": "storybook build --quiet",
