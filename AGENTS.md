@@ -27,6 +27,7 @@ It should not host:
 - [Acceptance/TDD Governance](docs/acceptance-tdd-governance.md)
 - [Frontend CTA Acceptance Matrix](docs/templates/frontend-cta-acceptance-matrix.md)
 - [Agent Acceptance/TDD Workflow](docs/agent-acceptance-tdd-workflow.md)
+- [Development Governance Closed Loop](docs/development-governance-closed-loop.md)
 - [Git Hooks](docs/GIT_HOOKS.md)
 - [Project Skeleton](docs/architecture/PROJECT_SKELETON.md)
 - [Contract Adapter Config](contract-adapter.config.json)
@@ -57,9 +58,9 @@ npm run test:visual
 npm run lighthouse:budget
 npm run bundle:budget
 npm run typecheck
-npm run lint
 npm run build
-bash scripts/install-git-hooks.sh
+npm run ci:quick
+python3 /root/work/agentic-selfcheck/scripts/install_v_continuous_governance_hooks.py --repo /root/work/v/ecommerce-frontend
 ```
 
 ## 4. Notes

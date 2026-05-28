@@ -1,13 +1,43 @@
 # Git Hooks
 
-Install hooks for this repository:
+This repo uses the workspace SelfCheck hook installer, not a repo-local shell script.
+
+## Install / refresh hooks
+
+```bash
+cd /root/work/agentic-selfcheck
+python3 scripts/install_v_continuous_governance_hooks.py --repo /root/work/v/ecommerce-frontend
+```
+
+Installed hooks:
+
+- `pre-commit`: cheap changed-file controls and large-source/locality guard.
+- `pre-push`: selected business gates from `/root/work/agentic-selfcheck/config/v-business-gate-selector.yaml`.
+- `post-merge`: refresh governance context after branch updates.
+
+## What the hooks connect
+
+`git changed files` → `v_continuous_governance_trigger.py` → `v-business-gate-selector.yaml` → selected SelfCheck feature gates.
+
+For product-flow UI changes, the frontend local gate is still:
+
+```bash
+cd /root/work/v/ecommerce-frontend
+npm run frontend:gate
+```
+
+`frontend:gate` writes machine-readable evidence under:
+
+- `reports/frontend-style-consistency/automation-gate-latest.json`
+- `reports/frontend-style-consistency/evidence-manifest.json`
+- `reports/frontend-quality/*-latest.json`
+
+## Do not use
+
+The old docs command below is intentionally obsolete and should not be reintroduced:
 
 ```bash
 bash scripts/install-git-hooks.sh
 ```
 
-## Pre-commit checks
-
-- staged TS/TSX line limit check
-- `npm run typecheck`
-- production build
+That file does not exist in this repo and would bypass the workspace SelfCheck selector.
