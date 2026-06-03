@@ -98,10 +98,11 @@
         "src/services/product.ts"
       ],
       "requiredSmokes": [
+        "ecommerce-current-contract-baseline",
         "ecommerce-product-create-list-detail-live-smoke"
       ],
-      "status": "planned",
-      "notes": "Planned Phase 4 critical operation; OpenAPI coverage and live smoke are explicitly tracked before activation."
+      "status": "contract_covered_live_smoke_blocked",
+      "notes": "OpenAPI/generated coverage is now part of the blocking baseline; live create/list/detail smoke remains blocked until auth fixture creation and cleanup ownership are registered."
     },
     {
       "id": "savePrepChoices",

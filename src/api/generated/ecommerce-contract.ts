@@ -29,7 +29,7 @@ export interface paths {
         };
         get: operations["listProducts"];
         put?: never;
-        post?: never;
+        post: operations["createProduct"];
         delete?: never;
         options?: never;
         head?: never;
@@ -129,6 +129,20 @@ export interface components {
                 decisions?: unknown[];
             };
         };
+        CreateProductResponse: components["schemas"]["ApiEnvelope"] & {
+            data?: components["schemas"]["Product"];
+        };
+        CreateProductRequest: {
+            sku_code: string;
+            title: string;
+            spu_id?: string;
+            category_id?: string;
+            brand_id?: string;
+            spec_json?: string;
+            cost_json?: string;
+            cost_currency?: string;
+            tags?: string[];
+        };
     };
     responses: never;
     parameters: never;
@@ -174,6 +188,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProductListResponse"];
+                };
+            };
+        };
+    };
+    createProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateProductRequest"];
+            };
+        };
+        responses: {
+            /** @description created product */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateProductResponse"];
                 };
             };
         };

@@ -19,7 +19,7 @@ if (!failures.length) {
 if (!existsSync(join(root, outputRel))) failures.push(`generated contract missing: ${outputRel}`)
 else {
   const text = readFileSync(join(root, outputRel), 'utf8')
-  for (const required of ['getEcommerceSession', 'listProducts', 'getProduct', 'getProductionStageView']) {
+  for (const required of ['getEcommerceSession', 'listProducts', 'createProduct', 'getProduct', 'getProductionStageView']) {
     if (!text.includes(required)) failures.push(`generated contract missing operation: ${required}`)
   }
 }

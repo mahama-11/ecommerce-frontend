@@ -1,0 +1,875 @@
+{
+  "schema_version": "1.2",
+  "status": "PASS_WITH_NOTES",
+  "acceptance_status": "ACCEPTED_WITH_NOTES",
+  "generated_by": "scripts/ecommerce-frontend-visual-evidence.mjs",
+  "generated_at": "2026-06-03T07:12:33.774Z",
+  "frontend_root": "/root/work/v-worktrees/ecommerce-frontend-create-product-contract",
+  "base_url": "http://127.0.0.1:5179",
+  "changed_files": [
+    "contract-governance/critical-journeys.json",
+    "contracts/base/ecommerce.openapi.json",
+    "contracts/ecommerce.openapi.json"
+  ],
+  "routes": [
+    {
+      "id": "product-center",
+      "path": "/products?dev=1",
+      "surface": "Product Center"
+    },
+    {
+      "id": "template-center",
+      "path": "/aiChat/template?dev=1",
+      "surface": "Template Center"
+    },
+    {
+      "id": "batch-listing-legacy",
+      "path": "/aiChat/batchListing?dev=1",
+      "surface": "Legacy Batch Listing Redirect"
+    },
+    {
+      "id": "product-batch-listing-legacy",
+      "path": "/products/workbench/batch-listing?dev=1",
+      "surface": "Legacy Product Batch Listing Redirect"
+    },
+    {
+      "id": "visual-tools-index",
+      "path": "/products/workbench/visual-tools?dev=1",
+      "surface": "Product Workbench"
+    },
+    {
+      "id": "visual-tools-ai-wearable",
+      "path": "/products/workbench/visual-tools/ai-wearable?dev=1",
+      "surface": "Product Workbench · AI Wearable"
+    },
+    {
+      "id": "product-ai-product",
+      "path": "/products/dev-product/ai/ai-product?dev=1",
+      "surface": "Product-scoped AI Product"
+    },
+    {
+      "id": "product-detail",
+      "path": "/products/dev-product?dev=1",
+      "surface": "Product Detail"
+    },
+    {
+      "id": "production-prep",
+      "path": "/products/dev-product/production/prep?dev=1",
+      "surface": "Production Prep"
+    },
+    {
+      "id": "production-sandbox",
+      "path": "/products/dev-product/production/sandbox?dev=1",
+      "surface": "Production Sandbox"
+    },
+    {
+      "id": "production-workshop",
+      "path": "/products/dev-product/production/workshop?dev=1",
+      "surface": "Production Workshop"
+    },
+    {
+      "id": "downloads",
+      "path": "/products/workbench/downloads?dev=1",
+      "surface": "Downloads"
+    }
+  ],
+  "viewports": [
+    {
+      "id": "desktop",
+      "width": 1440,
+      "height": 1200,
+      "mobile": false
+    },
+    {
+      "id": "tablet",
+      "width": 1024,
+      "height": 1000,
+      "mobile": false
+    },
+    {
+      "id": "mobile",
+      "width": 390,
+      "height": 844,
+      "mobile": true
+    }
+  ],
+  "screenshots": [
+    {
+      "id": "product-center-desktop",
+      "route_id": "product-center",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Product Center",
+      "url": "http://127.0.0.1:5179/products?dev=1",
+      "final_url": "http://127.0.0.1:5179/products?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-center-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\nSKU 工作台\n商品队列工作台\n\n查看每个 SKU 的素材、Listing 和交付状态，直接进入下一步处理。\n\n当前聚焦 SKU\nQA-STYLE-001 · QA Style Governance SKU\n新建 SKU\n导入表格\n01 · Intake\n0 个 SKU · 0 个待处理\n02 · Visual\n1 个 SKU · 1 个待处理\n03 · Listing\n0 个 SKU · 0 个待处理\n04 · Export\n0 个 SKU · 0 个待处理\n待视觉生产\n1 个 SKU 需要补素材/主图\n待 Listing\n0 个 SKU 需要文案/版本\n可交付\n0 个 SKU 已进入交付\n当前业务状态\n\n1 个 SKU，1 个在当前筛选中。\n\n推荐下一步\n\n打开生产准备流程，补齐图片解析和选择。\n\n结果去向\n\n视觉结果回写 SKU.assets，Listing 进入模板中心，导出进入交付中心。\n\n新建 SKU\n导入表格\n快速预览\n全部\n待素材/生产准备\n待 Listing\n待导出\n交付中心\nSKU 工作队列 — 1 个活跃\nQA-STYLE-001\nQA Style Governance SKU\nUncategorized / No brand\n素材\nListing\n导出包\n商业/额度检查\n缺失\n缺失\n待导出\n—\n详情\n进入视觉生产\n进入视觉工具中心\n模板中心交接（选中后激活）\n已选 0 个 SKU\n应用模板\n查看交付历史\n未开放的模板动作会保持不可点击。\n工作站点\nSKU\n商品队列\n按 SKU 判断素材、Listing、导出状态和下一步动作\nbusiness queue\nVISUAL\n视觉生产\n带着当前 SKU 进入视觉任务工作台\nSKU.assets\nDONE\n交付中心\n历史已完成生成的任务、导出记录与下载追踪\ncompleted history",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-center-tablet",
+      "route_id": "product-center",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Product Center",
+      "url": "http://127.0.0.1:5179/products?dev=1",
+      "final_url": "http://127.0.0.1:5179/products?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-center-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\nSKU 工作台\n商品队列工作台\n\n查看每个 SKU 的素材、Listing 和交付状态，直接进入下一步处理。\n\n当前聚焦 SKU\nQA-STYLE-001 · QA Style Governance SKU\n新建 SKU\n导入表格\n01 · Intake\n0 个 SKU · 0 个待处理\n02 · Visual\n1 个 SKU · 1 个待处理\n03 · Listing\n0 个 SKU · 0 个待处理\n04 · Export\n0 个 SKU · 0 个待处理\n待视觉生产\n1 个 SKU 需要补素材/主图\n待 Listing\n0 个 SKU 需要文案/版本\n可交付\n0 个 SKU 已进入交付\n当前业务状态\n\n1 个 SKU，1 个在当前筛选中。\n\n推荐下一步\n\n打开生产准备流程，补齐图片解析和选择。\n\n结果去向\n\n视觉结果回写 SKU.assets，Listing 进入模板中心，导出进入交付中心。\n\n新建 SKU\n导入表格\n快速预览\n全部\n待素材/生产准备\n待 Listing\n待导出\n交付中心\nSKU 工作队列 — 1 个活跃\nQA-STYLE-001\nQA Style Governance SKU\nUncategorized / No brand\n素材\nListing\n导出包\n商业/额度检查\n缺失\n缺失\n待导出\n—\n详情\n进入视觉生产\n进入视觉工具中心\n模板中心交接（选中后激活）\n已选 0 个 SKU\n应用模板\n查看交付历史\n未开放的模板动作会保持不可点击。\n工作站点\nSKU\n商品队列\n按 SKU 判断素材、Listing、导出状态和下一步动作\nbusiness queue\nVISUAL\n视觉生产\n带着当前 SKU 进入视觉任务工作台\nSKU.assets\nDONE\n交付中心\n历史已完成生成的任务、导出记录与下载追踪\ncompleted history",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-center-mobile",
+      "route_id": "product-center",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Product Center",
+      "url": "http://127.0.0.1:5179/products?dev=1",
+      "final_url": "http://127.0.0.1:5179/products?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-center-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "SKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\nSKU 工作台\n商品队列工作台\n\n查看每个 SKU 的素材、Listing 和交付状态，直接进入下一步处理。\n\n当前聚焦 SKU\nQA-STYLE-001 · QA Style Governance SKU\n新建 SKU\n导入表格\n01 · Intake\n0 个 SKU · 0 个待处理\n02 · Visual\n1 个 SKU · 1 个待处理\n03 · Listing\n0 个 SKU · 0 个待处理\n04 · Export\n0 个 SKU · 0 个待处理\n待视觉生产\n1 个 SKU 需要补素材/主图\n待 Listing\n0 个 SKU 需要文案/版本\n可交付\n0 个 SKU 已进入交付\n当前业务状态\n\n1 个 SKU，1 个在当前筛选中。\n\n推荐下一步\n\n打开生产准备流程，补齐图片解析和选择。\n\n结果去向\n\n视觉结果回写 SKU.assets，Listing 进入模板中心，导出进入交付中心。\n\n新建 SKU\n导入表格\n快速预览\n全部\n待素材/生产准备\n待 Listing\n待导出\n交付中心\nSKU 工作队列 — 1 个活跃\nQA-STYLE-001\nQA Style Governance SKU\nUncategorized / No brand\n素材\nListing\n导出包\n商业/额度检查\n缺失\n缺失\n待导出\n—\n详情\n进入视觉生产\n进入视觉工具中心\n模板中心交接（选中后激活）\n已选 0 个 SKU\n应用模板\n查看交付历史\n未开放的模板动作会保持不可点击。\n工作站点\nSKU\n商品队列\n按 SKU 判断素材、Listing、导出状态和下一步动作\nbusiness queue\nVISUAL\n视觉生产\n带着当前 SKU 进入视觉任务工作台\nSKU.assets\nDONE\n交付中心\n历史已完成生成的任务、导出记录与下载追踪\ncompleted history",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "template-center-desktop",
+      "route_id": "template-center",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Template Center",
+      "url": "http://127.0.0.1:5179/aiChat/template?dev=1",
+      "final_url": "http://127.0.0.1:5179/aiChat/template?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/template-center-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Agent Ecommerce\nSKU Queue\n\nAI VISUAL GENERATION\n\n👤\nModel Image Series\n👤\nReal Person to Model\n🧍\nMannequin to Model\n🌄\nBackground Swap\n👗\nAI Dressing\n⌚\nWearable Product\n🤸\nPose Variations\n📦\nProduct Image Series\n🎯\nProduct Scene Composition\n🔄\nProduct Replacement\n✨\nScene Variation\n🖌️\nScene Asset Generation\n🤲\nHandheld Product\n💎\nProduct Retouch\n🖼️\nImage Suite Series\n👔\nApparel Image Suite\n📸\nProduct Image Suite\n🎬\nAI Video\n🎥\nImage to Video\n🎞️\nBatch Video Generation\n🔗\nVideo Stitching\n\nAI SMART OPERATIONS\n\n💬\nAI Chat\n🤖\nAI Agent Templates\n📊\nAnalysis Records\n\nDATA LIBRARY\n\n🖼️\n资产库\n📋\n商品模板\n📖\nKnowledge Base\n🏷️\nBrand Library\nEN\nDU\nDev User\nLocal QA · No plan assigned\nOfficial Template Center\nAI Agent Template Market\n\nBrowse curated templates for cross-border ecommerce. Discover the right prompt by platform, task type, and scenario, then favorite, copy, and launch it in one step.\n\n1\nTotal Catalog\n1\nRecommended\n0\nFavorites\nWhy Templates Help\nFind the right template by platform, scenario, category, and task.\nFavorite useful templates and copy them into your own library.\nOpen the right tool directly from a template and skip repeated setup.\nPlatform Entry\nAll Templates\n🛒 Amazon\nAmazon\n🏬 Walmart\nWalmart\n🎵 TikTok / TikTok Shop\nTikTok\n🌐 DTC / SEO\nDTC\nModality Filters\nImage\nText\nWorkflow\nSeries\nVisual\n1\nCapabilities\nImage Generation · 1\nFeatured\nQA Style Governance Template\n\nReusable ecommerce production template for layout governance evidence.\n\nView Details\nUse Now\nGo to slide 1\nRecommended\nNewest\nMost Used\nMost Favorited\nAlphabetical\nThis page supports the full flow from discovery to launch.\nResults: 1\nPlatforms\n1\nModalities\n1\nSeries\n1\nCapabilities\n1\nClick to preview asset\nAmazon\nQA Style Governance Template\n12\n\nReusable ecommerce production template for layout governance evidence.\n\nAmazon\nApparel\nImage / Image Tool\nUsage\n128\nPreview\nUse Now\nPage 1 / 1\nPrev\nNext",
+      "console_error_count": 0,
+      "network_failure_count": 1,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "template-center-tablet",
+      "route_id": "template-center",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Template Center",
+      "url": "http://127.0.0.1:5179/aiChat/template?dev=1",
+      "final_url": "http://127.0.0.1:5179/aiChat/template?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/template-center-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Agent Ecommerce\nSKU Queue\n\nAI VISUAL GENERATION\n\n👤\nModel Image Series\n👤\nReal Person to Model\n🧍\nMannequin to Model\n🌄\nBackground Swap\n👗\nAI Dressing\n⌚\nWearable Product\n🤸\nPose Variations\n📦\nProduct Image Series\n🎯\nProduct Scene Composition\n🔄\nProduct Replacement\n✨\nScene Variation\n🖌️\nScene Asset Generation\n🤲\nHandheld Product\n💎\nProduct Retouch\n🖼️\nImage Suite Series\n👔\nApparel Image Suite\n📸\nProduct Image Suite\n🎬\nAI Video\n🎥\nImage to Video\n🎞️\nBatch Video Generation\n🔗\nVideo Stitching\n\nAI SMART OPERATIONS\n\n💬\nAI Chat\n🤖\nAI Agent Templates\n📊\nAnalysis Records\n\nDATA LIBRARY\n\n🖼️\n资产库\n📋\n商品模板\n📖\nKnowledge Base\n🏷️\nBrand Library\nEN\nDU\nDev User\nLocal QA · No plan assigned\nOfficial Template Center\nAI Agent Template Market\n\nBrowse curated templates for cross-border ecommerce. Discover the right prompt by platform, task type, and scenario, then favorite, copy, and launch it in one step.\n\n1\nTotal Catalog\n1\nRecommended\n0\nFavorites\nWhy Templates Help\nFind the right template by platform, scenario, category, and task.\nFavorite useful templates and copy them into your own library.\nOpen the right tool directly from a template and skip repeated setup.\nPlatform Entry\nAll Templates\n🛒 Amazon\nAmazon\n🏬 Walmart\nWalmart\n🎵 TikTok / TikTok Shop\nTikTok\n🌐 DTC / SEO\nDTC\nModality Filters\nImage\nText\nWorkflow\nSeries\nVisual\n1\nCapabilities\nImage Generation · 1\nFeatured\nQA Style Governance Template\n\nReusable ecommerce production template for layout governance evidence.\n\nView Details\nUse Now\nGo to slide 1\nRecommended\nNewest\nMost Used\nMost Favorited\nAlphabetical\nThis page supports the full flow from discovery to launch.\nResults: 1\nPlatforms\n1\nModalities\n1\nSeries\n1\nCapabilities\n1\nClick to preview asset\nAmazon\nQA Style Governance Template\n12\n\nReusable ecommerce production template for layout governance evidence.\n\nAmazon\nApparel\nImage / Image Tool\nUsage\n128\nPreview\nUse Now\nPage 1 / 1\nPrev\nNext",
+      "console_error_count": 0,
+      "network_failure_count": 1,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "template-center-mobile",
+      "route_id": "template-center",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Template Center",
+      "url": "http://127.0.0.1:5179/aiChat/template?dev=1",
+      "final_url": "http://127.0.0.1:5179/aiChat/template?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/template-center-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Agent Ecommerce\nSKU Queue\n\nAI VISUAL GENERATION\n\n👤\nModel Image Series\n👤\nReal Person to Model\n🧍\nMannequin to Model\n🌄\nBackground Swap\n👗\nAI Dressing\n⌚\nWearable Product\n🤸\nPose Variations\n📦\nProduct Image Series\n🎯\nProduct Scene Composition\n🔄\nProduct Replacement\n✨\nScene Variation\n🖌️\nScene Asset Generation\n🤲\nHandheld Product\n💎\nProduct Retouch\n🖼️\nImage Suite Series\n👔\nApparel Image Suite\n📸\nProduct Image Suite\n🎬\nAI Video\n🎥\nImage to Video\n🎞️\nBatch Video Generation\n🔗\nVideo Stitching\n\nAI SMART OPERATIONS\n\n💬\nAI Chat\n🤖\nAI Agent Templates\n📊\nAnalysis Records\n\nDATA LIBRARY\n\n🖼️\n资产库\n📋\n商品模板\n📖\nKnowledge Base\n🏷️\nBrand Library\nEN\nDU\nDev User\nLocal QA · No plan assigned\nOfficial Template Center\nAI Agent Template Market\n\nBrowse curated templates for cross-border ecommerce. Discover the right prompt by platform, task type, and scenario, then favorite, copy, and launch it in one step.\n\n1\nTotal Catalog\n1\nRecommended\n0\nFavorites\nWhy Templates Help\nFind the right template by platform, scenario, category, and task.\nFavorite useful templates and copy them into your own library.\nOpen the right tool directly from a template and skip repeated setup.\nPlatform Entry\nAll Templates\n🛒 Amazon\nAmazon\n🏬 Walmart\nWalmart\n🎵 TikTok / TikTok Shop\nTikTok\n🌐 DTC / SEO\nDTC\nModality Filters\nImage\nText\nWorkflow\nSeries\nVisual\n1\nCapabilities\nImage Generation · 1\nFeatured\nQA Style Governance Template\n\nReusable ecommerce production template for layout governance evidence.\n\nView Details\nUse Now\nGo to slide 1\nRecommended\nNewest\nMost Used\nMost Favorited\nAlphabetical\nThis page supports the full flow from discovery to launch.\nResults: 1\nPlatforms\n1\nModalities\n1\nSeries\n1\nCapabilities\n1\nClick to preview asset\nAmazon\nQA Style Governance Template\n12\n\nReusable ecommerce production template for layout governance evidence.\n\nAmazon\nApparel\nImage / Image Tool\nUsage\n128\nPreview\nUse Now\nPage 1 / 1\nPrev\nNext",
+      "console_error_count": 0,
+      "network_failure_count": 1,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "batch-listing-legacy-desktop",
+      "route_id": "batch-listing-legacy",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Legacy Batch Listing Redirect",
+      "url": "http://127.0.0.1:5179/aiChat/batchListing?dev=1",
+      "final_url": "http://127.0.0.1:5179/aiChat/template",
+      "screenshot": "reports/frontend-style-consistency/screenshots/batch-listing-legacy-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Agent Ecommerce\nSKU Queue\n\nAI VISUAL GENERATION\n\n👤\nModel Image Series\n👤\nReal Person to Model\n🧍\nMannequin to Model\n🌄\nBackground Swap\n👗\nAI Dressing\n⌚\nWearable Product\n🤸\nPose Variations\n📦\nProduct Image Series\n🎯\nProduct Scene Composition\n🔄\nProduct Replacement\n✨\nScene Variation\n🖌️\nScene Asset Generation\n🤲\nHandheld Product\n💎\nProduct Retouch\n🖼️\nImage Suite Series\n👔\nApparel Image Suite\n📸\nProduct Image Suite\n🎬\nAI Video\n🎥\nImage to Video\n🎞️\nBatch Video Generation\n🔗\nVideo Stitching\n\nAI SMART OPERATIONS\n\n💬\nAI Chat\n🤖\nAI Agent Templates\n📊\nAnalysis Records\n\nDATA LIBRARY\n\n🖼️\n资产库\n📋\n商品模板\n📖\nKnowledge Base\n🏷️\nBrand Library\nEN\nDU\nDev User\nLocal QA · No plan assigned\nOfficial Template Center\nAI Agent Template Market\n\nBrowse curated templates for cross-border ecommerce. Discover the right prompt by platform, task type, and scenario, then favorite, copy, and launch it in one step.\n\n1\nTotal Catalog\n1\nRecommended\n0\nFavorites\nWhy Templates Help\nFind the right template by platform, scenario, category, and task.\nFavorite useful templates and copy them into your own library.\nOpen the right tool directly from a template and skip repeated setup.\nPlatform Entry\nAll Templates\n🛒 Amazon\nAmazon\n🏬 Walmart\nWalmart\n🎵 TikTok / TikTok Shop\nTikTok\n🌐 DTC / SEO\nDTC\nModality Filters\nImage\nText\nWorkflow\nSeries\nVisual\n1\nCapabilities\nImage Generation · 1\nFeatured\nQA Style Governance Template\n\nReusable ecommerce production template for layout governance evidence.\n\nView Details\nUse Now\nGo to slide 1\nRecommended\nNewest\nMost Used\nMost Favorited\nAlphabetical\nThis page supports the full flow from discovery to launch.\nResults: 1\nPlatforms\n1\nModalities\n1\nSeries\n1\nCapabilities\n1\nClick to preview asset\nAmazon\nQA Style Governance Template\n12\n\nReusable ecommerce production template for layout governance evidence.\n\nAmazon\nApparel\nImage / Image Tool\nUsage\n128\nPreview\nUse Now\nPage 1 / 1\nPrev\nNext",
+      "console_error_count": 0,
+      "network_failure_count": 1,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "batch-listing-legacy-tablet",
+      "route_id": "batch-listing-legacy",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Legacy Batch Listing Redirect",
+      "url": "http://127.0.0.1:5179/aiChat/batchListing?dev=1",
+      "final_url": "http://127.0.0.1:5179/aiChat/template",
+      "screenshot": "reports/frontend-style-consistency/screenshots/batch-listing-legacy-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Agent Ecommerce\nSKU Queue\n\nAI VISUAL GENERATION\n\n👤\nModel Image Series\n👤\nReal Person to Model\n🧍\nMannequin to Model\n🌄\nBackground Swap\n👗\nAI Dressing\n⌚\nWearable Product\n🤸\nPose Variations\n📦\nProduct Image Series\n🎯\nProduct Scene Composition\n🔄\nProduct Replacement\n✨\nScene Variation\n🖌️\nScene Asset Generation\n🤲\nHandheld Product\n💎\nProduct Retouch\n🖼️\nImage Suite Series\n👔\nApparel Image Suite\n📸\nProduct Image Suite\n🎬\nAI Video\n🎥\nImage to Video\n🎞️\nBatch Video Generation\n🔗\nVideo Stitching\n\nAI SMART OPERATIONS\n\n💬\nAI Chat\n🤖\nAI Agent Templates\n📊\nAnalysis Records\n\nDATA LIBRARY\n\n🖼️\n资产库\n📋\n商品模板\n📖\nKnowledge Base\n🏷️\nBrand Library\nEN\nDU\nDev User\nLocal QA · No plan assigned\nOfficial Template Center\nAI Agent Template Market\n\nBrowse curated templates for cross-border ecommerce. Discover the right prompt by platform, task type, and scenario, then favorite, copy, and launch it in one step.\n\n1\nTotal Catalog\n1\nRecommended\n0\nFavorites\nWhy Templates Help\nFind the right template by platform, scenario, category, and task.\nFavorite useful templates and copy them into your own library.\nOpen the right tool directly from a template and skip repeated setup.\nPlatform Entry\nAll Templates\n🛒 Amazon\nAmazon\n🏬 Walmart\nWalmart\n🎵 TikTok / TikTok Shop\nTikTok\n🌐 DTC / SEO\nDTC\nModality Filters\nImage\nText\nWorkflow\nSeries\nVisual\n1\nCapabilities\nImage Generation · 1\nFeatured\nQA Style Governance Template\n\nReusable ecommerce production template for layout governance evidence.\n\nView Details\nUse Now\nGo to slide 1\nRecommended\nNewest\nMost Used\nMost Favorited\nAlphabetical\nThis page supports the full flow from discovery to launch.\nResults: 1\nPlatforms\n1\nModalities\n1\nSeries\n1\nCapabilities\n1\nClick to preview asset\nAmazon\nQA Style Governance Template\n12\n\nReusable ecommerce production template for layout governance evidence.\n\nAmazon\nApparel\nImage / Image Tool\nUsage\n128\nPreview\nUse Now\nPage 1 / 1\nPrev\nNext",
+      "console_error_count": 0,
+      "network_failure_count": 1,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "batch-listing-legacy-mobile",
+      "route_id": "batch-listing-legacy",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Legacy Batch Listing Redirect",
+      "url": "http://127.0.0.1:5179/aiChat/batchListing?dev=1",
+      "final_url": "http://127.0.0.1:5179/aiChat/template",
+      "screenshot": "reports/frontend-style-consistency/screenshots/batch-listing-legacy-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Agent Ecommerce\nSKU Queue\n\nAI VISUAL GENERATION\n\n👤\nModel Image Series\n👤\nReal Person to Model\n🧍\nMannequin to Model\n🌄\nBackground Swap\n👗\nAI Dressing\n⌚\nWearable Product\n🤸\nPose Variations\n📦\nProduct Image Series\n🎯\nProduct Scene Composition\n🔄\nProduct Replacement\n✨\nScene Variation\n🖌️\nScene Asset Generation\n🤲\nHandheld Product\n💎\nProduct Retouch\n🖼️\nImage Suite Series\n👔\nApparel Image Suite\n📸\nProduct Image Suite\n🎬\nAI Video\n🎥\nImage to Video\n🎞️\nBatch Video Generation\n🔗\nVideo Stitching\n\nAI SMART OPERATIONS\n\n💬\nAI Chat\n🤖\nAI Agent Templates\n📊\nAnalysis Records\n\nDATA LIBRARY\n\n🖼️\n资产库\n📋\n商品模板\n📖\nKnowledge Base\n🏷️\nBrand Library\nEN\nDU\nDev User\nLocal QA · No plan assigned\nOfficial Template Center\nAI Agent Template Market\n\nBrowse curated templates for cross-border ecommerce. Discover the right prompt by platform, task type, and scenario, then favorite, copy, and launch it in one step.\n\n1\nTotal Catalog\n1\nRecommended\n0\nFavorites\nWhy Templates Help\nFind the right template by platform, scenario, category, and task.\nFavorite useful templates and copy them into your own library.\nOpen the right tool directly from a template and skip repeated setup.\nPlatform Entry\nAll Templates\n🛒 Amazon\nAmazon\n🏬 Walmart\nWalmart\n🎵 TikTok / TikTok Shop\nTikTok\n🌐 DTC / SEO\nDTC\nModality Filters\nImage\nText\nWorkflow\nSeries\nVisual\n1\nCapabilities\nImage Generation · 1\nFeatured\nQA Style Governance Template\n\nReusable ecommerce production template for layout governance evidence.\n\nView Details\nUse Now\nGo to slide 1\nRecommended\nNewest\nMost Used\nMost Favorited\nAlphabetical\nThis page supports the full flow from discovery to launch.\nResults: 1\nPlatforms\n1\nModalities\n1\nSeries\n1\nCapabilities\n1\nClick to preview asset\nAmazon\nQA Style Governance Template\n12\n\nReusable ecommerce production template for layout governance evidence.\n\nAmazon\nApparel\nImage / Image Tool\nUsage\n128\nPreview\nUse Now\nPage 1 / 1\nPrev\nNext",
+      "console_error_count": 0,
+      "network_failure_count": 1,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-batch-listing-legacy-desktop",
+      "route_id": "product-batch-listing-legacy",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Legacy Product Batch Listing Redirect",
+      "url": "http://127.0.0.1:5179/products/workbench/batch-listing?dev=1",
+      "final_url": "http://127.0.0.1:5179/aiChat/template",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-batch-listing-legacy-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Agent Ecommerce\nSKU Queue\n\nAI VISUAL GENERATION\n\n👤\nModel Image Series\n👤\nReal Person to Model\n🧍\nMannequin to Model\n🌄\nBackground Swap\n👗\nAI Dressing\n⌚\nWearable Product\n🤸\nPose Variations\n📦\nProduct Image Series\n🎯\nProduct Scene Composition\n🔄\nProduct Replacement\n✨\nScene Variation\n🖌️\nScene Asset Generation\n🤲\nHandheld Product\n💎\nProduct Retouch\n🖼️\nImage Suite Series\n👔\nApparel Image Suite\n📸\nProduct Image Suite\n🎬\nAI Video\n🎥\nImage to Video\n🎞️\nBatch Video Generation\n🔗\nVideo Stitching\n\nAI SMART OPERATIONS\n\n💬\nAI Chat\n🤖\nAI Agent Templates\n📊\nAnalysis Records\n\nDATA LIBRARY\n\n🖼️\n资产库\n📋\n商品模板\n📖\nKnowledge Base\n🏷️\nBrand Library\nEN\nDU\nDev User\nLocal QA · No plan assigned\nOfficial Template Center\nAI Agent Template Market\n\nBrowse curated templates for cross-border ecommerce. Discover the right prompt by platform, task type, and scenario, then favorite, copy, and launch it in one step.\n\n1\nTotal Catalog\n1\nRecommended\n0\nFavorites\nWhy Templates Help\nFind the right template by platform, scenario, category, and task.\nFavorite useful templates and copy them into your own library.\nOpen the right tool directly from a template and skip repeated setup.\nPlatform Entry\nAll Templates\n🛒 Amazon\nAmazon\n🏬 Walmart\nWalmart\n🎵 TikTok / TikTok Shop\nTikTok\n🌐 DTC / SEO\nDTC\nModality Filters\nImage\nText\nWorkflow\nSeries\nVisual\n1\nCapabilities\nImage Generation · 1\nFeatured\nQA Style Governance Template\n\nReusable ecommerce production template for layout governance evidence.\n\nView Details\nUse Now\nGo to slide 1\nRecommended\nNewest\nMost Used\nMost Favorited\nAlphabetical\nThis page supports the full flow from discovery to launch.\nResults: 1\nPlatforms\n1\nModalities\n1\nSeries\n1\nCapabilities\n1\nClick to preview asset\nAmazon\nQA Style Governance Template\n12\n\nReusable ecommerce production template for layout governance evidence.\n\nAmazon\nApparel\nImage / Image Tool\nUsage\n128\nPreview\nUse Now\nPage 1 / 1\nPrev\nNext",
+      "console_error_count": 0,
+      "network_failure_count": 1,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-batch-listing-legacy-tablet",
+      "route_id": "product-batch-listing-legacy",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Legacy Product Batch Listing Redirect",
+      "url": "http://127.0.0.1:5179/products/workbench/batch-listing?dev=1",
+      "final_url": "http://127.0.0.1:5179/aiChat/template",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-batch-listing-legacy-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Agent Ecommerce\nSKU Queue\n\nAI VISUAL GENERATION\n\n👤\nModel Image Series\n👤\nReal Person to Model\n🧍\nMannequin to Model\n🌄\nBackground Swap\n👗\nAI Dressing\n⌚\nWearable Product\n🤸\nPose Variations\n📦\nProduct Image Series\n🎯\nProduct Scene Composition\n🔄\nProduct Replacement\n✨\nScene Variation\n🖌️\nScene Asset Generation\n🤲\nHandheld Product\n💎\nProduct Retouch\n🖼️\nImage Suite Series\n👔\nApparel Image Suite\n📸\nProduct Image Suite\n🎬\nAI Video\n🎥\nImage to Video\n🎞️\nBatch Video Generation\n🔗\nVideo Stitching\n\nAI SMART OPERATIONS\n\n💬\nAI Chat\n🤖\nAI Agent Templates\n📊\nAnalysis Records\n\nDATA LIBRARY\n\n🖼️\n资产库\n📋\n商品模板\n📖\nKnowledge Base\n🏷️\nBrand Library\nEN\nDU\nDev User\nLocal QA · No plan assigned\nOfficial Template Center\nAI Agent Template Market\n\nBrowse curated templates for cross-border ecommerce. Discover the right prompt by platform, task type, and scenario, then favorite, copy, and launch it in one step.\n\n1\nTotal Catalog\n1\nRecommended\n0\nFavorites\nWhy Templates Help\nFind the right template by platform, scenario, category, and task.\nFavorite useful templates and copy them into your own library.\nOpen the right tool directly from a template and skip repeated setup.\nPlatform Entry\nAll Templates\n🛒 Amazon\nAmazon\n🏬 Walmart\nWalmart\n🎵 TikTok / TikTok Shop\nTikTok\n🌐 DTC / SEO\nDTC\nModality Filters\nImage\nText\nWorkflow\nSeries\nVisual\n1\nCapabilities\nImage Generation · 1\nFeatured\nQA Style Governance Template\n\nReusable ecommerce production template for layout governance evidence.\n\nView Details\nUse Now\nGo to slide 1\nRecommended\nNewest\nMost Used\nMost Favorited\nAlphabetical\nThis page supports the full flow from discovery to launch.\nResults: 1\nPlatforms\n1\nModalities\n1\nSeries\n1\nCapabilities\n1\nClick to preview asset\nAmazon\nQA Style Governance Template\n12\n\nReusable ecommerce production template for layout governance evidence.\n\nAmazon\nApparel\nImage / Image Tool\nUsage\n128\nPreview\nUse Now\nPage 1 / 1\nPrev\nNext",
+      "console_error_count": 0,
+      "network_failure_count": 1,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-batch-listing-legacy-mobile",
+      "route_id": "product-batch-listing-legacy",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Legacy Product Batch Listing Redirect",
+      "url": "http://127.0.0.1:5179/products/workbench/batch-listing?dev=1",
+      "final_url": "http://127.0.0.1:5179/aiChat/template",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-batch-listing-legacy-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Agent Ecommerce\nSKU Queue\n\nAI VISUAL GENERATION\n\n👤\nModel Image Series\n👤\nReal Person to Model\n🧍\nMannequin to Model\n🌄\nBackground Swap\n👗\nAI Dressing\n⌚\nWearable Product\n🤸\nPose Variations\n📦\nProduct Image Series\n🎯\nProduct Scene Composition\n🔄\nProduct Replacement\n✨\nScene Variation\n🖌️\nScene Asset Generation\n🤲\nHandheld Product\n💎\nProduct Retouch\n🖼️\nImage Suite Series\n👔\nApparel Image Suite\n📸\nProduct Image Suite\n🎬\nAI Video\n🎥\nImage to Video\n🎞️\nBatch Video Generation\n🔗\nVideo Stitching\n\nAI SMART OPERATIONS\n\n💬\nAI Chat\n🤖\nAI Agent Templates\n📊\nAnalysis Records\n\nDATA LIBRARY\n\n🖼️\n资产库\n📋\n商品模板\n📖\nKnowledge Base\n🏷️\nBrand Library\nEN\nDU\nDev User\nLocal QA · No plan assigned\nOfficial Template Center\nAI Agent Template Market\n\nBrowse curated templates for cross-border ecommerce. Discover the right prompt by platform, task type, and scenario, then favorite, copy, and launch it in one step.\n\n1\nTotal Catalog\n1\nRecommended\n0\nFavorites\nWhy Templates Help\nFind the right template by platform, scenario, category, and task.\nFavorite useful templates and copy them into your own library.\nOpen the right tool directly from a template and skip repeated setup.\nPlatform Entry\nAll Templates\n🛒 Amazon\nAmazon\n🏬 Walmart\nWalmart\n🎵 TikTok / TikTok Shop\nTikTok\n🌐 DTC / SEO\nDTC\nModality Filters\nImage\nText\nWorkflow\nSeries\nVisual\n1\nCapabilities\nImage Generation · 1\nFeatured\nQA Style Governance Template\n\nReusable ecommerce production template for layout governance evidence.\n\nView Details\nUse Now\nGo to slide 1\nRecommended\nNewest\nMost Used\nMost Favorited\nAlphabetical\nThis page supports the full flow from discovery to launch.\nResults: 1\nPlatforms\n1\nModalities\n1\nSeries\n1\nCapabilities\n1\nClick to preview asset\nAmazon\nQA Style Governance Template\n12\n\nReusable ecommerce production template for layout governance evidence.\n\nAmazon\nApparel\nImage / Image Tool\nUsage\n128\nPreview\nUse Now\nPage 1 / 1\nPrev\nNext",
+      "console_error_count": 0,
+      "network_failure_count": 1,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "visual-tools-index-desktop",
+      "route_id": "visual-tools-index",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Product Workbench",
+      "url": "http://127.0.0.1:5179/products/workbench/visual-tools?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/workbench/visual-tools?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/visual-tools-index-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\nPRODUCT VISUAL STUDIO\nCreate product visuals with a clear next step\n\nChoose a product, preview the expected visual direction, pick a recommended goal, then generate assets that stay connected to the product journey.\n\nCurrent product\nQA-STYLE-001 · QA Style Governance SKU\nGenerate Product Visuals\nProduct Home\nTemplate Center\nDownload Center\n01 · Product\nQA-STYLE-001\n02 · Visual goal\nReal Person to Model\n03 · Result\nSaved for listing and delivery\nVisual outcome preview\n\nYour selected product and visual goal define the next image set. Use the preview area to keep the result expectation visible before entering generation.\n\nReal Person to Model\nProduct assets\nPrimary image\nNo bound asset returned yet\nDetail / lifestyle\nNo bound asset returned yet\nVideo source\nVideo source can be added later\nProduct for this visual task\nQA-STYLE-001 · QA Style Governance SKU\nRecommended next visual goals\n\nStart with the product image or scene image this SKU needs most, then generate.\n\n👤\nRECOMMENDED\nReal Person to Model\nUpload a try-on photo and transform it into different model ethnicities and looks\n⌚\nRECOMMENDED\nWearable Product\nGenerate close-up lifestyle images for watches, necklaces, earrings, and more\n🎯\nRECOMMENDED\nProduct Scene Composition\nPlace your product into a large library of AI-generated scenes\nExplore more visual goalsSecondary library · open only when the recommendation is not enough\nSelected visual goal\n👤\nReal Person to Model\n\nUpload a try-on photo and transform it into different model ethnicities and looks\n\nCurrent product\nQA Style Governance SKU\nView Product Detail\nAssets\n0\nListing\n0\nExport\npending\nGenerate Product Visuals\nResults will be saved back to this product and can be reused in Template Center or Download Center.\nResult destination\n\nGenerated images are saved with the selected product, then continue to detail review, Template Center, or Download Center.\n\nHow to move forward\n\nStart from one product so eve",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "visual-tools-index-tablet",
+      "route_id": "visual-tools-index",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Product Workbench",
+      "url": "http://127.0.0.1:5179/products/workbench/visual-tools?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/workbench/visual-tools?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/visual-tools-index-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\nPRODUCT VISUAL STUDIO\nCreate product visuals with a clear next step\n\nChoose a product, preview the expected visual direction, pick a recommended goal, then generate assets that stay connected to the product journey.\n\nCurrent product\nQA-STYLE-001 · QA Style Governance SKU\nGenerate Product Visuals\nProduct Home\nTemplate Center\nDownload Center\n01 · Product\nQA-STYLE-001\n02 · Visual goal\nReal Person to Model\n03 · Result\nSaved for listing and delivery\nVisual outcome preview\n\nYour selected product and visual goal define the next image set. Use the preview area to keep the result expectation visible before entering generation.\n\nReal Person to Model\nProduct assets\nPrimary image\nNo bound asset returned yet\nDetail / lifestyle\nNo bound asset returned yet\nVideo source\nVideo source can be added later\nProduct for this visual task\nQA-STYLE-001 · QA Style Governance SKU\nRecommended next visual goals\n\nStart with the product image or scene image this SKU needs most, then generate.\n\n👤\nRECOMMENDED\nReal Person to Model\nUpload a try-on photo and transform it into different model ethnicities and looks\n⌚\nRECOMMENDED\nWearable Product\nGenerate close-up lifestyle images for watches, necklaces, earrings, and more\n🎯\nRECOMMENDED\nProduct Scene Composition\nPlace your product into a large library of AI-generated scenes\nExplore more visual goalsSecondary library · open only when the recommendation is not enough\nSelected visual goal\n👤\nReal Person to Model\n\nUpload a try-on photo and transform it into different model ethnicities and looks\n\nCurrent product\nQA Style Governance SKU\nView Product Detail\nAssets\n0\nListing\n0\nExport\npending\nGenerate Product Visuals\nResults will be saved back to this product and can be reused in Template Center or Download Center.\nResult destination\n\nGenerated images are saved with the selected product, then continue to detail review, Template Center, or Download Center.\n\nHow to move forward\n\nStart from one product so eve",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "visual-tools-index-mobile",
+      "route_id": "visual-tools-index",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Product Workbench",
+      "url": "http://127.0.0.1:5179/products/workbench/visual-tools?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/workbench/visual-tools?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/visual-tools-index-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "SKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\nPRODUCT VISUAL STUDIO\nCreate product visuals with a clear next step\n\nChoose a product, preview the expected visual direction, pick a recommended goal, then generate assets that stay connected to the product journey.\n\nCurrent product\nQA-STYLE-001 · QA Style Governance SKU\nGenerate Product Visuals\nProduct Home\nTemplate Center\nDownload Center\n01 · Product\nQA-STYLE-001\n02 · Visual goal\nReal Person to Model\n03 · Result\nSaved for listing and delivery\nVisual outcome preview\n\nYour selected product and visual goal define the next image set. Use the preview area to keep the result expectation visible before entering generation.\n\nReal Person to Model\nProduct assets\nPrimary image\nNo bound asset returned yet\nDetail / lifestyle\nNo bound asset returned yet\nVideo source\nVideo source can be added later\nProduct for this visual task\nQA-STYLE-001 · QA Style Governance SKU\nRecommended next visual goals\n\nStart with the product image or scene image this SKU needs most, then generate.\n\n👤\nRECOMMENDED\nReal Person to Model\nUpload a try-on photo and transform it into different model ethnicities and looks\n⌚\nRECOMMENDED\nWearable Product\nGenerate close-up lifestyle images for watches, necklaces, earrings, and more\n🎯\nRECOMMENDED\nProduct Scene Composition\nPlace your product into a large library of AI-generated scenes\nExplore more visual goalsSecondary library · open only when the recommendation is not enough\nSelected visual goal\n👤\nReal Person to Model\n\nUpload a try-on photo and transform it into different model ethnicities and looks\n\nCurrent product\nQA Style Governance SKU\nView Product Detail\nAssets\n0\nListing\n0\nExport\npending\nGenerate Product Visuals\nResults will be saved back to this product and can be reused in Template Center or Download Center.\nResult destination\n\nGenerated images are saved with the selected product, then continue to detail review, Template Center, or Download Center.\n\nHow to move forward\n\nStart from one product so every im",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "visual-tools-ai-wearable-desktop",
+      "route_id": "visual-tools-ai-wearable",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Product Workbench · AI Wearable",
+      "url": "http://127.0.0.1:5179/products/workbench/visual-tools/ai-wearable?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/workbench/visual-tools/ai-wearable?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/visual-tools-ai-wearable-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\nPRODUCT VISUAL STUDIO\nCreate product visuals with a clear next step\n\nChoose a product, preview the expected visual direction, pick a recommended goal, then generate assets that stay connected to the product journey.\n\nCurrent product\nQA-STYLE-001 · QA Style Governance SKU\nGenerate Product Visuals\nProduct Home\nTemplate Center\nDownload Center\n01 · Product\nQA-STYLE-001\n02 · Visual goal\nWearable Product\n03 · Result\nSaved for listing and delivery\nVisual outcome preview\n\nYour selected product and visual goal define the next image set. Use the preview area to keep the result expectation visible before entering generation.\n\nWearable Product\nProduct assets\nPrimary image\nNo bound asset returned yet\nDetail / lifestyle\nNo bound asset returned yet\nVideo source\nVideo source can be added later\nProduct for this visual task\nQA-STYLE-001 · QA Style Governance SKU\nRecommended next visual goals\n\nStart with the product image or scene image this SKU needs most, then generate.\n\n👤\nRECOMMENDED\nReal Person to Model\nUpload a try-on photo and transform it into different model ethnicities and looks\n⌚\nRECOMMENDED\nWearable Product\nGenerate close-up lifestyle images for watches, necklaces, earrings, and more\n🎯\nRECOMMENDED\nProduct Scene Composition\nPlace your product into a large library of AI-generated scenes\nExplore more visual goalsSecondary library · open only when the recommendation is not enough\nSelected visual goal\n⌚\nWearable Product\n\nGenerate close-up lifestyle images for watches, necklaces, earrings, and more\n\nCurrent product\nQA Style Governance SKU\nView Product Detail\nAssets\n0\nListing\n0\nExport\npending\nGenerate Product Visuals\nResults will be saved back to this product and can be reused in Template Center or Download Center.\nResult destination\n\nGenerated images are saved with the selected product, then continue to detail review, Template Center, or Download Center.\n\nHow to move forward\n\nStart from one product so every image has cont",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "visual-tools-ai-wearable-tablet",
+      "route_id": "visual-tools-ai-wearable",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Product Workbench · AI Wearable",
+      "url": "http://127.0.0.1:5179/products/workbench/visual-tools/ai-wearable?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/workbench/visual-tools/ai-wearable?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/visual-tools-ai-wearable-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\nPRODUCT VISUAL STUDIO\nCreate product visuals with a clear next step\n\nChoose a product, preview the expected visual direction, pick a recommended goal, then generate assets that stay connected to the product journey.\n\nCurrent product\nQA-STYLE-001 · QA Style Governance SKU\nGenerate Product Visuals\nProduct Home\nTemplate Center\nDownload Center\n01 · Product\nQA-STYLE-001\n02 · Visual goal\nWearable Product\n03 · Result\nSaved for listing and delivery\nVisual outcome preview\n\nYour selected product and visual goal define the next image set. Use the preview area to keep the result expectation visible before entering generation.\n\nWearable Product\nProduct assets\nPrimary image\nNo bound asset returned yet\nDetail / lifestyle\nNo bound asset returned yet\nVideo source\nVideo source can be added later\nProduct for this visual task\nQA-STYLE-001 · QA Style Governance SKU\nRecommended next visual goals\n\nStart with the product image or scene image this SKU needs most, then generate.\n\n👤\nRECOMMENDED\nReal Person to Model\nUpload a try-on photo and transform it into different model ethnicities and looks\n⌚\nRECOMMENDED\nWearable Product\nGenerate close-up lifestyle images for watches, necklaces, earrings, and more\n🎯\nRECOMMENDED\nProduct Scene Composition\nPlace your product into a large library of AI-generated scenes\nExplore more visual goalsSecondary library · open only when the recommendation is not enough\nSelected visual goal\n⌚\nWearable Product\n\nGenerate close-up lifestyle images for watches, necklaces, earrings, and more\n\nCurrent product\nQA Style Governance SKU\nView Product Detail\nAssets\n0\nListing\n0\nExport\npending\nGenerate Product Visuals\nResults will be saved back to this product and can be reused in Template Center or Download Center.\nResult destination\n\nGenerated images are saved with the selected product, then continue to detail review, Template Center, or Download Center.\n\nHow to move forward\n\nStart from one product so every image has cont",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "visual-tools-ai-wearable-mobile",
+      "route_id": "visual-tools-ai-wearable",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Product Workbench · AI Wearable",
+      "url": "http://127.0.0.1:5179/products/workbench/visual-tools/ai-wearable?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/workbench/visual-tools/ai-wearable?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/visual-tools-ai-wearable-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "SKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\nPRODUCT VISUAL STUDIO\nCreate product visuals with a clear next step\n\nChoose a product, preview the expected visual direction, pick a recommended goal, then generate assets that stay connected to the product journey.\n\nCurrent product\nQA-STYLE-001 · QA Style Governance SKU\nGenerate Product Visuals\nProduct Home\nTemplate Center\nDownload Center\n01 · Product\nQA-STYLE-001\n02 · Visual goal\nWearable Product\n03 · Result\nSaved for listing and delivery\nVisual outcome preview\n\nYour selected product and visual goal define the next image set. Use the preview area to keep the result expectation visible before entering generation.\n\nWearable Product\nProduct assets\nPrimary image\nNo bound asset returned yet\nDetail / lifestyle\nNo bound asset returned yet\nVideo source\nVideo source can be added later\nProduct for this visual task\nQA-STYLE-001 · QA Style Governance SKU\nRecommended next visual goals\n\nStart with the product image or scene image this SKU needs most, then generate.\n\n👤\nRECOMMENDED\nReal Person to Model\nUpload a try-on photo and transform it into different model ethnicities and looks\n⌚\nRECOMMENDED\nWearable Product\nGenerate close-up lifestyle images for watches, necklaces, earrings, and more\n🎯\nRECOMMENDED\nProduct Scene Composition\nPlace your product into a large library of AI-generated scenes\nExplore more visual goalsSecondary library · open only when the recommendation is not enough\nSelected visual goal\n⌚\nWearable Product\n\nGenerate close-up lifestyle images for watches, necklaces, earrings, and more\n\nCurrent product\nQA Style Governance SKU\nView Product Detail\nAssets\n0\nListing\n0\nExport\npending\nGenerate Product Visuals\nResults will be saved back to this product and can be reused in Template Center or Download Center.\nResult destination\n\nGenerated images are saved with the selected product, then continue to detail review, Template Center, or Download Center.\n\nHow to move forward\n\nStart from one product so every image has context.\n",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-ai-product-desktop",
+      "route_id": "product-ai-product",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Product-scoped AI Product",
+      "url": "http://127.0.0.1:5179/products/dev-product/ai/ai-product?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/ai/ai-product?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-ai-product-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\n🎯\nProduct Scene Composition\nPlace your product into a large library of AI-generated scenes\nProduct-scoped AI workspace\nSource images and generated results are archived into this product.\nMissing product context. Return to the product workbench.\nProduct home\nBack to tool picker\nDownload center\n商品图 *\n上传白底、透明底或抠干净的商品图。\nimage/png, image/jpeg, image/webp · Max 20MB · Count 1-1\nUpload asset\n场景参考图 *\n上传目标场景、构图或风格参考图。\nimage/png, image/jpeg, image/webp · Max 20MB · Count 1-1\nUpload asset\nUpload 商品图\n\nUpload by slot: 商品图 / 场景参考图\n\n商品图 * · ≤20MB\n场景参考图 * · ≤20MB\nDefault Style\nGenerate",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-ai-product-tablet",
+      "route_id": "product-ai-product",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Product-scoped AI Product",
+      "url": "http://127.0.0.1:5179/products/dev-product/ai/ai-product?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/ai/ai-product?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-ai-product-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\n🎯\nProduct Scene Composition\nPlace your product into a large library of AI-generated scenes\nProduct-scoped AI workspace\nSource images and generated results are archived into this product.\nMissing product context. Return to the product workbench.\nProduct home\nBack to tool picker\nDownload center\n商品图 *\n上传白底、透明底或抠干净的商品图。\nimage/png, image/jpeg, image/webp · Max 20MB · Count 1-1\nUpload asset\n场景参考图 *\n上传目标场景、构图或风格参考图。\nimage/png, image/jpeg, image/webp · Max 20MB · Count 1-1\nUpload asset\nUpload 商品图\n\nUpload by slot: 商品图 / 场景参考图\n\n商品图 * · ≤20MB\n场景参考图 * · ≤20MB\nDefault Style\nGenerate",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-ai-product-mobile",
+      "route_id": "product-ai-product",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Product-scoped AI Product",
+      "url": "http://127.0.0.1:5179/products/dev-product/ai/ai-product?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/ai/ai-product?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-ai-product-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "SKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\n🎯\nProduct Scene Composition\nPlace your product into a large library of AI-generated scenes\nProduct-scoped AI workspace\nSource images and generated results are archived into this product.\nMissing product context. Return to the product workbench.\nProduct home\nBack to tool picker\nDownload center\n商品图 *\n上传白底、透明底或抠干净的商品图。\nimage/png, image/jpeg, image/webp · Max 20MB · Count 1-1\nUpload asset\n场景参考图 *\n上传目标场景、构图或风格参考图。\nimage/png, image/jpeg, image/webp · Max 20MB · Count 1-1\nUpload asset\nUpload 商品图\n\nUpload by slot: 商品图 / 场景参考图\n\n商品图 * · ≤20MB\n场景参考图 * · ≤20MB\nOR TRY THESE EXAMPLES\nTry this\nTry this\nGenerate",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-detail-desktop",
+      "route_id": "product-detail",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Product Detail",
+      "url": "http://127.0.0.1:5179/products/dev-product?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-detail-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Failed to load product workspace.\n\nHome\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\n\nSKU not found\n\nBack to product list",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-detail-tablet",
+      "route_id": "product-detail",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Product Detail",
+      "url": "http://127.0.0.1:5179/products/dev-product?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-detail-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Failed to load product workspace.\n\nHome\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\n\nSKU not found\n\nBack to product list",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "product-detail-mobile",
+      "route_id": "product-detail",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Product Detail",
+      "url": "http://127.0.0.1:5179/products/dev-product?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/product-detail-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Failed to load product workspace.\n\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\n\nSKU not found\n\nBack to product list",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "production-prep-desktop",
+      "route_id": "production-prep",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Production Prep",
+      "url": "http://127.0.0.1:5179/products/dev-product/production/prep?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/production/prep?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/production-prep-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nProduct Center\n/\n#dev-product\nProduction Prep\n→\nStrategy Setup\n→\nIteration Workshop\nEN\nDU\nProduction Prep\n\nUpload product and reference images, review the image analysis, and answer the four choices\n\nSKU Source Upload\n2\nwhite-tshirt-front.jpg\nwhite-tshirt-side.jpg\n继续添加/替换\nReference Source Upload\n1\nstudio-bg-ref.jpg\n继续添加/替换\n\n开始识别商品与参考图\n\n上传商品图和参考图后，系统会识别可用于出图的商品事实，并生成后续的视觉策略取舍。\n\n图片识别方式\n可切换识别侧重\n稳定识别（推荐）\n增强识别\n\n选择不同的识别侧重，可以对比图片的光影、材质和构图判断。\n\n开始解析\n1 conflict\nmaterial: Cotton Blend vs 100% Cotton → Cotton\nFour choices\n出图四问确认\n已确认 3 / 4，还剩 1 项\n\n逐项确认商品主体、商品背景、参考主体和参考背景是否进入本次出图要求。系统会把你的选择转成自然语言，带到下一步策略配置。\n\n已自动保留你上次完成的策略选择。需要调整时，直接点对应选项即可覆盖保存。\n决策项 4\n道具元素\n\n正在分析 SKU 与参考图，确认后生成选项...\n\n上一项\n4 / 4\n下一项\n本次已确认:\n工业车间\n暖色逆光\n中心特写\n88%\nParsed Attributes\n8 项\n这里展示图片解析得到的 SKU 与参考素材信息。中间四问会把“要/不要”转成自然语言，并同步影响下一步出图要求。\nProduct Type\ncomfyui\n\nT-Shirt\n\n待确认取舍\n色彩\ncomfyui\n\nWhite\n\n待确认取舍\n材质\nthird_party\n\nCotton\n\n待确认取舍\n风格\ncomfyui\n\nCasual\n\n待确认取舍\nTarget Audience\ncomfyui\n\nMen, Women\n\n待确认取舍\nSeason\nthird_party\n\nSummer\n\n待确认取舍\nBrand Tone\ncomfyui\n\nMinimalist\n\n待确认取舍\nPrice Range\nthird_party\n\nMid-range ($15-$35)\n\n待确认取舍\n参考侧重调节\n\n这里的调整会影响下一步出图要求\n\n整体参考比例\n\nUniformly adjust SKU/reference bias for all attributes. Underlying weights & negative prompts are computed dynamically.\n\n50%\nPreserve SKU Details\nMimic Reference Style\n\n生产准备还差一步\n\n还差 1 个“要/不要”选择，请先完成出图四问。\n\n查看下一步",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "production-prep-tablet",
+      "route_id": "production-prep",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Production Prep",
+      "url": "http://127.0.0.1:5179/products/dev-product/production/prep?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/production/prep?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/production-prep-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nProduct Center\n/\n#dev-product\nProduction Prep\n→\nStrategy Setup\n→\nIteration Workshop\nEN\nDU\nProduction Prep\n\nUpload product and reference images, review the image analysis, and answer the four choices\n\nSKU Source Upload\n2\nwhite-tshirt-front.jpg\nwhite-tshirt-side.jpg\n继续添加/替换\nReference Source Upload\n1\nstudio-bg-ref.jpg\n继续添加/替换\n\n开始识别商品与参考图\n\n上传商品图和参考图后，系统会识别可用于出图的商品事实，并生成后续的视觉策略取舍。\n\n图片识别方式\n可切换识别侧重\n稳定识别（推荐）\n增强识别\n\n选择不同的识别侧重，可以对比图片的光影、材质和构图判断。\n\n开始解析\n1 conflict\nmaterial: Cotton Blend vs 100% Cotton → Cotton\nFour choices\n出图四问确认\n已确认 3 / 4，还剩 1 项\n\n逐项确认商品主体、商品背景、参考主体和参考背景是否进入本次出图要求。系统会把你的选择转成自然语言，带到下一步策略配置。\n\n已自动保留你上次完成的策略选择。需要调整时，直接点对应选项即可覆盖保存。\n决策项 4\n道具元素\n\n正在分析 SKU 与参考图，确认后生成选项...\n\n上一项\n4 / 4\n下一项\n本次已确认:\n工业车间\n暖色逆光\n中心特写\n88%\nParsed Attributes\n8 项\n这里展示图片解析得到的 SKU 与参考素材信息。中间四问会把“要/不要”转成自然语言，并同步影响下一步出图要求。\nProduct Type\ncomfyui\n\nT-Shirt\n\n待确认取舍\n色彩\ncomfyui\n\nWhite\n\n待确认取舍\n材质\nthird_party\n\nCotton\n\n待确认取舍\n风格\ncomfyui\n\nCasual\n\n待确认取舍\nTarget Audience\ncomfyui\n\nMen, Women\n\n待确认取舍\nSeason\nthird_party\n\nSummer\n\n待确认取舍\nBrand Tone\ncomfyui\n\nMinimalist\n\n待确认取舍\nPrice Range\nthird_party\n\nMid-range ($15-$35)\n\n待确认取舍\n参考侧重调节\n\n这里的调整会影响下一步出图要求\n\n整体参考比例\n\nUniformly adjust SKU/reference bias for all attributes. Underlying weights & negative prompts are computed dynamically.\n\n50%\nPreserve SKU Details\nMimic Reference Style\n\n生产准备还差一步\n\n还差 1 个“要/不要”选择，请先完成出图四问。\n\n查看下一步",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "production-prep-mobile",
+      "route_id": "production-prep",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Production Prep",
+      "url": "http://127.0.0.1:5179/products/dev-product/production/prep?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/production/prep?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/production-prep-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Product Center\n/\n#dev-product\nProduction Prep\n→\nStrategy Setup\n→\nIteration Workshop\nEN\nDU\nProduction Prep\n\nUpload product and reference images, review the image analysis, and answer the four choices\n\nSKU Source Upload\n2\nwhite-tshirt-front.jpg\nwhite-tshirt-side.jpg\n继续添加/替换\nReference Source Upload\n1\nstudio-bg-ref.jpg\n继续添加/替换\n\n开始识别商品与参考图\n\n上传商品图和参考图后，系统会识别可用于出图的商品事实，并生成后续的视觉策略取舍。\n\n图片识别方式\n可切换识别侧重\n稳定识别（推荐）\n增强识别\n\n选择不同的识别侧重，可以对比图片的光影、材质和构图判断。\n\n开始解析\n1 conflict\nmaterial: Cotton Blend vs 100% Cotton → Cotton\nFour choices\n出图四问确认\n已确认 3 / 4，还剩 1 项\n\n逐项确认商品主体、商品背景、参考主体和参考背景是否进入本次出图要求。系统会把你的选择转成自然语言，带到下一步策略配置。\n\n已自动保留你上次完成的策略选择。需要调整时，直接点对应选项即可覆盖保存。\n决策项 4\n道具元素\n\n正在分析 SKU 与参考图，确认后生成选项...\n\n上一项\n4 / 4\n下一项\n本次已确认:\n工业车间\n暖色逆光\n中心特写\n88%\nParsed Attributes\n8 项\n这里展示图片解析得到的 SKU 与参考素材信息。中间四问会把“要/不要”转成自然语言，并同步影响下一步出图要求。\nProduct Type\ncomfyui\n\nT-Shirt\n\n待确认取舍\n色彩\ncomfyui\n\nWhite\n\n待确认取舍\n材质\nthird_party\n\nCotton\n\n待确认取舍\n风格\ncomfyui\n\nCasual\n\n待确认取舍\nTarget Audience\ncomfyui\n\nMen, Women\n\n待确认取舍\nSeason\nthird_party\n\nSummer\n\n待确认取舍\nBrand Tone\ncomfyui\n\nMinimalist\n\n待确认取舍\nPrice Range\nthird_party\n\nMid-range ($15-$35)\n\n待确认取舍\n参考侧重调节\n\n这里的调整会影响下一步出图要求\n\n整体参考比例\n\nUniformly adjust SKU/reference bias for all attributes. Underlying weights & negative prompts are computed dynamically.\n\n50%\nPreserve SKU Details\nMimic Reference Style\n\n生产准备还差一步\n\n还差 1 个“要/不要”选择，请先完成出图四问。\n\n查看下一步",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "production-sandbox-desktop",
+      "route_id": "production-sandbox",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Production Sandbox",
+      "url": "http://127.0.0.1:5179/products/dev-product/production/sandbox?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/production/sandbox?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/production-sandbox-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nProduct Center\n/\n#dev-product\nProduction Prep\n→\nStrategy Setup\n→\nIteration Workshop\nEN\nDU\nIntent Configuration & Execution\n\nCompile generation intents, configure execution, batch execute\n\n策略输入摘要\n\n来自生产准备页的图片解析与四个“要/不要”选择\n\n出图要求概览\n\n基于上传的 SKU 与参考素材，AI 已提炼出核心视觉策略。工业车间环境，暖色逆光氛围，低角度构图；金属质感突出。主体替换为当前 SKU，输出多种电商场景模板。\n\n查看详情 →\n\n核心环境\n\n工业车间 (Industrial Workshop)\n\n光线氛围\n\n暖色逆光 (Backlit Orange)\n\n构图方式\n\n低角度近景 (Low Angle Close-up)\n\n道具元素\n\n工具台 / 金属碎屑 / 油渍\n\n色调风格\n\n暖色调 / 高对比 / 金属质感\n\n参考侧重\n\nSKU 40% / 参考风格 60%\n\n出图方案 / 变化说明\n\n把你的选择整理成后续出图要求\n\n点击后，系统会把生产准备里的图片识别结果和你的选择整理成一份出图方案；准备好后，上方展示最终出图要求，下方只展示新增、移除或调整的变化。\n\n方案来源\n准备中\n准备状态\n未知\n下一步：还没有生成出图方案。请先点击「生成/刷新出图方案」。\n先完成 Prep 后生成方案\n生成方案按钮不可用：请先回到生产准备页，完成图片解析并确认至少一条选择。\n还没有生成出图方案。请先点击「生成/刷新出图方案」。\n\n变化说明\n\n完成生产准备里的选择后，点击上方按钮，系统会整理本次出图要求并展示变化。\n\n任务配额与出图槽位\n\n任务配额=槽位数；源图沿用 Prep 中已解析的 SKU 图片\n\n生成图片数量\n3\n最多支持 10 个槽位；1 个槽位 = 1 张待生成图片\n任务 01（主图）\n槽位 1 / 3\n等待 Prep 图片\n图类型\n主图\n海报\n使用图\n细节图\n对比图\n模板\nAmazon 平台主图模板\n工业风营销海报模板\n场景使用图模板\n细节特写模板\n对比图模板\n已注入默认模板配置：纯白背景，主体居中，符合 Amazon 主图规范；中心构图，突出主体；纯色或渐变背景，无干扰；符合平台主图规范；画幅 1:1。\n任务 02（营销海报）\n槽位 2 / 3\n等待 Prep 图片\n图类型\n主图\n海报\n使用图\n细节图\n对比图\n模板\nAmazon 平台主图模板\n工业风营销海报模板\n场景使用图模板\n细节特写模板\n对比图模板\n已注入默认模板配置：深色工业风背景，强调产品质感与力量感；纵向构图，强调视觉冲击；可容纳文案信息区；适合活动 / 促销场景；画幅 3:4。\n任务 03（使用场景图）\n槽位 3 / 3\n等待 Prep 图片\n图类型\n主图\n海报\n使用图\n细节图\n对比图\n模板\nAmazon 平台主图模板\n工业风营销海报模板\n场景使用图模板\n细节特写模板\n对比图模板\n已注入默认模板配置：真实使用场景，展示产品在实际环境中的效果；场景化构图，增强真实感；展示产品使用环境；增强信任感与代入感；画幅 16:9。\n添加新任务\n模板参考（3 个槽位）\n主体居中\n1:1\n01 Amazon 平台主图模板\nAmazon\n• 中心构图，突出主体\n• 纯色或渐变背景，无干扰\n• 符合平台主图规范\n3:4\n02 工业风营销海报模板\n通用\n• 纵向构图，强调视觉冲击\n• 可容纳文案信息区\n• 适合活动 / 促销场景\n16:9\n03 场景使用图模板\n通用\n• 场景化构图，增强真实感\n• 展示产品使用环境\n• 增强信任感与代入感\n\n本次会按「任务配额槽位」创建独立生成任务；源图沿用生产准备中的商品图，每个槽位只配置图类型、模板和细节要求。\n\n生产设置\n模型选择\n默认稳定模式\nMiniMax 图生图\n高质量创意模式\n快速预览模式\n\n适合正式生产，出图质量和稳定性优先\n\n高级设置\n消耗预估\n模型消耗（稳定生产模式）\n10 Credits / 张\n分辨率（标准方图）\n0 Credits / 张\n预计生成数量\n0 张图片\n预估总消耗\n0 Credits\n开始生产前还需要：先回到生产准备，完成图片解析结果确认和取舍选择。\n\n开始生产检查\n\n• 策略输入\n还没有可生成的选择\n• 出图方案\n还没有生成出图方案。请先点击「生成/刷新出图方案」。\n• 出图槽位\n等待 Prep 图片\n补齐生成条件\n\n当前按钮不会提交生产任务；只有策略输入、出图方案、出图槽位全部通过后才会变成“开始生产”。\n\n返回上一步\n0 张图片\n·\n稳定生产模式 模型\n·\n标准方图\n·\n预计消耗 0 Credits\n\n请先",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "production-sandbox-tablet",
+      "route_id": "production-sandbox",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Production Sandbox",
+      "url": "http://127.0.0.1:5179/products/dev-product/production/sandbox?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/production/sandbox?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/production-sandbox-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nProduct Center\n/\n#dev-product\nProduction Prep\n→\nStrategy Setup\n→\nIteration Workshop\nEN\nDU\nIntent Configuration & Execution\n\nCompile generation intents, configure execution, batch execute\n\n策略输入摘要\n\n来自生产准备页的图片解析与四个“要/不要”选择\n\n出图要求概览\n\n基于上传的 SKU 与参考素材，AI 已提炼出核心视觉策略。工业车间环境，暖色逆光氛围，低角度构图；金属质感突出。主体替换为当前 SKU，输出多种电商场景模板。\n\n查看详情 →\n\n核心环境\n\n工业车间 (Industrial Workshop)\n\n光线氛围\n\n暖色逆光 (Backlit Orange)\n\n构图方式\n\n低角度近景 (Low Angle Close-up)\n\n道具元素\n\n工具台 / 金属碎屑 / 油渍\n\n色调风格\n\n暖色调 / 高对比 / 金属质感\n\n参考侧重\n\nSKU 40% / 参考风格 60%\n\n出图方案 / 变化说明\n\n把你的选择整理成后续出图要求\n\n点击后，系统会把生产准备里的图片识别结果和你的选择整理成一份出图方案；准备好后，上方展示最终出图要求，下方只展示新增、移除或调整的变化。\n\n方案来源\n准备中\n准备状态\n未知\n下一步：还没有生成出图方案。请先点击「生成/刷新出图方案」。\n先完成 Prep 后生成方案\n生成方案按钮不可用：请先回到生产准备页，完成图片解析并确认至少一条选择。\n还没有生成出图方案。请先点击「生成/刷新出图方案」。\n\n变化说明\n\n完成生产准备里的选择后，点击上方按钮，系统会整理本次出图要求并展示变化。\n\n任务配额与出图槽位\n\n任务配额=槽位数；源图沿用 Prep 中已解析的 SKU 图片\n\n生成图片数量\n3\n最多支持 10 个槽位；1 个槽位 = 1 张待生成图片\n任务 01（主图）\n槽位 1 / 3\n等待 Prep 图片\n图类型\n主图\n海报\n使用图\n细节图\n对比图\n模板\nAmazon 平台主图模板\n工业风营销海报模板\n场景使用图模板\n细节特写模板\n对比图模板\n已注入默认模板配置：纯白背景，主体居中，符合 Amazon 主图规范；中心构图，突出主体；纯色或渐变背景，无干扰；符合平台主图规范；画幅 1:1。\n任务 02（营销海报）\n槽位 2 / 3\n等待 Prep 图片\n图类型\n主图\n海报\n使用图\n细节图\n对比图\n模板\nAmazon 平台主图模板\n工业风营销海报模板\n场景使用图模板\n细节特写模板\n对比图模板\n已注入默认模板配置：深色工业风背景，强调产品质感与力量感；纵向构图，强调视觉冲击；可容纳文案信息区；适合活动 / 促销场景；画幅 3:4。\n任务 03（使用场景图）\n槽位 3 / 3\n等待 Prep 图片\n图类型\n主图\n海报\n使用图\n细节图\n对比图\n模板\nAmazon 平台主图模板\n工业风营销海报模板\n场景使用图模板\n细节特写模板\n对比图模板\n已注入默认模板配置：真实使用场景，展示产品在实际环境中的效果；场景化构图，增强真实感；展示产品使用环境；增强信任感与代入感；画幅 16:9。\n添加新任务\n模板参考（3 个槽位）\n主体居中\n1:1\n01 Amazon 平台主图模板\nAmazon\n• 中心构图，突出主体\n• 纯色或渐变背景，无干扰\n• 符合平台主图规范\n3:4\n02 工业风营销海报模板\n通用\n• 纵向构图，强调视觉冲击\n• 可容纳文案信息区\n• 适合活动 / 促销场景\n16:9\n03 场景使用图模板\n通用\n• 场景化构图，增强真实感\n• 展示产品使用环境\n• 增强信任感与代入感\n\n本次会按「任务配额槽位」创建独立生成任务；源图沿用生产准备中的商品图，每个槽位只配置图类型、模板和细节要求。\n\n生产设置\n模型选择\n默认稳定模式\nMiniMax 图生图\n高质量创意模式\n快速预览模式\n\n适合正式生产，出图质量和稳定性优先\n\n高级设置\n消耗预估\n模型消耗（稳定生产模式）\n10 Credits / 张\n分辨率（标准方图）\n0 Credits / 张\n预计生成数量\n0 张图片\n预估总消耗\n0 Credits\n开始生产前还需要：先回到生产准备，完成图片解析结果确认和取舍选择。\n\n开始生产检查\n\n• 策略输入\n还没有可生成的选择\n• 出图方案\n还没有生成出图方案。请先点击「生成/刷新出图方案」。\n• 出图槽位\n等待 Prep 图片\n补齐生成条件\n\n当前按钮不会提交生产任务；只有策略输入、出图方案、出图槽位全部通过后才会变成“开始生产”。\n\n返回上一步\n0 张图片\n·\n稳定生产模式 模型\n·\n标准方图\n·\n预计消耗 0 Credits\n\n请先",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "production-sandbox-mobile",
+      "route_id": "production-sandbox",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Production Sandbox",
+      "url": "http://127.0.0.1:5179/products/dev-product/production/sandbox?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/production/sandbox?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/production-sandbox-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Product Center\n/\n#dev-product\nProduction Prep\n→\nStrategy Setup\n→\nIteration Workshop\nEN\nDU\nIntent Configuration & Execution\n\nCompile generation intents, configure execution, batch execute\n\n策略输入摘要\n\n来自生产准备页的图片解析与四个“要/不要”选择\n\n出图要求概览\n\n基于上传的 SKU 与参考素材，AI 已提炼出核心视觉策略。工业车间环境，暖色逆光氛围，低角度构图；金属质感突出。主体替换为当前 SKU，输出多种电商场景模板。\n\n查看详情 →\n\n核心环境\n\n工业车间 (Industrial Workshop)\n\n光线氛围\n\n暖色逆光 (Backlit Orange)\n\n构图方式\n\n低角度近景 (Low Angle Close-up)\n\n道具元素\n\n工具台 / 金属碎屑 / 油渍\n\n色调风格\n\n暖色调 / 高对比 / 金属质感\n\n参考侧重\n\nSKU 40% / 参考风格 60%\n\n出图方案 / 变化说明\n\n把你的选择整理成后续出图要求\n\n点击后，系统会把生产准备里的图片识别结果和你的选择整理成一份出图方案；准备好后，上方展示最终出图要求，下方只展示新增、移除或调整的变化。\n\n方案来源\n准备中\n准备状态\n未知\n下一步：还没有生成出图方案。请先点击「生成/刷新出图方案」。\n先完成 Prep 后生成方案\n生成方案按钮不可用：请先回到生产准备页，完成图片解析并确认至少一条选择。\n还没有生成出图方案。请先点击「生成/刷新出图方案」。\n\n变化说明\n\n完成生产准备里的选择后，点击上方按钮，系统会整理本次出图要求并展示变化。\n\n任务配额与出图槽位\n\n任务配额=槽位数；源图沿用 Prep 中已解析的 SKU 图片\n\n生成图片数量\n3\n最多支持 10 个槽位；1 个槽位 = 1 张待生成图片\n任务 01（主图）\n槽位 1 / 3\n等待 Prep 图片\n图类型\n主图\n海报\n使用图\n细节图\n对比图\n模板\nAmazon 平台主图模板\n工业风营销海报模板\n场景使用图模板\n细节特写模板\n对比图模板\n已注入默认模板配置：纯白背景，主体居中，符合 Amazon 主图规范；中心构图，突出主体；纯色或渐变背景，无干扰；符合平台主图规范；画幅 1:1。\n任务 02（营销海报）\n槽位 2 / 3\n等待 Prep 图片\n图类型\n主图\n海报\n使用图\n细节图\n对比图\n模板\nAmazon 平台主图模板\n工业风营销海报模板\n场景使用图模板\n细节特写模板\n对比图模板\n已注入默认模板配置：深色工业风背景，强调产品质感与力量感；纵向构图，强调视觉冲击；可容纳文案信息区；适合活动 / 促销场景；画幅 3:4。\n任务 03（使用场景图）\n槽位 3 / 3\n等待 Prep 图片\n图类型\n主图\n海报\n使用图\n细节图\n对比图\n模板\nAmazon 平台主图模板\n工业风营销海报模板\n场景使用图模板\n细节特写模板\n对比图模板\n已注入默认模板配置：真实使用场景，展示产品在实际环境中的效果；场景化构图，增强真实感；展示产品使用环境；增强信任感与代入感；画幅 16:9。\n添加新任务\n模板参考（3 个槽位）\n主体居中\n1:1\n01 Amazon 平台主图模板\nAmazon\n• 中心构图，突出主体\n• 纯色或渐变背景，无干扰\n• 符合平台主图规范\n3:4\n02 工业风营销海报模板\n通用\n• 纵向构图，强调视觉冲击\n• 可容纳文案信息区\n• 适合活动 / 促销场景\n16:9\n03 场景使用图模板\n通用\n• 场景化构图，增强真实感\n• 展示产品使用环境\n• 增强信任感与代入感\n\n本次会按「任务配额槽位」创建独立生成任务；源图沿用生产准备中的商品图，每个槽位只配置图类型、模板和细节要求。\n\n生产设置\n模型选择\n默认稳定模式\nMiniMax 图生图\n高质量创意模式\n快速预览模式\n\n适合正式生产，出图质量和稳定性优先\n\n高级设置\n消耗预估\n模型消耗（稳定生产模式）\n10 Credits / 张\n分辨率（标准方图）\n0 Credits / 张\n预计生成数量\n0 张图片\n预估总消耗\n0 Credits\n开始生产前还需要：先回到生产准备，完成图片解析结果确认和取舍选择。\n\n开始生产检查\n\n• 策略输入\n还没有可生成的选择\n• 出图方案\n还没有生成出图方案。请先点击「生成/刷新出图方案」。\n• 出图槽位\n等待 Prep 图片\n补齐生成条件\n\n当前按钮不会提交生产任务；只有策略输入、出图方案、出图槽位全部通过后才会变成“开始生产”。\n\n返回上一步\n0 张图片\n·\n稳定生产模式 模型\n·\n标准方图\n·\n预计消耗 0 Credits\n\n请先回到生产准",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "production-workshop-desktop",
+      "route_id": "production-workshop",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Production Workshop",
+      "url": "http://127.0.0.1:5179/products/dev-product/production/workshop?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/production/workshop?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/production-workshop-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nProduct Center\n/\n#dev-product\nProduction Prep\n→\nStrategy Setup\n→\nIteration Workshop\nEN\nDU\nIteration Workshop\n\nVariant selection, in-painting, conversational refinement\n\n版本谱系\n\nVersion Lineage\n\n对比模式\n还没有可查看的生成版本。请先在策略配置页提交生产任务，等真实图片结果返回后再进入工坊。\n新建分支\n生成结果（6）\n\nGeneration Results\n\n全部版本\n最新优先\n评分优先\n选择\n结果 1\n选择\n结果 2\n选择\n结果 3\n选择\n结果 4\n选择\n结果 5\n选择\n结果 6\n已选择 0 / 6 张图片\n全选真实资产\n定稿回流\n版本控制台\n\nVersion Control\n\nNo active version\nControls are disabled until real generation versions are available.\n权重再迭代\nWeight Re-iteration\n\n身份一致性（SKU）\n\n50%\n\nIdentity Consistency\n\n风格迁移（参考图）\n\n50%\n\nStyle Transfer (Reference)\n\n0%\n向左更像 SKU 本体，向右更偏向参考图风格\n100%\n高级微调\nAdvanced Tuning\n批量下载\nSelected or all real assets\n重新生成\nRe-generate\n保存为模板\n结果保存",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "production-workshop-tablet",
+      "route_id": "production-workshop",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Production Workshop",
+      "url": "http://127.0.0.1:5179/products/dev-product/production/workshop?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/production/workshop?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/production-workshop-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nProduct Center\n/\n#dev-product\nProduction Prep\n→\nStrategy Setup\n→\nIteration Workshop\nEN\nDU\nIteration Workshop\n\nVariant selection, in-painting, conversational refinement\n\n版本谱系\n\nVersion Lineage\n\n对比模式\n还没有可查看的生成版本。请先在策略配置页提交生产任务，等真实图片结果返回后再进入工坊。\n新建分支\n生成结果（6）\n\nGeneration Results\n\n全部版本\n最新优先\n评分优先\n选择\n结果 1\n选择\n结果 2\n选择\n结果 3\n选择\n结果 4\n选择\n结果 5\n选择\n结果 6\n已选择 0 / 6 张图片\n全选真实资产\n定稿回流\n版本控制台\n\nVersion Control\n\nNo active version\nControls are disabled until real generation versions are available.\n权重再迭代\nWeight Re-iteration\n\n身份一致性（SKU）\n\n50%\n\nIdentity Consistency\n\n风格迁移（参考图）\n\n50%\n\nStyle Transfer (Reference)\n\n0%\n向左更像 SKU 本体，向右更偏向参考图风格\n100%\n高级微调\nAdvanced Tuning\n批量下载\nSelected or all real assets\n重新生成\nRe-generate\n保存为模板\n结果保存",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "production-workshop-mobile",
+      "route_id": "production-workshop",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Production Workshop",
+      "url": "http://127.0.0.1:5179/products/dev-product/production/workshop?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/dev-product/production/workshop?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/production-workshop-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Product Center\n/\n#dev-product\nProduction Prep\n→\nStrategy Setup\n→\nIteration Workshop\nEN\nDU\nIteration Workshop\n\nVariant selection, in-painting, conversational refinement\n\n版本谱系\n\nVersion Lineage\n\n对比模式\n还没有可查看的生成版本。请先在策略配置页提交生产任务，等真实图片结果返回后再进入工坊。\n新建分支\n生成结果（6）\n\nGeneration Results\n\n全部版本\n最新优先\n评分优先\n选择\n结果 1\n选择\n结果 2\n选择\n结果 3\n选择\n结果 4\n选择\n结果 5\n选择\n结果 6\n已选择 0 / 6 张图片\n全选真实资产\n定稿回流\n版本控制台\n\nVersion Control\n\nNo active version\nControls are disabled until real generation versions are available.\n权重再迭代\nWeight Re-iteration\n\n身份一致性（SKU）\n\n50%\n\nIdentity Consistency\n\n风格迁移（参考图）\n\n50%\n\nStyle Transfer (Reference)\n\n0%\n向左更像 SKU 本体，向右更偏向参考图风格\n100%\n高级微调\nAdvanced Tuning\n批量下载\nSelected or all real assets\n重新生成\nRe-generate\n保存为模板\n结果保存",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "downloads-desktop",
+      "route_id": "downloads",
+      "viewport_id": "desktop",
+      "viewport": {
+        "width": 1440,
+        "height": 1200,
+        "mobile": false
+      },
+      "surface": "Downloads",
+      "url": "http://127.0.0.1:5179/products/workbench/downloads?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/workbench/downloads?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/downloads-desktop.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\n交付中心 · 下载记录\n交付中心\n\n导出任务队列、下载追踪、包完整性校验、交付链路\n\nBack to products\nOpen visual tools\nBack to production flow\nPRODUCT CENTER WORKFLOW\nNo SKU context yet\n1\nQueue\nIntake / triage board\n2\nSKU Detail\nSelect one SKU to open dossier\n3\nListing\nTemplate → validate → version\n4\nExport\nDelivery / downloads gate\n任务 0\n可下载 0\n处理中 0\n失败 0\n暂不可用 0\n可下载的交付文件会在这里统一管理\n全部\n可下载\n处理中\n失败\n暂不可用\n导出任务队列 — 0 条记录\n\n可下载的记录会启用下载按钮；暂不支持的平台发布会保持关闭。\n\n任务 ID\tSKU / 标题\t平台 / 站点 / 语言\t状态\t可下载\t创建时间\t操作\n暂无导出任务。\n包预览\n文件\n素材\n追踪\n错误\n选择/生成导出包后展示文件、素材清单和校验信息。\n交付说明\n\n这里展示导出队列和包预览。平台发布暂未开放；只有已生成且可下载的记录会启用下载按钮。",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "downloads-tablet",
+      "route_id": "downloads",
+      "viewport_id": "tablet",
+      "viewport": {
+        "width": 1024,
+        "height": 1000,
+        "mobile": false
+      },
+      "surface": "Downloads",
+      "url": "http://127.0.0.1:5179/products/workbench/downloads?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/workbench/downloads?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/downloads-tablet.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "Home\nSKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\n交付中心 · 下载记录\n交付中心\n\n导出任务队列、下载追踪、包完整性校验、交付链路\n\nBack to products\nOpen visual tools\nBack to production flow\nPRODUCT CENTER WORKFLOW\nNo SKU context yet\n1\nQueue\nIntake / triage board\n2\nSKU Detail\nSelect one SKU to open dossier\n3\nListing\nTemplate → validate → version\n4\nExport\nDelivery / downloads gate\n任务 0\n可下载 0\n处理中 0\n失败 0\n暂不可用 0\n可下载的交付文件会在这里统一管理\n全部\n可下载\n处理中\n失败\n暂不可用\n导出任务队列 — 0 条记录\n\n可下载的记录会启用下载按钮；暂不支持的平台发布会保持关闭。\n\n任务 ID\tSKU / 标题\t平台 / 站点 / 语言\t状态\t可下载\t创建时间\t操作\n暂无导出任务。\n包预览\n文件\n素材\n追踪\n错误\n选择/生成导出包后展示文件、素材清单和校验信息。\n交付说明\n\n这里展示导出队列和包预览。平台发布暂未开放；只有已生成且可下载的记录会启用下载按钮。",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    },
+    {
+      "id": "downloads-mobile",
+      "route_id": "downloads",
+      "viewport_id": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "mobile": true
+      },
+      "surface": "Downloads",
+      "url": "http://127.0.0.1:5179/products/workbench/downloads?dev=1",
+      "final_url": "http://127.0.0.1:5179/products/workbench/downloads?dev=1",
+      "screenshot": "reports/frontend-style-consistency/screenshots/downloads-mobile.png",
+      "title": "Agent Ecommerce",
+      "text_sample": "SKU Queue\nTemplate Center\nDelivery Center\nEN\n⌘\nK\nDU\n交付中心 · 下载记录\n交付中心\n\n导出任务队列、下载追踪、包完整性校验、交付链路\n\nBack to products\nOpen visual tools\nBack to production flow\nPRODUCT CENTER WORKFLOW\nNo SKU context yet\n1\nQueue\nIntake / triage board\n2\nSKU Detail\nSelect one SKU to open dossier\n3\nListing\nTemplate → validate → version\n4\nExport\nDelivery / downloads gate\n任务 0\n可下载 0\n处理中 0\n失败 0\n暂不可用 0\n可下载的交付文件会在这里统一管理\n全部\n可下载\n处理中\n失败\n暂不可用\n导出任务队列 — 0 条记录\n\n可下载的记录会启用下载按钮；暂不支持的平台发布会保持关闭。\n\n任务 ID\tSKU / 标题\t平台 / 站点 / 语言\t状态\t可下载\t创建时间\t操作\n暂无导出任务。\n包预览\n文件\n素材\n追踪\n错误\n选择/生成导出包后展示文件、素材清单和校验信息。\n交付说明\n\n这里展示导出队列和包预览。平台发布暂未开放；只有已生成且可下载的记录会启用下载按钮。",
+      "console_error_count": 0,
+      "network_failure_count": 0,
+      "overflow_finding_count": 0,
+      "overflow_findings": [],
+      "status": "CAPTURED"
+    }
+  ],
+  "runtime_assertions": {
+    "final_url": true,
+    "page_identity": true,
+    "selected_context": true,
+    "forbidden_stay_on_source": true
+  },
+  "overflow_report": {
+    "status": "PASS",
+    "finding_count": 0,
+    "findings": []
+  },
+  "visual_diff": {
+    "status": "DELEGATED_TO_PLAYWRIGHT_BASELINE",
+    "command": "npm run test:visual",
+    "note": "Playwright screenshot baselines cover critical routes; this CDP evidence adds multi-viewport screenshots and overflow/clipping inventory."
+  },
+  "decision": {
+    "decision": "ACCEPTED_WITH_NOTES",
+    "notes": "Automated multi-viewport screenshot evidence captured via Chromium CDP. This proves render/visual inventory plus overflow/clipping evidence, not full interaction or backend persistence QA."
+  },
+  "contract_evidence_note": "Contract-only P0 baseline change; browser screenshots prove no incidental route/layout regression while contract smoke/evidence proves createProduct OpenAPI/generated coverage."
+}

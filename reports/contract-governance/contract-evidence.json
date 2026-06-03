@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "runId": "2026-05-26T10-47-11-595Z-adapter-evidence",
+  "runId": "2026-06-03T07-24-06-975Z-adapter-evidence",
   "status": "PASS_WITH_NOTES",
   "project": "ecommerce-frontend",
   "adapter": {
@@ -10,12 +10,12 @@
   },
   "environment": {
     "name": "local",
-    "commit": "9d5e2a6",
-    "branch": "feat/ecom-editable-generation-prompt",
+    "commit": "8bbf937",
+    "branch": "chore/create-product-contract-baseline",
     "ci": false
   },
-  "startedAt": "2026-05-26T10:47:11.595Z",
-  "finishedAt": "2026-05-26T10:47:11.597Z",
+  "startedAt": "2026-06-03T07:24:06.975Z",
+  "finishedAt": "2026-06-03T07:24:06.977Z",
   "summary": "Contract adapter evidence completed with explicit notes or blocked future checks.",
   "commands": [
     {
@@ -24,8 +24,8 @@
       "cwd": ".",
       "status": "PASS_WITH_NOTES",
       "exitCode": 0,
-      "startedAt": "2026-05-26T10:47:11.430Z",
-      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "startedAt": "2026-06-03T07:24:06.807Z",
+      "finishedAt": "2026-06-03T07:24:06.809Z",
       "durationMs": 2
     },
     {
@@ -34,8 +34,8 @@
       "cwd": ".",
       "status": "PASS",
       "exitCode": 0,
-      "startedAt": "2026-05-26T10:47:11.595Z",
-      "finishedAt": "2026-05-26T10:47:11.597Z",
+      "startedAt": "2026-06-03T07:24:06.975Z",
+      "finishedAt": "2026-06-03T07:24:06.977Z",
       "durationMs": 2
     }
   ],
@@ -44,18 +44,18 @@
       "kind": "contract",
       "path": "contracts/ecommerce.openapi.json",
       "description": "Producer contract artifact configured by the adapter.",
-      "sha256": "f5dd5a1ee1fd2c591d51f64741c9b3b4287cbc7ca4c5d5daa5763b602a0d3c9d"
+      "sha256": "76c2b85d912122c2a2943ccd15fc3e5204c22082ee8d3318bfe3aea932197757"
     },
     {
       "kind": "generated",
       "path": "src/api/generated/ecommerce-contract.ts",
       "description": "Consumer generated artifact configured by the adapter.",
-      "sha256": "d117e2165f39ba1b4b402b5be575560d83d8b75ddbd8b47ec855de2b3d492579"
+      "sha256": "a4991568e3efc15904ed5d3094a45ffb05a1e628082adeccb53564e8ea49a40d"
     },
     {
       "kind": "diff",
       "path": "reports/contract-governance/contract-diff.json",
-      "sha256": "0051ad3f801339d2391bdc7046a4ce43c09efa1778c5a3bd3dbdcd058fa1374f"
+      "sha256": "c84889b870174200fead4d3bdce2c8f0241bcd736d8f9678bef9c7c72a45de3d"
     },
     {
       "kind": "evidence",
@@ -64,7 +64,7 @@
     {
       "kind": "smoke",
       "path": "reports/contract-governance/contract-smoke.json",
-      "sha256": "699177a818085a6259e49ccf9080558bd75274551dd744539314cad64e70a067"
+      "sha256": "fbd70b60f5f823f9ad1e877300e29d2b51557f509a5fba09aaea36c61430d4b4"
     }
   ],
   "diff": {
@@ -86,6 +86,7 @@
         "operations": [
           "getEcommerceSession",
           "listProducts",
+          "createProduct",
           "getProduct",
           "getProductionStageView"
         ],
@@ -99,40 +100,44 @@
         ]
       },
       "environment": "local",
-      "startedAt": "2026-05-26T10:47:11.432Z",
-      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "startedAt": "2026-06-03T07:24:06.809Z",
+      "finishedAt": "2026-06-03T07:24:06.809Z",
       "durationMs": 0,
       "assertions": [
         {
           "kind": "api",
-          "description": "The four currently governed Ecommerce operations exist in contracts/ecommerce.openapi.json.",
+          "description": "The five currently governed Ecommerce operations exist in contracts/ecommerce.openapi.json.",
           "status": "PASS",
           "expected": [
             "getEcommerceSession",
             "listProducts",
+            "createProduct",
             "getProduct",
             "getProductionStageView"
           ],
           "actual": [
             "getEcommerceSession",
             "listProducts",
+            "createProduct",
             "getProduct",
             "getProductionStageView"
           ]
         },
         {
           "kind": "generated",
-          "description": "The generated Ecommerce contract artifact exposes the four governed operation names.",
+          "description": "The generated Ecommerce contract artifact exposes the five governed operation names.",
           "status": "PASS",
           "expected": [
             "getEcommerceSession",
             "listProducts",
+            "createProduct",
             "getProduct",
             "getProductionStageView"
           ],
           "actual": [
             "getEcommerceSession",
             "listProducts",
+            "createProduct",
             "getProduct",
             "getProductionStageView"
           ],
@@ -143,7 +148,7 @@
         "status": "PASS_WITH_NOTES",
         "notes": "Static baseline only; no records are created."
       },
-      "notes": "This journey is the only Phase 4 blocking smoke. It validates artifacts that exist today and does not claim live API coverage."
+      "notes": "This journey is the Phase 4 blocking smoke for committed OpenAPI/generated artifacts, including createProduct contract coverage. It does not claim live API coverage."
     },
     {
       "id": "ecommerce-product-live-read-smoke",
@@ -159,8 +164,8 @@
         ]
       },
       "environment": "local",
-      "startedAt": "2026-05-26T10:47:11.432Z",
-      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "startedAt": "2026-06-03T07:24:06.809Z",
+      "finishedAt": "2026-06-03T07:24:06.809Z",
       "durationMs": 0,
       "assertions": [
         {
@@ -217,8 +222,8 @@
         ]
       },
       "environment": "local",
-      "startedAt": "2026-05-26T10:47:11.432Z",
-      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "startedAt": "2026-06-03T07:24:06.809Z",
+      "finishedAt": "2026-06-03T07:24:06.809Z",
       "durationMs": 0,
       "assertions": [
         {
@@ -274,46 +279,46 @@
         ]
       },
       "environment": "local",
-      "startedAt": "2026-05-26T10:47:11.432Z",
-      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "startedAt": "2026-06-03T07:24:06.809Z",
+      "finishedAt": "2026-06-03T07:24:06.809Z",
       "durationMs": 0,
       "assertions": [
         {
           "kind": "api",
           "description": "Configured operations exist in the contract artifact.",
-          "status": "BLOCKED",
+          "status": "PASS",
           "expected": [
             "createProduct",
             "listProducts",
             "getProduct"
           ],
           "actual": [
+            "createProduct",
             "listProducts",
             "getProduct"
-          ],
-          "notes": "Missing operations: createProduct"
+          ]
         },
         {
           "kind": "generated",
           "description": "Generated artifact contains configured operation exports.",
-          "status": "BLOCKED",
+          "status": "PASS",
           "expected": [
             "createProduct",
             "listProducts",
             "getProduct"
           ],
           "actual": [
+            "createProduct",
             "listProducts",
             "getProduct"
           ],
-          "artifactPath": "src/api/generated/ecommerce-contract.ts",
-          "notes": "Missing generated names: createProduct"
+          "artifactPath": "src/api/generated/ecommerce-contract.ts"
         },
         {
           "kind": "api",
           "description": "Live create -> list -> detail/read smoke against an authenticated Ecommerce environment.",
           "status": "BLOCKED",
-          "notes": "BLOCKED until createProduct is covered by OpenAPI, authenticated fixture creation is stable, and cleanup ownership is registered."
+          "notes": "OpenAPI coverage is now committed; live smoke remains BLOCKED until authenticated fixture creation is stable and cleanup ownership is registered."
         }
       ],
       "cleanup": {
@@ -337,8 +342,8 @@
         ]
       },
       "environment": "local",
-      "startedAt": "2026-05-26T10:47:11.432Z",
-      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "startedAt": "2026-06-03T07:24:06.809Z",
+      "finishedAt": "2026-06-03T07:24:06.809Z",
       "durationMs": 0,
       "assertions": [
         {
@@ -396,8 +401,8 @@
         ]
       },
       "environment": "local",
-      "startedAt": "2026-05-26T10:47:11.432Z",
-      "finishedAt": "2026-05-26T10:47:11.432Z",
+      "startedAt": "2026-06-03T07:24:06.809Z",
+      "finishedAt": "2026-06-03T07:24:06.809Z",
       "durationMs": 0,
       "assertions": [
         {
