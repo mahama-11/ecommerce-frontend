@@ -10,6 +10,10 @@ export type { BusinessWorkflowNode, BusinessWorkflowDAG, IntegrationVerdict, Rol
 const sessionKey = (productId: string) => `ecommerce.production.visualSession.${productId}`
 const sourceKey = (productId: string) => `ecommerce.production.sources.${productId}`
 const intentKey = (productId: string) => `ecommerce.production.intents.${productId}`
+const SESSION_CACHE_TTL_MS = 30_000
+const STAGE_VIEW_DEDUPE_TTL_MS = 1_500
+const sessionMemoryCache = new Map<string, { session: VisualSession; expiresAt: number }>()
+const stageViewRequestCache = new Map<string, { promise: Promise<StageViewDTO>; expiresAt: number }>()
 const ALLOWED_SOURCE_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 export const MAX_PARSING_SOURCE_IMAGE_BYTES = 10 * 1024 * 1024
 function getStored<T>(key: string, fallback: T): T {
@@ -52,21 +56,29 @@ async function getSkuCode(productId: string): Promise<string> {
     const sku = detail.product.skuCode?.trim()
     return sku || productId } catch {
     return productId } }
+function rememberVisualSession(productId: string, session: VisualSession): VisualSession {
+  setStored(sessionKey(productId), session)
+  sessionMemoryCache.set(productId, { session, expiresAt: Date.now() + SESSION_CACHE_TTL_MS })
+  return session }
 async function ensureVisualSession(productId: string): Promise<VisualSession> {
+  const memory = sessionMemoryCache.get(productId)
+  if (memory && memory.expiresAt > Date.now() && memory.session.product_id === productId) return memory.session
   const cached = getStored<VisualSession | null>(sessionKey(productId), null)
   if (cached?.id) {
     try {
       const current = await request<VisualSession>(`${VWF}/${cached.id}`, { method: 'GET', silent: true })
-      if (current.product_id === productId) { setStored(sessionKey(productId), current)
-        return current } } catch { clearStored(sessionKey(productId)) } }
+      if (current.product_id === productId) return rememberVisualSession(productId, current)
+    } catch {
+      // A stale or user-mutated localStorage session id must not pin the UI to a broken workflow.
+    }
+    clearStored(sessionKey(productId))
+  }
   const listed = await request<{ items: VisualSession[] }>(`${VWF}/sessions?product_id=${encodeURIComponent(productId)}&limit=1`, { method: 'GET', silent: true })
   const existing = listed.items?.[0]
-  if (existing?.id) { setStored(sessionKey(productId), existing)
-    return existing }
+  if (existing?.id) return rememberVisualSession(productId, existing)
   const skuCode = await getSkuCode(productId)
   const created = await request<VisualSession>(`${PRODUCT_VWF}/${productId}/v2/visual-sessions`, { method: 'POST', body: JSON.stringify({ sku_code: skuCode, tool_slug: 'production-pipeline', idempotency_key: `production-pipeline:${productId}:${skuCode}`, }), })
-  setStored(sessionKey(productId), created)
-  return created }
+  return rememberVisualSession(productId, created) }
 async function resolveProductionPromptTemplateId(locale = 'zh-CN'): Promise<string> {
   const candidates = await request<ProductionTemplateListItem[]>( `/api/v1/ecommerce/template-center/catalog?locale=${encodeURIComponent(locale)}&modality=image&sortBy=recommended`, { method: 'GET' }, )
   const selected = [...(candidates ?? [])] .filter(item => item.id) .sort((a, b) => Number(b.recommendScore ?? 0) - Number(a.recommendScore ?? 0))[0]
@@ -76,17 +88,26 @@ async function ensureSessionPromptTemplate(session: VisualSession, locale = 'zh-
   if (session.template_id) return session.template_id
   const templateId = await resolveProductionPromptTemplateId(locale)
   const updated = await request<VisualSession>(`${VWF}/${session.id}`, { method: 'PATCH', body: JSON.stringify({ template_id: templateId }), })
-  setStored(sessionKey(session.product_id), updated)
+  rememberVisualSession(session.product_id, updated)
   return updated.template_id || templateId }
-type StageViewProjection = 'sources' | 'sandbox' | 'workshop' | 'full'
-async function getStageView(productId: string, projection: StageViewProjection = 'full'): Promise<StageViewDTO> {
-  const session = await ensureVisualSession(productId)
-  const suffix = projection && projection !== 'full' ? `?projection=${encodeURIComponent(projection)}` : ''
-  return request<StageViewDTO>(`${VWF}/${session.id}/stage-view${suffix}`, { method: 'GET' }) }
+async function getStageView(productId: string, projection = ''): Promise<StageViewDTO> {
+  const cacheKey = projection ? `${productId}:${projection}` : productId
+  const cached = stageViewRequestCache.get(cacheKey)
+  if (cached && cached.expiresAt > Date.now()) return cached.promise
+  const query = projection ? `?projection=${encodeURIComponent(projection)}` : ''
+  const promise = ensureVisualSession(productId).then((session) => request<StageViewDTO>(`${VWF}/${session.id}/stage-view${query}`, { method: 'GET' }))
+  stageViewRequestCache.set(cacheKey, { promise, expiresAt: Date.now() + STAGE_VIEW_DEDUPE_TTL_MS })
+  try {
+    return await promise
+  } catch (error) {
+    stageViewRequestCache.delete(cacheKey)
+    throw error
+  }
+}
 async function listGenerationVersionDTOs(productId: string): Promise<GenerationVersionDTO[]> {
   const session = await ensureVisualSession(productId)
-  const result = await request<{ items: GenerationVersionDTO[] }>(`${VWF}/${session.id}/generation-versions`, { method: 'GET' })
-  return result.items ?? [] }
+  const response = await request<{ items: GenerationVersionDTO[] }>(`${VWF}/${session.id}/generation-versions`, { method: 'GET' })
+  return response.items ?? [] }
 export type ProductionArchitectureState = { businessFlow?: BusinessWorkflowDAG
   integrationVerdict?: IntegrationVerdict
   rollbackSnapshot?: RollbackSnapshot
@@ -144,7 +165,10 @@ function promptPlanSummary(stage: StageViewDTO): PromptPlanSummary {
   const promptBlockers = [ ...(Array.isArray(plan.blockers) ? plan.blockers : []), ...(Array.isArray(stage.readiness?.blockers) ? stage.readiness.blockers.filter(blocker => !blocker.target || ['prompt_plan', 'prompt_planner', 'source_references', 'deconstruction_job', 'runtime_capabilities'].includes(blocker.target)) : []), ]
   return { status: String(plan.status ?? 'unknown'), source: String(metadata.source ?? 'backend_intent_fusion'), promptId: plan.prompt_id, sceneType: plan.scene_type, variables: plan.variables ?? {}, metadata, diff: { added: toStrings(rawDiff.added), removed: toStrings(rawDiff.removed), changed: toStrings(rawDiff.changed), status: typeof rawDiff.status === 'string' ? rawDiff.status : undefined, }, readiness: stage.readiness ? { overall: stage.readiness.overall, prompt: stage.readiness.prompt, generation: stage.readiness.generation, blockers: stage.readiness.blockers, } : undefined, blockers: promptBlockers, } }
 export async function getPromptPlanSummary(productId: string): Promise<PromptPlanSummary> {
-  return promptPlanSummary(await getStageView(productId, 'sandbox')) }
+  return promptPlanSummary(await getStageView(productId)) }
+export async function getSandboxStrategyData(productId: string): Promise<{ intents: CompiledIntent[]; promptPlan: PromptPlanSummary }> {
+  const stage = await getStageView(productId, 'sandbox')
+  return { intents: stageToIntents(stage, productId), promptPlan: promptPlanSummary(stage) } }
 export async function requestPromptPlanner(productId: string, opts?: { marketplace?: string; locale?: string; templateId?: string; promptVariables?: Record<string, unknown> }): Promise<{ runtimeJobId?: string; status: string }> {
   const session = await ensureVisualSession(productId)
   const locale = opts?.locale ?? 'zh-CN'
@@ -672,11 +696,8 @@ function versionWeightParams(version: GenerationVersionDTO) {
   const config = (version.metadata?.config ?? {}) as Record<string, unknown>
   const skuBias = Number(config.skuBias ?? config.sku_bias ?? 70)
   return { skuBias: Number.isFinite(skuBias) ? Math.max(0, Math.min(100, skuBias)) : 70, styleStrength: Number(config.styleStrength ?? config.style_strength ?? 0.6), identityConsistency: Number(config.identityConsistency ?? config.identity_consistency ?? 0.8), creativeFreedom: Number(config.creativeFreedom ?? config.creative_freedom ?? 0.4), } }
-export async function listGenerationVersions(productId: string): Promise<VersionNode[]> {
-  if (isDevMode()) {
-    await delay(300)
-    return [] }
-  const versions = [...(await listGenerationVersionDTOs(productId))].sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
+function versionNodesFromGenerationVersions(input: GenerationVersionDTO[]): VersionNode[] {
+  const versions = [...input].sort((a, b) => String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')))
   const groups = new Map<string, GenerationVersionDTO[]>()
   versions.forEach((version) => {
     const key = generationGroupId(version)
@@ -691,17 +712,34 @@ export async function listGenerationVersions(productId: string): Promise<Version
     const weights = versionWeightParams(group.representative)
     const current = group.id === grouped.at(-1)?.id
     return { id: group.id, version: label, label, description: generationGroupDescription(group.versions), skuBias: weights.skuBias, refBias: 100 - weights.skuBias, timestamp: group.latest.created_at || new Date().toISOString(), strategySnapshot: String(group.representative.metadata?.source ?? group.representative.prompt_plan_status ?? 'backend_generation_version'), isCurrent: current, parentId: undefined, childrenIds: [], prompt: group.representative.prompt_id, negativePrompt: undefined, weightParams: weights, sourceVersionId: group.representative.version_id, versionIds: group.versions.map(version => version.version_id), resultAssetCount: group.versions.reduce((sum, version) => sum + (version.result_assets?.length ?? 0), 0), } }) }
-export async function listVariants(productId: string): Promise<AssetVariant[]> {
-  if (isDevMode()) {
-    await delay(400)
-    return MOCK_VARIANTS }
-  const variants = (await listGenerationVersionDTOs(productId)).flatMap(version => (version.result_assets ?? []).map(asset => ({ version, asset, })))
-  return Promise.all(variants.map(async ({ version, asset }) => {
-    const groupId = generationGroupId(version)
+async function variantsFromGenerationVersions(input: GenerationVersionDTO[], opts?: { generationGroupId?: string; limit?: number }): Promise<AssetVariant[]> {
+  const variants = input.flatMap(version => (version.result_assets ?? []).map(asset => ({ version, asset, groupId: generationGroupId(version) })))
+    .filter(({ groupId }) => !opts?.generationGroupId || groupId === opts.generationGroupId)
+    .slice(0, opts?.limit ?? 24)
+  return Promise.all(variants.map(async ({ version, asset, groupId }) => {
     const assetContentPath = asset.asset_content_url || (asset.asset_id ? `/api/v1/ecommerce/assets/${asset.asset_id}/content` : '')
     const authenticatedUrl = assetContentPath ? await fetchAuthenticatedObjectUrl(assetContentPath) : ''
     const done = ['completed', 'succeeded'].includes(String(version.status ?? '').toLowerCase()) || String(version.stage ?? '').toLowerCase() === 'completed'
     return { id: `${version.version_id}:${asset.asset_id}`, intentId: version.prompt_id || version.version_id, assetUrl: authenticatedUrl, thumbnailUrl: authenticatedUrl, width: Number(asset.metadata?.width ?? 1024), height: Number(asset.metadata?.height ?? 1024), status: asset.selected || asset.asset_id === version.selected_result_asset_id ? 'selected' : (done ? 'ready' : 'generating'), metadata: { ...version.metadata, ...asset.metadata, generation_group_id: groupId, version_id: version.version_id, asset_id: asset.asset_id, asset_content_url: assetContentPath, stage: version.stage, progress: version.progress, status: version.status }, createdAt: version.created_at || new Date().toISOString(), } })) }
+export async function listGenerationVersions(productId: string): Promise<VersionNode[]> {
+  if (isDevMode()) {
+    await delay(300)
+    return [] }
+  return versionNodesFromGenerationVersions(await listGenerationVersionDTOs(productId)) }
+export async function listVariants(productId: string, opts?: { generationGroupId?: string; limit?: number }): Promise<AssetVariant[]> {
+  if (isDevMode()) {
+    await delay(400)
+    return MOCK_VARIANTS }
+  return variantsFromGenerationVersions(await listGenerationVersionDTOs(productId), opts) }
+export async function getWorkshopData(productId: string): Promise<{ nodes: VersionNode[]; variants: AssetVariant[]; activeVersionId: string | null }> {
+  if (isDevMode()) {
+    await delay(400)
+    return { nodes: [], variants: MOCK_VARIANTS, activeVersionId: null } }
+  const rawVersions = await listGenerationVersionDTOs(productId)
+  const nodes = versionNodesFromGenerationVersions(rawVersions)
+  const activeVersionId = nodes.find((node) => node.isCurrent)?.id ?? nodes.at(-1)?.id ?? null
+  const variants = await variantsFromGenerationVersions(rawVersions, { generationGroupId: activeVersionId ?? undefined, limit: 24 })
+  return { nodes, variants, activeVersionId } }
 export async function createInpaintTask(_productId: string, req: CreateInpaintTaskRequest): Promise<InpaintTask> {
   if (isDevMode()) {
     await delay(1500)

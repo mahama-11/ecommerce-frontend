@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Check, Download, Loader2,
@@ -407,6 +407,11 @@ function ZoomModal({ variant, onClose, }: {
         >
           <X className="h-4 w-4" aria-hidden="true" /> </Button> </motion.div> </motion.div>
   ) }
+function mergeVariantsById(current: AssetVariant[], next: AssetVariant[]): AssetVariant[] {
+  const byId = new Map(current.map((variant) => [variant.id, variant]))
+  next.forEach((variant) => byId.set(variant.id, variant))
+  return [...byId.values()]
+}
 // ─── Main Component ──────────────────────────────────────────
 export default function WorkshopPage() {
   const { id } = useParams<{ id: string }>()
@@ -420,6 +425,9 @@ export default function WorkshopPage() {
     reset, } = useWorkshopStore()
   const [zoomVariant, setZoomVariant] = useState<AssetVariant | null>(null)
   const [actionBusy, setActionBusy] = useState(false)
+  const [loadingWorkshop, setLoadingWorkshop] = useState(false)
+  const [loadingVersionId, setLoadingVersionId] = useState<string | null>(null)
+  const versionLoadSeq = useRef(0)
   const hasGenerationVersions = versionNodes.length > 0
   const activeNode = versionNodes.find((node) => node.id === activeVersionId) ?? versionNodes.at(-1)
   const activeVersionLabel = activeNode?.version ?? null
@@ -431,19 +439,28 @@ export default function WorkshopPage() {
     if (id && id !== productId) { reset()
       setProductId(id) }
     return () => {} }, [id, productId, setProductId, reset])
-  // Load backend variants. Only dev=1 may show placeholder variants.
+  // Load backend workshop metadata first, then only hydrate images for the active version.
   useEffect(() => {
-    if (productId) { productionApi.listVariants(productId) .then(async (v) => { setVariants(v.length > 0 ? v : (isDevMode() ? MOCK_VARIANTS : []))
-          const nodes = isDevMode() ? [] : await productionApi.listGenerationVersions(productId)
+    let cancelled = false
+    if (productId) {
+      Promise.resolve().then(() => { if (!cancelled) setLoadingWorkshop(true) })
+      productionApi.getWorkshopData(productId) .then(({ nodes, variants: initialVariants, activeVersionId: nextActiveId }) => {
+          if (cancelled) return
+          setVariants(initialVariants.length > 0 ? initialVariants : (isDevMode() ? MOCK_VARIANTS : []))
           setVersionNodes(nodes)
-          setActiveVersionId(nodes.find((node) => node.isCurrent)?.id ?? nodes.at(-1)?.id ?? null)
-          if (nodes.length > 0) { setWeightParams(nodes.find((node) => node.isCurrent)?.weightParams ?? nodes[nodes.length - 1].weightParams) } })
-        .catch(() => { setVariants(isDevMode() ? MOCK_VARIANTS : [])
+          setActiveVersionId(nextActiveId)
+          const active = nodes.find((node) => node.id === nextActiveId) ?? nodes.at(-1)
+          if (active) setWeightParams(active.weightParams) })
+        .catch(() => { if (cancelled) return
+          setVariants(isDevMode() ? MOCK_VARIANTS : [])
           if (!isDevMode()) { setVersionNodes([])
-            setActiveVersionId(null) } }) } else {
+            setActiveVersionId(null) } })
+        .finally(() => { if (!cancelled) setLoadingWorkshop(false) })
+    } else {
       setVariants(isDevMode() ? MOCK_VARIANTS : [])
       if (!isDevMode()) { setVersionNodes([])
-        setActiveVersionId(null) } } }, [productId, setVariants, setVersionNodes, setActiveVersionId, setWeightParams])
+        setActiveVersionId(null) } }
+    return () => { cancelled = true } }, [productId, setVariants, setVersionNodes, setActiveVersionId, setWeightParams])
   // Clear all selection
   const handleToggle = useCallback( (variantId: string) => {
       if (variantId === '__clear_all__') { setSelectedVariantIds([]) } else { toggleVariantSelection(variantId)
@@ -452,16 +469,42 @@ export default function WorkshopPage() {
   const handleVersionSelect = useCallback( (versionId: string) => { setActiveVersionId(versionId)
       setSelectedVariantIds([])
       const node = versionNodes.find((n) => n.id === versionId)
-      if (node) { setWeightParams(node.weightParams) } },
-    [versionNodes, setActiveVersionId, setSelectedVariantIds, setWeightParams], )
-  const handleCompare = useCallback(() => {
+      if (node) { setWeightParams(node.weightParams) }
+      if (productId && !isDevMode()) {
+        const requestId = versionLoadSeq.current + 1
+        versionLoadSeq.current = requestId
+        setLoadingVersionId(versionId)
+        productionApi.listVariants(productId, { generationGroupId: versionId, limit: 24 })
+          .then((nextVariants) => { if (versionLoadSeq.current === requestId) setVariants(mergeVariantsById(variants, nextVariants)) })
+          .catch(() => { if (versionLoadSeq.current === requestId) toast.showToast('当前版本图片加载失败，请稍后重试。', 'error') })
+          .finally(() => { if (versionLoadSeq.current === requestId) setLoadingVersionId(current => current === versionId ? null : current) })
+      } },
+    [productId, variants, versionNodes, setActiveVersionId, setSelectedVariantIds, setWeightParams, setVariants, toast], )
+  const handleCompare = useCallback(async () => {
     if (versionNodes.length === 0) return
     const active = versionNodes.find((node) => node.id === activeVersionId) ?? versionNodes.at(-1)
     const parent = active?.parentId ? versionNodes.find((node) => node.id === active.parentId) : undefined
     const previous = versionNodes.slice().reverse().find((node) => node.id !== active?.id)
     const ids = [parent?.id, active?.id, previous?.id].filter((id, index, arr): id is string => Boolean(id) && arr.indexOf(id) === index).slice(0, 2)
-    setCompareVersionIds(ids.length > 0 ? ids : versionNodes.slice(-2).map((node) => node.id))
-    setIsComparing(true) }, [versionNodes, activeVersionId, setCompareVersionIds, setIsComparing])
+    const nextCompareIds = ids.length > 0 ? ids : versionNodes.slice(-2).map((node) => node.id)
+    if (productId && !isDevMode()) {
+      const missingIds = nextCompareIds.filter((versionId) => !variants.some((variant) => String(variant.metadata?.generation_group_id ?? '') === versionId))
+      if (missingIds.length > 0) {
+        const requestId = versionLoadSeq.current + 1
+        versionLoadSeq.current = requestId
+        setLoadingVersionId('compare')
+        try {
+          const loadedGroups = await Promise.all(missingIds.map((versionId) => productionApi.listVariants(productId, { generationGroupId: versionId, limit: 6 })))
+          if (versionLoadSeq.current === requestId) setVariants(mergeVariantsById(variants, loadedGroups.flat()))
+        } catch {
+          if (versionLoadSeq.current === requestId) toast.showToast('版本对比图片加载失败，请稍后重试。', 'error')
+        } finally {
+          if (versionLoadSeq.current === requestId) setLoadingVersionId(null)
+        }
+      }
+    }
+    setCompareVersionIds(nextCompareIds)
+    setIsComparing(true) }, [productId, variants, versionNodes, activeVersionId, setVariants, setCompareVersionIds, setIsComparing, toast])
   const handleBranch = useCallback(async () => {
     const targetVersionId = activeNode?.sourceVersionId ?? activeVersionId
     if (!productId || !targetVersionId) return
@@ -472,10 +515,10 @@ export default function WorkshopPage() {
       toast.showToast(`已提交分支出图任务：${result.versionId}，请等待结果返回。`, 'info')
       await productionApi.waitForGenerationResult(productId, result.versionId)
       toast.showToast(`分支出图完成：${result.versionId}`, 'success')
-      const [nextVariants, nextNodes] = await Promise.all([ productionApi.listVariants(productId), productionApi.listGenerationVersions(productId), ])
+      const { nodes: nextNodes, variants: nextVariants, activeVersionId: nextActiveId } = await productionApi.getWorkshopData(productId)
       setVariants(nextVariants)
       setVersionNodes(nextNodes)
-      setActiveVersionId(nextNodes.find((node) => node.isCurrent)?.id ?? nextNodes.at(-1)?.id ?? null) } catch (e) { toast.showToast(e instanceof Error ? e.message : 'Branch generation failed', 'error') } finally {
+      setActiveVersionId(nextActiveId) } catch (e) { toast.showToast(e instanceof Error ? e.message : 'Branch generation failed', 'error') } finally {
       setActionBusy(false) } }, [productId, activeNode, activeVersionId, weightParams, setVariants, setVersionNodes, setActiveVersionId, toast])
   const handleDownload = useCallback((variant: AssetVariant) => { toast.showToast('开始下载...', 'info')
     const a = document.createElement('a')
@@ -522,10 +565,10 @@ export default function WorkshopPage() {
       toast.showToast(`已提交重生成任务：${result.versionId}，请等待结果返回。`, 'info')
       await productionApi.waitForGenerationResult(productId, result.versionId)
       toast.showToast(`重生成完成：${result.versionId}`, 'success')
-      const [nextVariants, nextNodes] = await Promise.all([ productionApi.listVariants(productId), productionApi.listGenerationVersions(productId), ])
+      const { nodes: nextNodes, variants: nextVariants, activeVersionId: nextActiveId } = await productionApi.getWorkshopData(productId)
       setVariants(nextVariants)
       setVersionNodes(nextNodes)
-      setActiveVersionId(nextNodes.find((node) => node.isCurrent)?.id ?? nextNodes.at(-1)?.id ?? null) } catch (e) { toast.showToast(e instanceof Error ? e.message : 'Regenerate failed', 'error') } finally {
+      setActiveVersionId(nextActiveId) } catch (e) { toast.showToast(e instanceof Error ? e.message : 'Regenerate failed', 'error') } finally {
       setActionBusy(false) } }, [productId, activeNode, activeVersionId, weightParams, setVariants, setVersionNodes, setActiveVersionId, toast])
   return ( <div className="mx-auto max-w-[1440px] px-5 py-6">
       {/* Page Header */}
@@ -566,7 +609,11 @@ export default function WorkshopPage() {
             transition={{ delay: 0.1 }}
             className="min-h-0 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
           >
-            <VariantGrid
+            {(loadingWorkshop || loadingVersionId) ? ( <div className="flex min-h-[360px] flex-col items-center justify-center rounded-xl border border-cyan-400/10 bg-cyan-400/[0.03] text-center">
+                <Loader2 className="mb-3 h-6 w-6 animate-spin text-cyan-300" />
+                <p className="text-sm font-medium text-white/75">正在加载当前版本图片</p>
+                <p className="mt-1 max-w-sm text-xs leading-relaxed text-white/35">弱网下会先展示版本信息，只拉取当前选中版本的图片；其他版本点击后再加载。</p>
+              </div> ) : ( <VariantGrid
               variants={visibleVariants}
               selectedIds={selectedVariantIds}
               busy={actionBusy}
@@ -574,7 +621,7 @@ export default function WorkshopPage() {
               onZoom={(v) => setZoomVariant(v)}
               onDownload={handleDownload}
               onFinalize={handleFinalize}
-            /> </motion.div> </div>
+            /> )} </motion.div> </div>
         {/* ─── Right Column: Control Panel (3 cols) ────────── */}
         <div className="lg:col-span-3">
           <motion.div

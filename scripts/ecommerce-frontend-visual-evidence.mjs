@@ -277,18 +277,39 @@ async function connectCdp() {
   await cdp.send('Page.enable')
   await cdp.send('Runtime.enable')
   await cdp.send('Network.enable')
-  await cdp.send('Fetch.enable', { patterns: [{ urlPattern: '*://*/api/*', requestStage: 'Request' }] })
+  await cdp.send('Fetch.enable', { patterns: [
+    { urlPattern: '*://*/api/*', requestStage: 'Request' },
+    { urlPattern: '*://*/*', resourceType: 'Image', requestStage: 'Request' },
+  ] })
   cdp.onEvent = event => {
     if (event.method !== 'Fetch.requestPaused') return
     const requestId = event.params.requestId
     const url = event.params.request.url
-    const data = mockApiPayload(url)
-    cdp.send('Fetch.fulfillRequest', {
-      requestId,
-      responseCode: 200,
-      responseHeaders: [{ name: 'Content-Type', value: 'application/json' }],
-      body: Buffer.from(JSON.stringify(data)).toString('base64'),
-    }).catch(() => {})
+    const resourceType = event.params.resourceType
+    if (url.includes('/api/')) {
+      const data = mockApiPayload(url)
+      cdp.send('Fetch.fulfillRequest', {
+        requestId,
+        responseCode: 200,
+        responseHeaders: [{ name: 'Content-Type', value: 'application/json' }],
+        body: Buffer.from(JSON.stringify(data)).toString('base64'),
+      }).catch(() => {})
+      return
+    }
+    if (resourceType === 'Image' && !url.startsWith(baseUrl)) {
+      // Keep visual governance evidence hermetic: external/demo image hosts are not part of
+      // the frontend layout contract and can be unavailable in cron/network-sandbox runs.
+      // Fulfill them with a deterministic transparent PNG so network flakiness does not
+      // downgrade otherwise valid layout evidence to PASS_WITH_NOTES.
+      cdp.send('Fetch.fulfillRequest', {
+        requestId,
+        responseCode: 200,
+        responseHeaders: [{ name: 'Content-Type', value: 'image/png' }],
+        body: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=',
+      }).catch(() => {})
+      return
+    }
+    cdp.send('Fetch.continueRequest', { requestId }).catch(() => {})
   }
   await cdp.send('Log.enable').catch(() => {})
   await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: authBootstrapSource })
@@ -348,7 +369,21 @@ async function captureRoute(cdp, route, screenshotDir, viewport) {
   mkdirSync(dirname(screenshotPath), { recursive: true })
   writeFileSync(screenshotPath, Buffer.from(png.data, 'base64'))
   const consoleErrors = cdp.events.filter(event => event.method === 'Runtime.exceptionThrown')
-  const networkFailures = cdp.events.filter(event => event.method === 'Network.loadingFailed' && event.params?.requestId && event.params?.type !== 'Other')
+  const requestUrls = new Map(cdp.events
+    .filter(event => event.method === 'Network.requestWillBeSent' && event.params?.requestId)
+    .map(event => [event.params.requestId, { url: event.params.request?.url, type: event.params.type }]))
+  const networkFailures = cdp.events.filter(event => event.method === 'Network.loadingFailed'
+    && event.params?.requestId
+    && event.params?.type !== 'Other'
+    // React/router transitions can intentionally abort superseded fetches; those are
+    // client-side cancellations, not unavailable runtime evidence dependencies.
+    && event.params?.errorText !== 'net::ERR_ABORTED')
+  const networkFailureResources = networkFailures.map(event => ({
+    request_id: event.params.requestId,
+    type: event.params.type,
+    error_text: event.params.errorText,
+    url: requestUrls.get(event.params.requestId)?.url || '',
+  }))
   const overflowValue = overflow.result?.value || { findings: [] }
   return {
     id: `${route.id}-${viewport.id}`,
@@ -363,6 +398,7 @@ async function captureRoute(cdp, route, screenshotDir, viewport) {
     text_sample: body.result?.value || '',
     console_error_count: consoleErrors.length,
     network_failure_count: networkFailures.length,
+    network_failures: networkFailureResources,
     overflow_finding_count: overflowValue.findings?.length || 0,
     overflow_findings: overflowValue.findings || [],
     status: 'CAPTURED',
