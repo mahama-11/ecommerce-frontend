@@ -23,8 +23,17 @@ It should not host:
 
 - [Developer Guide](docs/DEVELOPER_GUIDE.md)
 - [Frontend Style Governance](docs/frontend-style-governance.md)
+- [Frontend Product IA Governance](docs/frontend-product-ia-governance.md)
+- [Acceptance/TDD Governance](docs/acceptance-tdd-governance.md)
+- [Multi-image Template Integration Matrix](docs/multimage-template-integration-matrix.md)
+- [Frontend CTA Acceptance Matrix](docs/templates/frontend-cta-acceptance-matrix.md)
+- [Agent Acceptance/TDD Workflow](docs/agent-acceptance-tdd-workflow.md)
+- [Development Governance Closed Loop](docs/development-governance-closed-loop.md)
 - [Git Hooks](docs/GIT_HOOKS.md)
 - [Project Skeleton](docs/architecture/PROJECT_SKELETON.md)
+- [Contract Adapter Config](contract-adapter.config.json)
+- [Contract Critical Journeys](contract-governance/critical-journeys.json)
+- [Workspace Cloud Dev Deploy Runbook](../tools/dev/README.md) — Cloud dev 部署固定入口，负责 commit/provenance guard、prod guard 与 health/evidence。
 - [Template Center Design](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_DESIGN.md)
 - [Template Center Evolution Plan](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_EVOLUTION_PLAN.md)
 
@@ -35,21 +44,24 @@ cd v-ecommerce-frontend
 npm install --legacy-peer-deps
 npm run dev
 npm run frontend:gate
+npm run layout:density
 npm run frontend:evidence
-npm run style:repair-queue
+npm run frontend:burn-down
 npm run lint:baseline
 npm run quality:static
 npm run design-system:check
 npm run storybook:build
 npm run api:contract
+npm run contract:smoke
+npm run contract:evidence
 npm run test:e2e
 npm run test:visual
 npm run lighthouse:budget
 npm run bundle:budget
 npm run typecheck
-npm run lint
 npm run build
-bash scripts/install-git-hooks.sh
+npm run ci:quick
+python3 /root/work/agentic-selfcheck/scripts/install_v_continuous_governance_hooks.py --repo /root/work/v/ecommerce-frontend
 ```
 
 ## 4. Notes

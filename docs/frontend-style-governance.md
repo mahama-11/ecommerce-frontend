@@ -14,6 +14,8 @@ For Product Center / Production Pipeline surfaces, use the shared Ecommerce desi
 - Buttons/links: `src/components/ui/Button.tsx`
 - Product dark shell/navigation/dialog primitives: `src/components/ui/EcomShell.tsx`
 - Guard: `npm run style:consistency`
+- Page-position guard: `npm run page:position`
+- Readability/density guard: `npm run layout:density`
 
 Do not add one-off page-local versions of:
 
@@ -28,13 +30,16 @@ Every non-trivial UI change follows this order:
 
 1. Identify the target surface: Product Center shell, SKU Queue, SKU Detail, Prep, Sandbox, Workshop, Listing, Delivery, public portal, account, or inventory.
 2. Reuse existing shared primitives before writing local classes.
-3. If a new visual pattern is genuinely needed, add it as a semantic token/component first, then consume it from pages.
-4. Run `npm run style:consistency` before typecheck/build.
-5. If the change is C/D-risk page/flow/visual work, route through the SelfCheck frontend workflow before implementation and require screenshots/parity evidence after implementation.
+3. For dense business content, choose or create a content-specific shared component instead of squeezing copy into action-button defaults.
+4. If a new visual pattern is genuinely needed, add it as a semantic token/component first, then consume it from pages.
+5. Run `npm run style:consistency` and `npm run layout:density` before typecheck/build.
+6. If the change is C/D-risk page/flow/visual work, route through the SelfCheck frontend workflow before implementation and require screenshots/parity evidence after implementation.
 
 ## Guard policy
 
-`npm run frontend:gate` is the default automation entrypoint for frontend increments. It runs style consistency, ESLint baseline, static accessibility/architecture quality checks, design-system registry validation, writes machine-readable reports, classifies changed files from git diff, generates the style-drift repair queue, and fails Product Center / Production UI page changes that do not include local visual evidence. If such a page change is detected and no valid manifest exists, the gate attempts to generate Chromium screenshot evidence automatically via `npm run frontend:evidence`. It also blocks changes to global style files (`src/index.css`, shared `Button`, shared `EcomShell`) unless the change includes an accepted style-change proposal.
+`npm run frontend:gate` is the default automation entrypoint for frontend increments. It runs page-position governance, style consistency, layout-density/readability, ESLint baseline, static accessibility/architecture quality checks, design-system registry validation, writes machine-readable reports, classifies changed files from git diff, generates the style-drift repair queue, and fails Product Center / Production UI page changes that do not include local visual evidence. If such a page change is detected and no valid change-scoped manifest exists, the gate attempts to generate Chromium screenshot evidence automatically via `npm run frontend:evidence`. It also blocks changes to global style files (`src/index.css`, shared `Button`, shared `EcomShell`) unless the change includes an accepted style-change proposal.
+
+`npm run page:position` validates the internal route registry in `docs/ecommerce-page-position-registry.json`: each critical route must declare its page type, business object, upstream/downstream, primary action, result destination, design pattern, and forbidden anti-patterns. This prevents applying homepage, tool-registry, or admin-page patterns to the wrong surface.
 
 `npm run style:consistency` has two layers:
 
@@ -42,6 +47,16 @@ Every non-trivial UI change follows this order:
 2. **Repo-wide drift baseline** — the current historical drift is recorded in `scripts/ecommerce-style-consistency-baseline.json`. New files cannot add drift, and existing files cannot increase drift. Reducing drift is always allowed; refresh the baseline only in PRs that intentionally burn down old page-local styling.
 
 This means old inconsistency is tolerated only as burn-down debt. New inconsistency fails closed.
+
+`npm run layout:density` adds the missing readability layer for long Chinese/product copy. It fails product-flow changes that introduce:
+
+- long content/decision `Button` controls with `whitespace-nowrap`;
+- fixed short-height `h-8`/`h-9` controls containing long business copy;
+- long explanatory text hidden by `truncate`;
+- two-column dense cards combining tiny typography (`text-[9px]`/`text-[10px]`/`text-xs`) with long copy;
+- long business copy with overly tight line-height.
+
+If a surface needs a content selection control, add or reuse a business component such as `DecisionOptionCard`, `ProgressSummaryCard`, `DenseInfoRow`, `EditablePromptCard`, `VersionLineageItem`, or `ProductionSectionCard` rather than forcing the generic action button contract to carry dense content. Shared content components must expose long-Chinese states in Storybook/visual evidence before production use.
 
 ## Style evolution policy
 
@@ -77,7 +92,7 @@ reports/frontend-style-consistency/evidence-manifest.json
 reports/frontend-style-consistency/screenshots/*.png
 ```
 
-`npm run frontend:gate` invokes this automatically for Product Center / Production UI changes when no accepted manifest exists. The generated manifest is render/visual-inventory evidence; it does not replace full runtime interaction QA or backend persistence checks for business-critical flows.
+`npm run frontend:gate` invokes this automatically for Product Center / Production UI changes when no accepted, change-scoped manifest exists. The manifest must list `changed_files` covering the product-flow files in the current diff; an old screenshot manifest from another change is treated as stale and fails closed. The generated manifest is render/visual-inventory evidence; it does not replace full runtime interaction QA or backend persistence checks for business-critical flows.
 
 ## Drift repair queue
 
@@ -118,7 +133,7 @@ A frontend consistency PR should report:
 
 - changed shared tokens/components
 - migrated pages/shells
-- `style:consistency` / `frontend:gate` result and drift totals
+- `style:consistency` / `layout:density` / `frontend:gate` result and drift/density totals
 - whether Product Center / Production UI changes required a visual evidence manifest
 - `typecheck` and `build` result
 - browser screenshots for user-visible redesigns

@@ -1,0 +1,39 @@
+services:
+  prod-ecommerce-web:
+    image: ver/v-ecommerce-frontend:${PROD_TAG:-1.0.0}
+    restart: unless-stopped
+    container_name: v-ecommerce-frontend
+    expose:
+      - "80"
+    environment:
+      - VITE_API_BASE_URL=/api/v1
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:80/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - shared-network
+    volumes:
+      - ./ecommerce-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+  dev-ecommerce-web:
+    image: ver/v-ecommerce-frontend:${DEV_TAG:-dev}
+    container_name: v-ecommerce-frontend-dev
+    restart: unless-stopped
+    expose:
+      - "80"
+    environment:
+      - VITE_API_BASE_URL=/api/v1
+    networks:
+      - shared-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:80/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  shared-network:
+    external: true
+    name: shared-network

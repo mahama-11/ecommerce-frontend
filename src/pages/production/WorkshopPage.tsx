@@ -2,10 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Check, Download, Loader2,
-  Search, Grid3X3, List, ChevronDown,
-  ChevronUp, Info, ArrowUpRight, RotateCw,
-  Save, Plus, X, Clock,
-  Sparkles, } from 'lucide-react'
+  Grid3X3, List, ChevronDown,
+  ChevronUp, Info, RotateCw,
+  Save, X, } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useWorkshopStore } from '@/store/productionStore'
 import * as productionApi from '@/services/production'
@@ -13,6 +12,7 @@ import { createExportPackage } from '@/services/product'
 import { useToastStore } from '@/store/toastStore'
 import type { AssetVariant, VersionNode } from '@/types/production'
 import { isDevMode } from '@/mocks/productionDemo'
+import { VersionLineage, ResultAssetCard } from '@/components/production/ProductionWorkflowComponents'
 import { Button } from '@/components/ui/Button'
 // ─── Mock Variant Images (placeholder URLs) ──────────────────
 const VARIANT_THUMBS = [ 'https://picsum.photos/seed/workshop1/400/400',
@@ -31,157 +31,8 @@ const MOCK_VARIANTS: AssetVariant[] = Array.from({ length: 8 }).map((_, i) => ({
 function fmtDate(iso: string): string {
   const d = new Date(iso)
   return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` }
-// ─── Version Icon ────────────────────────────────────────────
-function VersionIcon({ type }: { type: string }) {
-  const icons: Record<string, React.ReactNode> = { init: <Sparkles className="h-3.5 w-3.5" />, default: <Clock className="h-3.5 w-3.5" />, }
-  return ( <span className="text-white/30">{icons[type] ?? icons.default}</span> ) }
-// ─── Version Lineage (Left Panel) ────────────────────────────
-function VersionLineage({ nodes, activeId, onSelect,
-  onCompare, onBranch, }: { nodes: VersionNode[]
-  activeId: string | null
-  onSelect: (id: string) => void
-  onCompare: () => void
-  onBranch: () => void }) {
-  return ( <div className="space-y-0">
-      {/* Header */}
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-white">版本谱系</h3>
-          <p className="text-[10px] text-white/25">Version Lineage</p> </div>
-        <Button
-          type="button"
-          disabled={nodes.length === 0}
-          onClick={onCompare}
-          title="对比已有生成版本。"
-          className="inline-flex items-center gap-1 rounded-lg border border-cyan-400/10 bg-cyan-400/[0.03] px-2 py-1 text-[10px] text-cyan-200/65 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <ArrowUpRight className="h-3 w-3" />
-          对比模式 </Button> </div>
-      {/* Timeline */}
-      <div className="relative space-y-1 pl-4">
-        {/* Vertical line */}
-        {nodes.length > 0 && <div className="absolute left-[11px] top-2 bottom-2 w-px bg-white/[0.06]" />}
-        {nodes.length === 0 && ( <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-3 py-4 text-[11px] leading-relaxed text-amber-200/70">
-            还没有可查看的生成版本。请先在策略配置页提交生产任务，等真实图片结果返回后再进入工坊。 </div> )}
-        {nodes.map((node, idx) => {
-          const isActive = node.id === activeId
-          const isCurrent = node.isCurrent
-          return ( <motion.div
-              key={node.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              onClick={() => onSelect(node.id)}
-              className={`relative cursor-pointer rounded-xl border p-3 transition ${ isActive || isCurrent ? 'border-cyan-400/20 bg-cyan-400/[0.04]' : 'border-transparent bg-transparent hover:bg-[var(--ecom-surface-hover)]'
-              }`}
-            >
-              {/* Dot on timeline */}
-              <div
-                className={`absolute -left-[calc(1rem-2px)] top-4 h-2 w-2 rounded-full border-2 ${ isCurrent ? 'border-cyan-400 bg-cyan-400' : isActive
-                      ? 'border-cyan-400/50 bg-cyan-400/30' : 'border-white/10 bg-white/10' }`}
-              />
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5 shrink-0">
-                  <VersionIcon type={node.id === 'v-init' ? 'init' : 'default'} /> </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[11px] font-medium ${isCurrent ? 'text-cyan-400' : 'text-white/60'}`}>
-                      {node.label} </span>
-                    {isCurrent && ( <span className="rounded bg-cyan-400/10 px-1 py-0.5 text-[8px] text-cyan-400">
-                        当前 </span> )} </div>
-                  <p className="mt-0.5 text-[9px] text-white/25">{fmtDate(node.timestamp)}</p>
-                  <p className="mt-1 text-[10px] leading-relaxed text-white/40">{node.description}</p>
-                  <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-white/[0.03] px-1.5 py-0.5">
-                    <span className="text-[9px] text-white/30">SKU {node.skuBias}%</span>
-                    <span className="text-[9px] text-white/15">|</span>
-                    <span className="text-[9px] text-white/30">REF {node.refBias}%</span> </div> </div> </div>
-            </motion.div> ) })} </div>
-      {/* New branch button */}
-      <Button
-        type="button"
-        disabled={nodes.length === 0}
-        onClick={onBranch}
-        title="基于当前版本继续生成一个新分支。"
-        className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-cyan-400/20 bg-cyan-400/[0.04] py-2 text-[11px] text-cyan-200/70 transition hover:border-cyan-400/35 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <Plus className="h-3.5 w-3.5" />
-        新建分支 </Button> </div> )
-}
-// ─── Variant Card ────────────────────────────────────────────
-function VariantCard({ variant, index, isSelected,
-  onToggle, onZoom, onDownload, }: {
-  variant: AssetVariant
-  index: number
-  isSelected: boolean
-  onToggle: () => void
-  onZoom: () => void
-  onDownload: () => void }) {
-  const [hovered, setHovered] = useState(false)
-  return ( <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: index * 0.04 }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`group relative overflow-hidden rounded-xl border transition ${ isSelected ? 'border-cyan-400/30 bg-cyan-400/[0.02]' : 'border-white/[0.05] bg-white/[0.01] hover:border-white/10'
-      }`}
-    >
-      {/* Checkbox */}
-      <Button
-        type="button"
-        onClick={(e) => { e.stopPropagation()
-          onToggle() }}
-        className={`absolute right-2 top-2 z-10 flex h-5 w-5 items-center justify-center rounded border transition ${ isSelected ? 'border-cyan-400/60 bg-cyan-400/20 text-cyan-400' : 'border-white/10 bg-black/30 text-transparent hover:border-white/20'
-        }`}
-      >
-        <Check className="h-3 w-3" /> </Button>
-      {/* Image */}
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label={`选择变体 ${index + 1}`}
-        className="relative aspect-square cursor-pointer overflow-hidden bg-white/[0.02]"
-        onClick={onToggle}
-        onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onToggle() }}
-      >
-        <img
-          src={variant.thumbnailUrl}
-          alt={`Variant ${index + 1}`}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          loading="lazy"
-        />
-        {/* Hover overlay actions */}
-        <AnimatePresence>
-          {hovered && ( <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/60 to-transparent pb-3"
-            >
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation()
-                    onZoom() }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
-                >
-                  <Search className="h-3.5 w-3.5" /> </Button>
-                <Button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation()
-                    onDownload() }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white/70 backdrop-blur-sm transition hover:bg-white/20 hover:text-white"
-                >
-                  <Download className="h-3.5 w-3.5" /> </Button> </div> </motion.div>
-          )} </AnimatePresence> </div>
-      {/* Label */}
-      <div className="px-2 py-1.5">
-        <div className="truncate text-[10px] text-white/40">
-          {String(variant.metadata?.template_name ?? variant.metadata?.template_id ?? variant.metadata?.version_id ?? `结果 ${index + 1}`)} </div>
-        <div className="truncate text-[9px] text-white/20">
-          {String(variant.metadata?.source_name ?? variant.metadata?.source_id ?? variant.metadata?.fanout_task_id ?? '')} </div> </div> </motion.div>
-  ) }
 // ─── Variant Grid (Center) ───────────────────────────────────
+
 function VariantGrid({ variants, selectedIds, busy,
   onToggle, onZoom, onDownload, onFinalize,
 }: { variants: AssetVariant[]
@@ -251,7 +102,7 @@ function VariantGrid({ variants, selectedIds, busy,
           <p className="mt-2 max-w-sm text-[11px] leading-relaxed text-white/45">
             还没有真实生成结果。系统不会用占位图冒充结果；请回到策略配置页提交生产，等待图片返回后再进入。 </p> </div> ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredVariants.map((variant, idx) => ( <VariantCard
+          {filteredVariants.map((variant, idx) => ( <ResultAssetCard
               key={variant.id}
               variant={variant}
               index={idx}
@@ -274,11 +125,14 @@ function VariantGrid({ variants, selectedIds, busy,
                 <span className="text-[11px] text-white/60">{String(variant.metadata?.version_id ?? variant.id).slice(0, 18)} · {String(idx + 1).padStart(2, '0')}</span> </div>
               <Button
                 type="button"
+                aria-pressed={selectedIds.includes(variant.id)}
+                aria-label={`${selectedIds.includes(variant.id) ? '取消选择' : '选择'}生成结果 ${idx + 1}`}
                 onClick={() => onToggle(variant.id)}
-                className={`flex h-5 w-5 items-center justify-center rounded border ${ selectedIds.includes(variant.id) ? 'border-cyan-400/60 bg-cyan-400/20 text-cyan-400' : 'border-white/10 text-transparent'
+                className={`h-7 rounded-full px-2 text-[10px] ${ selectedIds.includes(variant.id) ? 'border border-cyan-300/50 bg-cyan-300/20 text-cyan-100' : 'border border-white/12 bg-white/[0.03] text-white/55 hover:border-cyan-300/35 hover:text-cyan-100'
                 }`}
               >
-                <Check className="h-3 w-3" /> </Button> </div> ))}
+                {selectedIds.includes(variant.id) ? <Check className="h-3 w-3" /> : null}
+                <span>{selectedIds.includes(variant.id) ? '已选' : '选择'}</span> </Button> </div> ))}
         </div> )}
       {/* Selection counter */}
       <div className="flex items-center justify-between">
@@ -476,27 +330,51 @@ function ComparePanel({ nodes, variants, onClose,
   variants: AssetVariant[]
   onClose: () => void }) {
   if (nodes.length === 0) return null
-  return ( <div className="mt-4 rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.03] p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-white">版本对比</h3>
-          <p className="text-[10px] text-white/30">对比已有生成版本</p> </div>
-        <Button type="button" onClick={onClose} className="rounded-lg bg-white/[0.06] px-2 py-1 text-[10px] text-white/50 hover:text-white">关闭</Button> </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        {nodes.map((node) => ( <div key={node.id} className="rounded-xl border border-white/[0.06] bg-black/10 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-semibold text-cyan-200">{node.label}</span>
-              <span className="text-[9px] text-white/25">{fmtDate(node.timestamp)}</span> </div>
-            <p className="text-[10px] leading-relaxed text-white/45">{node.description}</p>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {variants.filter((variant) => String(variant.metadata?.generation_group_id ?? '') === node.id).slice(0, 6).map((variant) => ( <img key={variant.id} src={variant.thumbnailUrl} alt={node.label} className="aspect-square rounded-lg border border-white/[0.06] object-cover" /> ))} </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-[10px]">
-              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">SKU Bias <b className="text-cyan-300">{node.skuBias}%</b></div>
-              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">REF Bias <b className="text-violet-300">{node.refBias}%</b></div>
-              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">Style <b className="text-white/70">{node.weightParams.styleStrength.toFixed(2)}</b></div>
-              <div className="rounded-lg bg-white/[0.03] p-2 text-white/45">Creative <b className="text-white/70">{node.weightParams.creativeFreedom.toFixed(2)}</b></div> </div>
-            <p className="mt-3 break-all text-[9px] text-white/20">{node.id}</p> </div> ))} </div>
-    </div> ) }
+  return ( <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 py-[8vh] backdrop-blur-md"
+      onClick={onClose}
+    >
+      <motion.section
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 12, scale: 0.98 }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="workshop-compare-title"
+        className="w-full max-w-6xl overflow-hidden rounded-3xl border border-cyan-300/15 bg-[var(--ecom-surface-raised)] shadow-[0_32px_120px_rgba(0,0,0,0.65)] ring-1 ring-cyan-300/10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/[0.08] bg-[var(--ecom-surface-raised)]/95 px-5 py-4 backdrop-blur-xl">
+          <div>
+            <h3 id="workshop-compare-title" className="text-base font-semibold text-white">版本对比</h3>
+            <p className="mt-1 text-xs text-white/45">以弹窗横向比较已选版本，避免把对比内容堆在页面底部。</p> </div>
+          <Button type="button" onClick={onClose} aria-label="关闭版本对比" className="h-8 rounded-full bg-white/[0.06] px-3 text-xs text-white/60 hover:text-white">
+            <X className="h-3.5 w-3.5" />
+            关闭 </Button> </div>
+        <div className="max-h-[72vh] overflow-y-auto p-5 scrollbar-thin">
+          <div className="grid gap-4 md:grid-cols-2">
+            {nodes.map((node) => {
+              const nodeVariants = variants.filter((variant) => String(variant.metadata?.generation_group_id ?? '') === node.id).slice(0, 6)
+              return ( <div key={node.id} className="rounded-2xl border border-white/[0.08] bg-black/15 p-4">
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <span className="text-sm font-semibold text-cyan-100">{node.label}</span>
+                    <p className="mt-1 text-[10px] text-white/30">{fmtDate(node.timestamp)}</p> </div>
+                  <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] text-white/45">{nodeVariants.length} 张结果</span> </div>
+                <p className="text-[11px] leading-relaxed text-white/50">{node.description}</p>
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {nodeVariants.length > 0 ? nodeVariants.map((variant) => ( <img key={variant.id} src={variant.thumbnailUrl} alt={node.label} className="aspect-square rounded-xl border border-white/[0.08] object-cover" /> )) : ( <div className="col-span-3 rounded-xl border border-amber-300/15 bg-amber-300/[0.04] p-4 text-center text-[11px] text-amber-100/70">该版本没有可对比的图片结果</div> )} </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="rounded-xl bg-white/[0.04] p-2 text-white/50">SKU Bias <b className="text-cyan-200">{node.skuBias}%</b></div>
+                  <div className="rounded-xl bg-white/[0.04] p-2 text-white/50">REF Bias <b className="text-violet-200">{node.refBias}%</b></div>
+                  <div className="rounded-xl bg-white/[0.04] p-2 text-white/50">Style <b className="text-white/75">{node.weightParams.styleStrength.toFixed(2)}</b></div>
+                  <div className="rounded-xl bg-white/[0.04] p-2 text-white/50">Creative <b className="text-white/75">{node.weightParams.creativeFreedom.toFixed(2)}</b></div> </div>
+                <p className="mt-3 break-all text-[9px] text-white/20">{node.id}</p> </div> ) })} </div> </div>
+      </motion.section>
+    </motion.div> ) }
 // ─── Zoom Modal ──────────────────────────────────────────────
 function ZoomModal({ variant, onClose, }: {
   variant: AssetVariant | null
@@ -671,7 +549,7 @@ export default function WorkshopPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="min-h-0 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
+            className="sticky top-6 min-h-0 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4"
           >
             <VersionLineage
               nodes={versionNodes}
@@ -717,7 +595,9 @@ export default function WorkshopPage() {
               onRegenerate={handleRegenerate}
               onSaveTemplate={handleSaveTemplate}
             /> </motion.div> </div> </div>
-      {isComparing && ( <ComparePanel nodes={compareNodes} variants={variants} onClose={() => setIsComparing(false)} /> )}
+      <AnimatePresence>
+        {isComparing && ( <ComparePanel nodes={compareNodes} variants={variants} onClose={() => setIsComparing(false)} /> )}
+      </AnimatePresence>
       {/* Zoom Modal */}
       <AnimatePresence>
         {zoomVariant && ( <ZoomModal variant={zoomVariant} onClose={() => setZoomVariant(null)} /> )} </AnimatePresence>

@@ -127,7 +127,7 @@ export default function AboutUsPage() {
             <div className="space-y-3">
               {[
                 { title: { zh: 'AI 视觉生成', en: 'AI Visual Generation' }, desc: { zh: '模特图、商品图、设计器、视频', en: 'Model images, product images, designer, and video' } },
-                { title: { zh: 'AI 智能运营', en: 'AI Smart Operations' }, desc: { zh: '对话、模板、批量 Listing、分析', en: 'Chat, templates, batch listing, and analysis' } },
+                { title: { zh: 'AI 智能运营', en: 'AI Smart Operations' }, desc: { zh: '对话、模板、模板中心、分析', en: 'Chat, templates, template center, and analysis' } },
                 { title: { zh: '数据资料库', en: 'Data Libraries' }, desc: { zh: '知识库、品牌库、素材库、规则库', en: 'Knowledge, brand, asset, and rule libraries' } },
               ].map(item => (
                 <div key={item.title.zh} className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3">

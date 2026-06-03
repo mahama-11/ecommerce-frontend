@@ -241,7 +241,7 @@ export default function DesignWorkbenchPage() {
       usageCount: '860', favorite: 4.7,
       savedAt: new Date().toISOString(), sourceType: 'design',
       sourceLabel: locale === 'zh' ? '来自视觉模板桥接' : 'Bridged from design template', zh: {
-        title: templateTitle.zh, summary: `${selectedAsset.title.zh} 已映射为可复用 Agent 模板，可继续在 AI 对话与批量 Listing 使用。`,
+        title: templateTitle.zh, summary: `${selectedAsset.title.zh} 已映射为可复用 Agent 模板，可继续在 AI 对话与模板中心 使用。`,
         scenario: '适合把视觉模板对应的运营动作沉淀为标准模板', },
       en: { title: templateTitle.en,
         summary: `${selectedAsset.title.en} is now mapped into a reusable Agent template for AI chat and batch-listing reuse.`, scenario: 'Suitable for converting design-template workflows into standardized operations templates',

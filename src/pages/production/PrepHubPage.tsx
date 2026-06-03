@@ -6,14 +6,15 @@ import { useTranslation } from 'react-i18next'
 import { Upload, Package, Image,
   BrainCircuit, AlertCircle, Loader2, X,
   ArrowRight, RotateCw, SlidersHorizontal, ChevronLeft,
-  ChevronRight, CheckCircle2, Circle, Sparkles,
+  ChevronRight, CheckCircle2, Sparkles,
   Tag, } from 'lucide-react'
+import { DecisionStepCard } from '@/components/production/ProductionWorkflowComponents'
 import { motion, AnimatePresence } from 'framer-motion'
 import { usePrepStore } from '@/store/productionStore'
 import * as productionApi from '@/services/production'
 import { MOCK_SOURCES } from '@/mocks/productionDemo'
 import { useToastStore } from '@/store/toastStore'
-import type { DualTrackParsing, LlmDecisionTreeResult, DecisionStep,
+import type { DualTrackParsing, LlmDecisionTreeResult,
   ParsedAttribute, ImageUnderstandingProviderCode, } from '@/types/production'
 // ─── Polling helper ──────────────────────────────────────────
 function usePolling<T>( fetcher: () => Promise<T>, shouldPoll: (data: T) => boolean, intervalMs = 2000,
@@ -98,9 +99,12 @@ function UploadZone({ title, icon: Icon, iconColor,
           <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-normal text-white/30">
             {sources.length} </span> </h3> </div>
       <div
+        role="button"
+        tabIndex={0}
         onDrop={onDrop}
         onDragOver={(e) => e.preventDefault()}
         onClick={() => inputRef.current?.click()}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click() }}
         className={`min-h-[132px] cursor-pointer rounded-lg border border-dashed border-white/[0.08] text-center transition hover:border-white/20 hover:bg-[var(--ecom-surface-hover)] ${sources.length > 0 ? 'p-2' : 'flex flex-col items-center justify-center'}`}
       >
         {sources.length > 0 ? ( <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -143,66 +147,6 @@ function UploadZone({ title, icon: Icon, iconColor,
           onChange={onFileInput}
         /> </div> </div> )
 }
-// ─── Interactive Decision Step Card ──────────────────────────
-function DecisionStepCard({ step, isCurrent, onSelectOption,
-}: { step: DecisionStep
-  isCurrent: boolean
-  onSelectOption: (stepId: string, optionId: string) => void }) {
-  const { t } = useTranslation()
-  const statusColor = { pending: 'text-white/20', active: 'text-violet-300', completed: 'text-emerald-400',
-  }[step.status]
-  const statusIcon = { pending: <Circle className="h-3.5 w-3.5" />, active: <Circle className="h-3.5 w-3.5 animate-pulse" />, completed: <CheckCircle2 className="h-3.5 w-3.5" />,
-  }[step.status]
-  const selectedOption = step.options.find((o) => o.id === step.selectedOptionId)
-  return ( <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className={`rounded-xl border p-4 transition ${ isCurrent ? 'border-violet-400/30 bg-violet-400/[0.04]' : step.status === 'completed'
-            ? 'border-emerald-400/15 bg-white/[0.015]' : 'border-white/[0.04] bg-white/[0.01] opacity-60' }`}
-    >
-      {/* Step header */}
-      <div className="mb-3 flex items-center gap-2.5">
-        <span className={`flex items-center justify-center ${statusColor}`}>
-          {statusIcon} </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-medium text-white/30">
-              决策项 {step.stepNumber} </span>
-            {step.status === 'completed' && selectedOption && ( <span className="rounded-md bg-emerald-400/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-400">
-                当前选择：{selectedOption.label} </span> )} </div>
-          <h4 className={`text-xs font-semibold ${statusColor}`}>
-            {step.title} </h4> </div> </div>
-      {/* Description */}
-      {step.description && ( <p className="mb-3 text-[10px] leading-relaxed text-white/35">
-          {step.description} </p> )}
-      {/* Options grid */}
-      {(isCurrent || step.status === 'completed') && step.options.length > 0 && ( <div className="grid grid-cols-2 gap-1.5">
-          {step.options.map((option) => {
-            const isSelected = option.id === step.selectedOptionId
-            return ( <Button
-                key={option.id}
-                type="button"
-                onClick={() => onSelectOption(step.id, option.id)}
-                className={`group relative flex flex-col items-start gap-1 rounded-lg border px-2.5 py-2 text-left transition ${ isSelected ? 'border-violet-400/40 bg-violet-400/[0.08]' : isCurrent
-                      ? 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-[var(--ecom-surface-hover)]' : 'border-white/[0.04] bg-white/[0.01] hover:border-white/[0.10] hover:bg-[var(--ecom-surface-hover)]' }`}
-              >
-                {option.icon && ( <span className="text-sm">{option.icon}</span> )}
-                <span className={`text-[11px] font-medium ${ isSelected ? 'text-violet-300' : 'text-white/60' }`}>
-                  {option.label} </span>
-                {option.description && ( <span className="text-[9px] text-white/25">{option.description}</span> )}
-                {option.confidence != null && ( <span className={`mt-0.5 text-[9px] tabular-nums ${ isSelected ? 'text-violet-400/60' : 'text-white/20' }`}>
-                    {Math.round(option.confidence * 100)}% </span> )}
-                {/* Selected indicator */}
-                {isSelected && ( <div className="absolute right-1.5 top-1.5">
-                    <CheckCircle2 className="h-3 w-3 text-violet-400" /> </div> )} </Button>
-            ) })} </div> )}
-      {/* Pending placeholder */}
-      {step.status === 'pending' && step.options.length === 0 && ( <div className="flex items-center justify-center py-4">
-          <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin text-white/15" />
-          <span className="text-[10px] text-white/25">
-            {t('production.prep.pending')} </span> </div> )}
-    </motion.div> ) }
 // ─── Attribute Row (read-only display) ──────────────────────
 type AttentionDecision = 'keep' | 'replace' | 'drop' | 'crop'
 function decisionFromOptionId(optionId?: string): AttentionDecision | undefined {
@@ -513,7 +457,7 @@ export default function PrepHubPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="min-h-0 space-y-4 lg:col-span-5"
+          className="min-h-0 space-y-4 lg:col-span-4"
         >
           <UploadZone
             testId="production-sku-source-upload"
@@ -612,7 +556,7 @@ export default function PrepHubPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="min-h-0 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 lg:col-span-4"
+          className="min-h-0 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 lg:col-span-5"
         >
           <div className="mb-4 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
@@ -625,17 +569,17 @@ export default function PrepHubPage() {
             <div className="space-y-4">
               {/* Questionnaire progress */}
               <div className="rounded-xl border border-violet-400/10 bg-violet-400/[0.04] p-3">
-                <div className="mb-2 flex items-center justify-between text-[10px]">
-                  <span className="font-medium text-violet-200/80">出图四问确认</span>
-                  <span className="tabular-nums text-white/35">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-violet-100">出图四问确认</span>
+                  <span className="rounded-full bg-white/[0.05] px-2 py-1 text-[11px] tabular-nums text-white/55">
                     已确认 {decisionProgress.answered} / {decisionProgress.total}，还剩 {decisionProgress.remaining} 项 </span> </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.08]">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-violet-400 to-cyan-300 transition-colors duration-300"
                     style={{ width: `${decisionProgress.percent}%` }}
                   /> </div>
-                <p className="mt-2 text-[10px] leading-relaxed text-white/35">
-                  按四个固定问题选择“要/不要”：SKU 产品、SKU 背景、参考产品、参考背景。系统会把选择结果转成自然语言，并拼进下一步的本次出图要求。 </p>
+                <p className="mt-3 text-xs leading-6 text-white/50">
+                  逐项确认商品主体、商品背景、参考主体和参考背景是否进入本次出图要求。系统会把你的选择转成自然语言，带到下一步策略配置。 </p>
                 {decisionProgress.historicalAnswered > 0 && Object.keys(sessionSelections).length === 0 && ( <div className="mt-3 rounded-lg border border-cyan-300/15 bg-cyan-300/[0.05] p-2.5 text-[10px] leading-relaxed text-cyan-100/70">
                     已自动保留你上次完成的策略选择。需要调整时，直接点对应选项即可覆盖保存。 </div> )}
                 {decisionProgress.complete && ( <div className="mt-3 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.05] p-2.5 text-[10px] leading-relaxed text-emerald-100/70">
@@ -655,22 +599,22 @@ export default function PrepHubPage() {
                       onSelectOption={handleSelectOption}
                     /> )} </motion.div> </AnimatePresence>
               {/* Step navigation */}
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center justify-between gap-3 pt-1">
                 <Button
                   type="button"
                   disabled={currentStepIndex === 0}
                   onClick={() => setCurrentStepIndex((i) => i - 1)}
-                  className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
+                  className="h-auto min-h-9 rounded-full border border-white/[0.08] bg-white/[0.025] px-3 text-xs text-white/55 transition hover:border-white/[0.16] hover:bg-[var(--ecom-surface-hover)] hover:text-white/75 disabled:cursor-default disabled:opacity-25"
                 >
                   <ChevronLeft className="h-3 w-3" />
                   上一项 </Button>
-                <span className="text-[10px] tabular-nums text-white/20">
+                <span className="shrink-0 rounded-full bg-white/[0.04] px-2.5 py-1 text-[11px] tabular-nums text-white/35">
                   {currentStepIndex + 1} / {steps.length} </span>
                 <Button
                   type="button"
                   disabled={currentStepIndex >= steps.length - 1}
                   onClick={() => setCurrentStepIndex((i) => i + 1)}
-                  className="flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] text-white/40 transition hover:bg-[var(--ecom-surface-hover)] hover:text-white/60 disabled:opacity-20 disabled:cursor-default"
+                  className="h-auto min-h-9 rounded-full border border-white/[0.08] bg-white/[0.025] px-3 text-xs text-white/55 transition hover:border-white/[0.16] hover:bg-[var(--ecom-surface-hover)] hover:text-white/75 disabled:cursor-default disabled:opacity-25"
                 >
                   下一项
                   <ChevronRight className="h-3 w-3" /> </Button> </div>

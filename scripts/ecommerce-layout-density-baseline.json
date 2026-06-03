@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-05-26T03:54:59.749Z",
+  "policy": "Product-flow UI readability/layout density debt may burn down but cannot increase. New dense long-copy/no-wrap controls fail closed.",
+  "rules": [
+    {
+      "code": "density.content_button_nowrap",
+      "severity": "error",
+      "message": "Content-heavy Button/choice controls must allow wrapping; use h-auto/min-h + whitespace-normal/break-words for long Chinese copy."
+    },
+    {
+      "code": "density.fixed_height_long_button",
+      "severity": "error",
+      "message": "Long Chinese action/choice copy cannot be squeezed into h-8/h-9 fixed-height controls."
+    },
+    {
+      "code": "density.longcopy_truncate",
+      "severity": "error",
+      "message": "Long business copy must not be hidden by truncate; use line-clamp, wrapping, title, or disclosure."
+    },
+    {
+      "code": "density.tiny_two_column_longcopy",
+      "severity": "error",
+      "message": "Two-column dense cards cannot combine tiny typography with long Chinese business copy."
+    },
+    {
+      "code": "density.tight_longcopy",
+      "severity": "warning",
+      "message": "Long business copy should not use leading-tight; prefer leading-relaxed/normal for readability."
+    }
+  ],
+  "totals": {
+    "files": 0,
+    "errors": 0,
+    "warnings": 0,
+    "findings": 0
+  },
+  "by_code": {
+    "density.content_button_nowrap": {
+      "errors": 0,
+      "warnings": 0,
+      "total": 0
+    },
+    "density.fixed_height_long_button": {
+      "errors": 0,
+      "warnings": 0,
+      "total": 0
+    },
+    "density.longcopy_truncate": {
+      "errors": 0,
+      "warnings": 0,
+      "total": 0
+    },
+    "density.tight_longcopy": {
+      "errors": 0,
+      "warnings": 0,
+      "total": 0
+    },
+    "density.tiny_two_column_longcopy": {
+      "errors": 0,
+      "warnings": 0,
+      "total": 0
+    }
+  },
+  "by_file": {},
+  "top_findings": []
+}

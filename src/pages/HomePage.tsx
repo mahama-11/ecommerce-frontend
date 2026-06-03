@@ -54,7 +54,7 @@ export default function HomePage() {
           {isAuthenticated ? (
             <Link
               to="/products"
-              className="inline-flex items-center gap-2 rounded-[28px] bg-cyan-200 px-7 py-3 text-sm font-bold text-[var(--ecom-action-primary-text)] shadow-[0_0_32px_rgba(34,211,238,0.18)] transition hover:bg-white hover:shadow-[0_0_40px_rgba(34,211,238,0.25)]"
+              className="inline-flex items-center gap-2 rounded-[28px] border border-cyan-100/25 bg-cyan-200 px-7 py-3 text-sm font-bold text-[var(--ecom-action-primary-text)] shadow-[0_12px_34px_rgba(34,211,238,0.16)] transition hover:bg-cyan-100 hover:shadow-[0_16px_42px_rgba(34,211,238,0.22)]"
             >
               {t('home.dashboard.hero_cta')}
               <ArrowRight className="h-4 w-4" />
@@ -62,7 +62,7 @@ export default function HomePage() {
           ) : (
             <Link
               to={loginPath}
-              className="inline-flex items-center gap-2 rounded-[28px] bg-cyan-200 px-7 py-3 text-sm font-bold text-[var(--ecom-action-primary-text)] shadow-[0_0_32px_rgba(34,211,238,0.18)] transition hover:bg-white hover:shadow-[0_0_40px_rgba(34,211,238,0.25)]"
+              className="inline-flex items-center gap-2 rounded-[28px] border border-cyan-100/25 bg-cyan-200 px-7 py-3 text-sm font-bold text-[var(--ecom-action-primary-text)] shadow-[0_12px_34px_rgba(34,211,238,0.16)] transition hover:bg-cyan-100 hover:shadow-[0_16px_42px_rgba(34,211,238,0.22)]"
             >
               {t('home.cta_start')}
               <ArrowRight className="h-4 w-4" />
@@ -70,7 +70,7 @@ export default function HomePage() {
           )}
           <Link
             to="/pricing"
-            className="inline-flex items-center gap-2 rounded-[28px] border border-[var(--ecom-border-strong)] bg-[var(--ecom-surface-raised)] px-7 py-3 text-sm font-semibold text-[var(--ecom-text-secondary)] transition hover:border-[var(--ecom-border-bright)] hover:bg-[var(--ecom-surface-hover)] hover:text-[var(--ecom-text-primary)]"
+            className="inline-flex items-center gap-2 rounded-[28px] border border-cyan-100/20 bg-[var(--ecom-surface-muted)] px-7 py-3 text-sm font-semibold text-[var(--ecom-text-primary)] shadow-[0_10px_28px_rgba(0,0,0,0.18)] transition hover:border-cyan-200/35 hover:bg-[var(--ecom-surface-hover)] hover:text-white"
           >
             {t('home.cta_demo')}
           </Link>
@@ -98,7 +98,7 @@ export default function HomePage() {
                   <Icon className="h-5 w-5" />
                 </div>
                 <h3 className="mb-2 text-lg font-semibold text-white">{t(step.titleKey)}</h3>
-                <p className="text-sm leading-relaxed text-[var(--ecom-text-muted)]">{t(step.descKey)}</p>
+                <p className="text-sm leading-relaxed text-[var(--ecom-text-secondary)]">{t(step.descKey)}</p>
                 <div className="absolute right-4 top-4 text-[10px] font-bold text-white/15">0{index + 1}</div>
               </motion.div>
             )
@@ -108,40 +108,40 @@ export default function HomePage() {
 
       {/* Quick Entry */}
       <motion.section variants={fadeUp} transition={{ duration: 0.6, delay: 0.3 }} className="relative z-10 mx-auto mb-24 max-w-5xl px-6">
-        <div className="rounded-[28px] border border-[var(--ecom-border)] bg-[var(--ecom-surface-raised)] p-8 shadow-[var(--ecom-shadow-card)] backdrop-blur-sm">
-          <div className="mb-6 text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--ecom-text-faint)]">
+        <div className="rounded-[28px] border border-[var(--ecom-border)] bg-[rgba(255,255,255,0.055)] p-8 shadow-[var(--ecom-shadow-card)] backdrop-blur-sm">
+          <div className="mb-6 text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-100/65">
             {t('home.dashboard.quick_entry_title')}
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            <Link to={isAuthenticated ? '/products' : loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-cyan-300/25 hover:bg-[var(--ecom-surface-hover)]">
+            <Link to={isAuthenticated ? '/products' : loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 transition hover:border-cyan-300/25 hover:bg-[var(--ecom-surface-hover)]">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-300/[0.08] text-cyan-200">
                 <BoxSelect className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('home.dashboard.quick_entry_product_center')}</div>
-                <div className="mt-0.5 text-xs text-[var(--ecom-text-muted)]">{t('home.dashboard.quick_entry_product_center_hint')}</div>
+                <div className="mt-0.5 text-xs text-[var(--ecom-text-secondary)]">{t('home.dashboard.quick_entry_product_center_hint')}</div>
               </div>
-              <ArrowRight className="ml-auto h-4 w-4 text-[var(--ecom-text-faint)] transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
+              <ArrowRight className="ml-auto h-4 w-4 text-[var(--ecom-text-muted)] transition group-hover:translate-x-0.5 group-hover:text-cyan-200" />
             </Link>
-            <Link to={isAuthenticated ? '/aiChat/template' : loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-violet-300/25 hover:bg-[var(--ecom-surface-hover)]">
+            <Link to={isAuthenticated ? '/aiChat/template' : loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 transition hover:border-violet-300/25 hover:bg-[var(--ecom-surface-hover)]">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-300/[0.08] text-violet-200">
                 <LayoutTemplate className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('home.dashboard.quick_entry_template_market')}</div>
-                <div className="mt-0.5 text-xs text-[var(--ecom-text-muted)]">{t('home.dashboard.quick_entry_template_market_hint')}</div>
+                <div className="mt-0.5 text-xs text-[var(--ecom-text-secondary)]">{t('home.dashboard.quick_entry_template_market_hint')}</div>
               </div>
-              <ArrowRight className="ml-auto h-4 w-4 text-[var(--ecom-text-faint)] transition group-hover:translate-x-0.5 group-hover:text-violet-200" />
+              <ArrowRight className="ml-auto h-4 w-4 text-[var(--ecom-text-muted)] transition group-hover:translate-x-0.5 group-hover:text-violet-200" />
             </Link>
-            <Link to={isAuthenticated ? '/inventory' : loginPath} className="group flex items-center gap-4 rounded-2xl border border-amber-300/15 bg-amber-300/[0.035] p-4 transition hover:border-amber-300/30 hover:bg-amber-300/[0.06]">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-300/[0.10] text-amber-200">
+            <Link to={isAuthenticated ? '/inventory' : loginPath} className="group flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 transition hover:border-amber-300/25 hover:bg-[var(--ecom-surface-hover)]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-300/[0.08] text-amber-200">
                 <PackageSearch className="h-5 w-5" />
               </div>
               <div>
                 <div className="text-sm font-semibold text-white/88 group-hover:text-white">{t('home.dashboard.quick_entry_inventory_demo')}</div>
-                <div className="mt-0.5 text-xs text-[var(--ecom-text-muted)]">{t('home.dashboard.quick_entry_inventory_demo_hint')}</div>
+                <div className="mt-0.5 text-xs text-[var(--ecom-text-secondary)]">{t('home.dashboard.quick_entry_inventory_demo_hint')}</div>
               </div>
-              <ArrowRight className="ml-auto h-4 w-4 text-[var(--ecom-text-faint)] transition group-hover:translate-x-0.5 group-hover:text-amber-200" />
+              <ArrowRight className="ml-auto h-4 w-4 text-[var(--ecom-text-muted)] transition group-hover:translate-x-0.5 group-hover:text-amber-200" />
             </Link>
           </div>
         </div>

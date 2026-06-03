@@ -186,7 +186,7 @@ const PAGE_MAP: Record<string, PageMeta> = { '/chat': {
       { title: { zh: '跨页面回写', en: 'Cross-page Sync' },
         desc: { zh: '结论可以继续送去模板、Listing 或资料库使用。', en: 'Insights can be pushed into templates, listings, or knowledge repositories.' }, meta: { zh: '后续衔接工作流', en: 'Workflow integration ready' },
       }, ],
-    actions: [ { label: { zh: '打开批量 Listing', en: 'Open Batch Listing' }, to: '/aiChat/batchListing' },
+    actions: [ { label: { zh: '打开模板中心', en: 'Open Template Center' }, to: '/aiChat/batchListing' },
       { label: { zh: '回到模板市场', en: 'Back to Marketplace' }, to: '/aiChat/template' }, ],
   }, '/aiChat/training': {
     i18nKey: 'pages.aiChatTraining', icon: Brain,
@@ -264,7 +264,7 @@ const PAGE_MAP: Record<string, PageMeta> = { '/chat': {
         title: { zh: '结果修复建议', en: 'Fix Suggestions' }, desc: { zh: '后续会给出替代表达和自动修复建议。', en: 'Later versions can suggest alternative wording and auto-fix proposals.' },
         meta: { zh: '适合内容质检', en: 'For content QA' }, },
     ], actions: [
-      { label: { zh: '回到品牌库', en: 'Back to Brand Library' }, to: '/brandLibrary' }, { label: { zh: '查看批量 Listing', en: 'Open Batch Listing' }, to: '/aiChat/batchListing' },
+      { label: { zh: '回到品牌库', en: 'Back to Brand Library' }, to: '/brandLibrary' }, { label: { zh: '查看模板中心', en: 'Open Template Center' }, to: '/aiChat/batchListing' },
     ], },
   '/database/tagManage': { i18nKey: 'pages.databaseTagManage',
     icon: Tag, section: 'data',

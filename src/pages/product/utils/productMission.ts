@@ -158,7 +158,7 @@ export function deriveMissionWorkUnit(product: ProductListItem): MissionWorkUnit
     nextBestAction = {
       label: '进入 Listing 配置',
       station: 'listing',
-      href: `/products/workbench/batch-listing?productIds=${encodeURIComponent(product.id)}&source=product-center`,
+      href: '/aiChat/template',
       state: 'available',
       helper: '进入 Listing 配置，创建或采纳可用版本。'
     }

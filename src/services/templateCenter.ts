@@ -1,9 +1,23 @@
 import { request } from '@/services/http'
+import type { ToolInputMode, ToolRequiredAsset } from '@/types/tool'
+
+export type TemplateApplicability = {
+  toolSlug?: string
+  inputMode?: ToolInputMode
+  productCategory?: string
+  platform?: string
+  providerCapability?: string
+  scenario?: string
+  industry?: string
+}
 
 export type TemplateListItem = {
   id: string
   slug: string
   toolSlug?: string
+  inputMode?: ToolInputMode
+  requiredAssets?: ToolRequiredAsset[]
+  applicability?: TemplateApplicability
   externalCode?: string
   name: string
   summary: string
@@ -47,6 +61,8 @@ export type TemplateDetail = {
     policySchema?: Record<string, unknown>
     defaultVariables: Record<string, unknown>
     toolBinding: Record<string, unknown>
+    requiredAssets?: ToolRequiredAsset[]
+    applicability?: TemplateApplicability
   }
   examples: Array<{
     id: string
@@ -70,6 +86,9 @@ export type TemplateUseResponse = {
   targetRoute: string
   executorType: string
   toolSlug?: string
+  inputMode?: ToolInputMode
+  requiredAssets?: ToolRequiredAsset[]
+  applicability?: TemplateApplicability
   prefilledInputSchema: Record<string, unknown>
   preloadedTemplatePayload: Record<string, unknown>
   supportsAsyncJob: boolean
@@ -126,45 +145,70 @@ function toQuery(params: Record<string, string | number | boolean | undefined>) 
 export async function listCatalog(params: {
   locale: string
   toolSlug?: string
+  inputMode?: ToolInputMode
   keyword?: string
   modality?: string
   series?: string
   capability?: string
   platform?: string
+  productCategory?: string
+  providerCapability?: string
+  scenario?: string
+  industry?: string
   sortBy?: 'recommended' | 'newest' | 'most_used' | 'most_favorited' | 'alphabetical'
-}) {
+  limit?: number
+  offset?: number
+}, init?: { signal?: AbortSignal }) {
   return request<TemplateListItem[]>(
     `/api/v1/ecommerce/template-center/catalog${toQuery({
       locale: params.locale,
       tool_slug: params.toolSlug,
+      input_mode: params.inputMode,
       keyword: params.keyword,
       modality: params.modality,
       series: params.series,
       capability: params.capability,
       platform: params.platform,
+      product_category: params.productCategory,
+      provider_capability: params.providerCapability,
+      scenario: params.scenario,
+      industry: params.industry,
       sortBy: params.sortBy,
+      limit: params.limit,
+      offset: params.offset,
     })}`,
+    { signal: init?.signal },
   )
 }
 
 export async function listCatalogFacets(params: {
   locale: string
   toolSlug?: string
+  inputMode?: ToolInputMode
   keyword?: string
   modality?: string
   series?: string
   capability?: string
   platform?: string
+  productCategory?: string
+  providerCapability?: string
+  scenario?: string
+  industry?: string
 }) {
   return request<TemplateCatalogFacets>(
     `/api/v1/ecommerce/template-center/catalog/facets${toQuery({
       locale: params.locale,
       tool_slug: params.toolSlug,
+      input_mode: params.inputMode,
       keyword: params.keyword,
       modality: params.modality,
       series: params.series,
       capability: params.capability,
       platform: params.platform,
+      product_category: params.productCategory,
+      provider_capability: params.providerCapability,
+      scenario: params.scenario,
+      industry: params.industry,
     })}`,
   )
 }

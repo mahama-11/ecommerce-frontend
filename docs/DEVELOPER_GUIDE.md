@@ -38,15 +38,17 @@ npm run frontend:evidence
 npm run style:repair-queue
 npm run lint
 npm run typecheck
-npm run build
-bash scripts/install-git-hooks.sh
+npm run ci:quick
+python3 /root/work/agentic-selfcheck/scripts/install_v_continuous_governance_hooks.py --repo /root/work/v/ecommerce-frontend
 ```
 
-`npm run ci:quick` is the default local preflight for frontend increments. It runs the full P0/P1 governance suite: automated frontend gate, TypeScript, Storybook, production build, bundle budget, API contract, Lighthouse budget, Playwright smoke, and Playwright visual diff:
+`npm run ci:quick` is the default local preflight for frontend increments. It runs the full P0/P1 governance suite: automated frontend gate, TypeScript, Storybook, production build, bundle budget, API contract, contract diff / smoke / evidence, Lighthouse budget, Playwright smoke, and Playwright visual diff:
 
 ```bash
 npm run ci:quick
 ```
+
+The same loop is also wired into `.github/workflows/ecommerce-frontend-governance.yml` for PRs and `main` pushes touching `ecommerce-frontend/**`, `ecommerce-backend/**`, `tools/contract-governance/**`, `docs/governance/**`, the PR template, or the workflow itself. Treat the GitHub Actions artifact `ecommerce-frontend-governance-reports` as the review/release evidence bundle when the workflow runs remotely.
 
 Frontend automation reports are written under `reports/frontend-style-consistency/`:
 

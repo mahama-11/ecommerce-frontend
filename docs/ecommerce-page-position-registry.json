@@ -1,0 +1,1037 @@
+{
+  "schemaVersion": "1.0.0",
+  "policy": "Internal page-position governance only. Do not expose this as a customer-facing site map.",
+  "productBackbone": {
+    "primaryObject": "SKU/Product",
+    "businessLoop": [
+      "Product Center",
+      "SKU Detail",
+      "Visual Production",
+      "SKU.assets",
+      "Template Center / Listing",
+      "Delivery / Downloads"
+    ],
+    "criticalChain": [
+      "/products",
+      "/products/:id",
+      "/products/workbench/visual-tools",
+      "/products/:id/production/prep",
+      "/products/:id/production/sandbox",
+      "/products/:id/production/workshop",
+      "/aiChat/template",
+      "/products/workbench/downloads"
+    ]
+  },
+  "pageTypes": {
+    "marketing-page": {
+      "userVisibleMap": false,
+      "description": "Public acquisition and value explanation."
+    },
+    "workspace-home": {
+      "requiresBusinessObjectOrQueue": true,
+      "description": "Logged-in business entry and triage."
+    },
+    "object-detail": {
+      "requiresBusinessObject": true,
+      "description": "Single SKU/Product/Listing/Asset dossier."
+    },
+    "production-station": {
+      "requiresInputOutputDestination": true,
+      "description": "Execute one business production task."
+    },
+    "library-management": {
+      "requiresCollectionSemantics": true,
+      "description": "Browse/manage reusable assets, templates, records."
+    },
+    "settings-admin": {
+      "requiresStableFormSemantics": true,
+      "description": "Configure account/org/system settings."
+    },
+    "redirect-legacy": {
+      "requiresRedirectTarget": true,
+      "description": "Historical route redirected to canonical route."
+    },
+    "utility-support": {
+      "requiresSupportIntent": true,
+      "description": "Help, docs, legal, auth, support."
+    }
+  },
+  "requiredRoutes": [
+    "/",
+    "/home",
+    "/pricing",
+    "/solutions",
+    "/login",
+    "/products",
+    "/products/:id",
+    "/products/workbench/visual-tools",
+    "/products/workbench/visual-tools/:toolSlug",
+    "/products/:productId/ai/:toolSlug",
+    "/products/:id/production/prep",
+    "/products/:id/production/sandbox",
+    "/products/:id/production/workshop",
+    "/aiChat/template",
+    "/products/workbench/downloads",
+    "/account/profile",
+    "/account/assets",
+    "/account/history",
+    "/account/templates",
+    "/account/billing",
+    "/org/overview",
+    "/inventory/*",
+    "/aiChat/batchListing",
+    "/products/workbench/batch-listing",
+    "/draw/product-home",
+    "/draw/product-records",
+    "/downloadCenter"
+  ],
+  "routes": [
+    {
+      "route": "/",
+      "pageType": "marketing-page",
+      "surface": "Public portal",
+      "businessObject": "Visitor / prospect",
+      "solves": "Explain product value and route visitors to trial/login/pricing.",
+      "upstream": [
+        "External acquisition",
+        "Direct visit"
+      ],
+      "downstream": [
+        "/login",
+        "/register",
+        "/pricing",
+        "/solutions"
+      ],
+      "primaryAction": "Understand value and start trial",
+      "resultDestination": "Authenticated workspace entry",
+      "designPattern": "Public marketing narrative with value proof, effect examples, and clear CTA",
+      "forbiddenPatterns": [
+        "logged-in production station pattern",
+        "dense SKU operations table",
+        "internal backend status"
+      ],
+      "userVisibleContext": [
+        "value proposition",
+        "effect examples",
+        "pricing/login CTA"
+      ],
+      "files": [
+        "src/pages/HomePage.tsx"
+      ]
+    },
+    {
+      "route": "/home",
+      "pageType": "marketing-page",
+      "surface": "Public portal",
+      "businessObject": "Visitor / prospect",
+      "solves": "Canonical home alias for product value explanation.",
+      "upstream": [
+        "Direct visit"
+      ],
+      "downstream": [
+        "/login",
+        "/pricing",
+        "/solutions"
+      ],
+      "primaryAction": "Understand value and start trial",
+      "resultDestination": "Authenticated workspace entry",
+      "designPattern": "Public marketing narrative",
+      "forbiddenPatterns": [
+        "functional workbench layout",
+        "settings/admin layout"
+      ],
+      "userVisibleContext": [
+        "value proposition",
+        "effect examples",
+        "pricing/login CTA"
+      ],
+      "canonicalRoute": "/"
+    },
+    {
+      "route": "/pricing",
+      "pageType": "marketing-page",
+      "surface": "Public portal",
+      "businessObject": "Visitor / buyer",
+      "solves": "Explain plan value and purchase path.",
+      "upstream": [
+        "Home",
+        "Feature pages"
+      ],
+      "downstream": [
+        "/login",
+        "/register",
+        "/account/billing"
+      ],
+      "primaryAction": "Compare plans",
+      "resultDestination": "Billing or registration",
+      "designPattern": "Pricing comparison and value proof",
+      "forbiddenPatterns": [
+        "SKU production dashboard",
+        "hidden purchase prerequisites"
+      ],
+      "userVisibleContext": [
+        "plans",
+        "value proof",
+        "purchase/login CTA"
+      ],
+      "files": [
+        "src/pages/PricingPage.tsx"
+      ]
+    },
+    {
+      "route": "/solutions",
+      "pageType": "marketing-page",
+      "surface": "Public portal",
+      "businessObject": "Visitor by use case",
+      "solves": "Explain use-case value and guide to trial.",
+      "upstream": [
+        "Home",
+        "SEO"
+      ],
+      "downstream": [
+        "/login",
+        "/register",
+        "/products"
+      ],
+      "primaryAction": "Select a use case",
+      "resultDestination": "Registration or workspace",
+      "designPattern": "Use-case marketing detail",
+      "forbiddenPatterns": [
+        "object detail dossier",
+        "production station"
+      ],
+      "userVisibleContext": [
+        "use case",
+        "output examples",
+        "CTA"
+      ],
+      "files": [
+        "src/pages/SolutionDetailPage.tsx"
+      ]
+    },
+    {
+      "route": "/login",
+      "pageType": "utility-support",
+      "surface": "Auth",
+      "businessObject": "Visitor / returning user",
+      "solves": "Authenticate user and return them to intended route.",
+      "upstream": [
+        "Protected routes",
+        "Public portal"
+      ],
+      "downstream": [
+        "previous protected route",
+        "/products"
+      ],
+      "primaryAction": "Log in",
+      "resultDestination": "Authenticated session",
+      "designPattern": "Focused auth form with redirect context",
+      "forbiddenPatterns": [
+        "marketing homepage hero overload",
+        "SKU workflow controls"
+      ],
+      "userVisibleContext": [
+        "login form",
+        "redirect hint",
+        "support link"
+      ],
+      "files": [
+        "src/pages/LoginPage.tsx"
+      ]
+    },
+    {
+      "route": "/products",
+      "pageType": "workspace-home",
+      "surface": "Product Workbench",
+      "businessObject": "SKU/Product queue",
+      "solves": "Help users choose which SKU/Product to work on next.",
+      "upstream": [
+        "Login",
+        "Portal CTA",
+        "Product navigation"
+      ],
+      "downstream": [
+        "/products/:id",
+        "/products/workbench/visual-tools",
+        "/products/:id/production/prep"
+      ],
+      "primaryAction": "Open/create SKU workflow",
+      "resultDestination": "Selected SKU enters downstream production",
+      "designPattern": "Workspace home: queue, readiness, recommended next actions",
+      "forbiddenPatterns": [
+        "homepage-style product marketing",
+        "equal-weight tool grid",
+        "raw backend table dump"
+      ],
+      "userVisibleContext": [
+        "current queue",
+        "readiness",
+        "recommended next SKU action"
+      ],
+      "files": [
+        "src/pages/product/ProductListPage.tsx",
+        "src/layouts/ProductWorkbenchLayout.tsx"
+      ],
+      "routeId": "product-center",
+      "evidenceRouteIds": [
+        "product-center"
+      ]
+    },
+    {
+      "route": "/products/:id",
+      "pageType": "object-detail",
+      "surface": "Product Workbench",
+      "businessObject": "SKU/Product",
+      "solves": "Show single-SKU dossier and decide the next workflow action.",
+      "upstream": [
+        "/products",
+        "search/deep link"
+      ],
+      "downstream": [
+        "/products/:id/production/prep",
+        "/products/workbench/visual-tools",
+        "/aiChat/template",
+        "/products/workbench/downloads"
+      ],
+      "primaryAction": "Continue SKU workflow",
+      "resultDestination": "Visual assets, listing drafts, downloads",
+      "designPattern": "Object detail dossier: facts, assets, readiness, downstream actions",
+      "forbiddenPatterns": [
+        "homepage hero",
+        "generic settings page",
+        "tool registry"
+      ],
+      "userVisibleContext": [
+        "SKU identity",
+        "asset/readiness state",
+        "next action",
+        "downstream destination"
+      ],
+      "files": [
+        "src/pages/product/ProductDetailPage.tsx"
+      ],
+      "routeId": "product-detail",
+      "evidenceRouteIds": [
+        "product-detail"
+      ]
+    },
+    {
+      "route": "/products/workbench/visual-tools",
+      "pageType": "production-station",
+      "surface": "Product Workbench",
+      "businessObject": "SKU/Product Asset",
+      "solves": "Choose and execute the next visual task for a SKU.",
+      "upstream": [
+        "/products",
+        "/products/:id"
+      ],
+      "downstream": [
+        "SKU.assets",
+        "/aiChat/template",
+        "/products/:id/production/prep",
+        "/products/workbench/downloads"
+      ],
+      "primaryAction": "Start recommended visual task",
+      "resultDestination": "Generated visual assets attached to SKU.assets and usable in Template Center/Listing",
+      "designPattern": "SKU visual task workbench: product context, recommended task, expected output, result destination",
+      "forbiddenPatterns": [
+        "homepage hero as primary structure",
+        "tool registry",
+        "equal-weight tool matrix",
+        "raw backend status panel"
+      ],
+      "userVisibleContext": [
+        "current SKU/product context",
+        "recommended visual task",
+        "expected outputs",
+        "save/use destination"
+      ],
+      "input": [
+        "SKU context",
+        "current assets",
+        "category",
+        "reference images"
+      ],
+      "expectedOutput": [
+        "visual assets attached to SKU.assets",
+        "task-specific image set"
+      ],
+      "resultDestinationDetail": [
+        "SKU.assets",
+        "Template Center",
+        "Listing"
+      ],
+      "routeId": "visual-tools-index",
+      "evidenceRouteIds": [
+        "visual-tools-index"
+      ],
+      "files": [
+        "src/pages/ProductVisualToolsPage.tsx",
+        "src/components/product-composition/index.tsx"
+      ]
+    },
+    {
+      "route": "/products/workbench/visual-tools/:toolSlug",
+      "pageType": "production-station",
+      "surface": "Product Workbench",
+      "businessObject": "SKU/Product Asset",
+      "solves": "Execute a selected visual production goal for a SKU.",
+      "upstream": [
+        "/products/workbench/visual-tools",
+        "/products/:id"
+      ],
+      "downstream": [
+        "SKU.assets",
+        "/aiChat/template",
+        "/products/workbench/downloads"
+      ],
+      "primaryAction": "Configure/start selected visual task",
+      "resultDestination": "Task result saved as SKU visual asset",
+      "designPattern": "Focused visual production station for one goal",
+      "forbiddenPatterns": [
+        "homepage hero as primary structure",
+        "tool registry",
+        "equal-weight tool matrix",
+        "raw backend status panel"
+      ],
+      "userVisibleContext": [
+        "selected visual goal",
+        "input requirements",
+        "expected image output",
+        "result destination"
+      ],
+      "input": [
+        "SKU context",
+        "selected tool goal",
+        "current/reference assets"
+      ],
+      "expectedOutput": [
+        "generated visual asset set"
+      ],
+      "resultDestinationDetail": [
+        "SKU.assets",
+        "Template Center",
+        "Listing"
+      ],
+      "routeId": "visual-tools-ai-wearable",
+      "evidenceRouteIds": [
+        "visual-tools-ai-wearable"
+      ],
+      "files": [
+        "src/pages/ProductVisualToolsPage.tsx"
+      ]
+    },
+    {
+      "route": "/products/:productId/ai/:toolSlug",
+      "pageType": "production-station",
+      "surface": "Product Workbench",
+      "businessObject": "SKU/Product Asset",
+      "solves": "Run an AI tool in the context of a specific product.",
+      "upstream": [
+        "/products/:id",
+        "/products/workbench/visual-tools/:toolSlug"
+      ],
+      "downstream": [
+        "SKU.assets",
+        "/products/:id"
+      ],
+      "primaryAction": "Run product-scoped AI task",
+      "resultDestination": "Product-scoped generated asset",
+      "designPattern": "Product-scoped AI workspace",
+      "forbiddenPatterns": [
+        "anonymous tool playground",
+        "homepage marketing"
+      ],
+      "userVisibleContext": [
+        "product context",
+        "tool goal",
+        "result save target"
+      ],
+      "input": [
+        "productId",
+        "toolSlug",
+        "assets"
+      ],
+      "expectedOutput": [
+        "generated or transformed SKU asset"
+      ],
+      "resultDestinationDetail": [
+        "SKU.assets"
+      ],
+      "routeId": "product-ai-product",
+      "evidenceRouteIds": [
+        "product-ai-product"
+      ],
+      "files": [
+        "src/pages/ToolPage.tsx"
+      ]
+    },
+    {
+      "route": "/products/:id/production/prep",
+      "pageType": "production-station",
+      "surface": "Production Pipeline",
+      "businessObject": "SKU/Product Generation Job",
+      "solves": "Handle the prep stage of SKU visual production.",
+      "upstream": [
+        "/products/:id",
+        "previous production stage"
+      ],
+      "downstream": [
+        "next production stage",
+        "SKU.assets",
+        "/aiChat/template",
+        "/products/workbench/downloads"
+      ],
+      "primaryAction": "Complete source/strategy decisions",
+      "resultDestination": "Confirmed strategy inputs",
+      "designPattern": "Production pipeline station with workflow progress, current task, guardrails, and result destination",
+      "forbiddenPatterns": [
+        "standalone homepage",
+        "unrelated dashboard",
+        "raw provider/runtime panel"
+      ],
+      "userVisibleContext": [
+        "current SKU",
+        "workflow step",
+        "primary task",
+        "result destination"
+      ],
+      "input": [
+        "SKU context",
+        "source assets",
+        "workflow state"
+      ],
+      "expectedOutput": [
+        "Confirmed strategy inputs"
+      ],
+      "resultDestinationDetail": [
+        "SKU.assets",
+        "Listing",
+        "Downloads"
+      ],
+      "files": [
+        "src/pages/production/PrepHubPage.tsx",
+        "src/layouts/ProductionLayout.tsx"
+      ],
+      "routeId": "production-prep",
+      "evidenceRouteIds": [
+        "production-prep"
+      ]
+    },
+    {
+      "route": "/products/:id/production/sandbox",
+      "pageType": "production-station",
+      "surface": "Production Pipeline",
+      "businessObject": "SKU/Product Generation Job",
+      "solves": "Handle the sandbox stage of SKU visual production.",
+      "upstream": [
+        "/products/:id",
+        "previous production stage"
+      ],
+      "downstream": [
+        "next production stage",
+        "SKU.assets",
+        "/aiChat/template",
+        "/products/workbench/downloads"
+      ],
+      "primaryAction": "Compose and verify generation requirements",
+      "resultDestination": "Generation plan and fanout request",
+      "designPattern": "Production pipeline station with workflow progress, current task, guardrails, and result destination",
+      "forbiddenPatterns": [
+        "standalone homepage",
+        "unrelated dashboard",
+        "raw provider/runtime panel"
+      ],
+      "userVisibleContext": [
+        "current SKU",
+        "workflow step",
+        "primary task",
+        "result destination"
+      ],
+      "input": [
+        "SKU context",
+        "source assets",
+        "workflow state"
+      ],
+      "expectedOutput": [
+        "Generation plan and fanout request"
+      ],
+      "resultDestinationDetail": [
+        "SKU.assets",
+        "Listing",
+        "Downloads"
+      ],
+      "files": [
+        "src/pages/production/SandboxPage.tsx",
+        "src/layouts/ProductionLayout.tsx"
+      ],
+      "routeId": "production-sandbox",
+      "evidenceRouteIds": [
+        "production-sandbox"
+      ]
+    },
+    {
+      "route": "/products/:id/production/workshop",
+      "pageType": "production-station",
+      "surface": "Production Pipeline",
+      "businessObject": "SKU/Product Generation Job",
+      "solves": "Handle the workshop stage of SKU visual production.",
+      "upstream": [
+        "/products/:id",
+        "previous production stage"
+      ],
+      "downstream": [
+        "next production stage",
+        "SKU.assets",
+        "/aiChat/template",
+        "/products/workbench/downloads"
+      ],
+      "primaryAction": "Select/finalize generated assets",
+      "resultDestination": "Final assets saved for listing/download",
+      "designPattern": "Production pipeline station with workflow progress, current task, guardrails, and result destination",
+      "forbiddenPatterns": [
+        "standalone homepage",
+        "unrelated dashboard",
+        "raw provider/runtime panel"
+      ],
+      "userVisibleContext": [
+        "current SKU",
+        "workflow step",
+        "primary task",
+        "result destination"
+      ],
+      "input": [
+        "SKU context",
+        "source assets",
+        "workflow state"
+      ],
+      "expectedOutput": [
+        "Final assets saved for listing/download"
+      ],
+      "resultDestinationDetail": [
+        "SKU.assets",
+        "Listing",
+        "Downloads"
+      ],
+      "files": [
+        "src/pages/production/WorkshopPage.tsx",
+        "src/layouts/ProductionLayout.tsx"
+      ],
+      "routeId": "production-workshop",
+      "evidenceRouteIds": [
+        "production-workshop"
+      ]
+    },
+    {
+      "route": "/aiChat/template",
+      "pageType": "library-management",
+      "surface": "Template Center",
+      "businessObject": "Template / Listing pattern collection",
+      "solves": "Browse and reuse templates for listing/content/visual production.",
+      "upstream": [
+        "Product Center",
+        "Visual Tools",
+        "Production Workshop"
+      ],
+      "downstream": [
+        "Listing draft",
+        "Product workflow",
+        "Tool execution"
+      ],
+      "primaryAction": "Choose template",
+      "resultDestination": "Reusable template applied to SKU/listing workflow",
+      "designPattern": "Library management with filters, preview, reuse action",
+      "forbiddenPatterns": [
+        "batch listing legacy language",
+        "homepage hero takeover",
+        "raw prompt registry"
+      ],
+      "userVisibleContext": [
+        "collection filters",
+        "template preview",
+        "reuse destination"
+      ],
+      "collection": "templates",
+      "routeId": "template-center",
+      "evidenceRouteIds": [
+        "template-center"
+      ],
+      "files": [
+        "src/pages/AgentTemplateMarketPage.tsx"
+      ]
+    },
+    {
+      "route": "/products/workbench/downloads",
+      "pageType": "library-management",
+      "surface": "Product Workbench",
+      "businessObject": "Generated asset/download package collection",
+      "solves": "Retrieve generated/downloadable assets and packages.",
+      "upstream": [
+        "SKU Detail",
+        "Workshop",
+        "Template Center"
+      ],
+      "downstream": [
+        "Local download",
+        "reuse in workflow"
+      ],
+      "primaryAction": "Download/reuse asset",
+      "resultDestination": "Downloaded package or reused asset",
+      "designPattern": "Asset/download library with status and filters",
+      "forbiddenPatterns": [
+        "marketing page",
+        "unscoped file dump"
+      ],
+      "userVisibleContext": [
+        "asset list",
+        "status",
+        "download action"
+      ],
+      "collection": "downloads",
+      "files": [
+        "src/pages/account/AccountDownloadsPage.tsx"
+      ],
+      "routeId": "downloads",
+      "evidenceRouteIds": [
+        "downloads"
+      ]
+    },
+    {
+      "route": "/account/profile",
+      "pageType": "settings-admin",
+      "surface": "Account / Organization",
+      "businessObject": "User profile",
+      "solves": "Manage personal profile and preferences.",
+      "upstream": [
+        "account navigation"
+      ],
+      "downstream": [
+        "related account pages",
+        "Product Center"
+      ],
+      "primaryAction": "Update profile",
+      "resultDestination": "Updated account state or selected reusable record",
+      "designPattern": "Stable account/settings or library surface",
+      "forbiddenPatterns": [
+        "page-local design system",
+        "ad-hoc button palette",
+        "unscoped dark surface drift"
+      ],
+      "userVisibleContext": [
+        "account context",
+        "current section",
+        "safe primary action"
+      ],
+      "files": []
+    },
+    {
+      "route": "/account/assets",
+      "pageType": "library-management",
+      "surface": "Account / Organization",
+      "businessObject": "Account assets",
+      "solves": "Review owned/generated account-level assets.",
+      "upstream": [
+        "account navigation"
+      ],
+      "downstream": [
+        "related account pages",
+        "Product Center"
+      ],
+      "primaryAction": "Open or reuse asset",
+      "resultDestination": "Updated account state or selected reusable record",
+      "designPattern": "Stable account/settings or library surface",
+      "forbiddenPatterns": [
+        "page-local design system",
+        "ad-hoc button palette",
+        "unscoped dark surface drift"
+      ],
+      "userVisibleContext": [
+        "account context",
+        "current section",
+        "safe primary action"
+      ],
+      "files": [],
+      "collection": "account assets"
+    },
+    {
+      "route": "/account/history",
+      "pageType": "library-management",
+      "surface": "Account / Organization",
+      "businessObject": "Account history",
+      "solves": "Review historical usage and generation records.",
+      "upstream": [
+        "account navigation"
+      ],
+      "downstream": [
+        "related account pages",
+        "Product Center"
+      ],
+      "primaryAction": "Inspect record",
+      "resultDestination": "Updated account state or selected reusable record",
+      "designPattern": "Stable account/settings or library surface",
+      "forbiddenPatterns": [
+        "page-local design system",
+        "ad-hoc button palette",
+        "unscoped dark surface drift"
+      ],
+      "userVisibleContext": [
+        "account context",
+        "current section",
+        "safe primary action"
+      ],
+      "files": [],
+      "collection": "usage/generation history"
+    },
+    {
+      "route": "/account/templates",
+      "pageType": "library-management",
+      "surface": "Account / Organization",
+      "businessObject": "User templates",
+      "solves": "Manage saved personal templates.",
+      "upstream": [
+        "account navigation"
+      ],
+      "downstream": [
+        "related account pages",
+        "Product Center"
+      ],
+      "primaryAction": "Open/reuse template",
+      "resultDestination": "Updated account state or selected reusable record",
+      "designPattern": "Stable account/settings or library surface",
+      "forbiddenPatterns": [
+        "page-local design system",
+        "ad-hoc button palette",
+        "unscoped dark surface drift"
+      ],
+      "userVisibleContext": [
+        "account context",
+        "current section",
+        "safe primary action"
+      ],
+      "files": [],
+      "collection": "saved templates"
+    },
+    {
+      "route": "/account/billing",
+      "pageType": "settings-admin",
+      "surface": "Account / Organization",
+      "businessObject": "Billing account",
+      "solves": "Review billing/orders and plan state.",
+      "upstream": [
+        "account navigation"
+      ],
+      "downstream": [
+        "related account pages",
+        "Product Center"
+      ],
+      "primaryAction": "Manage billing",
+      "resultDestination": "Updated account state or selected reusable record",
+      "designPattern": "Stable account/settings or library surface",
+      "forbiddenPatterns": [
+        "page-local design system",
+        "ad-hoc button palette",
+        "unscoped dark surface drift"
+      ],
+      "userVisibleContext": [
+        "account context",
+        "current section",
+        "safe primary action"
+      ],
+      "files": []
+    },
+    {
+      "route": "/org/overview",
+      "pageType": "settings-admin",
+      "surface": "Account / Organization",
+      "businessObject": "Organization",
+      "solves": "Review organization workspace and members.",
+      "upstream": [
+        "account navigation"
+      ],
+      "downstream": [
+        "related account pages",
+        "Product Center"
+      ],
+      "primaryAction": "Manage organization",
+      "resultDestination": "Updated account state or selected reusable record",
+      "designPattern": "Stable account/settings or library surface",
+      "forbiddenPatterns": [
+        "page-local design system",
+        "ad-hoc button palette",
+        "unscoped dark surface drift"
+      ],
+      "userVisibleContext": [
+        "account context",
+        "current section",
+        "safe primary action"
+      ],
+      "files": []
+    },
+    {
+      "route": "/inventory/*",
+      "pageType": "workspace-home",
+      "surface": "Inventory",
+      "businessObject": "Inventory SKU/stock queue",
+      "solves": "Manage inventory-related product operations.",
+      "upstream": [
+        "Main nav"
+      ],
+      "downstream": [
+        "inventory replenishment",
+        "inventory product management",
+        "alerts"
+      ],
+      "primaryAction": "Open inventory work item",
+      "resultDestination": "Inventory task/update",
+      "designPattern": "Inventory workspace with queue/status/action hierarchy",
+      "forbiddenPatterns": [
+        "marketing homepage",
+        "visual production station"
+      ],
+      "userVisibleContext": [
+        "inventory module",
+        "current task",
+        "status"
+      ],
+      "files": [
+        "src/layouts/InventoryLayout.tsx"
+      ]
+    },
+    {
+      "route": "/aiChat/batchListing",
+      "pageType": "redirect-legacy",
+      "surface": "Legacy route",
+      "businessObject": "Legacy navigation alias",
+      "solves": "Redirect legacy route to canonical /aiChat/template.",
+      "upstream": [
+        "legacy bookmarks",
+        "old navigation"
+      ],
+      "downstream": [
+        "/aiChat/template"
+      ],
+      "primaryAction": "Redirect",
+      "resultDestination": "Canonical route reached",
+      "designPattern": "No UI; router redirect only",
+      "forbiddenPatterns": [
+        "rendering new page here",
+        "duplicating legacy content"
+      ],
+      "userVisibleContext": [
+        "seamless redirect"
+      ],
+      "canonicalRoute": "/aiChat/template",
+      "routeId": "batch-listing-legacy",
+      "evidenceRouteIds": [
+        "batch-listing-legacy"
+      ]
+    },
+    {
+      "route": "/products/workbench/batch-listing",
+      "pageType": "redirect-legacy",
+      "surface": "Legacy route",
+      "businessObject": "Legacy navigation alias",
+      "solves": "Redirect legacy route to canonical /aiChat/template.",
+      "upstream": [
+        "legacy bookmarks",
+        "old navigation"
+      ],
+      "downstream": [
+        "/aiChat/template"
+      ],
+      "primaryAction": "Redirect",
+      "resultDestination": "Canonical route reached",
+      "designPattern": "No UI; router redirect only",
+      "forbiddenPatterns": [
+        "rendering new page here",
+        "duplicating legacy content"
+      ],
+      "userVisibleContext": [
+        "seamless redirect"
+      ],
+      "canonicalRoute": "/aiChat/template",
+      "routeId": "product-batch-listing-legacy",
+      "evidenceRouteIds": [
+        "product-batch-listing-legacy"
+      ]
+    },
+    {
+      "route": "/draw/product-home",
+      "pageType": "redirect-legacy",
+      "surface": "Legacy route",
+      "businessObject": "Legacy navigation alias",
+      "solves": "Redirect legacy route to canonical /products.",
+      "upstream": [
+        "legacy bookmarks",
+        "old navigation"
+      ],
+      "downstream": [
+        "/products"
+      ],
+      "primaryAction": "Redirect",
+      "resultDestination": "Canonical route reached",
+      "designPattern": "No UI; router redirect only",
+      "forbiddenPatterns": [
+        "rendering new page here",
+        "duplicating legacy content"
+      ],
+      "userVisibleContext": [
+        "seamless redirect"
+      ],
+      "canonicalRoute": "/products",
+      "routeId": "draw-product-home-legacy"
+    },
+    {
+      "route": "/draw/product-records",
+      "pageType": "redirect-legacy",
+      "surface": "Legacy route",
+      "businessObject": "Legacy navigation alias",
+      "solves": "Redirect legacy route to canonical /products/workbench/visual-tools.",
+      "upstream": [
+        "legacy bookmarks",
+        "old navigation"
+      ],
+      "downstream": [
+        "/products/workbench/visual-tools"
+      ],
+      "primaryAction": "Redirect",
+      "resultDestination": "Canonical route reached",
+      "designPattern": "No UI; router redirect only",
+      "forbiddenPatterns": [
+        "rendering new page here",
+        "duplicating legacy content"
+      ],
+      "userVisibleContext": [
+        "seamless redirect"
+      ],
+      "canonicalRoute": "/products/workbench/visual-tools",
+      "routeId": "draw-product-records-legacy"
+    },
+    {
+      "route": "/downloadCenter",
+      "pageType": "redirect-legacy",
+      "surface": "Legacy route",
+      "businessObject": "Legacy navigation alias",
+      "solves": "Redirect legacy route to canonical /products/workbench/downloads.",
+      "upstream": [
+        "legacy bookmarks",
+        "old navigation"
+      ],
+      "downstream": [
+        "/products/workbench/downloads"
+      ],
+      "primaryAction": "Redirect",
+      "resultDestination": "Canonical route reached",
+      "designPattern": "No UI; router redirect only",
+      "forbiddenPatterns": [
+        "rendering new page here",
+        "duplicating legacy content"
+      ],
+      "userVisibleContext": [
+        "seamless redirect"
+      ],
+      "canonicalRoute": "/products/workbench/downloads",
+      "routeId": "download-center-legacy"
+    }
+  ]
+}

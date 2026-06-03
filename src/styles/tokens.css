@@ -1,0 +1,32 @@
+:root {
+  color-scheme: dark;
+  --ecom-bg: #0a0a12;
+  --ecom-header-bg: rgba(8, 11, 17, .94);
+  --ecom-dialog-bg: rgba(11, 13, 20, .97);
+  --ecom-popover-bg: rgba(11, 15, 23, .985);
+  --ecom-surface: rgba(255, 255, 255, .07);
+  --ecom-surface-muted: rgba(255, 255, 255, .045);
+  --ecom-surface-raised: rgba(255, 255, 255, .095);
+  --ecom-surface-hover: rgba(255, 255, 255, .12);
+  --ecom-surface-active: rgba(255, 255, 255, .145);
+  --ecom-border: rgba(255, 255, 255, .10);
+  --ecom-border-strong: rgba(255, 255, 255, .16);
+  --ecom-border-bright: rgba(255, 255, 255, .24);
+  --ecom-text-primary: #f3f6fb;
+  --ecom-text-secondary: rgba(255, 255, 255, .78);
+  --ecom-text-muted: rgba(255, 255, 255, .60);
+  --ecom-text-faint: rgba(255, 255, 255, .42);
+  --ecom-action-primary: #ffffff;
+  --ecom-action-primary-hover: #dff6ff;
+  --ecom-action-primary-text: #05070c;
+  --ecom-focus-ring: rgba(103, 232, 249, .68);
+  --ecom-accent-cyan-soft: rgba(34, 211, 238, .10);
+  --ecom-accent-emerald-soft: rgba(52, 211, 153, .08);
+  --ecom-radius-sm: 10px;
+  --ecom-radius-md: 14px;
+  --ecom-radius-lg: 18px;
+  --ecom-radius-xl: 28px;
+  --ecom-shadow-action: 0 12px 30px rgba(0, 0, 0, .22);
+  --ecom-shadow-card: 0 20px 70px rgba(0, 0, 0, .34);
+  --ecom-shadow-dialog: 0 32px 120px rgba(0, 0, 0, .65);
+}
