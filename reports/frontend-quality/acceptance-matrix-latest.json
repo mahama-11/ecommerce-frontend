@@ -1,0 +1,22 @@
+{
+  "status": "PASS",
+  "change_object": "Ecommerce product create OpenAPI/generated contract baseline",
+  "user_action": "Frontend contract consumers can reference the governed createProduct operation without hand-written DTOs",
+  "current_page": "Contract governance baseline (no user-facing route change)",
+  "target_page": "contracts/ecommerce.openapi.json and src/api/generated/ecommerce-contract.ts",
+  "target_page_identity": "Machine-readable Ecommerce API contract exposes POST /api/v1/ecommerce/products as createProduct",
+  "required_context": [
+    "Backend route: POST /api/v1/ecommerce/products",
+    "Backend request DTO: sku_code + title required, optional spu/category/brand/cost/tags fields",
+    "Current blocking contract baseline includes createProduct/listProducts/getProduct/getProductionStageView/getEcommerceSession"
+  ],
+  "success_signal": "api:contract regenerates createProduct types; contract smoke/evidence marks current baseline PASS and future live create/list/detail smoke PASS_WITH_NOTES instead of missing-operation BLOCKED",
+  "forbidden_result": "No hand-written product-create DTO; no stale note claiming createProduct is missing from OpenAPI; no live API success is claimed without fixture cleanup",
+  "verification": "npm run api:contract && npm run contract:breaking-check && npm run contract:smoke && npm run contract:evidence && npm run typecheck && npm run build",
+  "red_green_evidence": {
+    "red": "Before restoring the stash, contract smoke/evidence marked createProduct as missing from OpenAPI/generated artifacts and the api-contract gate did not require it.",
+    "green": "After restoring and updating the baseline, api:contract PASS; current contract baseline PASS includes createProduct; create/list/detail live smoke remains explicitly PASS_WITH_NOTES/BLOCKED for fixture cleanup."
+  },
+  "risk_level": "P0",
+  "notes": "This is contract/runtime-governance evidence, not a user-facing CTA or page-route change. Runtime browser evidence is supplied only to satisfy the repository P0 gate and does not claim live product creation."
+}
