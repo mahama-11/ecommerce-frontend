@@ -51,6 +51,14 @@ function countMatches(relDir, suffix) {
 }
 
 const requiredPhase2Specs = [
+  'tests/e2e/business/production-ai-runtime-closure.business.spec.ts',
+  'tests/e2e/business/downloads-delivery-guards.business.spec.ts',
+  'tests/e2e/business/inventory-expanded.business.spec.ts',
+  'tests/e2e/business/account-commercial-coverage.business.spec.ts',
+  'tests/e2e/business/auth-rbac-registration.business.spec.ts',
+  'tests/e2e/business/workspace-template-persistence.business.spec.ts',
+  'tests/e2e/business/portal-public-smoke.business.spec.ts',
+  'tests/e2e/business/org-admin.business.spec.ts',
   'tests/e2e/business/chat-workspace.business.spec.ts',
   'tests/e2e/business/design-workbench.business.spec.ts',
   'tests/e2e/business/ops-workbench.business.spec.ts',
@@ -73,7 +81,9 @@ const contractSpecs = countMatches('tests/e2e/contract', '.contract.spec.ts')
 const mockContractReport = readJson('reports/frontend-quality/playwright-report.json')
 const apiContractReport = readJson('reports/frontend-quality/api-contract-latest.json')
 const realContractReport = readJson('reports/frontend-quality/real-contract-preflight-latest.json')
+const liveMutatingReport = readJson('reports/business-interaction-qa/live-mutating-latest.json')
 const requireReal = process.env.ECOMMERCE_QA_REQUIRE_REAL === '1' || process.env.ECOMMERCE_REAL_CONTRACT_REQUIRED === '1'
+const allowOffline = process.env.ECOMMERCE_QA_ALLOW_OFFLINE === '1'
 
 const failures = []
 const warnings = []
@@ -82,7 +92,7 @@ const notes = []
 for (const rel of requiredPhase2Specs) if (!existsSync(join(root, rel))) failures.push(`missing required Phase 2 business spec: ${rel}`)
 for (const rel of requiredUnitFiles) if (!existsSync(join(root, rel))) failures.push(`missing required unit/component test: ${rel}`)
 for (const rel of requiredDocs) if (!existsSync(join(root, rel))) failures.push(`missing governance doc: ${rel}`)
-if (businessSpecs.length < 20) failures.push(`business spec count below threshold: ${businessSpecs.length} < 20`)
+if (businessSpecs.length < 32) failures.push(`business spec count below threshold: ${businessSpecs.length} < 32`)
 if (contractSpecs.length < 1) failures.push('mock schema contract spec is missing')
 if (unitCoverage.pct.statements < 60 || unitCoverage.pct.branches < 60 || unitCoverage.pct.functions < 60 || unitCoverage.pct.lines < 60) {
   failures.push(`unit coverage below 60% threshold: ${JSON.stringify(unitCoverage.pct)}`)
@@ -98,16 +108,24 @@ else if (realContractReport.status === 'SKIPPED') {
 } else if (realContractReport.status === 'PASS' && realContractReport.authenticated === false) {
   warnings.push('real contract preflight PASS is unauthenticated/non-mutating; provide ECOMMERCE_REAL_CONTRACT_TOKEN or run qa:business:live for critical mutations')
 }
+if (!liveMutatingReport) {
+  const message = 'live mutating business QA report missing; run npm run qa:business:live'
+  if (allowOffline) warnings.push(`${message}; offline regression explicitly allowed`)
+  else failures.push(message)
+}
+else if (liveMutatingReport.status !== 'PASS') failures.push(`live mutating business QA ${liveMutatingReport.status || 'UNKNOWN'}: see reports/business-interaction-qa/live-mutating-latest.json`)
+else if (!Array.isArray(liveMutatingReport.cleanup) || liveMutatingReport.cleanup.some(item => item.status !== 'PASS')) failures.push('live mutating business QA cleanup is not fully PASS')
 
 const result = {
   status: failures.length ? 'FAIL' : (warnings.length ? 'PASS_WITH_NOTES' : 'PASS'),
   thresholds: {
     unit_coverage_min_percent: 60,
-    business_spec_min_count: 20,
+    business_spec_min_count: 32,
     required_phase2_business_specs: requiredPhase2Specs.length,
   },
   policy: 'real-first: use real frontend proxy/backend evidence when configured; mock business specs are deterministic offline regression and must not be reported as live business closure',
   require_real: requireReal,
+  allow_offline: allowOffline,
   unit_coverage: unitCoverage,
   business_specs: { count: businessSpecs.length, files: businessSpecs },
   contract_specs: { count: contractSpecs.length, files: contractSpecs },
@@ -115,6 +133,7 @@ const result = {
     mock_contract_playwright: mockContractReport ? 'reports/frontend-quality/playwright-report.json' : null,
     generated_api_contract: apiContractReport ? 'reports/frontend-quality/api-contract-latest.json' : null,
     real_contract_preflight: realContractReport ? 'reports/frontend-quality/real-contract-preflight-latest.json' : null,
+    live_mutating_business_qa: liveMutatingReport ? 'reports/business-interaction-qa/live-mutating-latest.json' : null,
   },
   governance_docs: requiredDocs,
   notes,

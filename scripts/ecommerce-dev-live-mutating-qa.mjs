@@ -10,6 +10,8 @@ const evidenceDir = process.env.ECOMMERCE_LIVE_QA_EVIDENCE_DIR || path.join(work
 const evidencePath = path.join(evidenceDir, 'evidence.json')
 const envFile = process.env.ECOMMERCE_AUTH_ENV_FILE || path.join(process.env.HOME || '/root', '.hermes/secrets/ecommerce-login.env')
 const base = (process.env.V_ECOMMERCE_BASE_URL || 'https://tra.agent-ecommerce.com').replace(/\/$/, '')
+const requestedProvider = process.env.ECOMMERCE_LIVE_QA_PROVIDER || 'comfyui_bridge'
+const latestEvidencePath = path.join(repoRoot, 'reports/business-interaction-qa/live-mutating-latest.json')
 const startedAt = new Date().toISOString()
 
 function refuseUnsafeBaseURL(value) {
@@ -190,7 +192,7 @@ async function main() {
       prompt: 'QA live provider routing smoke: create a clean marketplace product image variation.',
       negative_prompt: 'low quality, watermark',
       objective: 'quality',
-      preferred_providers: ['volcengine'],
+      preferred_providers: [requestedProvider],
       requested_variants: 1,
       width: 512,
       height: 512,
@@ -200,7 +202,7 @@ async function main() {
   resources.imageJobId = dataOf(imageJob.json)?.job_id || dataOf(imageJob.json)?.id || ''
   resources.imageRuntimeJobId = dataOf(imageJob.json)?.runtime_job_id || ''
   if (!resources.imageJobId || !resources.imageRuntimeJobId) throw new Error('image job create did not return job/runtime ids')
-  record('image_job.create', 'PASS', { job_id: resources.imageJobId, runtime_job_id: resources.imageRuntimeJobId, job_status: dataOf(imageJob.json)?.status || 'unknown' })
+  record('image_job.create', 'PASS', { job_id: resources.imageJobId, runtime_job_id: resources.imageRuntimeJobId, requested_provider: requestedProvider, job_status: dataOf(imageJob.json)?.status || 'unknown' })
 
   const imageJobReadback = await api(`/api/v1/ecommerce/image-jobs/${encodeURIComponent(resources.imageJobId)}`)
   if (imageJobReadback.status !== 200 || imageJobReadback.json?.code !== 0 || (dataOf(imageJobReadback.json)?.job_id || dataOf(imageJobReadback.json)?.id) !== resources.imageJobId) throw new Error(`image job readback failed status=${imageJobReadback.status}`)
@@ -265,6 +267,7 @@ try {
     finishedAt,
     baseURL: base,
     lane: base.includes('tra.agent-ecommerce.com') ? 'cloud-dev' : 'local-dev',
+    requestedProvider,
     auth: { envFile, emailPresent: true, password: '[REDACTED]', token: '[REDACTED]' },
     resources,
     checks,
@@ -272,5 +275,7 @@ try {
     secretPolicy: 'No password, bearer token, internal service secret, API key, or connection string is written to evidence.',
   }
   fs.writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`)
+  fs.mkdirSync(path.dirname(latestEvidencePath), { recursive: true })
+  fs.writeFileSync(latestEvidencePath, `${JSON.stringify(evidence, null, 2)}\n`)
   console.log(`result=${finalStatus} ecommerce_dev_live_mutating_qa evidence=${evidencePath} token=[REDACTED] password=[REDACTED] checks=${checks.length}`)
 }

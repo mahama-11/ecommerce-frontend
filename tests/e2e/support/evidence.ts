@@ -1,4 +1,4 @@
-import type { Page, TestInfo } from '@playwright/test'
+import type { Page, Request, TestInfo } from '@playwright/test'
 
 export type RuntimeEvidence = {
   consoleErrors: string[]
@@ -8,6 +8,7 @@ export type RuntimeEvidence = {
 
 export function createEvidenceCollector(page: Page): RuntimeEvidence {
   const evidence: RuntimeEvidence = { consoleErrors: [], networkFailures: [], apiCalls: [] }
+  const apiCallByRequest = new Map<Request, RuntimeEvidence['apiCalls'][number]>()
   page.on('pageerror', error => evidence.consoleErrors.push(error.message))
   page.on('console', msg => {
     if (msg.type() === 'error') evidence.consoleErrors.push(msg.text())
@@ -15,10 +16,21 @@ export function createEvidenceCollector(page: Page): RuntimeEvidence {
   page.on('requestfailed', request => {
     evidence.networkFailures.push(`${request.method()} ${request.url()} ${request.failure()?.errorText ?? ''}`.trim())
   })
+  page.on('request', request => {
+    const url = request.url()
+    if (url.includes('/api/v1/ecommerce/')) {
+      const entry: RuntimeEvidence['apiCalls'][number] = { method: request.method(), url: redactUrl(url) }
+      evidence.apiCalls.push(entry)
+      apiCallByRequest.set(request, entry)
+    }
+  })
   page.on('response', response => {
     const url = response.url()
     if (url.includes('/api/v1/ecommerce/')) {
-      evidence.apiCalls.push({ method: response.request().method(), url: redactUrl(url), status: response.status() })
+      const request = response.request()
+      const entry = apiCallByRequest.get(request)
+      if (entry) entry.status = response.status()
+      else evidence.apiCalls.push({ method: request.method(), url: redactUrl(url), status: response.status() })
     }
   })
   return evidence
@@ -40,4 +52,11 @@ export function expectCleanEvidence(evidence: RuntimeEvidence) {
   const ignoredConsole = evidence.consoleErrors.filter(message => !/favicon|ResizeObserver loop/i.test(message))
   const ignoredNetwork = evidence.networkFailures.filter(message => !/favicon|picsum\.photos|fastly\.picsum\.photos|ERR_ABORTED/i.test(message))
   return { consoleErrors: ignoredConsole, networkFailures: ignoredNetwork }
+}
+
+export function hasSuccessfulApiCall(
+  evidence: RuntimeEvidence,
+  predicate: (call: RuntimeEvidence['apiCalls'][number]) => boolean,
+) {
+  return evidence.apiCalls.some(call => predicate(call) && (call.status ?? 0) >= 200 && (call.status ?? 0) < 300)
 }

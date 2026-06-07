@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { ProductDetailPage } from '../pages/ProductDetailPage'
-import { createEvidenceCollector, expectCleanEvidence, screenshotEvidence } from '../support/evidence'
+import { createEvidenceCollector, expectCleanEvidence, hasSuccessfulApiCall, screenshotEvidence } from '../support/evidence'
 import { installBusinessRuntimeMocks, QA_PRODUCT_ID } from '../support/harness'
 import { expectNoInternalTerms } from '../pages/ProductionPages'
 import { selector } from '../support/selectors'
@@ -29,7 +29,7 @@ test('@business @p0 @listing-edit-adopt ecom-listing-edit-adopt updates listing 
     )
     await page.locator(selector('listingCreateSubmit')).click()
     await expect.poll(async () => (await createListingResponse).ok()).toBe(true)
-    expect(evidence.apiCalls.some(call => call.method === 'POST' && call.url.includes('/listing-versions'))).toBeTruthy()
+    expect(hasSuccessfulApiCall(evidence, call => call.method === 'POST' && call.url.includes('/listing-versions'))).toBeTruthy()
     await expectNoInternalTerms(page)
   })
 
@@ -40,7 +40,7 @@ test('@business @p0 @listing-edit-adopt ecom-listing-edit-adopt updates listing 
     )
     await page.locator(selector('listingAdoptSubmit')).first().click()
     await expect.poll(async () => (await adoptListingResponse).ok()).toBe(true)
-    expect(evidence.apiCalls.some(call => call.method === 'POST' && call.url.includes('/adopt'))).toBeTruthy()
+    expect(hasSuccessfulApiCall(evidence, call => call.method === 'POST' && call.url.includes('/adopt'))).toBeTruthy()
     await expectNoInternalTerms(page)
   })
 
