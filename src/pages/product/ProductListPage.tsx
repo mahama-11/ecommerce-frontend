@@ -329,7 +329,7 @@ function ProductListPage() {
   const itemVariants = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 260, damping: 26 } } }
 
   return (
-    <motion.div variants={containerVariants} initial="hidden" animate="show" data-page-shell="workspace-home" className="relative min-h-full bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)]">
+    <motion.div variants={containerVariants} initial="hidden" animate="show" data-page-shell="workspace-home" data-testid="product-list-page" className="relative min-h-full bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)]">
       <div className="pointer-events-none fixed inset-0 opacity-60">
         <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
         <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" />
@@ -369,7 +369,7 @@ function ProductListPage() {
             <ResultDestinationCard title="结果去向" description="视觉结果回写 SKU.assets，Listing 进入模板中心，导出进入交付中心。" />
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={() => setShowCreateModal(true)} variant="primary"><Plus className="h-4 w-4" />新建 SKU</Button>
+            <Button data-testid="product-create-open" onClick={() => setShowCreateModal(true)} variant="primary"><Plus className="h-4 w-4" />新建 SKU</Button>
             <Button onClick={() => setShowImportModal(true)} variant="secondary"><Upload className="h-4 w-4" />导入表格</Button>
             <Button onClick={() => setShowPreviewDrawer(true)} variant="secondary">快速预览</Button>
           </div>
@@ -412,7 +412,7 @@ function ProductListPage() {
                   const focused = focusedUnit?.product.id === product.id
                   const selected = selectedIds.includes(product.id)
                   return (
-                    <div key={product.id} className={`grid gap-3 px-3 py-3 text-sm transition max-2xl:grid-cols-1 2xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.25fr)_minmax(0,1.35fr)_minmax(64px,0.45fr)_minmax(72px,0.5fr)_minmax(64px,0.45fr)_minmax(64px,0.45fr)_minmax(260px,1.2fr)] 2xl:items-center ${focused ? 'bg-cyan-300/[0.075]' : 'hover:bg-[var(--ecom-surface-hover)]'} ${selected ? 'outline outline-1 outline-cyan-300/30' : ''}`}>
+                    <div key={product.id} data-testid="product-row" data-product-id={product.id} data-sku-code={product.skuCode} className={`grid gap-3 px-3 py-3 text-sm transition max-2xl:grid-cols-1 2xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.25fr)_minmax(0,1.35fr)_minmax(64px,0.45fr)_minmax(72px,0.5fr)_minmax(64px,0.45fr)_minmax(64px,0.45fr)_minmax(260px,1.2fr)] 2xl:items-center ${focused ? 'bg-cyan-300/[0.075]' : 'hover:bg-[var(--ecom-surface-hover)]'} ${selected ? 'outline outline-1 outline-cyan-300/30' : ''}`}>
                       <div className="flex min-w-0 items-center gap-2">
                         <input type="checkbox" checked={selected} onClick={event => event.stopPropagation()} onChange={() => { setFocusedProductId(product.id); toggleSelect(product.id) }} className="shrink-0 rounded border-white/20 bg-black/30 accent-cyan-300" />
                         <Link to={`/products/${product.id}`} onClick={event => event.stopPropagation()} title={product.skuCode} className="min-w-0 truncate font-mono text-xs text-cyan-100/82 underline-offset-4 transition hover:text-white hover:underline">{product.skuCode}</Link>
@@ -424,8 +424,8 @@ function ProductListPage() {
                       <QueueTag label={product.exportStatus === 'done' ? '已完成' : product.exportStatus === 'ready' ? '可交付' : '待导出'} tone={product.exportStatus === 'done' || product.exportStatus === 'ready' ? 'green' : 'red'} />
                       <div className="text-xs text-white/38">{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—'}</div>
                       <div className="flex min-w-0 flex-wrap gap-1.5 2xl:flex-nowrap">
-                        <ButtonLink to={`/products/${product.id}`} onClick={event => event.stopPropagation()} variant="primary" size="sm" className="px-2.5">详情</ButtonLink>
-                        <ButtonLink to={visualProductionHref(product.id)} onClick={event => event.stopPropagation()} variant="secondary" size="sm" className="px-2.5">进入视觉生产</ButtonLink>
+                        <ButtonLink data-testid="product-row-open-detail" to={`/products/${product.id}`} onClick={event => event.stopPropagation()} variant="primary" size="sm" className="px-2.5">详情</ButtonLink>
+                        <ButtonLink data-testid="product-visual-entry" to={visualProductionHref(product.id)} onClick={event => event.stopPropagation()} variant="secondary" size="sm" className="px-2.5">进入视觉生产</ButtonLink>
                         <Button onClick={event => { event.stopPropagation(); openVisualToolsCenter(product.id) }} variant="quiet" size="sm" className="px-2.5">进入视觉工具中心</Button>
                       </div>
                     </div>
@@ -509,7 +509,7 @@ function ProductListPage() {
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('product.list.createModal.skuCode')}>
-                <input type="text" value={createForm.skuCode} onChange={event => setCreateForm(prev => ({ ...prev, skuCode: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" placeholder={t('product.list.createModal.skuPlaceholder')} />
+                <input data-testid="product-create-sku-code" type="text" value={createForm.skuCode} onChange={event => setCreateForm(prev => ({ ...prev, skuCode: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" placeholder={t('product.list.createModal.skuPlaceholder')} />
               </Field>
               <Field label={t('product.list.createModal.currency')}>
                 <select value={createForm.costCurrency} onChange={event => setCreateForm(prev => ({ ...prev, costCurrency: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20">
@@ -520,7 +520,7 @@ function ProductListPage() {
               </Field>
             </div>
             <Field label={t('product.list.createModal.productTitle')}>
-              <input type="text" value={createForm.title} onChange={event => setCreateForm(prev => ({ ...prev, title: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" placeholder={t('product.list.createModal.titlePlaceholder')} />
+              <input data-testid="product-create-title" type="text" value={createForm.title} onChange={event => setCreateForm(prev => ({ ...prev, title: event.target.value }))} className="w-full rounded-md border border-white/10 bg-[var(--ecom-bg)] px-4 py-2.5 text-sm text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20" placeholder={t('product.list.createModal.titlePlaceholder')} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t('product.list.createModal.category')}>
@@ -549,7 +549,7 @@ function ProductListPage() {
           </div>
           <div className="mt-6 flex gap-3">
             <Button onClick={() => setShowCreateModal(false)} className="flex-1" variant="secondary">{t('product.list.createModal.cancel')}</Button>
-            <Button onClick={() => void handleCreate()} disabled={!createForm.skuCode.trim() || !createForm.title.trim()} className="flex-1" variant="primary">{t('product.list.create')}</Button>
+            <Button data-testid="product-create-submit" onClick={() => void handleCreate()} disabled={!createForm.skuCode.trim() || !createForm.title.trim()} className="flex-1" variant="primary">{t('product.list.create')}</Button>
           </div>
         </ModalShell>
       ) : null}

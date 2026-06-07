@@ -7,6 +7,7 @@ import { ArrowLeft,
 import { useTranslation } from 'react-i18next'
 import { useToastStore } from '@/store/toastStore'
 import { ProductWorkflowNav } from '@/components/product-workbench/ProductWorkflowNav'
+import { ProductAIPipelinePanel } from '@/pages/product/components/ProductAIPipelinePanel'
 import { Button, ButtonLink } from '@/components/ui/Button'
 import { getProduct,
   updateProduct, calculateProfit,
@@ -18,7 +19,8 @@ import { getProduct,
 import type { Product,
   ListingVersion, ProfitSnapshot,
   ExportTask, ProductActivity,
-  ProductAssetItem, DownloadRecord
+  ProductAssetItem, DownloadRecord,
+  ProductParsedInfo, ProductPrompt
 } from '@/types/product'
 void Trash2
 type ProductDetailResponse = { product: Product
@@ -26,7 +28,10 @@ type ProductDetailResponse = { product: Product
   listingVersions: ListingVersion[]
   profitSnapshots: ProfitSnapshot[]
   exportTasks: ExportTask[]
-  activities: ProductActivity[] }
+  activities: ProductActivity[]
+  parsed_info?: ProductParsedInfo | null
+  prompts?: ProductPrompt[]
+}
 type ProductFormState = { skuCode: string
   title: string
   categoryId: string
@@ -47,10 +52,11 @@ function SelectField({ label, value, onChange, options, inline = false }: { labe
         <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" /> </div>
     </div> )
 }
-function InputField({ label, value, onChange, placeholder, onBlur }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string, onBlur?: () => void }) {
+function InputField({ label, value, onChange, placeholder, onBlur, testId }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string, onBlur?: () => void, testId?: string }) {
   return ( <div className="space-y-1.5">
       <label className="text-xs font-medium text-white/60">{label}</label>
       <input
+        data-testid={testId}
         value={value}
         onChange={e => onChange(e.target.value)}
         onBlur={onBlur}
@@ -419,6 +425,12 @@ export function ProductDetailPage() {
   const { product } = data
   const parsedInfo = parseReadonlyProductInfo(product.specJson)
   const latestProfit = data.profitSnapshots[0]
+  const openProductAssetsWorkspace = () => {
+    navigate(`/products/workbench/visual-tools?productId=${encodeURIComponent(product.id)}&source=sku-detail-assets`)
+  }
+  const openPromptComposer = () => {
+    navigate(`/products/${encodeURIComponent(product.id)}/production/sandbox?source=sku-detail-prompt`)
+  }
   void adoptingVersionId
   void productDownloads
   void selectedDownloadId
@@ -439,7 +451,7 @@ export function ProductDetailPage() {
   void handleAssetSortOrderChange
   void handleMoveAsset
   void handleInspectExportAssets
-  return ( <div className="relative flex min-h-[calc(100vh-52px)] w-full flex-col overflow-hidden bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)] font-sans">
+  return ( <div data-testid="product-detail-page" data-product-id={product.id} data-sku-code={product.skuCode} className="relative flex min-h-[calc(100vh-52px)] w-full flex-col overflow-hidden bg-[var(--ecom-bg)] text-[var(--ecom-text-primary)] font-sans">
       <div className="pointer-events-none fixed inset-0 opacity-60">
         <div className="absolute left-[-18rem] top-[-18rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl" />
         <div className="absolute right-[-12rem] top-[22rem] h-[28rem] w-[28rem] rounded-full bg-emerald-400/8 blur-3xl" /> </div>
@@ -460,15 +472,44 @@ export function ProductDetailPage() {
               {product.skuCode} · {product.title} · {product.categoryId || 'Uncategorized'} · {product.status} / {product.assetStatus} / {product.listingStatus} </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setShowListingModal(true)} variant="secondary" size="sm">新建 Listing 版本</Button>
+            <Button data-testid="listing-create-open" onClick={() => setShowListingModal(true)} variant="secondary" size="sm">新建 Listing 版本</Button>
             <Button onClick={() => setShowProfitModal(true)} variant="secondary" size="sm">利润计算</Button> </div>
         </div>
         <div className="mb-5">
           <ProductWorkflowNav active="detail" productId={product.id} contextLabel={product.title} source="sku-detail" /> </div>
+        {/* AI Pipeline Panel */}
+        <ProductAIPipelinePanel
+          product={product}
+          assets={data.assets}
+          listingVersions={data.listingVersions}
+          exportTasks={data.exportTasks}
+          parsedInfo={data.parsed_info ?? null}
+          prompts={data.prompts ?? []}
+          aiLoading={false}
+          aiError={null}
+          generatingPrompt={false}
+          onGeneratePrompt={openPromptComposer}
+          onOpenAssets={openProductAssetsWorkspace}
+          onOpenListings={() => setShowListingModal(true)}
+          onOpenExports={() => setShowExportModal(true)}
+        />
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-5">
             <section className="rounded-[28px] border border-white/[0.07] bg-[var(--ecom-surface)] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.36)]">
-              <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">基础信息</div>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="text-xs font-bold uppercase tracking-[0.22em] text-white/38">基础信息</div>
+                <span data-testid="product-detail-save-status" className="text-xs text-cyan-100/58" aria-live="polite">{productSaveLabel || copy.autoSave}</span>
+              </div>
+              <div className="mb-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-3">
+                <InputField
+                  label="SKU name"
+                  value={productForm.title}
+                  onChange={value => setProductForm(prev => ({ ...prev, title: value }))}
+                  onBlur={() => void handleProductFieldBlur('title')}
+                  placeholder={copy.title}
+                  testId="product-detail-title-input"
+                />
+              </div>
               <div className="divide-y divide-white/[0.06] text-sm">
                 {[ ['SKU', product.skuCode],
                   ['标题', product.title], ['类目', product.categoryId || '—'],
@@ -498,9 +539,9 @@ export function ProductDetailPage() {
               <div className="rounded-[28px] border border-white/[0.07] bg-[var(--ecom-surface)] p-5">
                 <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">LISTING 版本</div>
                 <div className="space-y-2">
-                  {data.listingVersions.slice(0, 4).map(version => <div key={version.id} className="flex items-center justify-between rounded-2xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm"><span className="font-mono text-white/75">v{version.versionNo}</span><span className={version.status === 'adopted' ? 'text-emerald-200' : 'text-white/48'}>{version.status} · {version.versionLabel}</span></div>)}
+                  {data.listingVersions.slice(0, 4).map(version => <div key={version.id} className="flex items-center justify-between gap-2 rounded-2xl border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm"><span className="font-mono text-white/75">v{version.versionNo}</span><span className={version.status === 'adopted' ? 'text-emerald-200' : 'text-white/48'}>{version.status} · {version.versionLabel}</span>{version.status !== 'adopted' ? <Button data-testid="listing-adopt-submit" data-listing-version-id={version.id} onClick={() => void handleAdoptListing(version.id)} disabled={adoptingVersionId === version.id} variant="secondary" size="sm">采用</Button> : null}</div>)}
                   {!data.listingVersions.length ? <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/42">暂无 Listing 版本。</div> : null} </div>
-                <Button onClick={() => setShowListingModal(true)} className="mt-4" variant="primary" size="sm">新建版本</Button>
+                <Button data-testid="listing-create-open-secondary" onClick={() => setShowListingModal(true)} className="mt-4" variant="primary" size="sm">新建版本</Button>
                 <p className="mt-3 text-xs leading-5 text-white/42">Listing = 只增不改的版本仓库。任何编辑必须通过新版本生成实现。</p> </div>
               <div className="rounded-[28px] border border-white/[0.07] bg-[var(--ecom-surface)] p-5">
                 <div className="mb-4 text-xs font-bold uppercase tracking-[0.22em] text-white/38">导出前校验</div>
@@ -509,7 +550,7 @@ export function ProductDetailPage() {
                   <PrecheckLine label="必需素材" ok={product.assetStatus === 'ready'} value={product.assetStatus === 'ready' ? '素材完整' : '主图/必需素材缺失'} />
                   <PrecheckLine label="平台/站点/语言" ok value={`${exportForm.platform} / ${exportForm.site} / ${exportForm.locale}`} />
                   <PrecheckLine label="文件清单" ok={product.exportStatus === 'done'} value={product.exportStatus === 'done' ? '已生成' : '未生成'} /> </div>
-                <Button onClick={() => setShowExportModal(true)} disabled={product.assetStatus !== 'ready'} className="mt-4 w-full" variant="primary">创建导出任务{product.assetStatus !== 'ready' ? '（禁用：素材不完整）' : ''}</Button>
+                <Button data-testid="export-create-open" onClick={() => setShowExportModal(true)} disabled={product.assetStatus !== 'ready'} className="mt-4 w-full" variant="primary">创建导出任务{product.assetStatus !== 'ready' ? '（禁用：素材不完整）' : ''}</Button>
                 <p className="mt-3 text-xs leading-5 text-rose-100/65">导出前必须满足：已采用 Listing + 必需素材完整 + 平台配置存在。</p> </div>
             </section> </div>
           <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
@@ -587,7 +628,7 @@ export function ProductDetailPage() {
                 variant="secondary"
               >
                 {t('product.detail.exportModal.cancel')} </Button>
-              <Button onClick={handleCreateExport} className="flex-1" variant="primary">
+              <Button data-testid="export-create-submit" onClick={handleCreateExport} className="flex-1" variant="primary">
                 {t('product.detail.exportModal.create')} </Button>
             </div> </div>
         </div> )}
@@ -652,6 +693,7 @@ export function ProductDetailPage() {
               >
                 {t('product.detail.listingModal.cancel')} </Button>
               <Button
+                data-testid="listing-create-submit"
                 onClick={handleCreateListing}
                 disabled={!listingForm.versionLabel || !listingForm.title || savingListing}
                 className="flex-1"

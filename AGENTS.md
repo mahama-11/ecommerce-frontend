@@ -25,6 +25,7 @@ It should not host:
 - [Frontend Style Governance](docs/frontend-style-governance.md)
 - [Frontend Product IA Governance](docs/frontend-product-ia-governance.md)
 - [Acceptance/TDD Governance](docs/acceptance-tdd-governance.md)
+- [Business Interaction QA Design](docs/business-interaction-qa-design.md)
 - [Multi-image Template Integration Matrix](docs/multimage-template-integration-matrix.md)
 - [Frontend CTA Acceptance Matrix](docs/templates/frontend-cta-acceptance-matrix.md)
 - [Agent Acceptance/TDD Workflow](docs/agent-acceptance-tdd-workflow.md)
@@ -34,13 +35,13 @@ It should not host:
 - [Contract Adapter Config](contract-adapter.config.json)
 - [Contract Critical Journeys](contract-governance/critical-journeys.json)
 - [Workspace Cloud Dev Deploy Runbook](../tools/dev/README.md) — Cloud dev 部署固定入口，负责 commit/provenance guard、prod guard 与 health/evidence。
-- [Template Center Design](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_DESIGN.md)
-- [Template Center Evolution Plan](../docs/architecture/AGENT_ECOMMERCE_TEMPLATE_CENTER_EVOLUTION_PLAN.md)
+- [Template Center Data Model](../ecommerce-backend/docs/architecture/TEMPLATE_CENTER_DATA_MODEL.md) — backend-owned template model and media mapping reference.
+- [Multi-image Template Integration Matrix](docs/multimage-template-integration-matrix.md) — frontend integration state and acceptance matrix.
 
 ## 3. Commands
 
 ```bash
-cd v-ecommerce-frontend
+cd /root/work/v/ecommerce-frontend
 npm install --legacy-peer-deps
 npm run dev
 npm run frontend:gate
@@ -54,6 +55,9 @@ npm run storybook:build
 npm run api:contract
 npm run contract:smoke
 npm run contract:evidence
+npm run qa:business
+npm run qa:changed-flow
+npm run qa:report
 npm run test:e2e
 npm run test:visual
 npm run lighthouse:budget

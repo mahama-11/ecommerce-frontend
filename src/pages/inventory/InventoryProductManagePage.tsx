@@ -28,6 +28,9 @@ export default function InventoryProductManagePage() {
   const { t } = useTranslation()
   const { products, totalProducts, loadingProducts, filter, setFilter, loadProducts } = useInventoryStore()
 
+  const safeProducts = Array.isArray(products) ? products : []
+  const safeTotalProducts = typeof totalProducts === 'number' ? totalProducts : 0
+
   useEffect(() => {
     void loadProducts()
   }, [loadProducts])
@@ -49,19 +52,19 @@ export default function InventoryProductManagePage() {
       {/* 统计卡片 */}
       <div className="grid grid-cols-4 gap-4">
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4 text-center">
-          <div className="text-2xl font-bold text-white">{totalProducts}</div>
+          <div className="text-2xl font-bold text-white">{safeTotalProducts}</div>
           <div className="mt-1 text-xs text-white/40">商品总数</div>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4 text-center">
-          <div className="text-2xl font-bold text-emerald-400">{products.filter(p => p.status === 'in_stock').length}</div>
+          <div className="text-2xl font-bold text-emerald-400">{safeProducts.filter(p => p.status === 'in_stock').length}</div>
           <div className="mt-1 text-xs text-white/40">在售商品</div>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4 text-center">
-          <div className="text-2xl font-bold text-amber-400">{products.filter(p => p.status === 'low_stock').length}</div>
+          <div className="text-2xl font-bold text-amber-400">{safeProducts.filter(p => p.status === 'low_stock').length}</div>
           <div className="mt-1 text-xs text-white/40">低库存商品</div>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4 text-center">
-          <div className="text-2xl font-bold text-red-400">{products.filter(p => p.status === 'out_of_stock').length}</div>
+          <div className="text-2xl font-bold text-red-400">{safeProducts.filter(p => p.status === 'out_of_stock').length}</div>
           <div className="mt-1 text-xs text-white/40">缺货商品</div>
         </div>
       </div>
@@ -114,12 +117,12 @@ export default function InventoryProductManagePage() {
                     <div className="flex justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/60" /></div>
                   </td>
                 </tr>
-              ) : products.length === 0 ? (
+              ) : safeProducts.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="px-5 py-12 text-center text-white/40">{t('inventory.products.noData') ?? '暂无商品数据'}</td>
                 </tr>
               ) : (
-                products.map(p => (
+                safeProducts.map(p => (
                   <tr key={p.id} className="border-b border-white/[0.04] hover:bg-[var(--ecom-surface-hover)]">
                     <td className="px-5 py-3 font-mono text-xs text-cyan-400">{p.sku}</td>
                     <td className="px-5 py-3 text-white/90">{p.title}</td>

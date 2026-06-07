@@ -23,8 +23,9 @@ export default function InventoryAlertsPage() {
     void loadAlerts()
   }, [loadAlerts])
 
-  const unreadAlerts = alerts.filter(a => !a.read)
-  const readAlerts = alerts.filter(a => a.read)
+  const safeAlerts = Array.isArray(alerts) ? alerts : []
+  const unreadAlerts = safeAlerts.filter(a => !a.read)
+  const readAlerts = safeAlerts.filter(a => a.read)
 
   return (
     <div className="space-y-6">
@@ -52,15 +53,15 @@ export default function InventoryAlertsPage() {
       {/* 统计 */}
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-xl border border-red-400/20 bg-red-400/8 p-4 text-center">
-          <div className="text-2xl font-bold text-red-400">{alerts.filter(a => a.alertLevel === 'danger').length}</div>
+          <div className="text-2xl font-bold text-red-400">{safeAlerts.filter(a => a.alertLevel === 'danger').length}</div>
           <div className="mt-1 text-xs text-white/40">{t('inventory.alerts.danger')}</div>
         </div>
         <div className="rounded-xl border border-amber-400/20 bg-amber-400/8 p-4 text-center">
-          <div className="text-2xl font-bold text-amber-400">{alerts.filter(a => a.alertLevel === 'warning').length}</div>
+          <div className="text-2xl font-bold text-amber-400">{safeAlerts.filter(a => a.alertLevel === 'warning').length}</div>
           <div className="mt-1 text-xs text-white/40">{t('inventory.alerts.warning')}</div>
         </div>
         <div className="rounded-xl border border-blue-400/20 bg-blue-400/8 p-4 text-center">
-          <div className="text-2xl font-bold text-blue-400">{alerts.filter(a => a.alertLevel === 'info').length}</div>
+          <div className="text-2xl font-bold text-blue-400">{safeAlerts.filter(a => a.alertLevel === 'info').length}</div>
           <div className="mt-1 text-xs text-white/40">{t('inventory.alerts.info')}</div>
         </div>
       </div>
@@ -135,7 +136,7 @@ export default function InventoryAlertsPage() {
       )}
 
       {/* 空状态 */}
-      {alerts.length === 0 && !loadingAlerts && (
+      {safeAlerts.length === 0 && !loadingAlerts && (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.04] py-16">
           <Bell className="mb-4 h-12 w-12 text-white/20" />
           <p className="text-white/40">{t('inventory.alerts.noData') ?? '暂无预警信息'}</p>

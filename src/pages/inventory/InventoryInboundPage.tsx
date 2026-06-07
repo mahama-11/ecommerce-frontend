@@ -26,6 +26,8 @@ export default function InventoryInboundPage() {
   const { t } = useTranslation()
   const { inboundRecords, loadingInbound, loadInbound } = useInventoryStore()
 
+  const safeInboundRecords = Array.isArray(inboundRecords) ? inboundRecords : []
+
   useEffect(() => {
     void loadInbound()
   }, [loadInbound])
@@ -41,19 +43,19 @@ export default function InventoryInboundPage() {
       {/* 统计 */}
       <div className="grid grid-cols-4 gap-4">
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4 text-center">
-          <div className="text-2xl font-bold text-white">{inboundRecords.length}</div>
+          <div className="text-2xl font-bold text-white">{safeInboundRecords.length}</div>
           <div className="mt-1 text-xs text-white/40">{t('inventory.inbound.totalRecords') ?? '总记录'}</div>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4 text-center">
-          <div className="text-2xl font-bold text-amber-400">{inboundRecords.filter(r => r.status === 'pending').length}</div>
+          <div className="text-2xl font-bold text-amber-400">{safeInboundRecords.filter(r => r.status === 'pending').length}</div>
           <div className="mt-1 text-xs text-white/40">{t('inventory.inbound.pending')}</div>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4 text-center">
-          <div className="text-2xl font-bold text-blue-400">{inboundRecords.filter(r => r.status === 'in_transit').length}</div>
+          <div className="text-2xl font-bold text-blue-400">{safeInboundRecords.filter(r => r.status === 'in_transit').length}</div>
           <div className="mt-1 text-xs text-white/40">{t('inventory.inbound.in_transit')}</div>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-4 text-center">
-          <div className="text-2xl font-bold text-emerald-400">{inboundRecords.filter(r => r.status === 'received').length}</div>
+          <div className="text-2xl font-bold text-emerald-400">{safeInboundRecords.filter(r => r.status === 'received').length}</div>
           <div className="mt-1 text-xs text-white/40">{t('inventory.inbound.received')}</div>
         </div>
       </div>
@@ -81,12 +83,12 @@ export default function InventoryInboundPage() {
                     <div className="flex justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-white/20 border-t-white/60" /></div>
                   </td>
                 </tr>
-              ) : inboundRecords.length === 0 ? (
+              ) : safeInboundRecords.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-5 py-12 text-center text-white/40">{t('inventory.inbound.noData') ?? '暂无入库记录'}</td>
                 </tr>
               ) : (
-                inboundRecords.map(r => (
+                safeInboundRecords.map(r => (
                   <tr key={r.id} className="border-b border-white/[0.04] hover:bg-[var(--ecom-surface-hover)]">
                     <td className="px-5 py-3 font-mono text-xs text-cyan-400">{r.shipmentId}</td>
                     <td className="px-5 py-3 font-mono text-xs text-white/70">{r.sku}</td>

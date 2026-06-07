@@ -152,6 +152,7 @@ function VariantGrid({ variants, selectedIds, busy,
             >
               清空选择 </Button> )}
           <Button
+            data-testid="production-workshop-finalize"
             type="button"
             disabled={selectedIds.length === 0 || busy}
             onClick={onFinalize}
@@ -527,7 +528,7 @@ export default function WorkshopPage() {
       setVersionNodes(nextNodes)
       setActiveVersionId(nextNodes.find((node) => node.isCurrent)?.id ?? nextNodes.at(-1)?.id ?? null) } catch (e) { toast.showToast(e instanceof Error ? e.message : 'Regenerate failed', 'error') } finally {
       setActionBusy(false) } }, [productId, activeNode, activeVersionId, weightParams, setVariants, setVersionNodes, setActiveVersionId, toast])
-  return ( <div className="mx-auto max-w-[1440px] px-5 py-6">
+  return ( <div data-testid="production-workshop-page" className="mx-auto max-w-[1440px] px-5 py-6">
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}

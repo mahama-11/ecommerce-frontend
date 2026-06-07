@@ -79,23 +79,26 @@ export default function InventoryDashboardPage() {
     filter, setFilter, loadStats, loadProducts,
   } = useInventoryStore()
 
+  const safeProducts = Array.isArray(products) ? products : []
+  const safeTotalProducts = typeof totalProducts === 'number' ? totalProducts : 0
+
   useEffect(() => {
     void loadStats()
     void loadProducts()
   }, [loadStats, loadProducts])
 
   return (
-    <div className="space-y-6">
+    <div data-testid="inventory-dashboard-page" className="space-y-6">
       {/* 标题 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">{t('inventory.dashboard.title')}</h1>
+          <h1 data-testid="inventory-dashboard-title" className="text-2xl font-bold text-white">{t('inventory.dashboard.title')}</h1>
           <p className="mt-1 text-sm text-white/50">{t('inventory.dashboard.subtitle')}</p>
         </div>
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div data-testid="inventory-stats-panel" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           label={t('inventory.dashboard.totalStock')}
           value={stats?.totalQuantity ?? '—'}
@@ -142,14 +145,14 @@ export default function InventoryDashboardPage() {
       </div>
 
       {/* 库存列表 */}
-      <div className="rounded-2xl border border-white/[0.06] bg-white/[0.04] overflow-hidden">
+      <div data-testid="inventory-product-table" className="rounded-2xl border border-white/[0.06] bg-white/[0.04] overflow-hidden">
         {/* 工具栏 */}
-        <div className="flex flex-wrap items-center gap-3 border-b border-white/[0.06] px-5 py-4">
+        <div data-testid="inventory-table-toolbar" className="flex flex-wrap items-center gap-3 border-b border-white/[0.06] px-5 py-4">
           <div className="relative flex-1 min-w-[200px]">
             <input
               type="text"
               placeholder="搜索 SKU 或商品名称..."
-              value={filter.search}
+              value={filter.search ?? ''}
               onChange={e => setFilter({ search: e.target.value })}
               className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 pl-10 text-sm text-white placeholder-white/30 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20 focus:bg-white/[0.07]"
             />
@@ -157,7 +160,7 @@ export default function InventoryDashboardPage() {
           </div>
 
           <select
-            value={filter.status}
+            value={filter.status ?? 'all'}
             onChange={e => setFilter({ status: e.target.value as any })}
             className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
           >
@@ -169,7 +172,7 @@ export default function InventoryDashboardPage() {
           </select>
 
           <select
-            value={filter.platform}
+            value={filter.platform ?? 'all'}
             onChange={e => setFilter({ platform: e.target.value as any })}
             className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white/70 outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/50 focus-visible:ring-offset-0 focus:border-white/20"
           >
@@ -212,16 +215,19 @@ export default function InventoryDashboardPage() {
                     </div>
                   </td>
                 </tr>
-              ) : products.length === 0 ? (
+              ) : (safeProducts ?? []).length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-5 py-12 text-center text-white/40">
                     暂无库存数据
                   </td>
                 </tr>
               ) : (
-                products.map(product => (
+                safeProducts.map(product => (
                   <tr
                     key={product.id}
+                    data-testid="inventory-product-row"
+                    data-product-id={product.id}
+                    data-product-sku={product.sku}
                     className="border-b border-white/[0.04] transition hover:bg-[var(--ecom-surface-hover)]"
                   >
                     <td className="px-5 py-3 font-mono text-xs text-cyan-400">{product.sku}</td>
@@ -243,10 +249,10 @@ export default function InventoryDashboardPage() {
         </div>
 
         {/* 分页 */}
-        {totalProducts > 0 && (
+        {safeTotalProducts > 0 && (
           <div className="flex items-center justify-between border-t border-white/[0.06] px-5 py-4 text-sm text-white/50">
             <span>
-              共 {totalProducts} 条，第 {filter.page}/{Math.ceil(totalProducts / filter.pageSize)} 页
+              共 {safeTotalProducts} 条，第 {filter.page}/{Math.ceil(safeTotalProducts / filter.pageSize)} 页
             </span>
             <div className="flex gap-2">
               <Button
@@ -258,7 +264,7 @@ export default function InventoryDashboardPage() {
               </Button>
               <Button
                 onClick={() => setFilter({ page: filter.page + 1 })}
-                disabled={filter.page >= Math.ceil(totalProducts / filter.pageSize)}
+                disabled={filter.page >= Math.ceil(safeTotalProducts / filter.pageSize)}
                 className="rounded-lg px-3 py-1 text-xs transition hover:bg-[var(--ecom-surface-hover)] disabled:opacity-30"
               >
                 下一页

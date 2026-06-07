@@ -175,6 +175,141 @@
         "notes": "Future smoke must isolate or cleanup composed prompt artifacts."
       },
       "notes": "Tracks the Phase 4 Sandbox compose/read critical journey as an explicit future adapter obligation."
+    },
+    {
+      "id": "ecommerce-business-runtime-auth-protected-route",
+      "name": "Business runtime P0 auth + protected route browser gate",
+      "requiredForCurrentBaseline": false,
+      "expectedStatus": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "getEcommerceSession"
+        ],
+        "consumerPaths": [
+          "src/components/auth/RequireAuth.tsx",
+          "src/pages/auth/LoginPage.tsx",
+          "src/pages/product/ProductListPage.tsx"
+        ],
+        "runtimeSpecs": [
+          "tests/e2e/business/auth-protected-route.business.spec.ts"
+        ],
+        "selectorRegistry": "tests/e2e/support/selectors.ts"
+      },
+      "browserGate": {
+        "enabled": true,
+        "kind": "playwright",
+        "script": "npm run qa:business -- --grep @auth",
+        "notes": "Deterministic local runtime fixture covers browser redirect/session behavior; live auth smoke remains environment dependent."
+      },
+      "cleanup": {
+        "status": "NOT_REQUIRED",
+        "notes": "No live records created."
+      },
+      "notes": "Current business QA selector and report scripts include this journey. PASS_WITH_NOTES prevents overclaiming prod/live auth closure.  Contract artifact assertions are selector/SelfCheck routing inventory only unless the listed operationIds exist in OpenAPI; default business browser specs provide deterministic local evidence without claiming live adapter closure."
+    },
+    {
+      "id": "ecommerce-business-runtime-product-core",
+      "name": "Business runtime P0 product create -> list -> detail browser gate",
+      "requiredForCurrentBaseline": false,
+      "expectedStatus": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "createProduct",
+          "listProducts",
+          "getProduct"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts",
+          "src/pages/product/ProductListPage.tsx",
+          "src/pages/product/ProductDetailPage.tsx"
+        ],
+        "runtimeSpecs": [
+          "tests/e2e/business/product-core.business.spec.ts"
+        ],
+        "selectorRegistry": "tests/e2e/support/selectors.ts"
+      },
+      "browserGate": {
+        "enabled": true,
+        "kind": "playwright",
+        "script": "npm run qa:business -- --grep @product-core",
+        "notes": "Uses isolated browser runtime fixture by default; safe live fixture cleanup must be explicitly enabled before claiming full PASS."
+      },
+      "cleanup": {
+        "status": "NOT_REQUIRED_MOCK_FIXTURE",
+        "notes": "Local deterministic fixture records are in-memory; future live smoke must delete/archive QA products."
+      },
+      "notes": "Covers URL literal placeholder guard, product row selectors and detail page identity.  Contract artifact assertions are selector/SelfCheck routing inventory only unless the listed operationIds exist in OpenAPI; default business browser specs provide deterministic local evidence without claiming live adapter closure."
+    },
+    {
+      "id": "ecommerce-business-runtime-production-pipeline",
+      "name": "Business runtime P0 Prep/Sandbox/Workshop browser selector and copy gate",
+      "requiredForCurrentBaseline": false,
+      "expectedStatus": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "getProductionStageView",
+          "requestPromptPlanner",
+          "executeFanoutIntents",
+          "listGenerationVersions"
+        ],
+        "consumerPaths": [
+          "src/services/production.ts",
+          "src/pages/production/PrepHubPage.tsx",
+          "src/pages/production/SandboxPage.tsx",
+          "src/pages/production/WorkshopPage.tsx",
+          "src/components/production/ProductionWorkflowComponents.tsx"
+        ],
+        "runtimeSpecs": [
+          "tests/e2e/business/production-listing-export.business.spec.ts"
+        ],
+        "selectorRegistry": "tests/e2e/support/selectors.ts"
+      },
+      "browserGate": {
+        "enabled": true,
+        "kind": "playwright",
+        "script": "npm run qa:business -- --grep @production-prep-sandbox",
+        "notes": "Selector/copy/readiness runtime gate. Real provider fanout/callback/result asset closure remains PASS_WITH_NOTES until safe dev/prod runtime fixture is approved."
+      },
+      "cleanup": {
+        "status": "NOT_REQUIRED_MOCK_FIXTURE",
+        "notes": "No paid provider or live asset writes in default business QA."
+      },
+      "notes": "Fails on user-facing internal term leakage and placeholder route URLs.  Contract artifact assertions are selector/SelfCheck routing inventory only unless the listed operationIds exist in OpenAPI; default business browser specs provide deterministic local evidence without claiming live adapter closure."
+    },
+    {
+      "id": "ecommerce-business-runtime-listing-export-download",
+      "name": "Business runtime P0 listing/export/download selector gate",
+      "requiredForCurrentBaseline": false,
+      "expectedStatus": "PASS_WITH_NOTES",
+      "scope": {
+        "operations": [
+          "createListingVersion",
+          "adoptListingVersion",
+          "createExportTask",
+          "listDownloads",
+          "downloadExport"
+        ],
+        "consumerPaths": [
+          "src/services/product.ts",
+          "src/pages/product/ProductDetailPage.tsx",
+          "src/pages/account/AccountDownloadsPage.tsx"
+        ],
+        "runtimeSpecs": [
+          "tests/e2e/business/production-listing-export.business.spec.ts"
+        ],
+        "selectorRegistry": "tests/e2e/support/selectors.ts"
+      },
+      "browserGate": {
+        "enabled": true,
+        "kind": "playwright",
+        "script": "npm run qa:business -- --grep @listing-export-download",
+        "notes": "Validates visible CTAs and authenticated download selector with local fixture; live package creation/download remains environment dependent."
+      },
+      "cleanup": {
+        "status": "NOT_REQUIRED_MOCK_FIXTURE",
+        "notes": "No live packages are created by default."
+      },
+      "notes": "Selector registry includes listing-adopt-submit/export-create-submit/download-record-card/download-record-download.  Contract artifact assertions are selector/SelfCheck routing inventory only unless the listed operationIds exist in OpenAPI; default business browser specs provide deterministic local evidence without claiming live adapter closure."
     }
   ]
 }
