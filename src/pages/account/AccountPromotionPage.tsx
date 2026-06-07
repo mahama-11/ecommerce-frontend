@@ -38,7 +38,7 @@ const itemVariants = {
 export default function AccountPromotionPage() {
   const { t } = useTranslation()
   const { showToast } = useToastStore()
-  const [overview, setOverview] = useState<PromotionOverview>(emptyOverview)
+  const [overview, setOverview] = useState<PromotionOverview>(() => emptyOverview())
   const [programs, setPrograms] = useState<PromotionProgram[]>([])
   const [codes, setCodes] = useState<PromotionCode[]>([])
   const [conversions, setConversions] = useState<PromotionConversion[]>([])
@@ -56,7 +56,7 @@ export default function AccountPromotionPage() {
         commercialService.getPromotionCodes(),
         commercialService.getPromotionConversions(),
       ])
-      setOverview(overviewRes)
+      setOverview({ ...emptyOverview(), ...(overviewRes || {}) })
       setPrograms(programsRes)
       setCodes(codesRes)
       setConversions(conversionsRes)
@@ -69,8 +69,10 @@ export default function AccountPromotionPage() {
     void fetchData()
   }, [fetchData])
 
-  const activeCode = overview.codes[0] || codes[0]
-  const primaryProgram = overview.programs[0] || programs[0]
+  const overviewCodes = Array.isArray(overview.codes) ? overview.codes : []
+  const overviewPrograms = Array.isArray(overview.programs) ? overview.programs : []
+  const activeCode = overviewCodes[0] || codes[0]
+  const primaryProgram = overviewPrograms[0] || programs[0]
 
   useEffect(() => {
     if (!activeCode?.code) {

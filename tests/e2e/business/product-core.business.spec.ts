@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { ProductDetailPage } from '../pages/ProductDetailPage'
 import { ProductListPage } from '../pages/ProductListPage'
 import { expectNoInternalTerms } from '../pages/ProductionPages'
-import { createEvidenceCollector, expectCleanEvidence, screenshotEvidence } from '../support/evidence'
+import { createEvidenceCollector, expectCleanEvidence, hasSuccessfulApiCall, screenshotEvidence } from '../support/evidence'
 import { installBusinessRuntimeMocks, QA_PRODUCT_SKU } from '../support/harness'
 import { selector } from '../support/selectors'
 
@@ -26,9 +26,9 @@ test('@business @p0 @product-core ecom-product-create-list-detail creates SKU, r
   await detail.expectLoadedWithSku(sku)
   await expectNoInternalTerms(page)
 
-  expect(evidence.apiCalls.some(call => call.method === 'POST' && call.url.includes('/api/v1/ecommerce/products'))).toBeTruthy()
-  expect(evidence.apiCalls.some(call => call.method === 'GET' && call.url.match(/\/api\/v1\/ecommerce\/products(\?|$)/))).toBeTruthy()
-  expect(evidence.apiCalls.some(call => call.method === 'GET' && call.url.includes('/api/v1/ecommerce/products/qa-created-product'))).toBeTruthy()
+  expect(hasSuccessfulApiCall(evidence, call => call.method === 'POST' && call.url.includes('/api/v1/ecommerce/products'))).toBeTruthy()
+  expect(hasSuccessfulApiCall(evidence, call => call.method === 'GET' && Boolean(call.url.match(/\/api\/v1\/ecommerce\/products(\?|$)/)))).toBeTruthy()
+  expect(hasSuccessfulApiCall(evidence, call => call.method === 'GET' && call.url.includes('/api/v1/ecommerce/products/qa-created-product'))).toBeTruthy()
   await screenshotEvidence(page, testInfo, 'product-create-list-detail')
   expect(expectCleanEvidence(evidence)).toEqual({ consoleErrors: [], networkFailures: [] })
 })

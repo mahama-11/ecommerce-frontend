@@ -24,13 +24,10 @@ concurrency:
 
 jobs:
   qa-gate:
-    name: Real-first frontend QA gate
+    name: Frontend QA gate
     runs-on: ubuntu-latest
     env:
-      # Optional on normal PRs. When configured in a protected dev/review lane,
-      # test:contract:real runs authenticated non-mutating API reads.
-      ECOMMERCE_REAL_CONTRACT_BASE_URL: ${{ secrets.ECOMMERCE_REAL_CONTRACT_BASE_URL }}
-      ECOMMERCE_REAL_CONTRACT_TOKEN: ${{ secrets.ECOMMERCE_REAL_CONTRACT_TOKEN }}
+      ECOMMERCE_AUTH_ENV_FILE: ${{ runner.temp }}/ecommerce-login.env
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,7 +36,32 @@ jobs:
           cache: npm
       - run: npm ci --legacy-peer-deps
       - run: npx playwright install --with-deps chromium
-      - run: npm run ci:qa-gate
+      - name: Run offline PR regression gate
+        if: github.event_name == 'pull_request'
+        run: npm run ci:qa-gate:offline
+      - name: Prepare Ecommerce dev auth fixture
+        if: github.event_name != 'pull_request'
+        env:
+          ECOMMERCE_AUTH_EMAIL: ${{ secrets.ECOMMERCE_AUTH_EMAIL || secrets.PLATFORM_DEV_ADMIN_EMAIL }}
+          ECOMMERCE_AUTH_PASSWORD: ${{ secrets.ECOMMERCE_AUTH_PASSWORD || secrets.PLATFORM_DEV_ADMIN_PASSWORD }}
+        run: |
+          test -n "$ECOMMERCE_AUTH_EMAIL"
+          test -n "$ECOMMERCE_AUTH_PASSWORD"
+          {
+            printf 'ECOMMERCE_AUTH_EMAIL=%s\n' "$ECOMMERCE_AUTH_EMAIL"
+            printf 'ECOMMERCE_AUTH_PASSWORD=%s\n' "$ECOMMERCE_AUTH_PASSWORD"
+          } > "$ECOMMERCE_AUTH_ENV_FILE"
+          chmod 600 "$ECOMMERCE_AUTH_ENV_FILE"
+      - name: Run trusted real-first QA gate
+        if: github.event_name != 'pull_request'
+        env:
+          # Hard real-first lane. Default target is Cloud Dev; prod-like URLs are refused by scripts.
+          V_ECOMMERCE_BASE_URL: ${{ vars.V_ECOMMERCE_BASE_URL || secrets.V_ECOMMERCE_BASE_URL || 'https://tra.agent-ecommerce.com' }}
+          ECOMMERCE_REAL_CONTRACT_BASE_URL: ${{ vars.ECOMMERCE_REAL_CONTRACT_BASE_URL || secrets.ECOMMERCE_REAL_CONTRACT_BASE_URL || vars.V_ECOMMERCE_BASE_URL || secrets.V_ECOMMERCE_BASE_URL || 'https://tra.agent-ecommerce.com' }}
+          ECOMMERCE_REAL_CONTRACT_TOKEN: ${{ secrets.ECOMMERCE_REAL_CONTRACT_TOKEN }}
+          ECOMMERCE_LIVE_QA_PROVIDER: ${{ vars.ECOMMERCE_LIVE_QA_PROVIDER || 'comfyui_bridge' }}
+          ECOMMERCE_QA_REQUIRE_REAL: '1'
+        run: npm run ci:qa-gate
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -14,7 +14,7 @@ import type {
   CreateProductPromptInput,
   JsonObject,
 } from '@/types/product'
-import { ApiRequestError, downloadBinary, request } from './http'
+import { ApiRequestError, request } from './http'
 type RawRecord = Record<string, any>
 function normalizeAssetManifest(items: any[] | undefined) {
   return (items ?? []).map(item => ({
@@ -771,17 +771,4 @@ export function deleteProduct(productId: string) {
 export function listDownloads() {
   return request<RawRecord[]>('/api/v1/ecommerce/downloads', { method: 'GET' }).then(items => items.map(normalizeDownload))
 }
-export async function downloadExport(record: Pick<DownloadRecord, 'id' | 'packageUrl' | 'downloadFileName'>) {
-  if (record.packageUrl) {
-    window.open(record.packageUrl, '_blank', 'noopener,noreferrer')
-    return
-  }
-  await downloadBinary(`/api/v1/ecommerce/downloads/${record.id}/content`, record.downloadFileName)
-}
-export async function downloadExportTask(task: Pick<ExportTask, 'id' | 'packageUrl' | 'format'>, fallbackFileName?: string) {
-  if (task.packageUrl) {
-    window.open(task.packageUrl, '_blank', 'noopener,noreferrer')
-    return
-  }
-  await downloadBinary(`/api/v1/ecommerce/downloads/${task.id}/content`, fallbackFileName || `export.${task.format}`)
-}
+export { downloadExport, downloadExportTask } from './product-download'

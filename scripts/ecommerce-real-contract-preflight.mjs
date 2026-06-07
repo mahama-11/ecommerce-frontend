@@ -1,14 +1,16 @@
 #!/usr/bin/env node
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
 const root = process.cwd()
 const reportRel = 'reports/frontend-quality/real-contract-preflight-latest.json'
-const baseUrl = (process.env.ECOMMERCE_REAL_CONTRACT_BASE_URL || process.env.VITE_ECOMMERCE_API_BASE_URL || '').replace(/\/$/, '')
-const authToken = process.env.ECOMMERCE_REAL_CONTRACT_TOKEN || ''
+const baseUrl = (process.env.ECOMMERCE_REAL_CONTRACT_BASE_URL || process.env.VITE_ECOMMERCE_API_BASE_URL || process.env.V_ECOMMERCE_BASE_URL || 'https://tra.agent-ecommerce.com').replace(/\/$/, '')
+let authToken = process.env.ECOMMERCE_REAL_CONTRACT_TOKEN || ''
+let authenticatedVia = authToken ? 'token_env' : ''
 const allowProd = process.env.ECOMMERCE_REAL_CONTRACT_ALLOW_PROD === '1'
 const requireReal = process.env.ECOMMERCE_QA_REQUIRE_REAL === '1' || process.env.ECOMMERCE_REAL_CONTRACT_REQUIRED === '1'
 const timeoutMs = Number(process.env.ECOMMERCE_REAL_CONTRACT_TIMEOUT_MS || 10_000)
+const authEnvFile = process.env.ECOMMERCE_AUTH_ENV_FILE || join(process.env.HOME || '/root', '.hermes/secrets/ecommerce-login.env')
 
 function writeReport(payload) {
   const path = join(root, reportRel)
@@ -32,19 +34,39 @@ function looksLikeProd(url) {
   return host.includes('prod') || host === 'ecommerce.v.dev' || host.endsWith('.v.dev') || host.endsWith('.nousresearch.com')
 }
 
+function loadEnv(file) {
+  if (!existsSync(file)) return {}
+  const out = {}
+  for (const line of readFileSync(file, 'utf8').split(/\n/)) {
+    const s = line.trim()
+    if (!s || s.startsWith('#') || !s.includes('=')) continue
+    const [key, ...rest] = s.split('=')
+    out[key.trim()] = rest.join('=').trim().replace(/^["']|["']$/g, '')
+  }
+  return out
+}
+
+function dataOf(json) { return json?.data ?? json }
+
+function allowsFixtureLogin(url) {
+  const host = url.hostname.toLowerCase()
+  if (host === 'tra.agent-ecommerce.com') return true
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true
+  if (host.endsWith('.localhost')) return true
+  return false
+}
+
 if (!baseUrl) {
   writeReport({
-    status: requireReal ? 'BLOCKED' : 'SKIPPED',
-    reason: requireReal
-      ? 'real ecommerce backend is required but not configured; set ECOMMERCE_REAL_CONTRACT_BASE_URL or VITE_ECOMMERCE_API_BASE_URL'
-      : 'real ecommerce backend is not configured; set ECOMMERCE_REAL_CONTRACT_BASE_URL or VITE_ECOMMERCE_API_BASE_URL to enable non-mutating real contract smoke',
+    status: 'BLOCKED',
+    reason: 'real ecommerce backend is required but not configured; set ECOMMERCE_REAL_CONTRACT_BASE_URL or VITE_ECOMMERCE_API_BASE_URL',
     mode: 'real_first_preflight',
-    require_real: requireReal,
+    require_real: true,
     required_env: ['ECOMMERCE_REAL_CONTRACT_BASE_URL or VITE_ECOMMERCE_API_BASE_URL'],
-    optional_env: ['ECOMMERCE_REAL_CONTRACT_TOKEN', 'ECOMMERCE_REAL_CONTRACT_ALLOW_PROD=1', 'ECOMMERCE_QA_REQUIRE_REAL=1'],
+    optional_env: ['ECOMMERCE_REAL_CONTRACT_TOKEN', 'ECOMMERCE_REAL_CONTRACT_ALLOW_PROD=1', 'ECOMMERCE_AUTH_ENV_FILE'],
     report: reportRel,
   })
-  process.exit(requireReal ? 2 : 0)
+  process.exit(2)
 }
 
 let parsed
@@ -81,6 +103,46 @@ async function fetchWithTimeout(url, options = {}) {
   }
 }
 
+async function resolveAuthToken() {
+  if (authToken) return { ok: true, via: authenticatedVia }
+  if (!allowsFixtureLogin(parsed)) return { ok: false, via: '', reason: `fixture login refused for non-dev host: ${redactUrl(baseUrl)}` }
+  const env = loadEnv(authEnvFile)
+  const email = env.ECOMMERCE_AUTH_EMAIL || env.PLATFORM_DEV_ADMIN_EMAIL
+  const password = env.ECOMMERCE_AUTH_PASSWORD || env.PLATFORM_DEV_ADMIN_PASSWORD
+  if (!email || !password) return { ok: false, via: '', reason: `auth fixture missing email/password: ${authEnvFile}` }
+
+  try {
+    const response = await fetchWithTimeout(`${baseUrl}/api/v1/ecommerce/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const body = await response.json().catch(() => null)
+    const token = dataOf(body)?.access_token || ''
+    if (response.status !== 200 || body?.code !== 0 || !token) return { ok: false, via: '', reason: `fixture login failed status=${response.status}` }
+    authToken = token
+    authenticatedVia = 'fixture_login'
+    return { ok: true, via: authenticatedVia }
+  } catch (error) {
+    return { ok: false, via: '', reason: error instanceof Error ? error.message : String(error) }
+  }
+}
+
+const authResolution = await resolveAuthToken()
+if (requireReal && !authResolution.ok) {
+  writeReport({
+    status: 'BLOCKED',
+    reason: `real ecommerce backend is required but authenticated fixture is not available: ${authResolution.reason}`,
+    mode: 'real_first_preflight',
+    require_real: requireReal,
+    base_url: redactUrl(baseUrl),
+    authenticated: false,
+    auth_env_file: authEnvFile,
+    report: reportRel,
+  })
+  process.exit(2)
+}
+
 const results = []
 for (const endpoint of endpoints) {
   const url = `${baseUrl}${endpoint.path}`
@@ -112,13 +174,14 @@ for (const endpoint of endpoints) {
 
 const failures = results.filter(item => !item.accepted_status || !item.envelope_ok)
 const warnings = []
-if (!authToken) warnings.push('protected endpoints were validated only for reachable envelope/400|401|403 behavior; provide ECOMMERCE_REAL_CONTRACT_TOKEN for authenticated read smoke')
+if (!authToken) warnings.push('protected endpoints were validated only for reachable envelope/400|401|403 behavior; provide ECOMMERCE_REAL_CONTRACT_TOKEN or ECOMMERCE_AUTH_ENV_FILE for authenticated read smoke')
 writeReport({
   status: failures.length ? 'FAIL' : 'PASS',
   mode: 'non_mutating_real_contract_smoke',
   require_real: requireReal,
   base_url: redactUrl(baseUrl),
   authenticated: Boolean(authToken),
+  authenticated_via: authenticatedVia || null,
   endpoints: endpoints.map(item => item.path),
   results,
   failures,

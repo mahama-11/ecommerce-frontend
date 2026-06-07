@@ -14,6 +14,7 @@ reports/frontend-quality/*-latest.json
 reports/frontend-quality/lighthouse-raw.json
 reports/frontend-quality/playwright-report.json
 reports/business-interaction-qa/screenshots/*.png
+reports/business-interaction-qa/*.json
 storybook-static/
 test-results/
 artifacts/

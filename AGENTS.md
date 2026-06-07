@@ -56,14 +56,18 @@ npm run api:contract
 npm run contract:smoke
 npm run contract:evidence
 npm run qa:business
+npm run qa:business:live
 npm run qa:changed-flow
 npm run qa:report
+npm run test:contract:real
 npm run test:e2e
 npm run test:visual
 npm run lighthouse:budget
 npm run bundle:budget
 npm run typecheck
 npm run build
+npm run ci:qa-gate
+npm run ci:qa-gate:offline
 npm run ci:quick
 python3 /root/work/agentic-selfcheck/scripts/install_v_continuous_governance_hooks.py --repo /root/work/v/ecommerce-frontend
 ```

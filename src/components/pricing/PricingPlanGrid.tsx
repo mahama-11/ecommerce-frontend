@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
 import { commercialService } from '@/services/commercial'
 import { useAuth } from '@/hooks/useAuth'
-import { getAuthAwareStartPath } from '@/utils/authNavigation'
+import { getAuthAwareLoginPath } from '@/utils/authNavigation'
 import { useToastStore } from '@/store/toastStore'
 import type { CommercialOrderView, OfferingsResult, RateCard, SKU } from '@/types/commercial'
 import { Button } from '@/components/ui/Button'
@@ -41,7 +41,7 @@ export default function PricingPlanGrid({ variant = 'full', className = '' }: Pr
   const [loadFailed, setLoadFailed] = useState(false)
   const [purchasingPlanID, setPurchasingPlanID] = useState<string | null>(null)
   const language = i18n.resolvedLanguage ?? i18n.language
-  const startPath = getAuthAwareStartPath(isAuthenticated)
+  const startPath = getAuthAwareLoginPath(isAuthenticated)
   const compact = variant === 'preview'
 
   useEffect(() => {

@@ -55,8 +55,9 @@
     "test:unit:coverage": "vitest run --coverage",
     "test:contract": "playwright test tests/e2e/contract --project=api-contract",
     "test:contract:real": "node scripts/ecommerce-real-contract-preflight.mjs",
-    "ci:qa-gate": "npm run typecheck && npm run build && npm run test:unit:coverage && npm run test:contract && npm run test:contract:real && node scripts/ecommerce-business-qa-selector.mjs && npm run qa:business && npm run qa:report && npm run qa:quality-dashboard",
-    "ci:qa-gate:require-real": "ECOMMERCE_QA_REQUIRE_REAL=1 npm run ci:qa-gate",
+    "ci:qa-gate": "npm run typecheck && npm run build && npm run test:unit:coverage && npm run test:contract && ECOMMERCE_QA_REQUIRE_REAL=1 npm run test:contract:real && node scripts/ecommerce-business-qa-selector.mjs && npm run qa:business && npm run qa:report && npm run qa:business:live && ECOMMERCE_QA_REQUIRE_REAL=1 npm run qa:quality-dashboard",
+    "ci:qa-gate:offline": "npm run typecheck && npm run build && npm run test:unit:coverage && npm run test:contract && node scripts/ecommerce-business-qa-selector.mjs && npm run qa:business && npm run qa:report && ECOMMERCE_QA_ALLOW_OFFLINE=1 npm run qa:quality-dashboard",
+    "ci:qa-gate:require-real": "npm run ci:qa-gate",
     "qa:quality-dashboard": "node scripts/ecommerce-quality-dashboard.mjs"
   },
   "dependencies": {

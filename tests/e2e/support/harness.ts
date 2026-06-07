@@ -6,8 +6,8 @@ export const QA_PRODUCT_SKU = 'QA-BIZ-001'
 
 const devSession = {
   access_token: 'dev-business-token',
-  user: { full_name: 'Business QA User', email: 'business-qa@agent-ecommerce.local', org_name: 'Local QA' },
-  access: { product_roles: ['admin'] },
+  user: { full_name: 'Business QA User', email: 'business-qa@agent-ecommerce.local', org_name: 'Local QA', org_role: 'admin' },
+  access: { product_roles: ['admin', 'ecommerce.workspace_admin'] },
 }
 
 type RawProduct = Record<string, unknown>
@@ -73,9 +73,9 @@ const sourceReferences = [
 ]
 
 const generationVersion = {
-  id: 'gen-v1', version: 'v1', label: 'QA 生成轮次', status: 'succeeded', stage: 'completed', progress: 100, is_current: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
-  result_assets: [{ id: 'result-asset-1', asset_id: 'asset-generated-1', asset_content_url: '', thumbnail_url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="%2314b8a6"/><text x="20" y="64" fill="white">QA</text></svg>', metadata: { template_name: 'QA hero', source_name: 'QA SKU', generation_group_id: 'gen-v1' } }],
-  metadata: { user_visible_round: 'QA 生成轮次' },
+  id: 'gen-v1', version_id: 'gen-v1', version: 'v1', label: 'QA 生成轮次', prompt_id: 'prompt-qa', runtime_job_id: 'runtime-gen-v1', status: 'completed', stage: 'completed', progress: 100, selected_result_asset_id: 'asset-generated-1', is_current: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  result_assets: [{ id: 'result-asset-1', asset_id: 'asset-generated-1', asset_content_url: '/api/v1/ecommerce/assets/asset-generated-1/content', thumbnail_url: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="%2314b8a6"/><text x="20" y="64" fill="white">QA</text></svg>', metadata: { template_name: 'QA hero', source_name: 'QA SKU', generation_group_id: 'prompt:prompt-qa', width: 1024, height: 1024 } }],
+  metadata: { user_visible_round: 'QA 生成轮次', config: { skuBias: 72, styleStrength: 0.64, identityConsistency: 0.82, creativeFreedom: 0.36 } },
 }
 
 function stageView() {
@@ -96,7 +96,19 @@ function stageView() {
     prompt_plan: {
       id: 'prompt-plan-qa', prompt_id: 'prompt-qa', status: 'ready', source: 'llm_prompt_planner',
       variables: { composed_prompt_text: '电商主图：保留当前商品主体，使用参考图的干净光线和构图，突出材质与产品轮廓。', keywords: ['电商主图', '干净光线'] },
+      metadata: { source: 'llm_prompt_planner', prompt_diff: { added: ['突出材质'], removed: [], changed: ['背景更简洁'] } },
       diff: { added: ['突出材质'], removed: [], changed: ['背景更简洁'] }, blockers: [],
+    },
+    intent_spec: {
+      schema_version: 'v1',
+      product_id: QA_PRODUCT_ID,
+      selections: [
+        { element_id: 'fixed:sku_product', element_type: 'product_fact', element_key: 'sku_product', decision: 'keep', label: '要，保留 SKU 产品主体', value: { description: '保留当前商品主体' }, metadata: { fixed_prompt_question: true, prompt_slot: 'sku_product', source_role: 'sku' } },
+        { element_id: 'fixed:sku_background', element_type: 'background', element_key: 'sku_background', decision: 'drop', label: '不要，改换 SKU 背景', value: { description: '使用干净背景' }, metadata: { fixed_prompt_question: true, prompt_slot: 'sku_background', source_role: 'sku' } },
+        { element_id: 'fixed:reference_product', element_type: 'product_fact', element_key: 'reference_product', decision: 'keep', label: '要，参考产品元素进入画面', value: { description: '参考图构图' }, metadata: { fixed_prompt_question: true, prompt_slot: 'reference_product', source_role: 'reference' } },
+        { element_id: 'fixed:reference_background', element_type: 'background', element_key: 'reference_background', decision: 'keep', label: '要，采用参考背景场景', value: { description: '参考氛围' }, metadata: { fixed_prompt_question: true, prompt_slot: 'reference_background', source_role: 'reference' } },
+      ],
+      requirements: { type: 'scene_generation' },
     },
     generation_versions: [generationVersion],
   }
@@ -119,6 +131,7 @@ async function fulfill(route: Route, data: unknown, status = 200) {
 
 export async function installBusinessRuntimeMocks(page: Page) {
   const products: RawProduct[] = [baseProduct()]
+  const generationVersions = [generationVersion]
   await page.addInitScript(session => {
     window.localStorage.setItem('ecommerce_access_token', session.access_token)
     window.localStorage.setItem('ecommerce_session', JSON.stringify(session))
@@ -159,13 +172,61 @@ export async function installBusinessRuntimeMocks(page: Page) {
       return fulfill(route, { targetRoute: '/products/workbench/visual-tools', executorType: 'image_tool', prefilledInputSchema: {}, preloadedTemplatePayload: {}, supportsAsyncJob: true, supportsBatch: false })
     }
     if (path.includes('/commercial/offerings') && method === 'GET') {
-      return fulfill(route, { items: [{ id: 'offer-qa-1', name: 'QA Starter Pack', description: 'Business QA offering', price: { amount: 9.99, currency: 'USD' } }] })
+      return fulfill(route, {
+        product_code: 'ecommerce',
+        offerings: {
+          product: { id: 'product-ecommerce', code: 'ecommerce', name: 'Agent Ecommerce', status: 'active' },
+          skus: [
+            { id: 'sku-starter', product_id: 'product-ecommerce', code: 'starter', name: 'Starter', sku_type: 'subscription', billing_mode: 'prepaid', currency: 'CNY', list_price: 990, status: 'active', metadata: JSON.stringify({ package_code: 'ecommerce.basic.monthly' }) },
+            { id: 'sku-pro', product_id: 'product-ecommerce', code: 'pro', name: 'Pro', sku_type: 'subscription', billing_mode: 'prepaid', currency: 'CNY', list_price: 2990, status: 'active', metadata: JSON.stringify({ package_code: 'ecommerce.pro.monthly' }) },
+          ],
+          packages: [
+            { id: 'pkg-basic', product_id: 'product-ecommerce', code: 'ecommerce.basic.monthly', name: 'Starter', package_type: 'subscription', status: 'active', metadata: JSON.stringify({ sku_code: 'starter' }) },
+            { id: 'pkg-pro', product_id: 'product-ecommerce', code: 'ecommerce.pro.monthly', name: 'Pro', package_type: 'subscription', status: 'active', metadata: JSON.stringify({ sku_code: 'pro' }) },
+          ],
+          rate_cards: [
+            { id: 'rate-basic', product_id: 'product-ecommerce', code: 'rate-basic', target_type: 'sku', target_id: 'sku-starter', price_model: 'one_time', currency: 'CNY', price_config: JSON.stringify({ unit_amount: 990 }), version: 1, status: 'active', metadata: JSON.stringify({ package_code: 'ecommerce.basic.monthly' }) },
+            { id: 'rate-pro', product_id: 'product-ecommerce', code: 'rate-pro', target_type: 'sku', target_id: 'sku-pro', price_model: 'one_time', currency: 'CNY', price_config: JSON.stringify({ unit_amount: 2990 }), version: 1, status: 'active', metadata: JSON.stringify({ package_code: 'ecommerce.pro.monthly' }) },
+          ],
+          asset_definitions: [],
+          allowance_policies: [],
+        },
+        wallet_summary: null,
+      })
     }
     if (path.includes('/wallet/summary') && method === 'GET') {
-      return fulfill(route, { balance: { amount: 100.0, currency: 'USD' }, credits: 999 })
+      return fulfill(route, {
+        billing_subject_type: 'organization',
+        billing_subject_id: 'org-qa',
+        product_code: 'ecommerce',
+        total_balance: 100,
+        permanent_balance: 70,
+        reward_balance: 20,
+        allowance_balance: 10,
+        primary_asset_code: 'ECOMMERCE_CASH',
+        assets: [
+          { asset_code: 'ECOMMERCE_CASH', asset_type: 'cash', lifecycle_type: 'permanent', account_balance: 100, available_balance: 100, expiring_balance: 0 },
+        ],
+        quota: { billable_item_code: 'ecommerce.image_generation', granted: 1000, consumed: 1, reserved: 0, remaining: 999 },
+      })
+    }
+    if (path.includes('/wallet/history') && method === 'GET') {
+      return fulfill(route, { items: [{ id: 'wallet-history-qa-1', category: 'charge', title: 'QA generation charge', direction: 'debit', amount: 1, asset_code: 'ECOMMERCE_CASH', currency: 'USD', status: 'settled', occurred_at: new Date().toISOString(), reference_type: 'image_job', reference_id: 'image-job-qa-1' }] })
     }
     if (path.includes('/billing/summary') && method === 'GET') {
-      return fulfill(route, { totalCharges: 0, pendingCharges: 0, currency: 'USD' })
+      return fulfill(route, { charge_count: 1, settled_count: 1, refunded_count: 0, total_net_amount: 1, total_wallet_debited: 1, total_credits_consumed: 1, channel_pending_count: 0, channel_failed_count: 0 })
+    }
+    if (path.includes('/billing/charges') && method === 'GET') {
+      return fulfill(route, [{ id: 'charge-qa-1', product_code: 'ecommerce', organization_id: 'org-qa', user_id: 'user-qa', event_id: 'event-qa-1', business_type: 'image_generation', gross_amount: 1, discount_amount: 0, net_amount: 1, quota_consumed: 1, credits_consumed: 1, wallet_asset_code: 'ECOMMERCE_CASH', wallet_debited: 1, billing_amount: 1, reward_amount: 0, commission_amount: 0, status: 'settled', occurred_at: new Date().toISOString(), channel_status: 'settled' }])
+    }
+    if (path.includes('/commercial/orders/') && path.endsWith('/confirm-payment') && method === 'POST') {
+      return fulfill(route, { order: { id: 'order-qa-created', user_id: 'user-qa', organization_id: 'org-qa', product_code: 'ecommerce', sku_code: 'starter', package_code: 'starter', package_type: 'subscription', currency: 'USD', quantity: 1, unit_amount: 9.99, total_amount: 9.99, status: 'paid', payment_status: 'paid', fulfillment_status: 'fulfilled', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } })
+    }
+    if (path.includes('/commercial/orders') && method === 'POST') {
+      return fulfill(route, { order: { id: 'order-qa-created', user_id: 'user-qa', organization_id: 'org-qa', product_code: 'ecommerce', sku_code: 'starter', package_code: 'starter', package_type: 'subscription', currency: 'USD', quantity: 1, unit_amount: 9.99, total_amount: 9.99, status: 'pending', payment_status: 'pending', fulfillment_status: 'pending', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } })
+    }
+    if (path.includes('/commercial/orders') && method === 'GET') {
+      return fulfill(route, { items: [{ order: { id: 'order-qa-1', user_id: 'user-qa', organization_id: 'org-qa', product_code: 'ecommerce', sku_code: 'starter', package_code: 'starter', package_type: 'subscription', currency: 'USD', quantity: 1, unit_amount: 9.99, total_amount: 9.99, status: 'paid', payment_status: 'paid', fulfillment_status: 'fulfilled', created_at: new Date().toISOString(), updated_at: new Date().toISOString() } }] })
     }
 
     if (path.includes('/workflow/events') && method === 'GET') {
@@ -187,14 +248,43 @@ export async function installBusinessRuntimeMocks(page: Page) {
     if (path.includes('/workflow/template-bridges') && method === 'POST') return fulfill(route, [JSON.parse(request.postData() || '{}')])
 
     if (path.endsWith('/downloads') && method === 'GET') return fulfill(route, products.map(downloadRecord))
+    if (path.includes('/downloads/') && path.endsWith('/content')) return route.fulfill({ status: 200, contentType: 'text/csv', headers: { 'Content-Disposition': 'attachment; filename="qa-export.csv"' }, body: 'sku,title\nQA-BIZ-001,Business QA SKU\n' })
     if (path.includes('/exports/') && path.endsWith('/download')) return route.fulfill({ status: 200, contentType: 'text/csv', headers: { 'Content-Disposition': 'attachment; filename="qa-export.csv"' }, body: 'sku,title\nQA-BIZ-001,Business QA SKU\n' })
+    if (path.endsWith('/export-packages') && method === 'POST') return fulfill(route, { id: 'export-package-generated-1', status: 'succeeded', platform: 'ecommerce', site: 'download-center', locale: 'zh-CN', format: 'zip' })
     if (path.endsWith('/export-tasks') && method === 'POST') return fulfill(route, { id: 'export-task-created', status: 'succeeded' })
 
     if (path.includes('/v2/visual-workflows/sessions') && method === 'GET') return fulfill(route, { items: [{ id: 'session-qa-1', product_id: QA_PRODUCT_ID, sku_code: QA_PRODUCT_SKU, current_stage: 'prompt', status: 'ready', template_id: 'qa-template' }] })
     if (path.includes('/v2/visual-workflows/') && path.endsWith('/stage-view')) return fulfill(route, stageView())
-    if (path.includes('/v2/visual-workflows/') && path.endsWith('/generation-versions') && method === 'GET') return fulfill(route, { items: [generationVersion] })
+    if (path.includes('/v2/visual-workflows/') && path.endsWith('/generation-versions') && method === 'GET') return fulfill(route, { items: generationVersions })
+    if (path.includes('/v2/visual-workflows/') && path.endsWith('/generation-versions') && method === 'POST') {
+      const next = generationVersions.length + 1
+      const created = { ...generationVersion, id: `gen-v${next}`, version_id: `gen-v${next}`, prompt_id: `prompt-qa-${next}`, runtime_job_id: `runtime-gen-v${next}`, status: 'completed', stage: 'completed', progress: 100, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), metadata: { ...generationVersion.metadata, source: 'workshop_regenerate' } }
+      generationVersions.push(created)
+      return fulfill(route, created)
+    }
     if (path.includes('/v2/visual-workflows/') && path.endsWith('/prompt-planner-jobs') && method === 'POST') return fulfill(route, { runtime_job_id: 'job-qa', status: 'queued' })
-    if (path.includes('/v2/visual-workflows/') && path.endsWith('/generation-version-fanouts') && method === 'POST') return fulfill(route, { batch_id: 'batch-qa', total_tasks: 1, completed_tasks: 1, failed_tasks: 0, tasks: [{ id: 'task-qa-1', status: 'succeeded', progress: 100, scene_tag: 'hero', template_name: 'QA hero', result_asset_count: 1 }] })
+    if (path.includes('/v2/visual-workflows/') && path.endsWith('/generation-version-fanouts') && method === 'POST') {
+      const payload = route.request().postDataJSON() as { template_slots?: Array<Record<string, unknown>> } | null
+      const slots = payload?.template_slots?.length ? payload.template_slots : [{ template_id: 'tpl-qa-1', scene_tag: 'hero', detail_requirement: 'QA hero result' }]
+      const items = slots.map((slot, index) => {
+        const version = { ...generationVersion, id: `gen-fanout-${index + 1}`, version_id: `gen-fanout-${index + 1}`, prompt_id: `prompt-fanout-${index + 1}`, runtime_job_id: `runtime-fanout-${index + 1}` }
+        generationVersions.push(version)
+        return { fanout_task_id: `task-qa-${index + 1}`, source_asset_id: String(slot.source_asset_id ?? 'asset-1'), template_id: String(slot.template_id ?? 'tpl-qa-1'), slot_index: Number(slot.slot_index ?? index), scene_tag: String(slot.scene_tag ?? 'hero'), detail_requirement: String(slot.detail_requirement ?? 'QA hero result'), generation_version: version }
+      })
+      return fulfill(route, {
+        fanout_id: 'batch-qa',
+        batch_id: 'batch-qa',
+        items,
+        tasks: items.map(item => ({ id: item.fanout_task_id, status: 'succeeded', progress: 100, scene_tag: item.scene_tag, template_name: 'QA hero', result_asset_count: item.generation_version.result_assets?.length ?? 1 })),
+      })
+    }
+    const generationVersionAction = path.match(/\/v2\/visual-workflows\/([^/]+)\/generation-versions\/([^/]+)\/(select|writeback-selected-asset|save-as-template)$/)
+    if (generationVersionAction && method === 'POST') {
+      const [, , versionId, action] = generationVersionAction
+      if (action === 'select') return fulfill(route, { version_id: versionId, selected_result_asset_id: 'asset-generated-1', status: 'completed' })
+      if (action === 'writeback-selected-asset') return fulfill(route, { asset_relation: { id: 'asset-relation-generated-1', asset_id: 'asset-generated-1' } })
+      if (action === 'save-as-template') return fulfill(route, { template: { id: 'template-generated-1' }, saved_templates: [{ id: 'template-generated-1' }] })
+    }
     if (path.includes('/v2/visual-workflows/') && method === 'PATCH') return fulfill(route, { id: 'session-qa-1', product_id: QA_PRODUCT_ID, sku_code: QA_PRODUCT_SKU, current_stage: 'prompt', status: 'ready' })
     if (path.includes('/v2/visual-workflows/') && method === 'GET') return fulfill(route, { id: 'session-qa-1', product_id: QA_PRODUCT_ID, sku_code: QA_PRODUCT_SKU, current_stage: 'prompt', status: 'ready' })
     if (path.includes('/source-references') && method === 'POST') return fulfill(route, sourceReferences[0])
