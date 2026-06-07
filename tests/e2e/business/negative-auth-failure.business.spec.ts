@@ -13,6 +13,14 @@ test('@business @p0 @negative ecom-negative-auth-failure blocks unauthenticated 
   })
 
   await test.step('Bad credentials show error', async () => {
+    await page.route('**/api/v1/ecommerce/auth/login', async route => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ code: 401, message: 'Check your email and password and try again', data: null }),
+      })
+    })
+
     await login.goto()
     const responsePromise = page.waitForResponse(response => response.url().includes('/api/v1/ecommerce/auth/login'))
     await login.login('bad@example.com', 'wrongpassword')
