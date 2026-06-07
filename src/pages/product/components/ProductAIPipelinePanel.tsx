@@ -114,21 +114,16 @@ function flattenJsonRows(value: Record<string, unknown>, prefix = ''): Array<{ p
   })
 }
 
-function JsonTree({ value, testId }: { value: Record<string, unknown>; testId: string }) {
-  const rows = flattenJsonRows(value).slice(0, 24)
-  if (rows.length === 0) {
-    return <div data-testid={testId} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/35">—</div>
+function safeObjectFieldCount(value: Record<string, unknown>) {
+  return flattenJsonRows(value).filter(row => row.value !== '—').length
+}
+
+function promptBusinessSummary(prompt: ProductPrompt) {
+  return {
+    contentReady: prompt.content.trim().length > 0,
+    schemaFields: safeObjectFieldCount(prompt.schemaJson),
+    sourceLinks: safeObjectFieldCount(prompt.sourceMapJson),
   }
-  return (
-    <div data-testid={testId} className="space-y-2 rounded-xl border border-white/10 bg-[var(--ecom-surface)]/70 p-3">
-      {rows.map(({ path, value: rowValue }) => (
-        <div key={path} className="grid gap-2 border-b border-white/5 pb-2 last:border-none last:pb-0 sm:grid-cols-[180px_minmax(0,1fr)]">
-          <div className="break-all font-mono text-[11px] text-white/40">{path}</div>
-          <div className="break-words text-xs leading-relaxed text-white/70">{rowValue}</div>
-        </div>
-      ))}
-    </div>
-  )
 }
 
 export function ProductAIPipelinePanel({
@@ -358,20 +353,21 @@ export function ProductAIPipelinePanel({
             <div data-testid="prompt-version-list" className="mt-5 space-y-3">
               {prompts.map(prompt => {
                 const expanded = activeExpandedPromptId === prompt.id
+                const summary = promptBusinessSummary(prompt)
                 return (
                   <article key={prompt.id} data-testid={`prompt-version-card-${prompt.versionNo}`} className="rounded-2xl border border-white/10 bg-[var(--ecom-surface)]/70 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-sm font-semibold text-white">v{prompt.versionNo}</span><span data-testid={`prompt-version-status-${prompt.versionNo}`} className={`rounded-full border px-2 py-0.5 text-[10px] uppercase ${prompt.status === 'ready' ? statusStyle.ready : prompt.status === 'failed' ? statusStyle.failed : statusStyle.blocked}`}>{t(PROMPT_STATUS_LABEL_KEYS[prompt.status] ?? 'product.detail.ai.prompt.status.unknown', prompt.status)}</span><span className="rounded-md bg-white/5 px-2 py-0.5 text-[11px] text-white/50">{prompt.generationType} · {prompt.module}</span></div>
-                        <div className="mt-2 text-xs text-white/40">{formatDate(prompt.createdAt)} · {prompt.templateIds.length ? prompt.templateIds.join(', ') : t('product.detail.ai.prompt.noTemplate')}</div>
+                        <div className="mt-2 text-xs text-white/40">{formatDate(prompt.createdAt)} · {prompt.templateIds.length ? t('product.detail.ai.prompt.templateCount', { count: prompt.templateIds.length }) : t('product.detail.ai.prompt.noTemplate')}</div>
                       </div>
-                      <Button data-testid={`prompt-version-expand-${prompt.versionNo}`} onClick={() => setExpandedPromptId(expanded ? null : prompt.id)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/70"><ChevronDown className={`h-3.5 w-3.5 transition ${expanded ? 'rotate-180' : ''}`} />{expanded ? t('product.detail.ai.actions.collapse') : t('product.detail.ai.actions.viewContent')}</Button>
+                      <Button data-testid={`prompt-version-expand-${prompt.versionNo}`} onClick={() => setExpandedPromptId(expanded ? null : prompt.id)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/70"><ChevronDown className={`h-3.5 w-3.5 transition ${expanded ? 'rotate-180' : ''}`} />{expanded ? t('product.detail.ai.actions.collapse') : t('product.detail.ai.actions.viewSummary')}</Button>
                     </div>
                     {expanded ? (
-                      <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
-                        <div data-testid={`prompt-version-content-${prompt.versionNo}`}><div className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">{t('product.detail.ai.prompt.sections.content')}</div><pre className="whitespace-pre-wrap rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs leading-relaxed text-white/70">{prompt.content || '—'}</pre></div>
-                        <div><div className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">{t('product.detail.ai.prompt.sections.schema')}</div><JsonTree testId={`prompt-version-schema-${prompt.versionNo}`} value={prompt.schemaJson} /></div>
-                        <div><div className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">{t('product.detail.ai.prompt.sections.sourceMap')}</div><JsonTree testId={`prompt-version-source-map-${prompt.versionNo}`} value={prompt.sourceMapJson} /></div>
+                      <div className="mt-4 grid gap-3 border-t border-white/10 pt-4 sm:grid-cols-3">
+                        <Fact testId={`prompt-version-content-${prompt.versionNo}`} label={t('product.detail.ai.prompt.sections.content')} value={summary.contentReady ? t('product.detail.ai.prompt.summary.contentReady') : '—'} />
+                        <Fact testId={`prompt-version-schema-${prompt.versionNo}`} label={t('product.detail.ai.prompt.sections.schema')} value={t('product.detail.ai.prompt.summary.schemaFields', { count: summary.schemaFields })} />
+                        <Fact testId={`prompt-version-source-map-${prompt.versionNo}`} label={t('product.detail.ai.prompt.sections.sourceMap')} value={t('product.detail.ai.prompt.summary.sourceLinks', { count: summary.sourceLinks })} />
                       </div>
                     ) : null}
                   </article>

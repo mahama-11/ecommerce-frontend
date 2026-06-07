@@ -211,7 +211,12 @@ export async function getProduct(productId: string) {
     export_tasks?: RawRecord[]
     exportTasks?: RawRecord[]
     activities: RawRecord[]
+    parsed_info?: ParsedInfoDTO | null
+    parsedInfo?: ParsedInfoDTO | null
+    prompts?: PromptDTO[]
   }>(`/api/v1/ecommerce/products/${productId}`, { method: 'GET' })
+  const hasEmbeddedParsedInfo = 'parsed_info' in result || 'parsedInfo' in result
+  const hasEmbeddedPrompts = 'prompts' in result
   return {
     product: normalizeProduct(result.product),
     assets: (result.assets ?? []).map(normalizeProductAsset),
@@ -219,6 +224,12 @@ export async function getProduct(productId: string) {
     profitSnapshots: (result.profit_snapshots ?? result.profitSnapshots ?? []).map(normalizeProfitSnapshot),
     exportTasks: (result.export_tasks ?? result.exportTasks ?? []).map(normalizeExportTask),
     activities: (result.activities ?? []).map(normalizeActivity),
+    parsed_info: hasEmbeddedParsedInfo
+      ? normalizeParsedInfo(result.parsedInfo ?? result.parsed_info, productId)
+      : await getProductParsedInfo(productId),
+    prompts: hasEmbeddedPrompts
+      ? (result.prompts ?? []).map(item => normalizePrompt(item, productId)).sort((left, right) => right.versionNo - left.versionNo)
+      : await listProductPrompts(productId),
   }
 }
 type JsonStringOrObject = string | JsonObject | null | undefined

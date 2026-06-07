@@ -1,5 +1,6 @@
 dist/
 node_modules/
+coverage/
 reports/frontend-style-consistency/*-latest.json
 reports/frontend-style-consistency/automation-gate-latest.json
 reports/frontend-style-consistency/style-consistency-latest.json
@@ -12,6 +13,7 @@ reports/frontend-style-consistency/screenshots/
 reports/frontend-quality/*-latest.json
 reports/frontend-quality/lighthouse-raw.json
 reports/frontend-quality/playwright-report.json
+reports/business-interaction-qa/screenshots/*.png
 storybook-static/
 test-results/
 artifacts/

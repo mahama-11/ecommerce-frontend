@@ -431,7 +431,7 @@ export default function PrepHubPage() {
     return decisions }, [displaySteps])
   // ─── Steps navigation ───────────────────────────────────
   const steps = displaySteps
-  return ( <div className="mx-auto max-w-[1440px] px-5 py-6">
+  return ( <div data-testid="production-prep-page" className="mx-auto max-w-[1440px] px-5 py-6">
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -444,6 +444,7 @@ export default function PrepHubPage() {
           <p className="mt-1 text-sm text-white/50">
             {t('production.prep.subtitle')} </p> </div>
         {prepCanEnterSandbox && ( <Button
+            data-testid="production-next-sandbox"
             type="button"
             onClick={goToSandbox}
             className="inline-flex items-center gap-1.5 rounded-lg bg-brand-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-600"
@@ -460,7 +461,7 @@ export default function PrepHubPage() {
           className="min-h-0 space-y-4 lg:col-span-4"
         >
           <UploadZone
-            testId="production-sku-source-upload"
+            testId="production-source-upload-sku"
             title={t('production.prep.skuSourceUpload')}
             icon={Package}
             iconColor="text-cyan-400"
@@ -473,7 +474,7 @@ export default function PrepHubPage() {
             inputRef={skuInputRef}
           />
           <UploadZone
-            testId="production-reference-source-upload"
+            testId="production-source-upload-reference"
             title={t('production.prep.referenceSourceUpload')}
             icon={Image}
             iconColor="text-amber-400"
@@ -507,6 +508,7 @@ export default function PrepHubPage() {
               <p className="mt-1.5 text-[9px] leading-relaxed text-cyan-100/45">
                 选择不同的识别侧重，可以对比图片的光影、材质和构图判断。 </p> </div>
             <Button
+              data-testid="production-parse-start"
               type="button"
               onClick={startParsing}
               disabled={!dualTrackReady || isParsing}
@@ -700,6 +702,7 @@ export default function PrepHubPage() {
               }}
             />
             <input
+              data-testid="production-drift-bias"
               type="range"
               min={0}
               max={100}
@@ -730,6 +733,7 @@ export default function PrepHubPage() {
               <p className={`text-sm font-semibold ${prepCanEnterSandbox ? 'text-emerald-100' : 'text-amber-100'}`}>{prepCanEnterSandbox ? '生产准备已完成' : '生产准备还差一步'}</p>
               <p className={`mt-1 text-[11px] ${prepCanEnterSandbox ? 'text-emerald-100/55' : 'text-amber-100/65'}`}>{prepCanEnterSandbox ? '下一步进入策略配置：确认生成数量、模板预览和执行参数。' : prepNextStepHint}</p> </div>
             <Button
+              data-testid="production-next-sandbox-header"
               type="button"
               onClick={goToSandbox}
               aria-disabled={!prepCanEnterSandbox}

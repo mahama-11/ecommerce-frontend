@@ -312,7 +312,7 @@ const zh = { common: { brand: 'Agent Ecommerce', loading: '加载中...',
           setPrimaryAsset: '下一步：设置主图素材', setPrimaryAssetReason: 'Listing 已就绪，但导出仍需要一个主图素材。', setPrimaryAssetOutput: '主图会进入导出素材清单，确保平台模板可用。', },
         actions: { bindAssets: '去绑定素材', checkAssets: '检查源素材', generatePrompt: '生成出图文案',
           generatingPrompt: '正在生成出图文案…', viewListings: '查看 Listing', viewExports: '查看导出', waitParsed: '等待图片解析',
-          viewContent: '查看内容', collapse: '收起', }, blockers: {
+          viewSummary: '查看摘要', collapse: '收起', }, blockers: {
           noParsedInfo: '缺少图片解析结果', noAssets: '缺少源素材', noPrompt: '没有出图文案版本', noAdoptedListing: '没有已采纳 Listing',
           noPrimaryAsset: '缺少主图素材', }, labels: { confidence: '置信度',
           categoryGuess: '类目推断', platformFit: '平台适配', parserVersion: 'Parser 版本', createdAt: '创建时间',
@@ -320,9 +320,9 @@ const zh = { common: { brand: 'Agent Ecommerce', loading: '加载中...',
           title: 'AI 解析结果', subtitle: '只读理解层，供出图文案、素材生成和 Listing 使用。', readonly: '只读 · 图片解析', emptyTitle: '还没有 AI 解析结果',
           emptyDesc: '先绑定至少一张商品素材，系统会识别颜色、材质、场景和平台适配。解析结果只用于辅助生成，不会覆盖基础资料。', failedTitle: '解析失败，暂时无法生成出图文案', failedDesc: '请检查源图片是否可访问，或重新触发解析。失败不会修改已有商品资料。', errorDetail: '错误详情',
           noSources: '暂无来源资产', status: { empty: '未解析', pending: '解析中', succeeded: '已就绪', failed: '解析失败' }, }, prompt: {
-          title: '出图文案版本', subtitle: '系统整理后的出图文案和来源说明。', disabledReason: '需要先完成图片解析。', emptyReadyTitle: '可以生成第一版出图文案',
-          emptyReadyDesc: '系统会把图片解析和你的选择整理成出图文案，并保存为后续生成图片可用的版本。', emptyWaitingTitle: '等待图片解析结果', emptyWaitingDesc: '当前 SKU 还没有完成图片解析。先完成解析，才能整理出图文案。', noTemplate: '固定模板',
-          sections: { content: '内容', schema: '字段结构', sourceMap: '来源映射' }, status: { draft: '草稿', ready: '就绪', failed: '失败', archived: '已归档', unknown: '未知状态' }, }, errors: {
+          title: '出图文案版本', subtitle: '面向客户展示的生成方案摘要；原始生成指令和来源映射保留在系统内部。', disabledReason: '需要先完成图片解析。', emptyReadyTitle: '可以生成第一版出图文案',
+          emptyReadyDesc: '系统会把图片解析和你的选择整理成出图文案，并保存为后续生成图片可用的版本。', emptyWaitingTitle: '等待图片解析结果', emptyWaitingDesc: '当前 SKU 还没有完成图片解析。先完成解析，才能整理出图文案。', noTemplate: '固定模板', templateCount: '{{count}} 个模板引用',
+          sections: { content: '生成文案', schema: '方案字段', sourceMap: '来源关联' }, summary: { contentReady: '可用于图片生成', schemaFields: '{{count}} 个结构化字段', sourceLinks: '{{count}} 个来源关联' }, status: { draft: '草稿', ready: '就绪', failed: '失败', archived: '已归档', unknown: '未知状态' }, }, errors: {
           artifactLoadTitle: 'AI 内容加载不完整', artifactLoadDesc: '商品基础资料仍可使用；图片解析或出图文案暂时不可用，请稍后重试。', }, },
       deleteConfirm: '确定要删除此商品吗？所有相关数据都将丢失。', saving: '保存中...', savedJustNow: '刚刚保存', saveFailed: '保存失败',
       basic: { title: '基础信息', subtitle: '在线编辑商品元数据。字段在失焦时自动保存。', autoSave: '失焦自动保存',
@@ -357,6 +357,11 @@ const zh = { common: { brand: 'Agent Ecommerce', loading: '加载中...',
         site: '站点', costPrice: '成本价', listingPrice: '售价', logisticsCost: '物流成本',
         platformFee: '平台费', otherFee: '其他费用', previewTitle: '实时预估', estimatedNetProfit: '预计净利润',
         estimatedNetMargin: '预计净利率', formulaHint: '实际保存以系统返回的利润快照为准：净利 = 售价 - 成本 - 物流 - 平台费 - 其他费用。', cancel: '取消', calculate: '保存利润快照',
+      }, listingModal: {
+        titleCreate: '新建 Listing 版本', titleEdit: '编辑 Listing 版本', platform: '目标平台', site: '站点/地区', locale: '语言',
+        versionLabel: '版本标签', versionLabelPlaceholder: '例如：v1.0-主图优化', title: '商品标题', titlePlaceholder: '输入商品标题',
+        description: '商品描述', descriptionPlaceholder: '输入商品描述', bulletPoints: '卖点', bulletPlaceholder: '卖点',
+        keywords: '关键词', addKeyword: '添加关键词', saving: '保存中...', saveChanges: '保存修改', generate: '生成版本', cancel: '取消',
       }, profitTab: { count: '{{count}} 个利润快照', calculate: '计算利润',
         grossProfit: '毛利润', netProfit: '净利润', breakeven: '盈亏平衡点', minPrice: '盈利最低售价',
         listingPrice: '上架价格', cost: '成本', empty: '暂无利润快照', emptyDesc: '计算利润以开始使用。',

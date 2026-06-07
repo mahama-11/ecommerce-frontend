@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const port = Number(process.env.ECOMMERCE_E2E_PORT ?? 5207)
+const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
 
 export default defineConfig({
   testDir: './tests',
@@ -21,7 +22,7 @@ export default defineConfig({
     video: 'off',
     viewport: { width: 1440, height: 1200 },
     launchOptions: {
-      executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ?? '/usr/bin/chromium',
+      ...(chromiumExecutablePath ? { executablePath: chromiumExecutablePath } : {}),
       args: ['--no-sandbox', '--disable-dev-shm-usage'],
     },
   },
@@ -35,6 +36,11 @@ export default defineConfig({
     {
       name: 'chromium-smoke',
       testMatch: /.*\.smoke\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'api-contract',
+      testMatch: /.*\.contract\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {

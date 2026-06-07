@@ -362,7 +362,7 @@ export default function SandboxPage() {
   const promptPlanSourceLabel = promptPlan?.source === 'llm_prompt_planner' ? '已按你的选择整理' : promptPlan?.source ? '基础方案' : '准备中'; const promptPlanStatusLabel = promptPlan?.status === 'ready' ? '可用于生产' : promptPlan?.status === 'blocked' ? '需要先完成准备' : promptPlan?.status ? '整理中' : '未知'
   const generationPromptText = promptPlanGenerationPrompt(promptPlan); const effectiveGenerationPromptText = promptPlanEditorText.trim() || generationPromptText; const promptPlanChangedByUser = promptPlanEditorDirty && promptPlanEditorText.trim() !== generationPromptText.trim(); const promptKeywords = promptPlanKeywords(promptPlan)
   const productionReadinessItems = [ { label: '策略输入', ok: hasRunnableIntents, detail: hasRunnableIntents ? `${store.intents.length} 条已确认` : '还没有可生成的选择' }, { label: '出图方案', ok: promptPlanReady, detail: promptPlanReady ? '已准备好' : promptPlanBlocker }, { label: '出图槽位', ok: fanoutTasks.length > 0, detail: fanoutTasks.length > 0 ? `${fanoutTasks.length} 个任务` : '等待 Prep 图片' }, ]
-  return ( <div className="mx-auto max-w-[1440px] px-5 py-6">
+  return ( <div data-testid="production-sandbox-page" className="mx-auto max-w-[1440px] px-5 py-6">
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -438,6 +438,7 @@ export default function SandboxPage() {
                   ]}
                 /> )}
               <Button
+                data-testid="production-prompt-compose"
                 type="button"
                 onClick={runPromptPlanner}
                 disabled={promptPlanning || !hasRunnableIntents}
@@ -712,6 +713,7 @@ export default function SandboxPage() {
                     <span className={item.ok ? 'text-emerald-200/75' : 'text-amber-100/70'}>{item.ok ? '✓' : '•'} {item.label}</span>
                     <span className="text-right leading-relaxed text-white/42">{item.detail}</span> </div> ))} </div>
               <Button
+                data-testid="production-generation-start"
                 type="button"
                 onClick={() => {
                   if (!canStartProduction) { setExecutionPhase('idle')

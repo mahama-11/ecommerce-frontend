@@ -13,6 +13,9 @@ export default function InventoryAnalysisPage() {
   const { t } = useTranslation()
   const { salesAnalysis, loadSales } = useInventoryStore()
 
+  const safeSalesAnalysis = salesAnalysis ?? null
+  const dataPoints = safeSalesAnalysis?.dataPoints ?? []
+
   useEffect(() => {
     void loadSales('30d')
   }, [loadSales])
@@ -49,46 +52,46 @@ export default function InventoryAnalysisPage() {
             <ShoppingCart className="h-4 w-4" />
             {t('inventory.analysis.totalSales')}
           </div>
-          <div className="mt-2 text-3xl font-bold text-white">{salesAnalysis?.totalSales.toLocaleString() ?? '—'}</div>
+          <div className="mt-2 text-3xl font-bold text-white">{safeSalesAnalysis?.totalSales?.toLocaleString() ?? '—'}</div>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-5">
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/40">
             <DollarSign className="h-4 w-4" />
             {t('inventory.analysis.totalRevenue')}
           </div>
-          <div className="mt-2 text-3xl font-bold text-emerald-400">${salesAnalysis?.totalRevenue.toLocaleString() ?? '—'}</div>
+          <div className="mt-2 text-3xl font-bold text-emerald-400">${safeSalesAnalysis?.totalRevenue?.toLocaleString() ?? '—'}</div>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-5">
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/40">
             <BarChart3 className="h-4 w-4" />
             {t('inventory.analysis.totalOrders')}
           </div>
-          <div className="mt-2 text-3xl font-bold text-white">{salesAnalysis?.totalOrders.toLocaleString() ?? '—'}</div>
+          <div className="mt-2 text-3xl font-bold text-white">{safeSalesAnalysis?.totalOrders?.toLocaleString() ?? '—'}</div>
         </div>
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.04] p-5">
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-white/40">
-            {salesAnalysis && salesAnalysis.returnRate > 3 ? <TrendingDown className="h-4 w-4 text-red-400" /> : <TrendingUp className="h-4 w-4 text-emerald-400" />}
+            {safeSalesAnalysis && safeSalesAnalysis.returnRate > 3 ? <TrendingDown className="h-4 w-4 text-red-400" /> : <TrendingUp className="h-4 w-4 text-emerald-400" />}
             {t('inventory.analysis.returnRate')}
           </div>
-          <div className={`mt-2 text-3xl font-bold ${(salesAnalysis?.returnRate ?? 0) > 3 ? 'text-red-400' : 'text-white'}`}>
-            {salesAnalysis?.returnRate.toFixed(1) ?? '—'}%
+          <div className={`mt-2 text-3xl font-bold ${(safeSalesAnalysis?.returnRate ?? 0) > 3 ? 'text-red-400' : 'text-white'}`}>
+            {safeSalesAnalysis?.returnRate?.toFixed(1) ?? '—'}%
           </div>
         </div>
       </div>
 
       {/* 热销 SKU */}
-      {salesAnalysis && (
+      {safeSalesAnalysis && dataPoints.length > 0 && (
         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.04] p-5">
           <div className="mb-4">
             <h3 className="text-base font-semibold text-white">{t('inventory.analysis.topSku')}</h3>
-            <p className="mt-1 text-sm text-white/50">{t('inventory.analysis.topSkuSales')}: <strong className="text-[var(--ecom-text-primary)]">{salesAnalysis.topSku}</strong> — {salesAnalysis.topSkuSales.toLocaleString()}</p>
+            <p className="mt-1 text-sm text-white/50">{t('inventory.analysis.topSkuSales')}: <strong className="text-[var(--ecom-text-primary)]">{safeSalesAnalysis.topSku ?? '—'}</strong> — {safeSalesAnalysis.topSkuSales?.toLocaleString() ?? '—'}</p>
           </div>
 
           {/* 简易柱状图 */}
           <div className="space-y-2">
-            {salesAnalysis.dataPoints.slice(-14).map((dp) => {
-              const max = Math.max(...salesAnalysis.dataPoints.map(d => d.sales))
-              const width = max > 0 ? (dp.sales / max) * 100 : 0
+            {dataPoints.slice(-14).map((dp) => {
+              const max = Math.max(...dataPoints.map(d => d.sales ?? 0))
+              const width = max > 0 ? ((dp.sales ?? 0) / max) * 100 : 0
               return (
                 <div key={dp.date} className="flex items-center gap-3">
                   <span className="w-20 text-xs text-white/40 font-mono">{dp.date.slice(5)}</span>

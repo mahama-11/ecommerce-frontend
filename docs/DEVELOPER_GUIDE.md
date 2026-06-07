@@ -339,6 +339,23 @@ reports/frontend-style-consistency/evidence-manifest.json
 
 The manifest must include local screenshots and a `PASS`, `ACCEPTED`, or `ACCEPTED_WITH_NOTES` decision. This keeps C/D-risk product-flow changes from being reported complete without visible evidence.
 
+Business interaction QA adds a P0 browser/API-readback selector layer on top of the static frontend gate. For changes touching `src/services/auth.ts`, `src/services/http.ts`, `src/services/product.ts`, `src/services/production.ts`, `src/pages/product/**`, `src/pages/production/**`, `src/pages/account/AccountDownloadsPage.tsx`, router/contract/generated API files, run:
+
+```bash
+npm run qa:changed-flow
+npm run qa:report
+```
+
+Artifacts:
+
+- `tests/e2e/support/selectors.ts`: stable P0 `data-testid` registry and internal-copy scan patterns.
+- `tests/e2e/support/harness.ts`: deterministic business runtime harness for local browser gates; live fixtures must still be called out before claiming full backend/provider PASS.
+- `tests/e2e/business/*.business.spec.ts`: P0 Auth, Product create/list/detail, product-scoped production entry, Prep/Sandbox/Workshop selector/copy readiness, Listing/Export/Download selector gates.
+- `scripts/ecommerce-business-qa-selector.mjs`: changed-file selector + selector registry validation.
+- `scripts/ecommerce-business-qa-report.mjs`: evidence JSON writer under `reports/business-interaction-qa/business-qa-report.json`.
+
+Status discipline from `docs/business-interaction-qa-design.md` applies: browser actions with deterministic mocks are `PASS_WITH_NOTES`; live product/provider/export closure requires safe fixture ownership and cleanup evidence before reporting full `PASS`.
+
 For global style evolution, provide:
 
 ```text
@@ -393,4 +410,5 @@ Relevant docs for this project:
 - `AGENTS.md`
 - `docs/GIT_HOOKS.md`
 - `docs/DEVELOPER_GUIDE.md`
+- `docs/business-interaction-qa-design.md`
 - `docs/architecture/PROJECT_SKELETON.md`

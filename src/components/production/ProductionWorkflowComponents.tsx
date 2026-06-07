@@ -49,6 +49,8 @@ export function DecisionOptionCard({
 }) {
   return (
     <Button
+      data-testid="production-choice-submit"
+      data-choice-id={option.id}
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
@@ -94,6 +96,8 @@ export function DecisionStepCard({
   const selectedOption = step.options.find((option) => option.id === step.selectedOptionId)
   return (
     <motion.div
+      data-testid="production-choice-card"
+      data-step-id={step.id}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
@@ -151,6 +155,7 @@ export function EditablePromptCard({
           <span className={dirty ? 'rounded-full bg-cyan-300/10 px-2 py-1 text-[10px] text-cyan-100/70' : 'rounded-full bg-emerald-300/10 px-2 py-1 text-[10px] text-emerald-100/60'}>{dirty ? '已手动微调' : '可直接编辑'}</span>
         </div>
         <textarea
+          data-testid="production-prompt-editor"
           aria-label="本次出图要求"
           value={value}
           onChange={(event) => onChange(event.target.value)}
@@ -185,6 +190,8 @@ export function VersionLineageItem({ node, active, index, onSelect }: { node: Ve
   const isCurrent = node.isCurrent
   return (
     <motion.div
+      data-testid="production-version-card"
+      data-version-id={node.id}
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
@@ -234,7 +241,7 @@ export function ResultAssetCard({ variant, index, isSelected, onToggle, onZoom, 
   const title = String(variant.metadata?.template_name ?? variant.metadata?.template_id ?? variant.metadata?.version_id ?? `结果 ${index + 1}`)
   const subtitle = String(variant.metadata?.source_name ?? variant.metadata?.source_id ?? variant.metadata?.fanout_task_id ?? '')
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.04 }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} className={cn('group relative overflow-hidden rounded-xl border transition', isSelected ? 'border-cyan-400/30 bg-cyan-400/[0.02]' : 'border-white/[0.05] bg-white/[0.01] hover:border-white/10')}>
+    <motion.div data-testid="production-result-card" data-variant-id={variant.id} initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: index * 0.04 }} onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} className={cn('group relative overflow-hidden rounded-xl border transition', isSelected ? 'border-cyan-400/30 bg-cyan-400/[0.02]' : 'border-white/[0.05] bg-white/[0.01] hover:border-white/10')}>
       <Button type="button" aria-pressed={isSelected} aria-label={`${isSelected ? '取消选择' : '选择'}生成结果 ${index + 1}`} onClick={(event) => { event.stopPropagation(); onToggle() }} className={cn('absolute right-2 top-2 z-10 h-7 rounded-full px-2 text-[10px] shadow-[0_8px_24px_rgba(0,0,0,0.28)] backdrop-blur-md transition', isSelected ? 'border border-cyan-300/50 bg-cyan-300/20 text-cyan-100' : 'border border-white/12 bg-black/45 text-white/70 hover:border-cyan-300/35 hover:text-cyan-100')}>{isSelected ? <Check className="h-3 w-3" /> : null}<span>{isSelected ? '已选' : '选择'}</span></Button>
       <div role="button" tabIndex={0} aria-label={`选择变体 ${index + 1}`} className="relative aspect-square cursor-pointer overflow-hidden bg-white/[0.02]" onClick={onToggle} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onToggle() }}>
         <img src={variant.thumbnailUrl} alt={`Variant ${index + 1}`} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />

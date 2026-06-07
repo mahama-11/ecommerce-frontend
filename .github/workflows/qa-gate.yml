@@ -1,0 +1,53 @@
+name: Ecommerce Frontend QA Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'scripts/**'
+      - 'docs/**'
+      - 'playwright*.config.ts'
+      - 'vitest.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/qa-gate.yml'
+  push:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+
+concurrency:
+  group: ecommerce-frontend-qa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qa-gate:
+    name: Real-first frontend QA gate
+    runs-on: ubuntu-latest
+    env:
+      # Optional on normal PRs. When configured in a protected dev/review lane,
+      # test:contract:real runs authenticated non-mutating API reads.
+      ECOMMERCE_REAL_CONTRACT_BASE_URL: ${{ secrets.ECOMMERCE_REAL_CONTRACT_BASE_URL }}
+      ECOMMERCE_REAL_CONTRACT_TOKEN: ${{ secrets.ECOMMERCE_REAL_CONTRACT_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npx playwright install --with-deps chromium
+      - run: npm run ci:qa-gate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ecommerce-frontend-qa-evidence
+          path: |
+            coverage/
+            reports/frontend-quality/
+            reports/business-interaction-qa/
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
