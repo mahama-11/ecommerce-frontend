@@ -218,7 +218,7 @@ export default function SandboxPage() {
     let cancelled = false
     if (isDevMode()) { setStrategySummary(MOCK_STRATEGY)
       return () => { cancelled = true } }
-    Promise.all([productionApi.listIntents(productId), productionApi.getPromptPlanSummary(productId)]) .then(([intents, plan]) => {
+    productionApi.getSandboxStrategyData(productId) .then(({ intents, promptPlan: plan }) => {
         if (cancelled) return
         setIntents(intents)
         setPromptPlan(plan)
